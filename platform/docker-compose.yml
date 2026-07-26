@@ -1,0 +1,86 @@
+services:
+  content-funnel:
+    build: .
+    container_name: content-checkout-funnel
+    restart: unless-stopped
+    environment:
+      # Bind Next.js to all interfaces. Docker auto-sets HOSTNAME to the container
+      # id, and Next.js 15 binds to it — so without this it listens on only one
+      # network IP and Traefik gets a 502. Must be 0.0.0.0. See GO_LIVE_PLAN.md.
+      HOSTNAME: "0.0.0.0"
+      DATABASE_URL: "postgres://${POSTGRES_USER:?Set POSTGRES_USER in .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@content-funnel-postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}"
+      PUBLIC_APP_URL: https://dgtlmag.com
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-}
+      # --- Outreach batch sending ---
+      OUTREACH_DRY_RUN: ${OUTREACH_DRY_RUN:-}
+      OUTREACH_CRON_TOKEN: ${OUTREACH_CRON_TOKEN:-}
+      UNSUBSCRIBE_SECRET: ${UNSUBSCRIBE_SECRET:-}
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+      HUNTER_API_KEY: ${HUNTER_API_KEY:-}
+      APOLLO_API_KEY: ${APOLLO_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      # --- Call transcription (Deepgram primary, OpenAI Whisper fallback) ---
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+      DEEPGRAM_MODEL: ${DEEPGRAM_MODEL:-}
+      # --- Claude / AI (subscription token preferred; API key is fallback) ---
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LEAD_RESEARCH_MODEL: ${LEAD_RESEARCH_MODEL:-}
+      LEAD_RESEARCH_MAX_WEB_SEARCHES: ${LEAD_RESEARCH_MAX_WEB_SEARCHES:-}
+      # --- Telephony (Twilio) — used in Phase 7 ---
+      TELEPHONY_PROVIDER: ${TELEPHONY_PROVIDER:-twilio}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TELEPHONY_WEBHOOK_BASE_URL: ${TELEPHONY_WEBHOOK_BASE_URL:-}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://dgtlmag.com}
+      DEFAULT_COUNTRY_CODE: ${DEFAULT_COUNTRY_CODE:-CA}
+      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-America/Toronto}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
+      OWNER_NAME: ${OWNER_NAME:-}
+      TEAM_NAME: ${TEAM_NAME:-}
+      TEAM_SLUG: ${TEAM_SLUG:-}
+    depends_on:
+      - content-funnel-postgres
+    volumes:
+      # Media-library uploads. output:"standalone" snapshots public/ at build
+      # time, so runtime uploads must live on a mount or they vanish on rebuild.
+      - ./uploads:/app/public/uploads
+    networks:
+      - traefik-public
+      - content-funnel-internal
+    ports:
+      - "127.0.0.1:8088:3000"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "traefik-public"
+      traefik.http.routers.dgtlmag.rule: "Host(`dgtlmag.com`) || Host(`www.dgtlmag.com`) || Host(`app.dgtlmedia.io`)"
+      traefik.http.routers.dgtlmag.entrypoints: "websecure"
+      traefik.http.routers.dgtlmag.tls.certresolver: "letsencrypt"
+      traefik.http.services.dgtlmag.loadbalancer.server.port: "3000"
+
+  content-funnel-postgres:
+    image: postgres:17-alpine
+    container_name: content-funnel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:?Set POSTGRES_DB in .env}"
+      POSTGRES_USER: "${POSTGRES_USER:?Set POSTGRES_USER in .env}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    volumes:
+      - content-funnel-postgres-data:/var/lib/postgresql/data
+    networks:
+      - content-funnel-internal
+
+networks:
+  traefik-public:
+    external: true
+  content-funnel-internal:
+    internal: true
+
+volumes:
+  content-funnel-postgres-data:

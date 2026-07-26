@@ -1,0 +1,23 @@
+{
+  "slug": "shane-boyer",
+  "name": "Shane Boyer",
+  "type": "creator",
+  "status": "migrated",
+  "hub": "index.html",
+  "features": [
+    "features/polaroid.html",
+    "features/ray-ban-meta.html",
+    "features/canada-goose.html",
+    "features/ysl.html",
+    "features/dji.html"
+  ],
+  "cases": [],
+  "sources": "sources.md",
+  "backlinkKit": "backlink-kit.md",
+  "hasMedia": true,
+  "updated": "2026-07-17",
+  "canonicalUrl": "",
+  "additionalSources": [
+    "sources-partnerships.md"
+  ]
+}

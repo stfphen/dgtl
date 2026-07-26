@@ -1,0 +1,59 @@
+filters:
+  and:
+    - file.ext == "md"
+formulas:
+  days_stale: if(updated, (now() - date(updated)).days.round(0), "")
+properties:
+  status:
+    displayName: Status
+  type:
+    displayName: Type
+  updated:
+    displayName: Updated
+  formula.days_stale:
+    displayName: Days stale
+views:
+  - type: table
+    name: Working set (living)
+    filters:
+      and:
+        - status == "living"
+    order:
+      - file.name
+      - type
+      - updated
+      - formula.days_stale
+  - type: table
+    name: Stale radar
+    filters:
+      and:
+        - status != "living"
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - file.name
+      - type
+      - updated
+      - formula.days_stale
+  - type: table
+    name: Modules
+    filters:
+      and:
+        - file.inFolder("20-Modules")
+    order:
+      - file.name
+      - status
+      - updated
+      - formula.days_stale
+  - type: table
+    name: All notes
+    groupBy:
+      property: file.folder
+      direction: ASC
+    order:
+      - file.name
+      - type
+      - status
+      - updated
+      - formula.days_stale

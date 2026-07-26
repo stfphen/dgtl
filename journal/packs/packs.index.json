@@ -1,0 +1,15 @@
+{
+  "publication": "DGTL Influence Journal",
+  "updated": "2026-07-24",
+  "packs": [
+    "5a1ive",
+    "burns-twins",
+    "dom-vallie",
+    "patrick-gillett",
+    "shane-boyer",
+    "sorisa"
+  ],
+  "cases": [
+    "../cases/a-day-with-swae-lee.html"
+  ]
+}

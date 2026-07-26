@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DGTL Rotating Hero — reference implementation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --text:#F0F0F0; --muted:#D0D0D0; --dim:#8a8a8a;
+    --gold:#F0CF50; --border:#2a2a2a; --whiteline:rgba(255,255,255,.08);
+    --r-btn:7px; --r-card:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:Manrope, ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---- Hero shell (DGTL Centered Monument) ---- */
+  .hero{
+    position:relative; overflow:hidden;
+    min-height:100vh; display:grid; place-items:center;
+    padding:180px 24px 120px; text-align:center;
+    background:
+      radial-gradient(1100px 520px at 50% -10%, rgba(240,207,80,.10), transparent 60%),
+      radial-gradient(900px 600px at 100% 120%, rgba(240,207,80,.05), transparent 55%),
+      #000;
+  }
+  .hero__spark{
+    position:absolute; inset:0; margin:auto; width:min(1100px,120vw); height:auto;
+    opacity:.05; transform:rotate(-12deg); pointer-events:none; z-index:0;
+  }
+  .hero__inner{position:relative; z-index:1; max-width:920px}
+
+  .kicker{
+    display:inline-flex; align-items:center; gap:9px;
+    padding:7px 14px; border:1px solid var(--border); border-radius:9999px;
+    font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--muted); background:rgba(255,255,255,.02); margin-bottom:28px;
+  }
+  .kicker .dot{width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px rgba(240,207,80,.8)}
+
+  /* ---- Rotating H1 ---- */
+  .hero-h1{
+    margin:0 0 22px; font-weight:700; letter-spacing:-1.4px; color:#fff;
+    font-size:clamp(40px,6vw,70px); line-height:1.06;
+  }
+  /* Stack every variant in ONE grid cell so the box sizes to the tallest line
+     and rotating never causes layout shift. */
+  .hero-rot{display:grid}
+  .hero-rot__line{
+    grid-area:1 / 1;
+    opacity:0; transform:translateY(10px);
+    transition:opacity .6s ease, transform .6s ease;
+    pointer-events:none;
+  }
+  .hero-rot__line.is-active{opacity:1; transform:none; pointer-events:auto}
+  .gold{color:var(--gold)}
+
+  .hero-sub{
+    margin:0 auto 34px; max-width:600px;
+    font-size:clamp(15px,1.4vw,17px); line-height:1.6; color:var(--muted);
+  }
+
+  .cta-row{display:flex; gap:14px; justify-content:center; flex-wrap:wrap}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:15px 24px; border-radius:var(--r-btn);
+    font-size:16px; font-weight:700; text-decoration:none; cursor:pointer;
+    transition:transform .15s ease, filter .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{background:var(--gold); color:#000; border:1px solid var(--gold)}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-secondary{background:transparent; color:#fff; border:1px solid rgba(255,255,255,.4)}
+
+  /* progress dots (optional affordance so viewers see it will cycle) */
+  .hero-dots{display:flex; gap:8px; justify-content:center; margin-top:40px}
+  .hero-dots button{
+    width:8px; height:8px; padding:0; border-radius:50%; cursor:pointer;
+    border:1px solid var(--border); background:transparent; transition:background .3s, border-color .3s;
+  }
+  .hero-dots button[aria-current="true"]{background:var(--gold); border-color:var(--gold)}
+
+  .note{max-width:720px; margin:0 auto; padding:40px 24px 80px; color:var(--dim); font-size:13px; line-height:1.7; text-align:center}
+  .note code{color:var(--gold); background:rgba(240,207,80,.08); padding:1px 6px; border-radius:5px}
+
+  @media (prefers-reduced-motion: reduce){
+    .hero-rot__line{transition:none; transform:none}
+  }
+</style>
+</head>
+<body>
+  <section class="hero">
+    <!-- faint gold bolt watermark (inline so the page is self-contained) -->
+    <svg class="hero__spark" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M58 2 L14 78 H44 L38 138 L86 54 H54 Z" fill="#F0CF50"/>
+    </svg>
+
+    <div class="hero__inner">
+      <span class="kicker"><span class="dot"></span>DGTL GROUP</span>
+
+      <!-- ROTATING HERO HEADLINE ------------------------------------------------
+           Every variant lives in the DOM (good for SEO + no-JS + reduced motion).
+           Line 0 is the strong, safe default; it shows if JS never runs.
+           Each line keeps its OWN gold accent word. -->
+      <h1 class="hero-h1">
+        <span class="hero-rot" data-hero-rotator>
+          <span class="hero-rot__line is-active">Transforming brands with work people <span class="gold">remember</span>.</span>
+          <span class="hero-rot__line" aria-hidden="true">Content that <span class="gold">converts</span> — not just collects likes.</span>
+          <span class="hero-rot__line" aria-hidden="true">350M+ followers. 5B+ impressions. <span class="gold">Receipts, not promises.</span></span>
+          <span class="hero-rot__line" aria-hidden="true">We don't chase trends. We <span class="gold">set</span> them.</span>
+          <span class="hero-rot__line" aria-hidden="true">Your brand, <span class="gold">unforgettable</span>.</span>
+        </span>
+      </h1>
+
+      <p class="hero-sub">Strategy, creative, and influence for brands that refuse to blend in.</p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#">See the Full Pitch →</a>
+        <a class="btn btn-secondary" href="#">Book a Call</a>
+      </div>
+
+      <!-- optional cycle indicator; also lets a viewer jump to a line -->
+      <div class="hero-dots" data-hero-dots aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <p class="note">
+    Reference implementation for the DGTL pitch + teaser skills. The headline rotates through 3–5
+    variants, each held for <code>5–7s</code> scaled by how long that line takes to read. Hover the
+    headline to pause; it also pauses when the tab is hidden and stays on the first line under
+    <code>prefers-reduced-motion</code>. Drop the marked-up block, the <code>.hero-rot</code> CSS,
+    and the script below into any DGTL hero — see <code>hero-rotation-skill-patch.md</code>.
+  </p>
+
+<script>
+/* ============================================================================
+   DGTL rotating hero — dependency-free, accessible, layout-shift-free.
+   Reused verbatim by dgtl-pitch-pages (§2 Hero) and dgtl-pitch-teasers (§2 Hero).
+   ========================================================================== */
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Dwell time for a line: base + per-word, clamped to the 5–7s window the
+  // brief asks for. Tune the two constants if you want faster/slower cycling.
+  function dwellFor(text) {
+    var words = text.trim().split(/\s+/).filter(Boolean).length;
+    var ms = 2400 + words * 520;          // ~5.0s at 5 words … ~7.0s at 9 words
+    return Math.min(7000, Math.max(5000, ms));
+  }
+
+  document.querySelectorAll('[data-hero-rotator]').forEach(function (group) {
+    var lines = Array.prototype.slice.call(group.querySelectorAll('.hero-rot__line'));
+    if (lines.length < 2) return;                     // nothing to rotate
+
+    // Build optional dot indicators next to this rotator (if a host exists).
+    var host = document.querySelector('[data-hero-dots]');
+    var dots = [];
+    if (host) {
+      lines.forEach(function (_, idx) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('aria-label', 'Show headline ' + (idx + 1));
+        b.addEventListener('click', function () { go(idx, true); });
+        host.appendChild(b);
+        dots.push(b);
+      });
+      host.removeAttribute('aria-hidden');
+    }
+
+    var i = 0, timer = null, paused = false;
+
+    function render(n) {
+      lines.forEach(function (l, idx) {
+        var on = idx === n;
+        l.classList.toggle('is-active', on);
+        if (on) l.removeAttribute('aria-hidden'); else l.setAttribute('aria-hidden', 'true');
+      });
+      dots.forEach(function (d, idx) {
+        if (idx === n) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current');
+      });
+    }
+    function schedule() {
+      clearTimeout(timer);
+      timer = setTimeout(advance, dwellFor(lines[i].textContent));
+    }
+    function advance() {
+      if (paused) return;
+      i = (i + 1) % lines.length;
+      render(i);
+      schedule();
+    }
+    function go(n, fromClick) {           // jump (used by dots)
+      i = n; render(i);
+      if (!paused && !reduce) schedule();
+      if (fromClick) { paused = false; }
+    }
+
+    render(0);
+    if (reduce) return;                   // static: first line stays, no cycling
+
+    schedule();
+
+    // Pause while a reader is on the headline; resume when they leave.
+    group.addEventListener('mouseenter', function () { paused = true; clearTimeout(timer); });
+    group.addEventListener('mouseleave', function () { paused = false; schedule(); });
+    group.addEventListener('focusin',   function () { paused = true; clearTimeout(timer); });
+    group.addEventListener('focusout',  function () { paused = false; schedule(); });
+
+    // Don't burn cycles on a hidden tab.
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) clearTimeout(timer);
+      else if (!paused) schedule();
+    });
+  });
+})();
+</script>
+</body>
+</html>

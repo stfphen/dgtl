@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>DGTL × Sample Client — Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0A0A0A;--gold:#F0CF50;--ink:#EDEDED;--dim:#9A9A9A;--card:#141414;--line:#242424}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,sans-serif;line-height:1.55}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px}
+  header{padding:28px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+  .logo{font-weight:800;letter-spacing:.04em}.logo b{color:var(--gold)}
+  .badge{display:inline-block;padding:6px 12px;border:1px solid var(--gold);border-radius:999px;color:var(--gold);font-size:12px;font-weight:700}
+  .hero{padding:88px 0 64px}
+  .kicker{color:var(--gold);font-weight:700;letter-spacing:.18em;text-transform:uppercase;font-size:12px}
+  h1{font-size:54px;font-weight:800;line-height:1.05;margin:14px 0 18px}
+  .lead{color:var(--dim);font-size:19px;max-width:660px}
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  h2{font-size:28px;font-weight:800;margin:0 0 20px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .box h3{margin:0 0 6px;color:var(--gold);font-size:16px}.box p{margin:0;color:var(--dim);font-size:14px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center}
+  .stat .n{font-size:40px;font-weight:800;color:var(--gold)}.stat .l{color:var(--dim);font-size:13px}
+  .cta{margin:24px 0 96px;padding:44px;background:linear-gradient(180deg,#151206,#0A0A0A);border:1px solid var(--gold);border-radius:18px;text-align:center}
+  .btn{display:inline-block;background:var(--gold);color:#0A0A0A;font-weight:800;text-decoration:none;padding:16px 34px;border-radius:999px;margin-top:14px}
+  footer{padding:40px 0;color:var(--dim);font-size:13px;border-top:1px solid var(--line)}
+  @media(max-width:640px){h1{font-size:38px}.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><b>DGTL</b> GROUP</div>
+    <div class="badge">Sample deck · pipeline test</div>
+  </header>
+
+  <div class="hero">
+    <p class="kicker">Proposal · Sample Client</p>
+    <h1>This deck proves the pipeline works.</h1>
+    <p class="lead">If you're reading this at <b>pitch.dgtlmedia.io/sample-client</b>, your
+      self-hosted deck deploy is live — HTTPS, your domain, no Netlify. Duplicate this folder,
+      rename it, edit, push, deploy.</p>
+  </div>
+
+  <section>
+    <h2>The approach</h2>
+    <div class="grid">
+      <div class="box"><h3>Diagnose</h3><p>Audit the funnel, find the leak, size the opportunity.</p></div>
+      <div class="box"><h3>Build</h3><p>Ship the offer, the pages, and the outreach that convert.</p></div>
+      <div class="box"><h3>Scale</h3><p>Double down on what works, cut what doesn't, compound.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Proof</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">30s</div><div class="l">edit → live</div></div>
+      <div class="stat"><div class="n">$0</div><div class="l">Netlify bill</div></div>
+      <div class="stat"><div class="n">1</div><div class="l">command to deploy</div></div>
+    </div>
+  </section>
+
+  <div class="cta">
+    <p class="kicker">Ready when you are</p>
+    <h2 style="margin:10px 0 0">Let's start.</h2>
+    <a class="btn" href="https://dgtlmag.com/checkout?utm_source=pitch&utm_campaign=sample-client">Book the kickoff →</a>
+  </div>
+
+  <footer>© DGTL Group · dgtlgroup.io · Sample proposal</footer>
+</div>
+</body>
+</html>

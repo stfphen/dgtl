@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>DGTL × {{CLIENT_TITLE}} — Proposal</title>
+<!-- Replace this scaffold with a full deck from the dgtl-pitch-pages skill when ready. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0A0A0A;--gold:#F0CF50;--ink:#EDEDED;--dim:#9A9A9A;--card:#141414;--line:#242424}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,sans-serif;line-height:1.55}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px}
+  header{padding:28px 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+  .logo{font-weight:800;letter-spacing:.04em}
+  .logo b{color:var(--gold)}
+  .hero{padding:96px 0 72px}
+  .kicker{color:var(--gold);font-weight:700;letter-spacing:.18em;text-transform:uppercase;font-size:12px}
+  h1{font-size:52px;font-weight:800;line-height:1.05;margin:14px 0 18px}
+  .lead{color:var(--dim);font-size:19px;max-width:640px}
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  h2{font-size:28px;font-weight:800;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .box h3{margin:0 0 6px;color:var(--gold);font-size:16px}
+  .box p{margin:0;color:var(--dim);font-size:14px}
+  .cta{margin:24px 0 96px;padding:40px;background:linear-gradient(180deg,#151206,#0A0A0A);border:1px solid var(--gold);border-radius:18px;text-align:center}
+  .btn{display:inline-block;background:var(--gold);color:#0A0A0A;font-weight:800;text-decoration:none;padding:16px 34px;border-radius:999px;margin-top:14px}
+  footer{padding:40px 0;color:var(--dim);font-size:13px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><b>DGTL</b> GROUP</div>
+    <div style="color:var(--dim);font-size:13px">Prepared for {{CLIENT_TITLE}}</div>
+  </header>
+
+  <div class="hero">
+    <p class="kicker">Proposal · {{CLIENT_TITLE}}</p>
+    <h1>A growth engine built for {{CLIENT_TITLE}}.</h1>
+    <p class="lead">Replace this scaffold with your real pitch. Headline the outcome you'll drive,
+      not the services you sell.</p>
+  </div>
+
+  <section>
+    <h2>What we'd do</h2>
+    <div class="grid">
+      <div class="box"><h3>Phase 1</h3><p>Describe the first workstream and the outcome.</p></div>
+      <div class="box"><h3>Phase 2</h3><p>Describe the second workstream and the outcome.</p></div>
+      <div class="box"><h3>Phase 3</h3><p>Describe the third workstream and the outcome.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why DGTL</h2>
+    <p class="lead">Proof points, case studies, and the numbers that make this a low-risk yes.</p>
+  </section>
+
+  <div class="cta">
+    <p class="kicker">Ready when you are</p>
+    <h2 style="margin:10px 0 0">Let's start.</h2>
+    <!-- CTA feeds the funnel: slug = campaign so deck conversions are attributable. -->
+    <a class="btn" href="https://dgtlmag.com/checkout?utm_source=pitch&utm_campaign={{CLIENT_SLUG}}">Book the kickoff →</a>
+  </div>
+
+  <footer>© DGTL Group · dgtlgroup.io · Proposal for {{CLIENT_TITLE}}</footer>
+</div>
+</body>
+</html>

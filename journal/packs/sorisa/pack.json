@@ -1,0 +1,18 @@
+{
+  "slug": "sorisa",
+  "name": "Sorisa",
+  "type": "creator",
+  "status": "migrated",
+  "hub": "index.html",
+  "features": [],
+  "cases": [
+    "cases/lees-palace-dom-corleo.html",
+    "cases/rolling-loud.html",
+    "cases/the-rise.html"
+  ],
+  "sources": "sources.md",
+  "backlinkKit": "backlink-kit.md",
+  "hasMedia": true,
+  "updated": "2026-07-17",
+  "canonicalUrl": ""
+}

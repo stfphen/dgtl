@@ -1,0 +1,548 @@
+/* ==========================================================================
+   DGTL admin reskin — COMPREHENSIVE stylesheet, wired to the POC UI spec
+   (prototypes/dgtl-reskin/admin-pipeline-poc.html). Scoped to the admin shell +
+   login only; the public tenant funnels never carry .v2-admin-shell/.admin-login
+   so they are untouched. This file fully OWNS the admin look (it does not rely on
+   styles.css bleeding through) — every shell + pipeline component is specified to
+   the POC's exact values. Delete this file to revert.
+   Manrope is loaded by app/admin/layout.jsx (next/font -> --font-manrope).
+   ========================================================================== */
+
+/* ---------------- Tokens (both themes) ---------------- */
+html .v2-admin-shell,
+html .admin-login {
+  --font-sans: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
+  --blue: #F0CF50;            /* admin accent -> gold; cascades to every derived token */
+  --blue-dark: #cbab35;
+  --on-blue: #000;
+  --info: #6E9FDB;
+  --success: #7BC47F;
+  --warn: #E8A33D;
+  --danger: #E5484D;
+  --gold-tint: rgba(240, 207, 80, 0.08);
+  --shadow-card: 0 6px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.15);
+  --fp-radius-button: 7px;
+  --radius: 16px;
+  --radius-sm: 7px;
+  --radius-lg: 16px;
+}
+html .v2-admin-shell ::selection,
+html .admin-login ::selection { background: #F0CF50; color: #000; }
+
+/* ---------------- Dark surface ladder (the DGTL identity) ---------------- */
+html .v2-admin-shell[data-theme="dark"] {
+  --white: #0a0a0a; --soft: #000000; --soft-2: #111111;
+  --black: #F0F0F0; --near-black: #e6e6e6; --muted: #8a8a8a;
+  --line: #2a2a2a; --border: #2a2a2a;
+  --bg: #000000; --surface: #0a0a0a; --surface-2: #111111; --surface-3: #1a1a1a;
+  --fg: #F0F0F0; --fg-muted: #8a8a8a;
+  --glass-dark: rgba(0, 0, 0, 0.5);
+}
+html .v2-admin-shell[data-theme="light"] { --line: #e6e2d6; --border: #e6e2d6; }
+
+/* ---------------- Generic primitives (used across all tabs) ---------------- */
+html .v2-admin-shell .button {
+  min-height: 0;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+html .v2-admin-shell .button--primary { background: var(--blue); color: #000; }
+html .v2-admin-shell .button--primary:hover { filter: brightness(1.06); background: var(--blue); }
+html .v2-admin-shell .button--secondary {
+  background: transparent;
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.4));
+  color: #fff;
+}
+html .v2-admin-shell input,
+html .v2-admin-shell select,
+html .v2-admin-shell textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  font-size: 13px;
+}
+html .v2-admin-shell input::placeholder { color: #6a6a6a; }
+
+/* Status badges (pipeline stages, counts). */
+html .v2-admin-shell .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  background: var(--gold-tint);
+  color: var(--blue);
+}
+html .v2-admin-shell .status-pill--won,
+html .v2-admin-shell .status-pill--booked {
+  background: rgba(123, 196, 127, 0.12); color: var(--success);
+}
+html .v2-admin-shell .status-pill--lost,
+html .v2-admin-shell .status-pill--disqualified {
+  background: rgba(229, 72, 77, 0.12); color: var(--danger);
+}
+
+/* ==========================================================================
+   SHELL — matched to the POC frame
+   ========================================================================== */
+/* Main column: glassy top bar + padded content. */
+html .v2-admin-shell .v2-dashboard-main.admin-shell {
+  display: flex; flex-direction: column; padding: 0; margin: 0;
+}
+html .v2-admin-shell .dgtl-content {
+  display: flex; flex-direction: column; gap: 24px;
+  max-width: 1240px; width: 100%;
+  padding: 18px 16px 96px; /* bottom clears the fixed mobile nav */
+}
+
+/* Glassy top bar */
+html .v2-admin-shell .dgtl-topbar {
+  position: sticky; top: 0; z-index: 20;
+  height: 60px; display: flex; align-items: center; gap: 16px;
+  padding: 0 16px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px) saturate(1.8);
+  -webkit-backdrop-filter: blur(8px) saturate(1.8);
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+}
+html .v2-admin-shell .dgtl-topbar__title {
+  font-size: 17px; font-weight: 700; color: var(--fg); letter-spacing: -0.2px;
+}
+html .v2-admin-shell .dgtl-topbar__crumb { color: var(--fg-muted); font-weight: 500; }
+html .v2-admin-shell .dgtl-search { position: relative; margin-left: auto; max-width: 280px; width: 100%; }
+html .v2-admin-shell .dgtl-search svg {
+  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  color: var(--fg-muted); pointer-events: none;
+}
+html .v2-admin-shell .dgtl-search input {
+  width: 100%; padding: 9px 14px 9px 36px;
+  border-radius: var(--radius-sm); background: var(--surface);
+  border: 1px solid var(--border); color: var(--fg); font-size: 13px;
+}
+html .v2-admin-shell .dgtl-topbar__actions { display: flex; align-items: center; gap: 4px; }
+
+/* Icon buttons (theme toggle + logout) */
+html .v2-admin-shell .dgtl-iconbtn,
+html .v2-admin-shell .theme-toggle {
+  width: 34px; height: 34px; border-radius: var(--radius-sm);
+  border: none; background: transparent; color: var(--fg-muted);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+html .v2-admin-shell .dgtl-iconbtn:hover,
+html .v2-admin-shell .theme-toggle:hover { background: var(--surface-2); color: #fff; }
+
+/* View head (eyebrow + title + description) */
+html .v2-admin-shell .admin-header.v2-view-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 16px; margin-bottom: 0;
+}
+html .v2-admin-shell .admin-header .eyebrow {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em;
+  color: var(--gold-tan, #b3a06a); font-weight: 700; margin-bottom: 6px;
+}
+html .v2-admin-shell .admin-header h1 {
+  font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -0.4px;
+}
+html .v2-admin-shell .admin-header p { color: var(--fg-muted); margin-top: 4px; font-size: 13px; }
+
+/* Nav count badges (hidden on the mobile bottom bar) */
+html .v2-admin-shell .v2-nav-count { display: none; }
+
+/* --- Desktop sidebar: the POC .sidebar --- */
+@media (min-width: 1024px) {
+  html .v2-admin-shell .v2-nav-container {
+    position: sticky; top: 0; height: 100svh;
+    width: 248px; flex-direction: column; justify-content: flex-start;
+    gap: 4px; padding: 20px 14px;
+    background: #0a0a0a; border: none; border-right: 1px solid var(--border);
+    border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  html .v2-admin-shell .dgtl-brand { display: flex; align-items: center; padding: 6px 8px 18px; }
+  html .v2-admin-shell .dgtl-brand svg { height: 24px; width: auto; color: var(--fg); }
+  html .v2-admin-shell .dgtl-nav-label {
+    display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--fg-muted); font-weight: 700; padding: 14px 12px 6px; margin: 0;
+  }
+  html .v2-admin-shell .v2-nav-item {
+    display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+    gap: 12px; width: 100%; height: auto; min-height: 0; padding: 10px 12px;
+    border-radius: var(--radius-sm); color: #D0D0D0; font-weight: 500; font-size: 14px;
+    position: relative;
+  }
+  html .v2-admin-shell .v2-nav-item svg { width: 20px; height: 20px; opacity: 1; }
+  html .v2-admin-shell .v2-nav-item:hover { background: var(--surface-2); color: #fff; }
+  html .v2-admin-shell .v2-nav-item.is-active {
+    background: var(--gold-tint); color: var(--blue); box-shadow: none; font-weight: 600;
+  }
+  html .v2-admin-shell .v2-nav-item.is-active svg { opacity: 1; }
+  html .v2-admin-shell .v2-nav-item.is-active::before {
+    content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
+    width: 2px; border-radius: 2px; background: var(--blue);
+  }
+  html .v2-admin-shell .v2-nav-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 9999px; font-size: 11px; font-weight: 800;
+    background: var(--surface-2); color: var(--fg-muted);
+  }
+  html .v2-admin-shell .v2-nav-item.is-active .v2-nav-count { background: var(--blue); color: #000; }
+
+  html .v2-admin-shell .dgtl-sidebar-foot {
+    display: flex; align-items: center; gap: 6px; margin-top: auto;
+    padding: 12px 8px 4px; border-top: 1px solid var(--border);
+  }
+  html .v2-admin-shell .dgtl-userchip { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; }
+  html .v2-admin-shell .dgtl-avatar {
+    width: 32px; height: 32px; flex: 0 0 32px; border-radius: 9999px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; color: var(--blue);
+  }
+  html .v2-admin-shell .dgtl-userchip__meta { display: flex; flex-direction: column; min-width: 0; }
+  html .v2-admin-shell .dgtl-userchip__name {
+    font-size: 13px; font-weight: 600; color: var(--fg);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  html .v2-admin-shell .dgtl-userchip__role { font-size: 11px; color: var(--fg-muted); }
+
+  html .v2-admin-shell .dgtl-topbar { padding: 0 28px; }
+  html .v2-admin-shell .dgtl-topbar__actions { display: none; }
+  html .v2-admin-shell .dgtl-content { padding: 28px; }
+}
+
+/* ==========================================================================
+   PIPELINE CONTENT — matched to the POC
+   ========================================================================== */
+/* KPI metric cards */
+html .v2-admin-shell .v2-metrics-scroll {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px; overflow: visible; margin: 0; padding: 0;
+}
+html .v2-admin-shell .v2-metric-pill {
+  min-width: 0; display: flex; flex-direction: column; gap: 6px;
+  padding: 18px 20px; border-radius: 16px;
+  background: rgba(0, 0, 0, 0.45); border: 1px solid var(--border);
+  box-shadow: var(--shadow-card); transition: border-color 0.2s, transform 0.2s;
+}
+html .v2-admin-shell .v2-metric-pill:hover { border-color: #3a3a3a; transform: translateY(-2px); }
+html .v2-admin-shell .v2-metric-count {
+  font-family: var(--font-sans); font-size: 34px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums; color: #fff; margin: 0;
+}
+html .v2-admin-shell .v2-metrics-scroll .v2-metric-pill:first-child .v2-metric-count { color: var(--blue); }
+html .v2-admin-shell .v2-metric-label {
+  font-size: 12px; color: var(--fg-muted); text-transform: capitalize;
+  font-weight: 500; letter-spacing: 0; margin: 0;
+}
+
+/* Panels */
+html .v2-admin-shell .admin-panel {
+  background: rgba(0, 0, 0, 0.45); border: 1px solid var(--border);
+  border-radius: 16px; box-shadow: var(--shadow-card);
+  padding: 20px 22px; margin: 0; overflow: hidden;
+}
+html .v2-admin-shell .admin-panel .pipeline-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin: -20px -22px 18px; padding: 16px 22px; border-bottom: 1px solid var(--border);
+}
+html .v2-admin-shell .admin-panel .pipeline-header h2 { font-size: 16px; font-weight: 700; color: #fff; margin: 0; }
+html .v2-admin-shell .admin-panel .pipeline-header p { font-size: 12px; color: var(--fg-muted); margin-top: 3px; }
+
+/* Callback / simple list rows */
+html .v2-admin-shell .outreach-list { display: flex; flex-direction: column; }
+html .v2-admin-shell .outreach-list-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 12px; border-radius: 10px;
+}
+html .v2-admin-shell .outreach-list-row:hover { background: var(--surface-2); }
+html .v2-admin-shell .outreach-list-row + .outreach-list-row { border-top: 1px solid #1c1c1c; }
+html .v2-admin-shell .outreach-list-row strong { font-weight: 600; color: var(--fg); }
+html .v2-admin-shell .outreach-list-row span { font-size: 12px; color: var(--fg-muted); }
+
+/* Filters */
+html .v2-admin-shell .lead-filters {
+  display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 16px;
+}
+html .v2-admin-shell .lead-filters input,
+html .v2-admin-shell .lead-filters select {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 9px 12px; color: var(--fg); font-size: 13px; min-width: 0;
+}
+html .v2-admin-shell .lead-filters input[name="q"] { flex: 1; min-width: 200px; }
+
+/* Lead list rendered as a bordered DGTL data table (rows expand in place). */
+html .v2-admin-shell .lead-control-list {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+html .v2-admin-shell .lead-card {
+  border: 0; border-top: 1px solid #1c1c1c; border-radius: 0; background: transparent;
+}
+html .v2-admin-shell .lead-control-list > .lead-card:first-child { border-top: 0; }
+html .v2-admin-shell .lead-card summary { padding: 13px 16px; }
+html .v2-admin-shell .lead-card summary:hover { background: #0f0f0f; }
+html .v2-admin-shell .lead-card[open] summary { background: #0f0f0f; }
+html .v2-admin-shell .lead-score {
+  background: transparent; color: var(--blue); font-weight: 800; font-variant-numeric: tabular-nums;
+}
+
+/* Funding cards */
+html .v2-admin-shell .admin-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
+}
+html .v2-admin-shell .outreach-card {
+  display: flex; flex-direction: column; gap: 12px; padding: 20px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+html .v2-admin-shell .outreach-card:hover { border-color: #3a3a3a; transform: translateY(-2px); }
+html .v2-admin-shell .admin-grid .outreach-card:first-child { border-left: 3px solid var(--blue); }
+html .v2-admin-shell .outreach-card h3 { font-size: 16px; font-weight: 700; color: #fff; }
+html .v2-admin-shell .outreach-card strong { color: var(--blue); font-weight: 800; }
+
+/* Formal table header for the lead list (aligns with the summary row columns). */
+html .v2-admin-shell .lead-table-head {
+  display: grid; grid-template-columns: minmax(0, 1fr) 90px 130px auto;
+  gap: 12px; align-items: center; padding: 11px 16px;
+  background: var(--surface-2); color: var(--fg-muted);
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;
+}
+html .v2-admin-shell .lead-card summary {
+  grid-template-columns: minmax(0, 1fr) 90px 130px auto; align-items: center;
+}
+
+/* Lead detail opens as a right-side DRAWER, driven entirely by the native
+   <details open> state — no JS, no markup change, so every detail form
+   (calls, enrichment, research) stays exactly as-is. The row's <summary>
+   becomes the drawer header; click it (✕) to close.
+   z-index sits ABOVE the nav (which is z-index:1000 in styles.css) so the
+   overlay covers the sidebar too, and the detail's existing 2-column grid is
+   forced to a single readable column (else its content collapses to a sliver). */
+html .v2-admin-shell .lead-card[open]::before {
+  content: ""; position: fixed; inset: 0; z-index: 1100;
+  background: rgba(0, 0, 0, 0.62); animation: dgtl-fade 0.2s ease;
+}
+html .v2-admin-shell .lead-card[open] > summary {
+  position: fixed; z-index: 1120; top: 0; right: 0; margin: 0;
+  width: min(460px, 92vw); height: 56px;
+  display: flex; align-items: center; gap: 10px; padding: 0 18px;
+  background: var(--surface-2); overflow: hidden; white-space: nowrap;
+  border-left: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+html .v2-admin-shell .lead-card[open] > summary > * { min-width: 0; }
+html .v2-admin-shell .lead-card[open] > summary::after {
+  content: "\2715"; margin-left: auto; flex: 0 0 auto;
+  color: var(--fg-muted); font-size: 15px; font-weight: 700;
+}
+html .v2-admin-shell .lead-card[open] > .lead-detail-grid {
+  position: fixed; z-index: 1110; top: 0; right: 0; bottom: 0;
+  width: min(460px, 92vw); max-width: 92vw;
+  display: block; grid-template-columns: none; gap: 0;
+  overflow-y: auto; overflow-x: hidden; padding: 74px 22px 28px; margin: 0;
+  background: var(--surface); border-left: 1px solid var(--border);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.55); animation: dgtl-drawer-in 0.22s ease;
+}
+/* Force the detail's inner content to a single, full-width column. */
+html .v2-admin-shell .lead-card[open] > .lead-detail-grid > * { display: block; width: 100%; min-width: 0; }
+html .v2-admin-shell .lead-card[open] > .lead-detail-grid .lead-contact-row { grid-template-columns: 92px 1fr; }
+html .v2-admin-shell .lead-card[open] > .lead-detail-grid .lead-facts { grid-template-columns: 1fr; }
+html .v2-admin-shell .lead-card[open] > .lead-detail-grid .lead-section > summary {
+  color: var(--fg); font-weight: 600; padding: 8px 0; cursor: pointer; display: list-item;
+}
+@keyframes dgtl-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dgtl-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ==========================================================================
+   POLISH PASS — tab-specific widgets brought up to DGTL POC spec.
+   All token-scoped under the admin shell; additive.
+   ========================================================================== */
+
+/* ---- Shared forms (Outreach, Tenants, Prospecting, Funding) ---- */
+html .v2-admin-shell .admin-form { display: grid; gap: 14px; }
+html .v2-admin-shell .admin-form > label,
+html .v2-admin-shell .admin-form__label,
+html .v2-admin-shell .outreach-builder__form label,
+html .v2-admin-shell .batch-builder__form label {
+  display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: #c9c9c9;
+}
+html .v2-admin-shell .admin-form input,
+html .v2-admin-shell .admin-form select,
+html .v2-admin-shell .admin-form textarea,
+html .v2-admin-shell .outreach-builder__form input,
+html .v2-admin-shell .outreach-builder__form select,
+html .v2-admin-shell .outreach-builder__form textarea,
+html .v2-admin-shell .outreach-card input,
+html .v2-admin-shell .outreach-card select,
+html .v2-admin-shell .outreach-card textarea {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 12px; color: var(--fg); font-size: 14px; font-weight: 400;
+}
+html .v2-admin-shell .admin-hint,
+html .v2-admin-shell .tenant-builder__hint,
+html .v2-admin-shell .admin-form__hint { font-size: 12px; color: var(--fg-muted); margin: 2px 0 0; }
+html .v2-admin-shell .admin-error { color: var(--danger); font-size: 13px; font-weight: 600; }
+html .v2-admin-shell .admin-check { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--fg); }
+html .v2-admin-shell .admin-check input { accent-color: var(--blue); width: auto; }
+html .v2-admin-shell .inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Empty states -> DGTL (gold-tint icon chip, encouraging voice). */
+html .v2-admin-shell .ui-empty { border: 1px dashed var(--border); border-radius: 16px; color: var(--fg-muted); }
+html .v2-admin-shell .ui-empty__icon { background: var(--gold-tint); color: var(--blue); }
+html .v2-admin-shell .ui-empty__title { color: var(--fg); font-weight: 700; }
+
+/* ---- Outreach tab ---- */
+html .v2-admin-shell .outreach-card,
+html .v2-admin-shell .outreach-metrics article {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  box-shadow: none; padding: 18px 20px;
+}
+html .v2-admin-shell .outreach-metrics {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;
+}
+html .v2-admin-shell .outreach-metrics span {
+  font-size: 26px; font-weight: 800; color: var(--fg); font-variant-numeric: tabular-nums;
+}
+html .v2-admin-shell .outreach-metrics p { color: var(--fg-muted); font-size: 12px; }
+html .v2-admin-shell .outreach-lead-row,
+html .v2-admin-shell .outreach-queue-row {
+  border-bottom: 1px solid #1c1c1c; padding: 12px 6px;
+}
+html .v2-admin-shell .outreach-lead-row small,
+html .v2-admin-shell .outreach-queue-row small,
+html .v2-admin-shell .outreach-list-item span { color: var(--fg-muted); }
+html .v2-admin-shell .outreach-preview,
+html .v2-admin-shell .outreach-list-item {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+}
+html .v2-admin-shell .metric-table {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: none;
+}
+html .v2-admin-shell .metric-table strong { color: var(--fg); font-size: 13px; }
+
+/* ---- Tenants tab ---- */
+html .v2-admin-shell .tenant-summary-card,
+html .v2-admin-shell .tenant-editor__section {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+}
+html .v2-admin-shell .tenant-editor__sections { display: grid; gap: 12px; }
+html .v2-admin-shell .tenant-editor__diff { display: grid; gap: 4px; }
+html .v2-admin-shell .tenant-editor__diff-before { color: var(--fg-muted); text-decoration: line-through; }
+html .v2-admin-shell .tenant-editor__diff-after { color: var(--blue); font-weight: 600; }
+html .v2-admin-shell .tenant-builder__warnings { color: var(--warn); font-size: 13px; }
+html .v2-admin-shell .tenant-builder__actions,
+html .v2-admin-shell .tenant-builder__result { margin-top: 12px; }
+html .v2-admin-shell .admin-icon-preview {
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2);
+}
+/* Media picker is already token-based; just tighten the dropzone to gold-on-hover. */
+html .v2-admin-shell .media-picker__dropzone { border: 2px dashed var(--border); border-radius: 12px; }
+html .v2-admin-shell .media-picker__dropzone:hover { border-color: var(--blue); color: var(--fg); }
+
+/* ---- Cross-cutting: toast stays light-on-dark even inside the shell ---- */
+html .v2-admin-shell .toast { color: #F0F0F0; background: #111; border: 1px solid var(--border); }
+
+/* ---- Calls tab: dial pad (keys were var(--soft) = #000 in dark → invisible) ---- */
+html .v2-admin-shell .dialpad__panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; box-shadow: var(--shadow-card); max-width: 320px;
+}
+html .v2-admin-shell .dialpad__key {
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--fg);
+  border-radius: 12px; font-weight: 700;
+}
+html .v2-admin-shell .dialpad__key:hover { background: var(--gold-tint); border-color: var(--blue); }
+html .v2-admin-shell .dialpad__display input,
+html .v2-admin-shell .dialpad__back {
+  background: var(--surface); border: 1px solid var(--border); color: var(--fg); border-radius: 10px;
+}
+
+/* ---- Calls tab: call log table -> DGTL data-table skin ---- */
+html .v2-admin-shell .calls-table-wrap { border: 1px solid var(--border); border-radius: 12px; }
+html .v2-admin-shell .calls-table th {
+  background: var(--surface-2); color: var(--fg-muted); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; padding: 10px;
+}
+html .v2-admin-shell .calls-table td { border-bottom: 1px solid #1c1c1c; padding: 11px 10px; color: var(--fg); }
+html .v2-admin-shell[data-theme="dark"] .calls-table tbody tr:hover { background: #0f0f0f; }
+html .v2-admin-shell .calls-table__danger,
+html .v2-admin-shell .calls-table__delete {
+  color: var(--danger); background: transparent;
+  border: 1px solid rgba(229, 72, 77, 0.4); border-radius: var(--radius-sm);
+}
+html .v2-admin-shell .calls-table__confirm,
+html .v2-admin-shell .calls-table__transcribe { color: var(--blue); }
+
+/* ---- Prospecting tab: batch builder + preview cards (were near-transparent) ---- */
+html .v2-admin-shell .batch-builder__form,
+html .v2-admin-shell .batch-history,
+html .v2-admin-shell .batch-preview,
+html .v2-admin-shell .preview-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+}
+html .v2-admin-shell .preview-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;
+}
+html .v2-admin-shell .preview-card span,
+html .v2-admin-shell .preview-card small { color: var(--fg-muted); }
+
+/* ---- Accounts tab: enrichment/research groups ---- */
+html .v2-admin-shell .research-group { border-top: 1px solid #1c1c1c; padding-top: 10px; margin-top: 10px; }
+html .v2-admin-shell .research-group strong { color: var(--fg); }
+
+/* ==========================================================================
+   LOGIN — DGTL auth screen (matches the POC auth recipe). Login uses the root
+   layout, so it is styled explicitly here (not via the shell's theme vars).
+   ========================================================================== */
+html .admin-login {
+  min-height: 100svh; display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(1100px 560px at 50% -12%, rgba(240, 207, 80, 0.06), transparent 62%),
+    radial-gradient(900px 500px at 0% 100%, rgba(255, 255, 255, 0.02), transparent 55%),
+    #000;
+}
+html .admin-login .admin-login__panel {
+  width: 100%; max-width: 400px;
+  background: rgba(0, 0, 0, 0.45); border: 1px solid #2a2a2a; border-radius: 16px;
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.15);
+  padding: 32px; text-align: left;
+}
+html .admin-login .admin-login__brand {
+  display: flex; justify-content: center; margin: 8px 0 28px;
+}
+html .admin-login .admin-login__brand svg { height: 34px; width: auto; color: #F0F0F0; }
+html .admin-login .sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+html .admin-login .admin-loading__text {
+  color: #8a8a8a; font-size: 13px; text-align: center; margin: 0;
+}
+html .admin-login .admin-form { display: flex; flex-direction: column; gap: 14px; }
+html .admin-login .admin-form label {
+  display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: #D0D0D0;
+}
+html .admin-login .admin-form input {
+  background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 7px;
+  padding: 12px 14px; color: #F0F0F0; font-size: 14px; width: 100%;
+}
+html .admin-login .admin-form input::placeholder { color: #6a6a6a; }
+html .admin-login .admin-form input:focus-visible {
+  outline: none; border-color: #F0CF50; box-shadow: 0 0 0 3px rgba(240, 207, 80, 0.15);
+}
+html .admin-login .admin-form .button--primary {
+  background: #F0CF50; color: #000; border: none; border-radius: 7px;
+  padding: 12px 18px; font-weight: 700; font-size: 14px; margin-top: 4px; width: 100%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+html .admin-login .admin-error { color: #E5484D; font-size: 13px; margin-top: 4px; }
+html .admin-login ::selection { background: #F0CF50; color: #000; }

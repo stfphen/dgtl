@@ -1,0 +1,18 @@
+{
+  "slug": "5a1ive",
+  "name": "5A1Ive",
+  "type": "creator",
+  "status": "migrated",
+  "hub": "index.html",
+  "features": [
+    "features/eyewear.html",
+    "features/gshock.html",
+    "features/scene.html"
+  ],
+  "cases": [],
+  "sources": "sources.md",
+  "backlinkKit": "backlink-kit.md",
+  "hasMedia": true,
+  "updated": "2026-07-17",
+  "canonicalUrl": ""
+}

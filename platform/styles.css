@@ -1,0 +1,5309 @@
+:root {
+  /* Core palette (unchanged token names — consumed across the whole app and
+     overridden per-tenant via lib/branding.js: --blue/--blue-dark/--accent). */
+  --black: #050505;
+  --near-black: #111114;
+  --white: #ffffff;
+  --soft: #f6f6f8;
+  --soft-2: #e8e8ed;
+  --muted: #5d5d63;
+  --line: rgba(0, 0, 0, 0.09);
+  --line-dark: rgba(255, 255, 255, 0.18);
+  --blue: #0071e3;
+  --blue-dark: #005bb5;
+  --accent: #050505;
+  /* Semantic status colors — referenced instead of scattered hex. Each has a
+     soft surface (-bg) + accessible text (-fg) variant; both color-mix over the
+     semantic --surface/--fg so they adapt automatically in admin dark mode. */
+  --danger: #d23123;
+  --success: #0b8a5a;
+  --warn: #b07d0a;
+  --info: var(--blue);
+  --success-bg: color-mix(in srgb, var(--success) 12%, var(--surface));
+  --success-fg: color-mix(in srgb, var(--success) 72%, var(--fg));
+  --warn-bg: color-mix(in srgb, var(--warn) 14%, var(--surface));
+  --warn-fg: color-mix(in srgb, var(--warn) 78%, var(--fg));
+  --danger-bg: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  --danger-fg: color-mix(in srgb, var(--danger) 70%, var(--fg));
+  --info-bg: color-mix(in srgb, var(--info) 10%, var(--surface));
+  --info-fg: color-mix(in srgb, var(--info) 30%, var(--fg));
+  --info-border: color-mix(in srgb, var(--info) 24%, transparent);
+
+  /* Brand aliases — readable names for new rules; never override the contract
+     tokens above so tenant theming keeps working. */
+  --brand: var(--blue);
+  --brand-strong: var(--blue-dark);
+
+  /* Semantic surface tokens. Light defaults mirror the current look; the admin
+     dark theme (see [data-theme="dark"]) only re-points these. */
+  --bg: var(--soft);
+  --surface: var(--white);
+  --surface-2: var(--soft);
+  --surface-3: var(--white); /* raised: popovers/modals (re-pointed lighter in dark) */
+  --border: var(--line);
+  --border-subtle: color-mix(in srgb, var(--border) 55%, transparent);
+  --border-strong: color-mix(in srgb, var(--fg) 16%, transparent);
+  --fg: var(--black);
+  --fg-muted: var(--muted);
+  --fg-subtle: color-mix(in srgb, var(--fg-muted) 70%, var(--surface));
+
+  /* Interaction tokens — derived from the (tenant) accent + semantic fg, so they
+     stay AA and re-point with dark mode. */
+  --ring: color-mix(in srgb, var(--blue) 45%, transparent);
+  --ring-offset: var(--surface);
+  --hover-fill: color-mix(in srgb, var(--fg) 5%, transparent);
+  --active-fill: color-mix(in srgb, var(--fg) 9%, transparent);
+  --overlay: color-mix(in srgb, #000 55%, transparent);
+  /* Editorial accent devices (Direction C) — section tints + soft chips. */
+  --accent-band: color-mix(in srgb, var(--blue) 9%, var(--surface));
+  --accent-soft: color-mix(in srgb, var(--blue) 13%, transparent);
+
+  /* Radii */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
+
+  /* Layered, premium elevation (replaces the old single-drop shadows). */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.08),
+    0 26px 64px rgba(0, 0, 0, 0.09);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.05), 0 18px 44px rgba(0, 0, 0, 0.12),
+    0 48px 110px rgba(0, 0, 0, 0.16);
+  --shadow-brand: 0 10px 30px color-mix(in srgb, var(--blue) 28%, transparent);
+
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-dark: rgba(255, 255, 255, 0.85);
+
+  /* Type scale (editorial ramp). */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-3xl: 34px;
+  --text-4xl: 44px;
+  --text-5xl: 56px;
+  --text-6xl: 72px;
+  --text-7xl: 88px;
+
+  /* Spacing scale. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* Motion tokens — shared by CSS transitions and Framer variants. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+
+  /* Typography. --font-sans / --font-mono are injected by next/font
+     (app/layout.jsx) on <html> — never redefine those here or they'd clobber
+     the loaded webfonts. One calm family (Geist) for body AND headings, so
+     --font-display simply points at --font-sans. */
+  --font-display: var(--font-sans, -apple-system, BlinkMacSystemFont, "SF Pro Display",
+      "Helvetica Neue", Arial, sans-serif);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+      "Helvetica Neue", Arial, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* V2 Admin Styles - Apple Inspired */
+.v2-admin-shell {
+  min-height: 100svh;
+  background: #f5f5f7; /* Apple's lighter gray */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile-First: Bottom Nav */
+.v2-nav-container {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(400px, calc(100% - 32px));
+  height: 64px;
+  background: var(--glass-dark);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.v2-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  transition: all var(--dur-fast) var(--ease-out);
+  flex: 1;
+  min-height: 48px;
+  height: 100%;
+  text-decoration: none;
+}
+
+.v2-nav-item svg {
+  width: 24px;
+  height: 24px;
+  opacity: 0.6;
+}
+
+.v2-nav-item.is-active {
+  color: var(--blue);
+}
+
+.v2-nav-item.is-active svg {
+  opacity: 1;
+}
+
+/* Mobile "More" overflow sheet — keeps the bottom bar to <=5 slots. The sheet
+   and scrim are mobile-only; on desktop the overflow group flows into the
+   sidebar (see the >=1024px overrides). */
+@media (max-width: 1023px) {
+  .v2-nav-overflow {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    transform: translateX(-50%);
+    width: min(320px, calc(100vw - 32px));
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    background: var(--glass-dark);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+  }
+
+  .v2-nav-container.is-more-open .v2-nav-overflow {
+    display: flex;
+  }
+
+  .v2-nav-overflow .v2-nav-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 12px;
+    font-size: 14px;
+    border-radius: var(--radius-sm);
+  }
+
+  .v2-nav-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    border: none;
+    background: transparent;
+  }
+}
+
+/* Dashboard Content Area */
+.v2-dashboard-main {
+  flex: 1;
+  padding: 24px 20px 100px; /* Extra padding for bottom nav */
+}
+
+.v2-dashboard-main.admin-shell {
+  width: 100%;
+  margin: 0;
+}
+
+.v2-nav-logout {
+  margin-top: auto;
+  width: 100%;
+}
+
+.v2-nav-logout .v2-nav-item {
+  width: 100%;
+}
+
+.v2-nav-item--danger {
+  color: var(--danger, #ff3b30);
+}
+
+.v2-view-header {
+  margin-bottom: 24px;
+}
+
+.v2-view-header h1 {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+/* Metrics Horizontal Scroll - iOS style */
+.v2-metrics-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 4px 20px;
+  margin-left: -4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.v2-metrics-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.v2-metric-pill {
+  flex: 0 0 auto;
+  min-width: 100px;
+  background: var(--white);
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
+}
+
+.v2-metric-count {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.v2-metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* Table Polish */
+
+/* iOS Status Select */
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-only {
+    display: block;
+  }
+}
+
+/* Desktop Overrides */
+@media (min-width: 1024px) {
+  .v2-admin-shell {
+    flex-direction: row;
+  }
+
+  .v2-nav-container {
+    position: sticky;
+    top: 0;
+    left: 0;
+    bottom: auto;
+    transform: none;
+    width: 260px;
+    height: 100svh;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 40px 16px;
+    background: #f5f5f7;
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid var(--line);
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .v2-nav-item {
+    flex: 0 0 auto;
+    width: 100%;
+    height: 44px;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0 16px;
+    gap: 12px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  /* Desktop sidebar has room for every tab: dissolve the mobile overflow
+     wrapper so its items sit inline, and drop the "More" trigger. */
+  .v2-nav-overflow {
+    display: contents;
+  }
+
+  .v2-nav-more {
+    display: none;
+  }
+
+  .v2-nav-item:hover {
+    background: var(--hover-fill);
+  }
+
+  .v2-nav-item.is-active {
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 var(--blue);
+    color: var(--blue);
+    font-weight: 650;
+  }
+
+  .v2-dashboard-main {
+    padding: 40px 60px;
+  }
+
+  .v2-dashboard-main.admin-shell {
+    margin: 0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--black);
+  letter-spacing: 0;
+  overflow-x: hidden;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Funnel design-direction layer. Direction token specs
+   (lib/tenantBuilder/designDirections.js) inject --fp-* custom properties on
+   .tenant-root; every funnel rule reads them through var(--fp-x, <current
+   literal>) so pages without a direction render byte-identical, and the admin
+   (which never defines --fp-*) always hits the fallbacks. Brand contract
+   tokens (--blue/--blue-dark/--accent) stay untouched. */
+.tenant-root {
+  background: var(--fp-bg, var(--white));
+  color: var(--fp-fg, var(--black));
+}
+
+.hero {
+  min-height: 94svh;
+  position: relative;
+  display: grid;
+  align-items: flex-end;
+  overflow: hidden;
+  background: var(--black);
+}
+
+.hero__image,
+.hero__shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero__image {
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.72;
+  transition: opacity 250ms ease;
+}
+
+/* Looping YouTube hero background (components/YouTubeHeroPlayer.jsx). The
+   component sizes the iframe itself (ResizeObserver + aspect-aware cover math
+   that also crops YouTube's in-player letter/pillarbox bars — see the
+   coverSize() helper), so no CSS sizing here. The iframe is revealed only once
+   real playback starts; the hero image stays underneath as poster/fallback and
+   fades out while the video is playing. Non-interactive by design. */
+.hero__video {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.hero__video iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+/* A playing YouTube hero replaces the image outright: full-opacity video,
+   poster faded away (the .hero__shade gradient stays on top for text
+   legibility, exactly as it darkened the image). The player stamps
+   data-video-playing on the hero/media-frame container when real playback
+   starts (an attribute React doesn't manage, so re-renders keep it). */
+.hero__video.is-playing iframe {
+  opacity: 1;
+}
+
+[data-video-playing] .hero__image {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__video {
+    display: none;
+  }
+}
+
+.hero__shade {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.86), rgba(0, 0, 0, 0.3) 46%, rgba(0, 0, 0, 0.1)),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.02) 58%);
+}
+
+.hero__content {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 120px 0 54px;
+  color: var(--white);
+}
+
+/* Per-tenant white-label wordmark (themed via --blue/--accent on .tenant-root) */
+.brandbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+/* Push the login button to the far right of the top brand row. */
+.brandbar__login {
+  margin-left: auto;
+  min-height: 38px;
+  padding: 8px 18px;
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+
+.brandbar__wordmark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding-left: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--white);
+}
+
+.brandbar__wordmark::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 28%, transparent);
+}
+
+.brandbar__logo {
+  height: 28px;
+  width: auto;
+}
+
+.brandbar__tagline {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+  color: inherit;
+  font-family: var(--fp-eyebrow-font, inherit);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: var(--fp-eyebrow-tracking, 0.08em);
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+/* Direction C: accent-forward eyebrows on light funnel sections (the hero
+   eyebrow keeps inheriting white against its dark image). */
+.section .eyebrow,
+.section__inner .eyebrow,
+.section__header .eyebrow {
+  color: var(--fp-eyebrow-color, color-mix(in srgb, var(--blue) 78%, var(--fg-muted)));
+  opacity: 1;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fp-font-display, var(--font-display, var(--font-sans, -apple-system,
+        BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif)));
+}
+
+h1 {
+  width: min(820px, 100%);
+  margin-bottom: 22px;
+  font-size: var(--fp-h1-size, var(--text-7xl));
+  font-weight: var(--fp-h1-weight, 800);
+  line-height: var(--fp-h1-leading, 0.94);
+  letter-spacing: var(--fp-h1-tracking, -0.03em);
+}
+
+h2 {
+  margin-bottom: 18px;
+  font-size: var(--fp-h2-size, var(--text-6xl));
+  font-weight: var(--fp-h2-weight, 800);
+  line-height: 1;
+  letter-spacing: -0.028em;
+}
+
+h3 {
+  margin-bottom: 10px;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+p {
+  color: var(--fp-muted, var(--muted));
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.hero__copy {
+  width: min(650px, 100%);
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 25px;
+  line-height: 1.32;
+}
+
+.hero__actions,
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.button {
+  min-height: 46px;
+  border: 0;
+  border-radius: var(--fp-radius-button, 999px);
+  padding: 12px 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--black);
+  background: var(--white);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out), background var(--dur-fast) ease,
+    color var(--dur-fast) ease, filter var(--dur-fast) ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.button:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--blue) 42%, transparent);
+  outline-offset: 3px;
+}
+
+.button--primary {
+  color: var(--on-blue, var(--white));
+  background: var(--blue);
+}
+
+.button--primary:hover {
+  background: var(--blue-dark);
+  box-shadow: var(--shadow-brand);
+}
+
+.button--secondary {
+  color: var(--black);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.button--dark {
+  color: var(--fp-button-dark-fg, var(--white));
+  background: var(--fp-button-dark-bg, var(--black));
+}
+
+.hero__stats {
+  width: min(720px, 100%);
+  margin: 58px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line-dark);
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--line-dark);
+  backdrop-filter: blur(16px);
+}
+
+.hero__stats div {
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hero__stats dt {
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.hero__stats dd {
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+}
+
+/* Hero layout variants (design directions). The default full-bleed hero keeps
+   the rules above untouched; light variants add .hero--onlight so the white
+   image-overlay literals re-point to direction tokens in one place. */
+.hero--onlight {
+  min-height: auto;
+  align-items: start;
+  background: var(--fp-bg, var(--white));
+  color: var(--fp-fg, var(--black));
+}
+
+.hero--onlight .hero__content {
+  color: inherit;
+}
+
+.hero--onlight .hero__copy {
+  color: var(--fp-muted, var(--muted));
+}
+
+.hero--onlight .brandbar__wordmark {
+  color: inherit;
+}
+
+.hero--onlight .brandbar__tagline {
+  color: var(--fp-muted, var(--muted));
+}
+
+.hero--onlight .button--secondary {
+  border-color: var(--fp-border-color, rgba(0, 0, 0, 0.12));
+  color: var(--fp-fg, var(--black));
+  background: transparent;
+}
+
+.hero--onlight .hero__stats {
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  background: var(--fp-border-color, var(--line));
+  backdrop-filter: none;
+}
+
+.hero--onlight .hero__stats div {
+  background: var(--fp-surface, var(--white));
+}
+
+.hero--onlight .hero__stats dd {
+  color: var(--fp-muted, var(--muted));
+}
+
+.hero--typographic .hero__content {
+  padding: 108px 0 88px;
+}
+
+.hero--typographic h1 {
+  width: min(980px, 100%);
+}
+
+.hero--split .hero__content {
+  padding: 96px 0 88px;
+}
+
+.hero__split-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  gap: 56px;
+  align-items: center;
+}
+
+.hero__media-frame {
+  position: relative;
+  min-height: 440px;
+  height: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--fp-radius, var(--radius)) + 8px);
+  box-shadow: var(--fp-shadow-card, var(--shadow));
+}
+
+.hero__media-frame .hero__image {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+}
+
+@media (max-width: 880px) {
+  .hero--onlight {
+    min-height: auto;
+  }
+
+  .hero--typographic .hero__content,
+  .hero--split .hero__content {
+    padding: 88px 0 64px;
+  }
+
+  .hero__split-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .hero__media-frame {
+    min-height: 300px;
+    height: auto;
+  }
+}
+
+.section {
+  padding: var(--fp-section-pad, 96px) 0;
+}
+
+.section--soft {
+  background: var(--fp-soft, var(--soft));
+}
+
+.section--black {
+  color: var(--white);
+  background: var(--black);
+}
+
+.section--black p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.section__inner {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 54px;
+}
+
+.split--center {
+  align-items: center;
+}
+
+.section__header {
+  width: min(790px, 100%);
+  margin-bottom: 44px;
+}
+
+.section__header--compact {
+  margin-bottom: 30px;
+}
+
+.problem h2 {
+  margin-bottom: 0;
+}
+
+.problem__grid,
+.feature-row,
+.package-grid,
+.faq-grid {
+  display: grid;
+  gap: var(--fp-grid-gap, 16px);
+}
+
+/* Mobile-first: these funnel grids stack in a single column by default and
+   fan out on wider screens. The 881px enhancement mirrors the existing 880px
+   collapse boundary, so desktop renders exactly as before. */
+.problem__grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 881px) {
+  .problem__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .feature-row,
+  .faq-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .package-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.problem__grid p,
+.feature-row article,
+.package,
+.faq-grid article {
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-surface, var(--white));
+}
+
+.problem__grid p {
+  min-height: 112px;
+  margin: 0;
+  padding: 22px;
+  color: var(--fp-fg, var(--near-black));
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: flex-end;
+}
+
+.feature-row {
+  grid-template-columns: 1fr;
+}
+
+.feature-row article {
+  padding: 28px;
+  box-shadow: var(--fp-shadow-card, 0 18px 50px rgba(0, 0, 0, 0.06));
+}
+
+.feature-row p,
+.package p,
+.faq-grid p {
+  font-size: 16px;
+}
+
+/* Feature anchor — an accent tick, not a numbered badge. The feature cards are
+   a set, not an ordered sequence, so they carry no index (unlike .timeline). */
+.icon {
+  width: 32px;
+  height: 3px;
+  margin-bottom: 24px;
+  display: block;
+  border-radius: 999px;
+  background: var(--blue);
+}
+
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 22px;
+  padding: 28px 0;
+  border-bottom: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+}
+
+.timeline span {
+  color: var(--fp-muted, var(--muted));
+  font-weight: 800;
+}
+
+.timeline p {
+  margin-bottom: 0;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(88px, 1fr));
+  gap: 10px;
+}
+
+.content-grid div {
+  aspect-ratio: 1;
+  border: 1px solid var(--line-dark);
+  border-radius: var(--fp-radius, var(--radius));
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.78);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03)),
+    #17171a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Portfolio + references (per-tenant proof sections; render only when the
+   tenant config populates them). Mobile-first: single column base, enhanced
+   at min-width 768/1024. Uses semantic tokens only — brand tokens untouched. */
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+  margin-top: 36px;
+}
+
+/* Direction tokens with the current values as fallbacks (missed in the
+   original --fp-* pass; hardcoded white cards broke dark directions). */
+.portfolio-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-surface, var(--surface));
+  box-shadow: var(--fp-shadow-card, var(--shadow-sm));
+  color: var(--fp-fg, inherit);
+}
+
+.portfolio-card__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--soft);
+}
+
+.portfolio-card__media img,
+.portfolio-card__media video,
+.portfolio-card__media iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: cover;
+}
+
+.portfolio-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px 20px;
+}
+
+.portfolio-card__body h3 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.portfolio-card__body h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.portfolio-card__body h3 a:hover,
+.portfolio-card__body h3 a:focus-visible {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.portfolio-card__body p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.portfolio-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.portfolio-card__meta strong {
+  color: var(--blue-dark);
+  font-weight: 700;
+}
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin-top: 32px;
+}
+
+.testimonial {
+  margin: 0;
+  padding: 22px;
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-surface, var(--surface));
+  color: var(--fp-fg, inherit);
+}
+
+.testimonial p {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+
+.testimonial footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.testimonial footer span {
+  color: var(--fp-muted, var(--muted));
+}
+
+.logo-wall {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px 34px;
+  margin: 34px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.logo-wall li {
+  position: relative;
+  width: 128px;
+  height: 44px;
+}
+
+.logo-wall a {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+.logo-wall img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (min-width: 768px) {
+  .portfolio-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .testimonial-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .portfolio-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .testimonial-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.package-grid {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+.package {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
+}
+
+.package--featured {
+  border-color: rgba(0, 113, 227, 0.55);
+  box-shadow: var(--shadow);
+}
+
+.package.is-selected {
+  border-color: rgba(0, 113, 227, 0.85);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.16), var(--shadow);
+}
+
+.package__top {
+  min-height: 108px;
+}
+
+.price {
+  margin: 18px 0 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.price span {
+  font-size: 42px;
+  font-weight: 850;
+}
+
+.price small,
+.price__alt {
+  color: var(--fp-muted, var(--muted));
+}
+
+.price__alt {
+  margin-bottom: 26px;
+  font-size: 14px;
+}
+
+.package ul {
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.package li {
+  color: var(--fp-fg, var(--near-black));
+  line-height: 1.42;
+}
+
+.package li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 10px;
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--blue);
+  vertical-align: 0.08em;
+}
+
+.package .button {
+  width: 100%;
+  margin-top: auto;
+}
+
+.enterprise-band {
+  margin-top: 18px;
+  padding: 32px;
+  border-radius: var(--fp-radius, var(--radius));
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+  color: var(--white);
+  background: var(--black);
+}
+
+.enterprise-band p {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 16px;
+}
+
+.enterprise-band .button--secondary {
+  white-space: nowrap;
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 54px;
+  align-items: start;
+}
+
+.selected-package {
+  min-height: 120px;
+  margin-top: 28px;
+  padding: 24px;
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-surface, var(--white));
+}
+
+.selected-package strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.selected-package span {
+  color: var(--fp-muted, var(--muted));
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.checkout-form {
+  padding: 28px;
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-surface, rgba(255, 255, 255, 0.84));
+  box-shadow: var(--fp-shadow-form, 0 20px 60px rgba(0, 0, 0, 0.08));
+}
+
+.checkout-form label {
+  margin-bottom: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--fp-fg, var(--near-black));
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.checkout-form label span {
+  color: var(--fp-muted, var(--muted));
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.checkout-form input,
+.checkout-form select,
+.checkout-form textarea {
+  width: 100%;
+  border: 1px solid var(--fp-input-border, rgba(0, 0, 0, 0.16));
+  border-radius: var(--fp-radius, var(--radius));
+  padding: 13px 14px;
+  color: var(--fp-fg, var(--black));
+  background: var(--fp-input-bg, var(--white));
+  outline: 0;
+}
+
+.checkout-form input:focus,
+.checkout-form select:focus,
+.checkout-form textarea:focus {
+  border-color: var(--blue);
+  outline: 0;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.14);
+}
+
+.form-note {
+  margin: 18px 0 0;
+  font-size: 13px;
+}
+
+.faq-grid {
+  grid-template-columns: 1fr;
+}
+
+.faq-grid article {
+  padding: 24px;
+}
+
+.final-cta {
+  padding: 110px 20px;
+  color: var(--white);
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.86)),
+    url("assets/content-day-hero.png") center / cover;
+  text-align: center;
+}
+
+.final-cta__inner {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.final-cta p {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 10;
+  max-width: min(420px, calc(100% - 36px));
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  color: var(--white);
+  background: rgba(0, 0, 0, 0.86);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mobile-action {
+  display: none;
+}
+
+/* Direction-specific structural exceptions — only what custom properties can't
+   express. Scoped to [data-direction=...] set on .tenant-root; never touches
+   admin or default-look funnels. */
+[data-direction="bold-brutalist"] h1,
+[data-direction="bold-brutalist"] h2 {
+  text-transform: uppercase;
+}
+
+[data-direction="bold-brutalist"] .timeline span {
+  font-family: var(--font-mono, "SF Mono", "Courier New", monospace);
+}
+
+[data-direction="bold-brutalist"] .button--secondary {
+  border: 2px solid var(--fp-fg, var(--black));
+  color: var(--fp-fg, var(--black));
+  background: transparent;
+}
+
+[data-direction="bold-brutalist"] .package--featured {
+  border-color: var(--fp-fg, var(--black));
+  box-shadow: 8px 8px 0 var(--fp-fg, var(--black));
+}
+
+[data-direction="bold-brutalist"] .package.is-selected {
+  border-color: var(--fp-fg, var(--black));
+  box-shadow: 8px 8px 0 var(--blue);
+}
+
+[data-direction="bold-brutalist"] .icon {
+  border-radius: 0;
+  height: 4px;
+}
+
+[data-direction="editorial-minimal"] .package--featured {
+  border-color: var(--fp-fg, var(--black));
+  box-shadow: none;
+}
+
+[data-direction="editorial-minimal"] .package.is-selected {
+  border-color: var(--blue);
+  box-shadow: none;
+}
+
+[data-direction="editorial-minimal"] .button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+[data-direction="dark-cinematic"] .button--secondary {
+  color: var(--fp-fg, var(--black));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-direction="dark-cinematic"] .package--featured {
+  border-color: color-mix(in srgb, var(--blue) 65%, transparent);
+}
+
+[data-direction="dark-cinematic"] .mobile-action {
+  border-top-color: rgba(255, 255, 255, 0.14);
+  background: rgba(10, 10, 12, 0.88);
+}
+
+[data-direction="dark-cinematic"] .checkout-form input,
+[data-direction="dark-cinematic"] .checkout-form select,
+[data-direction="dark-cinematic"] .checkout-form textarea {
+  color-scheme: dark;
+}
+
+@media (max-width: 1080px) {
+  h1 {
+    font-size: var(--fp-h1-size, 72px);
+  }
+
+  h2 {
+    font-size: var(--fp-h2-size, 52px);
+  }
+
+  .hero__copy {
+    font-size: 23px;
+  }
+}
+
+@media (max-width: 880px) {
+  .hero {
+    min-height: 92svh;
+  }
+
+  .hero__content,
+  .section__inner {
+    width: min(100% - 28px, 680px);
+  }
+
+  .hero__content {
+    padding: 92px 0 38px;
+  }
+
+  .hero__image {
+    object-position: 58% center;
+  }
+
+  h1 {
+    max-width: 650px;
+    font-size: var(--fp-h1-size, 56px);
+    line-height: var(--fp-h1-leading, 1);
+  }
+
+  h2 {
+    font-size: var(--fp-h2-size, 44px);
+    line-height: 1.06;
+  }
+
+  h3 {
+    font-size: 21px;
+  }
+
+  p {
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  .hero__copy {
+    font-size: 21px;
+  }
+
+  .hero__shade {
+    background:
+      linear-gradient(90deg, rgba(0, 0, 0, 0.84), rgba(0, 0, 0, 0.48)),
+      linear-gradient(0deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.08) 70%);
+  }
+
+  .split,
+  .feature-row,
+  .package-grid,
+  .checkout-layout,
+  .faq-grid,
+  .enterprise-band {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: var(--fp-section-pad-sm, 64px) 0;
+  }
+
+  .problem__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .problem__grid p {
+    min-height: 88px;
+  }
+
+  .package {
+    min-height: auto;
+  }
+
+  .package__top {
+    min-height: auto;
+  }
+
+  .checkout-form {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .eyebrow {
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+
+  h1 {
+    margin-bottom: 16px;
+    font-size: var(--fp-h1-size, 42px);
+    line-height: var(--fp-h1-leading, 1.02);
+  }
+
+  h2 {
+    font-size: var(--fp-h2-size, 34px);
+  }
+
+  h3 {
+    font-size: 20px;
+  }
+
+  p {
+    font-size: 16px;
+  }
+
+  .hero {
+    min-height: 100svh;
+  }
+
+  .hero__content {
+    padding: 74px 0 24px;
+  }
+
+  .hero__copy {
+    margin-bottom: 22px;
+    font-size: 18px;
+    line-height: 1.38;
+  }
+
+  .hero__actions,
+  .form-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .button {
+    min-height: 48px;
+    width: 100%;
+    padding: 13px 18px;
+  }
+
+  /* Keep the top-bar login compact; the full-width rule above is for stacked
+     CTAs, not the brandbar corner button. */
+  .brandbar__login {
+    width: auto;
+    flex: 0 0 auto;
+    align-self: center;
+    min-height: 40px;
+    padding: 8px 18px;
+  }
+
+  .hero__stats {
+    margin-top: 28px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hero__stats div {
+    padding: 13px 10px;
+  }
+
+  .hero__stats dt {
+    font-size: 22px;
+  }
+
+  .hero__stats dd {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .section {
+    padding: var(--fp-section-pad-sm, 54px) 0;
+  }
+
+  .section__header {
+    margin-bottom: 28px;
+  }
+
+  .split {
+    gap: 28px;
+  }
+
+  .problem__grid,
+  .feature-row,
+  .package-grid,
+  .faq-grid {
+    gap: 12px;
+  }
+
+  .problem__grid p,
+  .feature-row article,
+  .package,
+  .faq-grid article {
+    padding: 20px;
+  }
+
+  .feature-row article {
+    box-shadow: none;
+  }
+
+  .timeline li {
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    padding: 22px 0;
+  }
+
+  .content-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .content-grid div {
+    font-size: 11px;
+  }
+
+  .price span {
+    font-size: 36px;
+  }
+
+  .enterprise-band {
+    gap: 18px;
+    padding: 22px;
+  }
+
+  .enterprise-band .button--secondary {
+    white-space: normal;
+  }
+
+  .selected-package {
+    min-height: auto;
+    margin-top: 22px;
+    padding: 20px;
+  }
+
+  .checkout-form {
+    padding: 20px;
+  }
+
+  .checkout-form label {
+    margin-bottom: 15px;
+  }
+
+  .checkout-form input,
+  .checkout-form select,
+  .checkout-form textarea {
+    font-size: 16px;
+  }
+
+  .final-cta {
+    padding: 72px 20px;
+  }
+
+  .toast {
+    right: 12px;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    max-width: calc(100% - 24px);
+  }
+
+  .mobile-action {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 9;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-action .button {
+    min-height: 46px;
+  }
+
+  .mobile-action .button--secondary {
+    width: auto;
+    min-width: 104px;
+  }
+}
+
+@media (max-width: 370px) {
+  /* On the narrowest phones, drop the secondary tagline so the logo and the
+     login button sit cleanly on one row. */
+  .brandbar {
+    gap: 10px;
+  }
+
+  .brandbar__tagline {
+    display: none;
+  }
+
+  h1 {
+    font-size: var(--fp-h1-size, 38px);
+  }
+
+  h2 {
+    font-size: var(--fp-h2-size, 31px);
+  }
+
+  .hero__stats dd {
+    font-size: 10px;
+  }
+
+  .mobile-action {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-action .button--secondary {
+    width: 100%;
+  }
+}
+
+.admin-login {
+  min-height: 100svh;
+  padding: 32px 18px;
+  display: grid;
+  place-items: center;
+  background: var(--soft);
+}
+
+.admin-login__panel {
+  width: min(480px, 100%);
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.admin-login h1,
+.admin-shell h1 {
+  font-size: 48px;
+  line-height: 1.04;
+}
+
+.admin-shell {
+  width: min(1240px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 72px;
+}
+
+.admin-header {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.admin-notice {
+  position: sticky;
+  top: var(--space-3);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
+  padding: 14px 16px;
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius);
+  color: var(--info-fg);
+  background: var(--info-bg);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+}
+
+.admin-notice__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-notice__dismiss {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 8px);
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--dur-fast, 0.15s) var(--ease-out, ease);
+}
+
+.admin-notice__dismiss:hover {
+  background: var(--hover-fill);
+}
+
+.admin-notice__dismiss:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.admin-metrics article,
+.admin-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.admin-metrics article {
+  padding: 18px;
+}
+
+.admin-metrics span {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-metrics p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.admin-panel {
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.admin-panel h2 {
+  margin-bottom: 8px;
+  font-size: 28px;
+}
+
+.admin-panel--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-panel,
+.outreach-card {
+  scroll-margin-top: 24px;
+}
+
+.tenant-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.tenant-summary-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+}
+
+.funding-lead-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.funding-lead-card {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+}
+
+.funding-lead-card__header,
+.funding-lead-stats {
+  display: grid;
+  gap: 12px;
+}
+
+.funding-lead-card__header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.funding-lead-card h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.funding-lead-card a,
+.muted-text,
+.funding-gap-list p,
+.funding-gap-list li {
+  color: var(--muted);
+}
+
+.funding-lead-card a {
+  overflow-wrap: anywhere;
+}
+
+.funding-lead-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.funding-lead-stats div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.funding-lead-stats dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.funding-lead-stats dd {
+  margin: 5px 0 0;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.funding-gap-list ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.funding-opportunity-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.funding-opportunity-card {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.funding-opportunity-card > p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Human review checklist: pinned at top of the lead card, collapsible.
+   Mobile-first base; the sticky summary keeps the review status visible. */
+.funding-review {
+  margin: 0 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface, #fff);
+  overflow: hidden;
+}
+
+.funding-review__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  background: var(--surface, #fff);
+  border-bottom: 1px solid var(--line);
+}
+
+.funding-review__header::-webkit-details-marker {
+  display: none;
+}
+
+.funding-review[open] > .funding-review__header {
+  border-bottom: 1px solid var(--line);
+}
+
+.funding-review:not([open]) > .funding-review__header {
+  border-bottom: 0;
+}
+
+.funding-review__form {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.funding-review > p {
+  margin: 0;
+  padding: 12px 14px;
+  color: var(--muted);
+}
+
+@media (min-width: 768px) {
+  .funding-review__form {
+    padding: 14px 16px;
+  }
+}
+
+.funding-review__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.funding-review__item em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.funding-review__meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.status-pill--ok {
+  background: color-mix(in srgb, var(--success, #0b8a5a) 18%, transparent);
+  color: var(--success, #0b8a5a);
+}
+
+.status-pill--warn {
+  background: color-mix(in srgb, #b8860b 20%, transparent);
+  color: #8a6d0b;
+}
+
+.funding-handoff {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+.funding-handoff summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.funding-handoff__body {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.funding-handoff__meta {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tenant-summary-card span {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.tenant-builder {
+  display: grid;
+  gap: 18px;
+}
+
+.tenant-builder__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.tenant-builder input,
+.tenant-builder select,
+.tenant-builder textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius);
+  padding: 11px 12px;
+  color: var(--black);
+  background: var(--white);
+  font: inherit;
+}
+
+.tenant-builder textarea {
+  resize: vertical;
+}
+
+/* Standalone form label text (for grouped controls like the direction picker
+   that can't live inside a <label>). Mirrors the admin-form label styling. */
+.admin-form__label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Design-direction picker (admin) — data-driven cards over the direction
+   catalog. Uses semantic tokens only so the admin dark theme re-points it. */
+.direction-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
+}
+
+.direction-card {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur) var(--ease-out);
+}
+
+.direction-card:hover {
+  border-color: var(--border-strong);
+}
+
+.direction-card.is-selected {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+
+.direction-card input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.direction-card:focus-within {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.direction-card__preview {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  grid-template-rows: auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.direction-card__sample {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.direction-card__swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.direction-card__swatches i {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.direction-card__thumb {
+  display: flex;
+  gap: 3px;
+  align-items: stretch;
+  height: 14px;
+}
+
+.direction-card__thumb i {
+  background: color-mix(in srgb, var(--fg) 24%, transparent);
+  border-radius: 2px;
+}
+
+/* full-bleed: one wide block; split: copy + media columns; typographic: bars. */
+.direction-card__thumb--full-bleed i:first-child {
+  flex: 1;
+}
+
+.direction-card__thumb--full-bleed i:not(:first-child) {
+  display: none;
+}
+
+.direction-card__thumb--split i:first-child {
+  flex: 1.2;
+}
+
+.direction-card__thumb--split i:nth-child(2) {
+  flex: 0.8;
+  background: color-mix(in srgb, var(--brand) 45%, transparent);
+}
+
+.direction-card__thumb--split i:nth-child(3) {
+  display: none;
+}
+
+.direction-card__thumb--typographic {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.direction-card__thumb--typographic i {
+  height: 3px;
+}
+
+.direction-card__thumb--typographic i:first-child {
+  width: 85%;
+}
+
+.direction-card__thumb--typographic i:nth-child(2) {
+  width: 60%;
+}
+
+.direction-card__thumb--typographic i:nth-child(3) {
+  width: 35%;
+}
+
+.direction-card__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.direction-card__blurb {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+
+/* Tenant editor (admin) — draft editing panel: prompt edits, diff summary,
+   per-section forms. Semantic tokens only (dark-mode safe). */
+.tenant-editor__body {
+  display: grid;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.tenant-editor__diff {
+  margin: 0;
+  padding: 12px 14px;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+.tenant-editor__diff code {
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.tenant-editor__diff-before {
+  color: var(--danger-fg);
+  text-decoration: line-through;
+  overflow-wrap: anywhere;
+}
+
+.tenant-editor__diff-after {
+  color: var(--success-fg);
+  overflow-wrap: anywhere;
+}
+
+.tenant-editor__sections {
+  display: grid;
+  gap: 10px;
+}
+
+.tenant-editor__section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tenant-editor__section summary {
+  padding: 12px 14px;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.tenant-editor__section .admin-form {
+  padding: 4px 14px 14px;
+}
+
+.tenant-editor__media {
+  display: grid;
+  gap: 10px;
+}
+
+/* Media picker — per-slot thumbnail + expandable library grid / dropzone. */
+.media-picker {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.media-picker__slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.media-picker__label {
+  min-width: 160px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.media-picker__thumb {
+  width: 72px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.media-picker__empty {
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.media-picker__slot-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.media-picker__slot-actions .button {
+  min-height: 34px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.media-picker__panel {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.media-picker__dropzone {
+  display: grid;
+  place-items: center;
+  min-height: 74px;
+  padding: 14px;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--fg-muted);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-picker__dropzone input {
+  display: none;
+}
+
+.media-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+}
+
+.media-picker__asset {
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+  cursor: pointer;
+  aspect-ratio: 4 / 3;
+}
+
+.media-picker__asset img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.media-picker__asset.is-selected {
+  border-color: var(--brand);
+}
+
+.media-picker__url {
+  display: flex;
+  gap: 8px;
+}
+
+.media-picker__url input {
+  flex: 1;
+}
+
+/* YouTube hero slot (components/admin/YouTubeHeroInput.jsx). */
+.youtube-hero__current {
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.youtube-hero__current a {
+  color: var(--brand);
+}
+
+.youtube-hero__candidate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.youtube-hero__candidate-body {
+  flex: 1;
+  min-width: 200px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.youtube-hero__prefer {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.youtube-hero__prefer label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.api-provider-stack {
+  display: grid;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.api-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.api-provider-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.admin-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.api-provider-card.admin-form {
+  margin-top: 0;
+}
+
+/* "More details" disclosure for long admin forms. CSS-only (checkbox hack):
+   advanced fields are collapsed on phones and always shown on desktop. The
+   inputs stay in the DOM either way, so they always submit. */
+.admin-form__more-toggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-form__more-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--near-black);
+  cursor: pointer;
+}
+
+.admin-form__more-label::after {
+  content: "▾";
+}
+
+.admin-form__more-toggle:checked ~ .admin-form__more-label::after {
+  content: "▴";
+}
+
+.admin-form__more-toggle:focus-visible ~ .admin-form__more-label {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.admin-form__more {
+  display: none;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.admin-form__more-toggle:checked ~ .admin-form__more {
+  display: grid;
+}
+
+@media (min-width: 1024px) {
+  .admin-form__more-toggle,
+  .admin-form__more-label {
+    display: none;
+  }
+
+  .admin-form__more {
+    display: grid;
+  }
+}
+
+.pipeline-header,
+.batch-preview__header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.batch-builder {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.batch-builder__form,
+.batch-history,
+.batch-preview {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.admin-check {
+  display: flex;
+  grid-template-columns: none;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-check input {
+  width: auto;
+}
+
+.batch-history .admin-list a {
+  display: grid;
+  gap: 4px;
+  color: var(--black);
+  text-decoration: none;
+}
+
+.batch-preview {
+  margin-top: 20px;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.preview-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  cursor: pointer;
+}
+
+.preview-card input {
+  grid-row: span 3;
+  width: auto;
+  margin-top: 3px;
+}
+
+.preview-card span,
+.preview-card small {
+  color: var(--muted);
+}
+
+.lead-filters {
+  display: grid;
+  /* 0 minimums let the search box + 4 selects shrink to fit the desktop sidebar
+     content width instead of overflowing at ~1024px. Inputs already set
+     min-width:0. Collapses to one column at <=880px. */
+  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)) auto;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.lead-filters input,
+.lead-filters select {
+  min-width: 0;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius);
+  padding: 11px 12px;
+  background: var(--white);
+  font: inherit;
+}
+
+.lead-control-list {
+  display: grid;
+  gap: 12px;
+}
+
+.lead-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.lead-card summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) auto auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.lead-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.lead-card small,
+.lead-facts dd,
+.duplicate-review p {
+  color: var(--muted);
+}
+
+.lead-score,
+.status-pill,
+.duplicate-pill {
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.lead-score {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.status-pill {
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--blue-dark);
+}
+
+.status-pill--won,
+.status-pill--booked {
+  color: #1b7f3a;
+  background: rgba(27, 127, 58, 0.1);
+}
+
+.status-pill--lost,
+.status-pill--disqualified {
+  color: #b00020;
+  background: rgba(176, 0, 32, 0.08);
+}
+
+.duplicate-pill {
+  color: #8a4b00;
+  background: rgba(255, 149, 0, 0.14);
+}
+
+.outreach-metrics {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.outreach-metrics article,
+.outreach-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.outreach-metrics article {
+  padding: 14px;
+}
+
+.outreach-metrics span {
+  display: block;
+  font-size: 22px;
+  font-weight: 850;
+}
+
+.outreach-metrics p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.outreach-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.outreach-card {
+  padding: 16px;
+}
+
+.outreach-card--wide {
+  margin-top: 16px;
+}
+
+.outreach-builder {
+  display: grid;
+  /* 0 minimums so the three columns shrink to fit the narrower desktop content
+     width once the sidebar appears (~1024px) instead of overflowing. Stacks to
+     a single column at <=880px. On roomy desktops the fr ratios are unchanged. */
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
+}
+
+.outreach-builder__form,
+.outreach-builder__leads,
+.outreach-builder__preview,
+.outreach-list {
+  display: grid;
+  gap: 10px;
+}
+
+.outreach-builder__form label {
+  display: grid;
+  gap: 8px;
+  color: var(--near-black);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.outreach-builder__form input,
+.outreach-builder__form select,
+.outreach-card input,
+.outreach-card select,
+.outreach-card textarea {
+  min-width: 0;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius);
+  padding: 10px 11px;
+  background: var(--white);
+  font: inherit;
+}
+
+.outreach-builder__actions,
+.lead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.outreach-lead-list {
+  display: grid;
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.outreach-lead-row,
+.outreach-queue-row,
+.outreach-list-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 11px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.outreach-list-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.outreach-lead-row:last-child,
+.outreach-queue-row:last-child,
+.outreach-list-row:last-child {
+  border-bottom: 0;
+}
+
+.outreach-lead-row input,
+.outreach-queue-row input {
+  width: auto;
+  margin-top: 3px;
+}
+
+.outreach-lead-row small,
+.outreach-queue-row small,
+.outreach-list-row span,
+.outreach-list-item span,
+.metric-table span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.outreach-lead-row em {
+  color: #b00020;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.outreach-preview,
+.outreach-list-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.outreach-preview--skipped {
+  border-color: rgba(176, 0, 32, 0.28);
+  background: rgba(176, 0, 32, 0.04);
+}
+
+.outreach-preview div,
+.outreach-list-item summary {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.outreach-preview pre,
+.outreach-list-item pre,
+.outreach-history pre {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--near-black);
+  font: 13px/1.45 var(--font-mono, ui-monospace), SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.outreach-performance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-table {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.inline-form {
+  margin-top: 10px;
+}
+
+.lead-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+  gap: 20px;
+  padding: 0 16px 16px;
+}
+
+.lead-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.lead-facts div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.lead-facts dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.lead-facts dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.duplicate-review,
+.metadata-preview {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.metadata-preview {
+  max-height: 260px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+
+.admin-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--near-black);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius);
+  padding: 11px 12px;
+  color: var(--black);
+  background: var(--white);
+  font: inherit;
+}
+
+.admin-checkbox {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.admin-checkbox span {
+  font-weight: 700;
+}
+
+.team-user-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+
+.team-user-form .button {
+  align-self: end;
+}
+
+.team-users-table {
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  background: var(--white);
+}
+
+.team-users-table__row {
+  min-width: 920px;
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr 1.4fr 0.8fr 0.8fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.team-users-table__row:last-child {
+  border-bottom: 0;
+}
+
+.team-users-table__row--head {
+  color: var(--muted);
+  background: var(--soft);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.team-role-form {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.team-role-form select {
+  min-height: 38px;
+}
+
+.team-users-table .button {
+  min-height: 38px;
+  padding: 8px 14px;
+}
+
+/* Phones/tablets: stack team + audit rows into labeled cards instead of a
+   fixed 920px-wide grid with horizontal scroll. Desktop keeps the grid. */
+@media (max-width: 1023px) {
+  .team-users-table {
+    overflow-x: visible;
+  }
+
+  .team-users-table__row {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+
+  .team-users-table__row--head {
+    display: none;
+  }
+
+  .team-users-table__row > [role="cell"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    overflow-wrap: anywhere;
+  }
+
+  .team-users-table__row > [role="cell"]::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+}
+
+.admin-error {
+  margin: 0;
+  color: #b00020;
+  font-size: 14px;
+}
+
+.admin-hint {
+  margin: 4px 0 0;
+  color: var(--fg-muted, #6b7280);
+  font-size: 13px;
+}
+
+.lead-call-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.lead-call-row {
+  display: grid;
+  gap: 4px;
+}
+
+.lead-call-outcome {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+/* Calls tab: filters + call log table */
+.calls-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calls-filters__count {
+  color: var(--fg-muted, #6b7280);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.calls-table-wrap {
+  overflow-x: auto;
+}
+
+.calls-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.calls-table th,
+.calls-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.calls-table th {
+  font-weight: 600;
+  color: var(--fg-muted, #6b7280);
+}
+
+.calls-table select {
+  font-size: 13px;
+}
+
+/* Phones/tablets: stack the call log into labeled cards instead of a
+   nowrap horizontal-scroll table. Desktop (>=1024px) keeps the table. */
+@media (max-width: 1023px) {
+  .calls-table-wrap {
+    overflow-x: visible;
+  }
+
+  .calls-table,
+  .calls-table tbody,
+  .calls-table tr,
+  .calls-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .calls-table thead {
+    display: none;
+  }
+
+  .calls-table tr {
+    margin-bottom: 12px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-sm);
+  }
+
+  .calls-table td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    white-space: normal;
+  }
+
+  .calls-table tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .calls-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--fg-muted, #6b7280);
+    flex: 0 0 auto;
+  }
+}
+
+/* Call-status pill colors (mirrors the lead status-pill palette) */
+.status-pill--completed {
+  color: #1b7f3a;
+  background: rgba(27, 127, 58, 0.1);
+}
+
+.status-pill--missed,
+.status-pill--failed {
+  color: #b00020;
+  background: rgba(176, 0, 32, 0.08);
+}
+
+.status-pill--ringing,
+.status-pill--in_progress {
+  color: #0a5bd3;
+  background: rgba(10, 91, 211, 0.1);
+}
+
+.admin-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.admin-list div {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+}
+
+.admin-list strong,
+.admin-list span {
+  display: block;
+}
+
+.admin-list span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-list a {
+  margin-top: 8px;
+  display: inline-block;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.admin-list--drafts pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  color: var(--near-black);
+  font-family: var(--font-mono, ui-monospace), SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lead-enrichment {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+}
+
+.lead-enrichment__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 10px;
+}
+
+.lead-enrichment__meta strong {
+  color: var(--near-black);
+}
+
+.lead-enrichment__meta span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.lead-enrichment__group {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+.lead-enrichment__group strong {
+  font-size: 13px;
+}
+
+.lead-enrichment__values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lead-enrichment__pill,
+.lead-enrichment__score {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--near-black);
+  font-size: 12px;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.lead-enrichment__brief {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.lead-enrichment__brief strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.lead-enrichment__brief p {
+  margin: 0 0 8px;
+  color: var(--near-black);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lead-enrichment__brief p span {
+  font-weight: 700;
+}
+
+.lead-enrichment__scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.button--disabled {
+  color: var(--muted);
+  background: var(--soft-2);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+@media (max-width: 880px) {
+  .admin-header,
+  .admin-grid,
+  .api-provider-grid,
+  .batch-builder,
+  .outreach-admin-grid,
+  .outreach-builder,
+  .outreach-metrics,
+  .outreach-performance-grid,
+  .preview-grid,
+  .lead-detail-grid,
+  .lead-facts,
+  .tenant-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-header {
+    display: grid;
+  }
+
+  .lead-enrichment__group {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-login h1,
+  .admin-shell h1 {
+    font-size: 38px;
+  }
+
+  .pipeline-header,
+  .batch-preview__header {
+    display: grid;
+  }
+
+  .lead-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .lead-card summary {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .tenant-builder__actions {
+    justify-content: flex-start;
+  }
+}
+
+/* ============================================================
+   REDESIGN LAYER — bold / editorial polish, motion, admin dark theme.
+   Appended last so these rules win the cascade over the base styles above.
+   Class names + DOM are unchanged; this is purely a new skin + motion.
+   ============================================================ */
+
+/* Editorial eyebrow — refined tracking */
+.eyebrow {
+  font-size: var(--text-sm);
+  letter-spacing: 0.14em;
+}
+
+/* Body copy weight tuning for the new typeface */
+.hero__copy {
+  letter-spacing: -0.01em;
+}
+
+/* --- Premium hover lift, consistent across card surfaces --- */
+.feature-row article,
+.package,
+.faq-grid article,
+.funding-lead-card,
+.funding-opportunity-card,
+.tenant-summary-card,
+.outreach-card,
+.api-provider-card,
+.preview-card,
+.lead-card,
+.admin-metrics article {
+  transition: transform var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+
+.feature-row article:hover,
+.package:hover,
+.faq-grid article:hover,
+.funding-lead-card:hover,
+.funding-opportunity-card:hover,
+.tenant-summary-card:hover,
+.outreach-card:hover,
+.api-provider-card:hover,
+.preview-card:hover,
+.lead-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: color-mix(in srgb, var(--blue) 26%, var(--border));
+}
+
+/* Featured package — brand glow */
+.package--featured {
+  box-shadow: var(--shadow-lg);
+}
+.package--featured:hover {
+  box-shadow: var(--shadow-lg), var(--shadow-brand);
+}
+
+/* Metric pills — subtle interactive feedback */
+.v2-metric-pill {
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+.v2-metric-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Admin nav item — smoother active/hover transitions */
+.v2-nav-item {
+  transition: color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+/* --- Theme toggle button (admin) --- */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  transition: transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) ease, color var(--dur-fast) ease,
+    box-shadow var(--dur) var(--ease-out);
+}
+.theme-toggle:hover {
+  transform: translateY(-1px);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-sm);
+}
+.theme-toggle:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--blue) 42%, transparent);
+  outline-offset: 3px;
+}
+.admin-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ============================================================
+   ADMIN DARK THEME — scoped to the admin shell only.
+   Re-points the palette + semantic tokens; brand tokens (--blue / --accent)
+   are intentionally left intact so tenant accents still pop. The public funnel
+   never has this ancestor, so it is completely unaffected.
+   ============================================================ */
+.v2-admin-shell[data-theme="dark"] {
+  /* Command-center deep palette (dark-first admin). */
+  --white: #121218;
+  --soft: #0e0e13;
+  --soft-2: #20202b;
+  --black: #eef0f6;
+  --near-black: #dfe0e8;
+  --muted: #9a9ba7;
+  --line: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.09);
+  --bg: #08080b;
+  --surface: #121218;
+  --surface-2: #17171f;
+  --surface-3: #20202b; /* raised sits lighter than surface in dark */
+  --fg: #eef0f6;
+  --fg-muted: #9a9ba7;
+  /* Derived tokens MUST be re-declared here. Their :root definitions color-mix
+     over --surface/--fg/--border and are computed once at :root — so they bake in
+     the LIGHT primitives and inherit down unchanged. Re-declaring the same
+     expressions in the dark scope forces them to re-resolve against the dark
+     primitives above (fixes state banners, interaction fills, accent bands that
+     otherwise render light-on-dark). Percentages nudged up: fills/tints need more
+     weight to read on dark, and -fg mixes use less accent so text stays light. */
+  --success-bg: color-mix(in srgb, var(--success) 16%, var(--surface));
+  --success-fg: color-mix(in srgb, var(--success) 45%, var(--fg));
+  --warn-bg: color-mix(in srgb, var(--warn) 18%, var(--surface));
+  --warn-fg: color-mix(in srgb, var(--warn) 50%, var(--fg));
+  --danger-bg: color-mix(in srgb, var(--danger) 18%, var(--surface));
+  --danger-fg: color-mix(in srgb, var(--danger) 48%, var(--fg));
+  --info-bg: color-mix(in srgb, var(--info) 18%, var(--surface));
+  --info-fg: color-mix(in srgb, var(--info) 45%, var(--fg));
+  --info-border: color-mix(in srgb, var(--info) 40%, transparent);
+  --border-subtle: color-mix(in srgb, var(--border) 55%, transparent);
+  --border-strong: color-mix(in srgb, var(--fg) 24%, transparent);
+  --fg-subtle: color-mix(in srgb, var(--fg-muted) 70%, var(--surface));
+  --hover-fill: color-mix(in srgb, var(--fg) 8%, transparent);
+  --active-fill: color-mix(in srgb, var(--fg) 13%, transparent);
+  --accent-band: color-mix(in srgb, var(--blue) 14%, var(--surface));
+  --accent-soft: color-mix(in srgb, var(--blue) 20%, transparent);
+  /* Command-center accent-highlight + elevation tokens. All derive from --blue
+     (the admin accent; = the tenant accent when the shell is branded), so any
+     brand works and stays AA. --ring stays a COLOR (used in outline:); the glow
+     is a separate box-shadow token. */
+  --accent-fg: color-mix(in srgb, var(--blue) 60%, #ffffff);
+  --accent-tint: color-mix(in srgb, var(--blue) 16%, var(--surface));
+  --accent-line: color-mix(in srgb, var(--blue) 52%, transparent);
+  --ring: color-mix(in srgb, var(--blue) 60%, transparent);
+  --focus-glow: 0 0 0 3px color-mix(in srgb, var(--blue) 32%, transparent),
+    0 0 20px color-mix(in srgb, var(--blue) 24%, transparent);
+  --glow: 0 0 22px color-mix(in srgb, var(--blue) 26%, transparent);
+  --card-grad: linear-gradient(180deg, var(--surface-2), var(--surface));
+  --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 30px rgba(0, 0, 0, 0.55);
+  --card-shadow-hi: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 18px 50px rgba(0, 0, 0, 0.6);
+  --bg-tint: radial-gradient(1200px 600px at 78% -12%, color-mix(in srgb, var(--blue) 10%, transparent), transparent 70%);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.45), 0 28px 80px rgba(0, 0, 0, 0.6);
+  --glass-dark: rgba(28, 28, 30, 0.82);
+  background-color: var(--bg);
+  background-image: var(--bg-tint);
+  color: var(--black);
+}
+
+/* Browser autofill forces a pale-blue fill + dark text via -webkit-autofill,
+   which reads as a light patch in the dark shell. Re-skin it to the dark
+   surface (box-shadow inset is the only way to override the UA fill). */
+.v2-admin-shell[data-theme="dark"] input:-webkit-autofill,
+.v2-admin-shell[data-theme="dark"] input:-webkit-autofill:hover,
+.v2-admin-shell[data-theme="dark"] input:-webkit-autofill:focus,
+.v2-admin-shell[data-theme="dark"] textarea:-webkit-autofill,
+.v2-admin-shell[data-theme="dark"] select:-webkit-autofill {
+  -webkit-text-fill-color: var(--fg);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  caret-color: var(--fg);
+}
+
+/* True-white text where elements sit on a colored fill (the palette swap would
+   otherwise render these dark-on-blue). */
+.v2-admin-shell[data-theme="dark"] .button--primary,
+.v2-admin-shell[data-theme="dark"] .button--dark {
+  color: #fff;
+}
+
+/* Secondary button: base is rgba-white fill + dark text — invert for dark. */
+.v2-admin-shell[data-theme="dark"] .button--secondary {
+  color: var(--black);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Sidebar nav (desktop bg is a hardcoded #f5f5f7). */
+@media (min-width: 1024px) {
+  .v2-admin-shell[data-theme="dark"] .v2-nav-container {
+    background: #131315;
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+}
+.v2-admin-shell[data-theme="dark"] .v2-nav-container {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.v2-admin-shell[data-theme="dark"] .v2-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Inputs (hardcoded light borders). */
+.v2-admin-shell[data-theme="dark"] input,
+.v2-admin-shell[data-theme="dark"] select,
+.v2-admin-shell[data-theme="dark"] textarea {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Subtle "tinted" panels that used rgba(0,0,0,.0x) fills. */
+.v2-admin-shell[data-theme="dark"] .batch-builder__form,
+.v2-admin-shell[data-theme="dark"] .batch-history,
+.v2-admin-shell[data-theme="dark"] .batch-preview,
+.v2-admin-shell[data-theme="dark"] .outreach-metrics article,
+.v2-admin-shell[data-theme="dark"] .outreach-card,
+.v2-admin-shell[data-theme="dark"] .duplicate-review,
+.v2-admin-shell[data-theme="dark"] .metadata-preview {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Pills / chips on dark. */
+.v2-admin-shell[data-theme="dark"] .lead-score {
+  background: rgba(255, 255, 255, 0.08);
+}
+.v2-admin-shell[data-theme="dark"] .lead-enrichment__pill,
+.v2-admin-shell[data-theme="dark"] .lead-enrichment__score {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.v2-admin-shell[data-theme="dark"] .lead-enrichment__brief {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+.v2-admin-shell[data-theme="dark"] .status-pill {
+  color: color-mix(in srgb, var(--blue) 55%, #ffffff);
+  background: color-mix(in srgb, var(--blue) 22%, transparent);
+}
+
+/* Row separators that used rgba(0,0,0,.0x). */
+.v2-admin-shell[data-theme="dark"] .outreach-lead-row,
+.v2-admin-shell[data-theme="dark"] .outreach-queue-row,
+.v2-admin-shell[data-theme="dark"] .outreach-list-row,
+.v2-admin-shell[data-theme="dark"] .team-users-table__row {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Avoid a hydration flash before the toggle resolves the stored theme. */
+.v2-admin-shell:not([data-theme]) {
+  visibility: hidden;
+}
+
+/* --- Respect reduced-motion preferences everywhere --- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* --- Admin login: premium, elevated, subtle brand wash --- */
+.admin-login {
+  background:
+    radial-gradient(1100px 560px at 50% -12%, color-mix(in srgb, var(--blue) 12%, transparent), transparent 62%),
+    var(--soft);
+}
+.admin-login__panel {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* --- Admin header: larger, more editorial title --- */
+.v2-view-header h1 {
+  font-size: var(--text-5xl);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+@media (max-width: 880px) {
+  .v2-view-header h1 {
+    font-size: var(--text-4xl);
+  }
+}
+
+/* Admin metric numbers / pill counts pick up the display face */
+.v2-metric-count,
+.admin-metrics span,
+.outreach-metrics span,
+.price span,
+.hero__stats dt {
+  font-family: var(--font-display, var(--font-sans, inherit));
+  letter-spacing: -0.02em;
+}
+
+/* AI Deep Research */
+.lead-research {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
+}
+
+.lead-research__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.research-dossier {
+  display: grid;
+  gap: 10px;
+}
+
+.research-summary {
+  margin: 0;
+}
+
+.research-group strong {
+  display: block;
+  color: var(--near-black);
+  margin-bottom: 4px;
+}
+
+.research-group ul,
+.research-group ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.research-group a {
+  font-size: 13px;
+}
+
+.research-group--review {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.research-pill {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: capitalize;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg-muted);
+}
+
+.research-pill--verified,
+.research-pill--high {
+  background: var(--success-bg);
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+  color: var(--success-fg);
+}
+
+.research-pill--medium {
+  background: var(--warn-bg);
+  border-color: color-mix(in srgb, var(--warn) 30%, transparent);
+  color: var(--warn-fg);
+}
+
+.research-pill--low,
+.research-pill--unverified {
+  background: var(--danger-bg);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  color: var(--danger-fg);
+}
+
+/* ============================================================
+   ADMIN — REFINED SAAS NORMALIZATION (Phase 2)
+   Everything here is scoped to .v2-admin-shell so the public funnel is
+   untouched. Goal: ONE spacing scale, ONE card treatment, ONE header style,
+   and a calm Linear/Stripe/Vercel-style type hierarchy. Appended last so it
+   wins the cascade over the scattered legacy values.
+   ============================================================ */
+
+/* --- Container / scaffold: clear max-width + generous, consistent gutters --- */
+@media (min-width: 1024px) {
+  .v2-admin-shell .v2-dashboard-main.admin-shell {
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 40px 48px 88px;
+  }
+}
+
+/* --- Calm type hierarchy (admin only; funnel keeps its editorial scale) --- */
+.v2-admin-shell .v2-view-header {
+  margin-bottom: var(--space-8);
+}
+.v2-admin-shell .v2-view-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.v2-admin-shell .v2-view-header .eyebrow {
+  margin-bottom: 8px;
+  color: color-mix(in srgb, var(--blue) 70%, var(--fg-muted));
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.v2-admin-shell .admin-header > div > p {
+  margin-top: 6px;
+  max-width: 60ch;
+  font-size: 14px;
+  color: var(--muted);
+}
+.v2-admin-shell .admin-panel h2,
+.v2-admin-shell .pipeline-header h2,
+.v2-admin-shell .batch-preview__header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+.v2-admin-shell h3 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.v2-admin-shell .pipeline-header p,
+.v2-admin-shell .batch-preview__header p {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* --- ONE card treatment for every module --- */
+.v2-admin-shell .admin-panel,
+.v2-admin-shell .outreach-card,
+.v2-admin-shell .funding-lead-card,
+.v2-admin-shell .funding-opportunity-card,
+.v2-admin-shell .api-provider-card,
+.v2-admin-shell .batch-builder__form,
+.v2-admin-shell .batch-history,
+.v2-admin-shell .batch-preview,
+.v2-admin-shell .tenant-summary-card,
+.v2-admin-shell .lead-enrichment,
+.v2-admin-shell .metric-table {
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+@media (min-width: 1024px) {
+  .v2-admin-shell .admin-panel,
+  .v2-admin-shell .outreach-card,
+  .v2-admin-shell .funding-lead-card,
+  .v2-admin-shell .funding-opportunity-card,
+  .v2-admin-shell .api-provider-card,
+  .v2-admin-shell .batch-builder__form,
+  .v2-admin-shell .batch-history,
+  .v2-admin-shell .batch-preview {
+    padding: var(--space-6);
+  }
+}
+
+/* Inner tiles / sub-cards: one smaller, consistent step */
+.v2-admin-shell .funding-lead-stats div,
+.v2-admin-shell .lead-facts div,
+.v2-admin-shell .preview-card,
+.v2-admin-shell .duplicate-review,
+.v2-admin-shell .metadata-preview,
+.v2-admin-shell .admin-list div {
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+}
+
+/* --- Vertical rhythm: equal space between stacked modules --- */
+.v2-admin-shell .admin-panel,
+.v2-admin-shell .admin-grid,
+.v2-admin-shell .outreach-admin-grid,
+.v2-admin-shell .admin-metrics,
+.v2-admin-shell .outreach-metrics,
+.v2-admin-shell .outreach-card--wide,
+.v2-admin-shell .api-provider-stack {
+  margin-bottom: var(--space-6);
+}
+.v2-admin-shell .admin-tab-panel > *:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Grid gaps: card grids breathe (20px), lists stay tight (12px) --- */
+.v2-admin-shell .admin-grid,
+.v2-admin-shell .outreach-admin-grid,
+.v2-admin-shell .api-provider-grid,
+.v2-admin-shell .funding-opportunity-grid,
+.v2-admin-shell .tenant-summary-grid {
+  gap: var(--space-5);
+}
+.v2-admin-shell .lead-control-list,
+.v2-admin-shell .funding-lead-list,
+.v2-admin-shell .outreach-list,
+.v2-admin-shell .admin-list,
+.v2-admin-shell .funding-lead-stats,
+.v2-admin-shell .lead-facts,
+.v2-admin-shell .outreach-performance-grid {
+  gap: var(--space-3);
+}
+
+/* --- Section header: consistent rhythm across the 3 legacy patterns --- */
+.v2-admin-shell .pipeline-header,
+.v2-admin-shell .batch-preview__header {
+  margin-bottom: var(--space-5);
+  align-items: center;
+}
+
+/* --- Unified stat / metric cards --- */
+.v2-admin-shell .admin-metrics article,
+.v2-admin-shell .outreach-metrics article,
+.v2-admin-shell .v2-metric-pill {
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+.v2-admin-shell .admin-metrics span,
+.v2-admin-shell .outreach-metrics span,
+.v2-admin-shell .v2-metric-count,
+.v2-admin-shell .funding-lead-stats dd {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.v2-admin-shell .admin-metrics span,
+.v2-admin-shell .outreach-metrics span,
+.v2-admin-shell .v2-metric-count {
+  font-size: 22px;
+}
+.v2-admin-shell .admin-metrics p,
+.v2-admin-shell .outreach-metrics p,
+.v2-admin-shell .v2-metric-label,
+.v2-admin-shell .funding-lead-stats dt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* --- Forms: ONE input style + consistent gaps --- */
+.v2-admin-shell .admin-form,
+.v2-admin-shell .outreach-builder__form {
+  gap: var(--space-4);
+}
+.v2-admin-shell .admin-form label,
+.v2-admin-shell .outreach-builder__form label,
+.v2-admin-shell .lead-filters label,
+.v2-admin-shell .tenant-builder label,
+.v2-admin-shell .team-user-form label {
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.v2-admin-shell input,
+.v2-admin-shell select,
+.v2-admin-shell textarea {
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+}
+.v2-admin-shell input:focus,
+.v2-admin-shell select:focus,
+.v2-admin-shell textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent);
+  outline: none;
+}
+
+/* --- Buttons: crisp rectangles in admin (funnel keeps pills) --- */
+.v2-admin-shell .button {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* --- Tables: quiet uppercase headers, roomy rows --- */
+.v2-admin-shell .team-users-table__row--head {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* --- Pills / badges: consistent sizing --- */
+.v2-admin-shell .status-pill,
+.v2-admin-shell .lead-score,
+.v2-admin-shell .duplicate-pill {
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* --- Notice banner: align with the calmer system --- */
+.v2-admin-shell .admin-notice {
+  margin-bottom: var(--space-6);
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+/* ============================================================================
+   === Phase 2 — funnel premium pass ===
+   Appended last (like the redesign layer above) so it wins the cascade and
+   stays easy to A/B or revert. Signature: numbers typeset as data (Geist Mono,
+   tabular), tenant accent used as a single precise marker. No tenant tokens
+   are redefined here — theming via --blue/--accent stays intact.
+   ========================================================================== */
+
+/* 1. Hero stats — instrument readouts with an accent gauge tick per cell. */
+.hero__stats div {
+  border-top: 2px solid var(--blue);
+}
+.hero__stats dt {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* 2. Numbers as data — prices and the (genuine) process-sequence index. */
+.price span {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.timeline span {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--blue);
+}
+
+/* 3. Featured pricing tier — accent "popular" marker (elevation already set by
+   the redesign layer's .package--featured rule). */
+.package {
+  position: relative;
+}
+.package__badge {
+  position: absolute;
+  top: -11px;
+  left: 28px;
+  padding: 4px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--on-blue, var(--white));
+  background: var(--blue);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--fp-radius-button, 999px);
+}
+
+/* 4. Checkout submit — disabled + spinner loading state. */
+.button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+}
+.spinner {
+  width: 15px;
+  height: 15px;
+  margin-right: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  animation: btn-spin 0.7s linear infinite;
+}
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+/* ============================================================================
+   === Phase 5 — global :focus-visible fallback ===
+   Only .button and .theme-toggle had focus rings before. This closes the gap
+   for survey buttons, admin nav/cards, links, and every form control at once.
+   Low specificity, so the existing specific rings still win where defined.
+   ========================================================================== */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* === Phase 4 — admin table row feedback === */
+.calls-table tbody tr:hover {
+  background: color-mix(in srgb, var(--blue) 6%, transparent);
+}
+
+/* ============================================================
+   MOBILE ADMIN UI FIXES — anomaly pass (2026-06-22)
+   All rules scoped to .v2-admin-shell so the public funnel is untouched.
+   ============================================================ */
+
+/* Lead row: truncate long business name + meta instead of overflowing */
+.v2-admin-shell .lead-card summary > span:first-child { min-width: 0; overflow: hidden; }
+.v2-admin-shell .lead-card summary strong {
+  display: block; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.v2-admin-shell .lead-card small {
+  display: block; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Raw JSON metadata: wrap long tokens, never force horizontal page scroll */
+.v2-admin-shell .metadata-preview { word-break: break-word; overflow-wrap: anywhere; }
+
+/* Funding stat cards: no mid-word breaks; sane column counts on phones */
+.v2-admin-shell .funding-lead-stats dd { overflow-wrap: anywhere; hyphens: none; }
+@media (max-width: 880px) {
+  .v2-admin-shell .funding-lead-stats { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .v2-admin-shell .funding-lead-stats { grid-template-columns: 1fr; }
+}
+
+/* Mobile/tablet gutters: the legacy `.admin-shell { padding: 40px 0 72px }`
+   rule (declared later in source) was overriding the intended horizontal
+   padding to 0, so KPI metric strips and tab title sections bled to the
+   screen edges. Restore consistent side gutters below the desktop breakpoint.
+   Also ensure content clears the fixed bottom nav (~96px incl. gap + safe area). */
+@media (max-width: 1023px) {
+  .v2-admin-shell .v2-dashboard-main,
+  .v2-admin-shell .v2-dashboard-main.admin-shell {
+    padding-top: 24px;
+    padding-right: 20px;
+    padding-left: 20px;
+    padding-bottom: calc(132px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 560px) {
+  .v2-admin-shell .v2-dashboard-main,
+  .v2-admin-shell .v2-dashboard-main.admin-shell {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}
+
+/* Action rows + tap targets on small screens */
+@media (max-width: 560px) {
+  .v2-admin-shell .lead-actions { flex-direction: column; align-items: stretch; }
+  .v2-admin-shell .lead-actions .button,
+  .v2-admin-shell .lead-actions form,
+  .v2-admin-shell .lead-actions form .button { width: 100%; }
+}
+
+/* Guard: nothing in the admin should cause sideways scrolling */
+@media (max-width: 1023px) {
+  .v2-admin-shell, .v2-admin-shell .v2-dashboard-main { overflow-x: hidden; }
+}
+
+/* Simplified mobile lead-detail: essentials + collapsible sections */
+.v2-admin-shell .lead-detail-grid--stacked {
+  display: block;
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.v2-admin-shell .lead-detail-grid--stacked > section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.v2-admin-shell .lead-detail-grid--stacked > section + section {
+  margin-top: var(--space-3);
+}
+
+/* Essentials contact record */
+.v2-admin-shell .lead-contact-record {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0 0 var(--space-2);
+  border: 0.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  overflow: hidden;
+}
+
+.v2-admin-shell .lead-contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+}
+
+.v2-admin-shell .lead-contact-row + .lead-contact-row {
+  border-top: 0.5px solid var(--line);
+}
+
+.v2-admin-shell .lead-contact-row dt {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.v2-admin-shell .lead-contact-row dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.v2-admin-shell .lead-contact-row dd a {
+  display: inline-block;
+  min-height: 44px;
+  line-height: 44px;
+}
+
+/* Collapsible sections */
+.v2-admin-shell .lead-section {
+  border: 0.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.v2-admin-shell .lead-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  font-weight: 800;
+}
+
+.v2-admin-shell .lead-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.v2-admin-shell .lead-section > summary::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.v2-admin-shell .lead-section[open] > summary::after {
+  transform: rotate(225deg);
+}
+
+.v2-admin-shell .lead-section__body {
+  padding: 0 var(--space-4) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.v2-admin-shell .lead-section__body > .lead-actions {
+  margin-top: var(--space-1);
+}
+
+/* Call recording players — keep compact and never overflow the row/table. */
+/* Compact play/pause recording control (no scrubber) */
+.rec-player {
+  display: inline-flex;
+  align-items: center;
+}
+
+.rec-player__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.14));
+  background: var(--white, #fff);
+  color: var(--blue, #0071e3);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.rec-player__btn:hover {
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.calls-table__rec-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calls-table__transcribe {
+  padding: 4px 10px;
+  font-size: 12px;
+  min-height: 0;
+}
+
+.calls-table__no-recording {
+  color: var(--muted);
+}
+
+.calls-table__transcript-flag {
+  font-size: 14px;
+  color: var(--muted);
+  cursor: help;
+}
+
+/* Dialpad (Calls tab) */
+.dialpad {
+  margin-bottom: 16px;
+}
+
+.dialpad__panel {
+  margin-top: 12px;
+  padding: 16px;
+  max-width: 320px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: var(--radius, 14px);
+  background: var(--white, #fff);
+  box-shadow: var(--shadow-sm, 0 4px 16px rgba(0, 0, 0, 0.08));
+}
+
+.dialpad__from {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dialpad__tenant {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.dialpad__tenant select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.dialpad__display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dialpad__display input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 10px;
+}
+
+.dialpad__back {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  background: transparent;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.dialpad__keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dialpad__key {
+  height: 52px;
+  font-size: 22px;
+  font-weight: 600;
+  background: var(--soft, #f5f5f7);
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.1));
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease;
+}
+
+.dialpad__key:hover {
+  background: color-mix(in srgb, var(--blue, #0071e3) 8%, var(--soft, #f5f5f7));
+}
+
+.dialpad__key:active {
+  transform: scale(0.96);
+}
+
+.dialpad__actions {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.dialpad__plus {
+  height: 48px;
+  font-size: 22px;
+  font-weight: 700;
+  background: var(--soft, #f5f5f7);
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.1));
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.dialpad__call {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: #34c759;
+  border: 1px solid #2faa4d;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.dialpad__call:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dialpad__clear {
+  height: 48px;
+  padding: 0 12px;
+  font-size: 14px;
+  background: transparent;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* Owner-only destructive controls (call delete) */
+.calls-table__delete,
+.lead-call-delete {
+  margin-left: 8px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--danger, #d70015);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--danger, #d70015) 40%, transparent);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.calls-table__delete:hover,
+.lead-call-delete:hover {
+  background: color-mix(in srgb, var(--danger, #d70015) 10%, transparent);
+}
+
+.calls-table__confirm,
+.lead-call-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.calls-table__danger,
+.lead-call-danger {
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--danger, #d70015);
+  border: 1px solid var(--danger, #d70015);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.calls-table__cancel,
+.lead-call-cancel {
+  padding: 3px 9px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Per-call transcript + AI summary (lead Call panel) */
+.lead-call-summary,
+.lead-call-transcript {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.lead-call-summary > summary,
+.lead-call-transcript > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--near-black);
+}
+
+.lead-call-summary p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+.lead-call-transcript pre {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  max-height: 240px;
+  overflow: auto;
+  background: var(--soft, #f5f5f7);
+  border-radius: var(--radius);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+}
+
+@media (min-width: 1024px) {
+  .v2-admin-shell .lead-detail-grid--stacked {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  .v2-admin-shell .lead-detail-grid--stacked > section + section {
+    margin-top: 0;
+  }
+}
+
+/* ============================================================================
+   === UI OVERHAUL PRIMITIVES (Direction C — editorial brand-forward) ===
+   Small, additive, token-only utility classes. Reused across admin + funnel
+   reskins. Every value reads var(--…) so admin dark mode + tenant accents work.
+   ========================================================================== */
+
+/* --- Card: flat, hairline; elevation reserved for raised/popover --- */
+
+/* --- Eyebrow / kicker: editorial section intro --- */
+
+/* --- Display heading helper --- */
+
+/* --- Badge set (complements .status-pill; for new, generic chips) --- */
+
+/* --- Skeleton: reserves space for async content (CLS guard) --- */
+@keyframes ui-shimmer {
+  to { background-position: -100% 0; }
+}
+
+/* --- Empty state --- */
+.ui-empty {
+  text-align: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-8) var(--space-6);
+  color: var(--fg-muted);
+}
+.ui-empty__icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto var(--space-3);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--fg-subtle);
+}
+.ui-empty__title { font-weight: 640; color: var(--fg); }
+.ui-empty p { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--fg-subtle); }
+
+/* --- Inline error note (for components lacking error UX) --- */
+
+/* --- Editorial section band (funnel; Direction C accent device) --- */
+.section--accent {
+  background: var(--accent-band);
+}
+.section--accent-strong {
+  background: var(--blue);
+  color: var(--on-blue);
+}
+
+/* Inline recording-error note (RecordingButton) */
+.rec-player__error {
+  font-size: var(--text-xs);
+  color: var(--danger-fg);
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   === ADMIN COMMAND-CENTER (bold, dark-first reskin) ===
+   Appended last so it wins the cascade over the "Phase 2 normalization" block
+   that flattens the admin. Scoped to .v2-admin-shell (admin only — funnel
+   untouched). Consumes tokens from :root (light) + the dark scope (deep). The
+   new command-center tokens get LIGHT defaults here so the light toggle stays
+   usable; .v2-admin-shell[data-theme="dark"] overrides them (higher specificity).
+   ========================================================================== */
+
+/* Light-mode defaults for the command-center tokens. */
+.v2-admin-shell {
+  --accent-fg: color-mix(in srgb, var(--blue) 78%, #000000);
+  --accent-tint: color-mix(in srgb, var(--blue) 10%, var(--surface));
+  --accent-line: color-mix(in srgb, var(--blue) 45%, transparent);
+  --focus-glow: 0 0 0 3px color-mix(in srgb, var(--blue) 22%, transparent);
+  --glow: 0 6px 20px color-mix(in srgb, var(--blue) 20%, transparent);
+  --card-grad: var(--surface);
+  --card-shadow: 0 1px 2px rgba(10, 12, 20, 0.05), 0 6px 20px rgba(10, 12, 20, 0.06);
+  --card-shadow-hi: 0 2px 6px rgba(10, 12, 20, 0.08), 0 16px 40px rgba(10, 12, 20, 0.1);
+}
+
+/* Header — confident hierarchy + bright accent eyebrow (reverses Phase-2 shrink). */
+.v2-admin-shell .v2-view-header h1 {
+  font-size: clamp(30px, 3.4vw, 40px);
+  font-weight: 720;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+}
+.v2-admin-shell .v2-view-header .eyebrow,
+.v2-admin-shell .admin-header .eyebrow {
+  color: var(--accent-fg);
+  opacity: 1;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+/* Sidebar active item — glowing accent rail + tint + accent text/icon. */
+.v2-admin-shell .v2-nav-item.is-active {
+  color: var(--accent-fg);
+  background: var(--accent-tint);
+  box-shadow: inset 0 0 0 1px var(--accent-line), var(--glow);
+}
+.v2-admin-shell .v2-nav-item.is-active svg {
+  color: var(--accent-fg);
+  opacity: 1;
+}
+
+/* KPI header — the signature command-center element (reverses the flat stat cards). */
+.v2-admin-shell .admin-metrics {
+  gap: var(--space-4);
+}
+.v2-admin-shell .admin-metrics .v2-metric-pill {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  background: var(--card-grad);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--card-shadow);
+  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+.v2-admin-shell .admin-metrics .v2-metric-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--blue), transparent 72%);
+  opacity: 0.55;
+}
+.v2-admin-shell .admin-metrics .v2-metric-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hi);
+}
+.v2-admin-shell .admin-metrics .v2-metric-count {
+  font-family: var(--font-mono);
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 680;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+.v2-admin-shell .admin-metrics .v2-metric-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--space-3);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.v2-admin-shell .admin-metrics .v2-metric-label::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--blue);
+  box-shadow: var(--glow);
+}
+
+/* --- Phase D: elevated panels/cards (reverses the flat "ONE card treatment") --- */
+.v2-admin-shell .admin-panel,
+.v2-admin-shell .outreach-card,
+.v2-admin-shell .funding-lead-card,
+.v2-admin-shell .funding-opportunity-card,
+.v2-admin-shell .api-provider-card,
+.v2-admin-shell .batch-builder__form,
+.v2-admin-shell .batch-history,
+.v2-admin-shell .batch-preview,
+.v2-admin-shell .tenant-summary-card,
+.v2-admin-shell .lead-enrichment,
+.v2-admin-shell .metric-table {
+  background: var(--card-grad);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--card-shadow);
+}
+
+/* --- Phase D: inputs — inset surface + glowing accent focus ring --- */
+.v2-admin-shell input,
+.v2-admin-shell select,
+.v2-admin-shell textarea {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.v2-admin-shell input:focus,
+.v2-admin-shell select:focus,
+.v2-admin-shell textarea:focus {
+  border-color: var(--blue);
+  box-shadow: var(--focus-glow);
+}
+.v2-admin-shell .button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-glow);
+}
+/* Primary buttons carry a soft accent glow (command-center emphasis). */
+.v2-admin-shell .button--primary:hover {
+  box-shadow: var(--focus-glow);
+}
+
+/* --- Phase D: tables — accent-quiet headers, row hover, defined list cards --- */
+.v2-admin-shell .calls-table th {
+  color: var(--fg-subtle);
+  letter-spacing: 0.08em;
+}
+.v2-admin-shell .calls-table tbody tr:hover {
+  background: var(--hover-fill);
+}
+.v2-admin-shell .admin-list div {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+/* --- Phase D: status pills — a hairline border for definition on deep bg --- */
+.v2-admin-shell .status-pill {
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+}
+
+/* =============================================================================
+   SECTION VARIANTS (template library) — additive only.
+   New compositions for packages (comparison, single-offer) and references
+   (logo-wall, stat-band, case-strip, testimonial-editorial), rendered by
+   components/funnel/sections/*. Every rule reads --fp-* tokens with
+   premium-agency-equivalent fallbacks, same discipline as the funnel layer
+   above. No selector above this line is modified.
+   ========================================================================== */
+
+/* ---- packages: comparison ---- */
+
+.package-compare {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: 1fr;
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-surface, var(--white));
+  overflow: hidden;
+}
+
+.package-compare__col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+}
+
+.package-compare__col + .package-compare__col {
+  border-top: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+}
+
+@media (min-width: 881px) {
+  .package-compare {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+
+  .package-compare__col + .package-compare__col {
+    border-top: 0;
+    border-left: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  }
+}
+
+.package-compare__col--featured {
+  background: var(--fp-soft, var(--soft));
+}
+
+.package-compare__col.is-selected {
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+
+.package-compare__flag {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--fp-eyebrow-tracking, 0.08em);
+  color: var(--blue);
+}
+
+.package-compare__head h3 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.package-compare__head p {
+  margin: 0 0 4px;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--fp-muted, var(--muted));
+}
+
+/* Non-numeric prices ("Success fee") can be long: let the price wrap and
+   drop the qualifier onto its own line instead of floating beside it. */
+.price--compare {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.price--compare span {
+  font-size: 34px;
+  line-height: 1.05;
+}
+
+.price--compare small {
+  flex-basis: 100%;
+}
+
+.package-compare__col ul {
+  margin: 10px 0 26px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--fp-fg, var(--near-black));
+}
+
+.package-compare__col li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 10px;
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--blue);
+  vertical-align: 0.08em;
+}
+
+.package-compare__col .button {
+  margin-top: auto;
+  width: 100%;
+}
+
+/* ---- packages: single-offer ---- */
+
+.package-offer {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  padding: 36px;
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-surface, var(--white));
+  box-shadow: var(--fp-shadow-card, var(--shadow));
+}
+
+@media (min-width: 881px) {
+  .package-offer {
+    grid-template-columns: 3fr 2fr;
+    align-items: start;
+  }
+}
+
+.package-offer.is-selected {
+  box-shadow: inset 0 0 0 2px var(--blue), var(--fp-shadow-card, var(--shadow));
+}
+
+.package-offer__body h3 {
+  margin: 0 0 8px;
+  font-size: 26px;
+}
+
+.package-offer__summary {
+  margin: 0 0 22px;
+  font-size: 16px;
+  color: var(--fp-muted, var(--muted));
+}
+
+.package-offer__body ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  color: var(--fp-fg, var(--near-black));
+}
+
+.package-offer__body li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 10px;
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--blue);
+  vertical-align: 0.08em;
+}
+
+.package-offer__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 26px;
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-soft, var(--soft));
+}
+
+.package-offer__aside .price {
+  margin: 0;
+}
+
+.package-offer__aside .button {
+  margin-top: 14px;
+  width: 100%;
+}
+
+.package-offer__rest {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+.package-offer__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 4px;
+}
+
+.package-offer__row + .package-offer__row {
+  border-top: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+}
+
+@media (min-width: 768px) {
+  .package-offer__row {
+    grid-template-columns: 1fr auto auto;
+    gap: 20px;
+  }
+}
+
+.package-offer__row.is-selected {
+  background: var(--fp-soft, var(--soft));
+}
+
+.package-offer__row-copy h4 {
+  margin: 0 0 2px;
+  font-size: 16px;
+}
+
+.package-offer__row-copy p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--fp-muted, var(--muted));
+}
+
+.package-offer__row-price {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* ---- references: logo-wall ---- */
+
+.refs-logos {
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .refs-logos {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 36px;
+  }
+}
+
+.refs-logos li {
+  position: relative;
+  height: 56px;
+}
+
+.refs-logos img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.refs-quote-duo {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+@media (min-width: 768px) {
+  .refs-quote-duo {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.refs-quote {
+  margin: 0;
+  padding: 22px;
+  border: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  border-radius: var(--fp-radius, var(--radius));
+  background: var(--fp-surface, var(--white));
+}
+
+.refs-quote p {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+
+.refs-quote footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.refs-quote footer span {
+  color: var(--fp-muted, var(--muted));
+}
+
+/* ---- references: stat-band ---- */
+
+.refs-stats__band {
+  margin: 36px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 881px) {
+  .refs-stats__band {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+.refs-stats__band > div {
+  border-top: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+  padding-top: 16px;
+}
+
+.refs-stats__band dt {
+  font-family: var(--fp-font-display, var(--font-display, var(--font-sans, sans-serif)));
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: var(--fp-h2-weight, 800);
+  letter-spacing: var(--fp-h1-tracking, -0.02em);
+  line-height: 1;
+}
+
+.refs-stats__band dd {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--fp-muted, var(--muted));
+}
+
+.refs-stats__quote {
+  margin: 44px 0 0;
+  max-width: 56ch;
+}
+
+.refs-stats__quote p {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.refs-stats__quote footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.refs-stats__quote footer span {
+  color: var(--fp-muted, var(--muted));
+}
+
+/* ---- references: case-strip ---- */
+
+.refs-ledger {
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.refs-ledger__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 24px 0;
+}
+
+.refs-ledger__row + .refs-ledger__row {
+  border-top: var(--fp-border-w, 1px) solid var(--fp-border-color, var(--line));
+}
+
+@media (min-width: 768px) {
+  .refs-ledger__row {
+    grid-template-columns: 240px 1fr;
+    gap: 32px;
+  }
+}
+
+.refs-ledger__who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.refs-ledger__who span {
+  color: var(--fp-muted, var(--muted));
+}
+
+.refs-ledger__row blockquote {
+  margin: 0;
+}
+
+.refs-ledger__row blockquote p {
+  margin: 0;
+  font-size: 17px;
+}
+
+/* ---- references: testimonial-editorial ---- */
+
+.refs-editorial__lead {
+  margin: 40px 0 0;
+  max-width: 36ch;
+}
+
+.refs-editorial__lead p {
+  margin: 0 0 18px;
+  font-family: var(--fp-font-display, var(--font-display, var(--font-sans, sans-serif)));
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: var(--fp-h2-weight, 600);
+  letter-spacing: var(--fp-h1-tracking, -0.015em);
+  line-height: 1.25;
+}
+
+.refs-editorial__lead footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.refs-editorial__lead footer span {
+  color: var(--fp-muted, var(--muted));
+}

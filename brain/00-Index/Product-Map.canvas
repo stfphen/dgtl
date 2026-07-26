@@ -1,0 +1,39 @@
+{
+	"nodes":[
+		{"id":"aa00000000000010","type":"group","x":0,"y":0,"width":520,"height":700,"label":"Acquisition","color":"5"},
+		{"id":"aa00000000000020","type":"group","x":640,"y":0,"width":520,"height":900,"label":"Lead lifecycle","color":"4"},
+		{"id":"aa00000000000030","type":"group","x":1280,"y":0,"width":520,"height":760,"label":"Platform","color":"6"},
+		{"id":"aa00000000000001","type":"text","x":0,"y":-280,"width":520,"height":220,"text":"# Product map\n\nNode colors = module status:\n- 🟢 green — stable / shipped\n- 🟡 yellow — MVP built (2C)\n- 🟠 orange — phased, partly shipped (2D: P0 ✅, P1–P4 proposed)\n\nFlow follows the lead lifecycle in [[20-Modules-MOC]]."},
+		{"id":"aa00000000000011","type":"text","x":40,"y":60,"width":440,"height":180,"text":"**Public funnel `/t/[slug]`**\n\nhero → problem → system → output → **portfolio / references (P0 ✅)** → packages → checkout\n\nPer-tenant config, draft→publish.","color":"4"},
+		{"id":"aa00000000000012","type":"file","x":40,"y":290,"width":440,"height":100,"file":"20-Modules/23-Prospecting.md","color":"4"},
+		{"id":"aa00000000000013","type":"file","x":40,"y":430,"width":440,"height":100,"file":"20-Modules/2C-Enterprise-Prospecting.md","color":"3"},
+		{"id":"aa00000000000014","type":"file","x":40,"y":570,"width":440,"height":100,"file":"20-Modules/29-Funding-Program.md","color":"4"},
+		{"id":"aa00000000000021","type":"file","x":680,"y":60,"width":440,"height":100,"file":"20-Modules/22-Lead-Pipeline.md","color":"4"},
+		{"id":"aa00000000000022","type":"file","x":680,"y":200,"width":440,"height":100,"file":"20-Modules/24-Enrichment.md","color":"4"},
+		{"id":"aa00000000000023","type":"file","x":680,"y":340,"width":440,"height":100,"file":"20-Modules/25-Lead-Research-AI.md","color":"4"},
+		{"id":"aa00000000000024","type":"file","x":680,"y":480,"width":440,"height":100,"file":"20-Modules/26-Outreach.md","color":"4"},
+		{"id":"aa00000000000025","type":"file","x":680,"y":620,"width":440,"height":100,"file":"20-Modules/28-Telephony.md","color":"4"},
+		{"id":"aa00000000000026","type":"file","x":680,"y":760,"width":440,"height":100,"file":"20-Modules/27-Checkout-Payments.md","color":"4"},
+		{"id":"aa00000000000031","type":"file","x":1320,"y":60,"width":440,"height":100,"file":"20-Modules/21-Admin-Shell.md","color":"4"},
+		{"id":"aa00000000000032","type":"file","x":1320,"y":200,"width":440,"height":100,"file":"20-Modules/2A-Tenant-Builder.md","color":"4"},
+		{"id":"aa00000000000033","type":"file","x":1320,"y":340,"width":440,"height":100,"file":"20-Modules/2B-AI-Backend.md","color":"4"},
+		{"id":"aa00000000000034","type":"file","x":1320,"y":480,"width":440,"height":100,"file":"20-Modules/2D-Portfolio-Media.md","color":"2"},
+		{"id":"aa00000000000035","type":"file","x":1320,"y":620,"width":440,"height":100,"file":"10-Architecture/15-Multi-Tenancy.md"}
+	],
+	"edges":[
+		{"id":"ee00000000000001","fromNode":"aa00000000000011","fromSide":"right","toNode":"aa00000000000021","toSide":"left","toEnd":"arrow","label":"leads"},
+		{"id":"ee00000000000002","fromNode":"aa00000000000012","fromSide":"right","toNode":"aa00000000000021","toSide":"left","toEnd":"arrow","label":"batches"},
+		{"id":"ee00000000000003","fromNode":"aa00000000000013","fromSide":"right","toNode":"aa00000000000024","toSide":"left","toEnd":"arrow","label":"gated ABM outreach"},
+		{"id":"ee00000000000004","fromNode":"aa00000000000014","fromSide":"right","toNode":"aa00000000000021","toSide":"left","toEnd":"arrow","label":"survey leads"},
+		{"id":"ee00000000000005","fromNode":"aa00000000000021","fromSide":"bottom","toNode":"aa00000000000022","toSide":"top","toEnd":"arrow"},
+		{"id":"ee00000000000006","fromNode":"aa00000000000022","fromSide":"bottom","toNode":"aa00000000000023","toSide":"top","toEnd":"arrow"},
+		{"id":"ee00000000000007","fromNode":"aa00000000000023","fromSide":"bottom","toNode":"aa00000000000024","toSide":"top","toEnd":"arrow"},
+		{"id":"ee00000000000008","fromNode":"aa00000000000024","fromSide":"bottom","toNode":"aa00000000000025","toSide":"top","toEnd":"arrow","label":"calls"},
+		{"id":"ee00000000000009","fromNode":"aa00000000000011","fromSide":"bottom","toNode":"aa00000000000026","toSide":"left","toEnd":"arrow","label":"checkout / Stripe"},
+		{"id":"ee0000000000000a","fromNode":"aa00000000000032","fromSide":"left","toNode":"aa00000000000011","toSide":"top","toEnd":"arrow","label":"generates tenant config"},
+		{"id":"ee0000000000000b","fromNode":"aa00000000000033","fromSide":"left","toNode":"aa00000000000023","toSide":"right","toEnd":"arrow","label":"Claude"},
+		{"id":"ee0000000000000c","fromNode":"aa00000000000033","fromSide":"top","toNode":"aa00000000000032","toSide":"bottom","toEnd":"arrow"},
+		{"id":"ee0000000000000d","fromNode":"aa00000000000034","fromSide":"left","toNode":"aa00000000000011","toSide":"right","toEnd":"arrow","label":"portfolio section (P0)"},
+		{"id":"ee0000000000000e","fromNode":"aa00000000000031","fromSide":"left","toNode":"aa00000000000021","toSide":"right","toEnd":"arrow","label":"manages"}
+	]
+}

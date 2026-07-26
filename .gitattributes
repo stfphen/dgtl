@@ -1,6 +1,7 @@
-# No Git LFS. Prototypes and rendered video were deliberately left out of this repo, so
-# nothing here is large enough to need it — largest asset is ~530 KB. Keep it that way: if you
-# ever need to add video, host it and reference the URL rather than committing the file.
+# No Git LFS. Prototypes and rendered video were deliberately left out of this repo, so nothing
+# here comes close to needing it — the largest tracked asset is a 1.7 MB PNG
+# (platform/public/assets/content-day-hero.png), well under GitHub's 100 MB limit. Keep it that
+# way: if you ever need video, host it and reference the URL rather than committing the file.
 
 # Normalize text
 *.html text
