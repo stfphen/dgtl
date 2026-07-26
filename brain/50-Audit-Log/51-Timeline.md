@@ -12,6 +12,24 @@ Chronological history, reconstructed from repo docs + git. **Append newest entri
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
 
 ## 2026-07
+- **07-25 (b)** — **All pitches consolidated into `pitches/` on the pack model.** Six of the seven
+  pitch artifacts were tracked in **no repo at all**: five sat under the gitignored `prototypes/pitches/`
+  and THE CLIMB was a loose 344 KB file at the archive repo root. Now `pitches/<slug>/` with
+  `index.html` + optional `teaser.html` + `media/` + `pitch.json`, registered in `pitches.index.json`:
+  **escott** (concept, restructured via `git mv` to preserve history), **dmtv-bose** (client pitch —
+  full became `index.html`, teaser beside it), **the-climb** (concept). The three generic
+  "Your Brand × DGTL" offer pages (website overhaul, brand redesign kit, influencer activation) went to
+  `pitches/_templates/` as clone-per-prospect starting points, not pitches. Deploy scheme
+  `pitch.dgtlmedia.io/<slug>/`, confirmed from THE CLIMB's existing canonical tag.
+  Fixes: the DMTV × Bose teaser's three "See the Full Pitch" buttons pointed at domain-absolute
+  `/full/` — broken locally *and* under the `/<slug>/` scheme — now relative `index.html`; ESCOTT
+  gained the meta description it lacked; ESCOTT's six `escott-media/` refs repointed after the folder
+  rename. `tools/check-links.py` rewritten to cover `pitches/` as well as `journal/` (it previously
+  watched only the journal, which is why none of this was caught), to flag root-absolute links as their
+  own class, and to treat assets declared in a pitch's `pendingAssets` as *pending* rather than
+  *missing* — so ESCOTT's three never-supplied photos are visible without leaving the check
+  permanently red. Verified 746 refs, `missing=0`, and a negative test confirms it still fails on a
+  real break.
 - **07-25** — **Two parallel migration builds merged; this repo becomes authoritative and
   `content-checkout-funnel` is retired.** Two sessions had independently built a new-repo scaffold:
   `dgtl-repo-plan/dgtl` (publishing-only, prototypes via Git LFS, full app brain) and `dgtl-repo`

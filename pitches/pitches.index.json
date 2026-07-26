@@ -1,0 +1,15 @@
+{
+  "collection": "DGTL pitches",
+  "updated": "2026-07-25",
+  "deployScheme": "https://pitch.dgtlmedia.io/<slug>/",
+  "pitches": [
+    "escott",
+    "dmtv-bose",
+    "the-climb"
+  ],
+  "templates": [
+    "_templates/website-overhaul.html",
+    "_templates/brand-redesign-kit.html",
+    "_templates/influencer-activation.html"
+  ]
+}

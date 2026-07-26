@@ -1,0 +1,13 @@
+{
+  "slug": "dmtv-bose",
+  "name": "DMTV \u00d7 Bose Partnership",
+  "type": "client-pitch",
+  "client": "Bose",
+  "status": "delivered",
+  "hub": "index.html",
+  "teaser": "teaser.html",
+  "canonicalUrl": "",
+  "media": null,
+  "notes": "Teaser \u2192 full handoff is a relative link. Self-contained: 39 inlined images in the hub.",
+  "updated": "2026-07-25"
+}

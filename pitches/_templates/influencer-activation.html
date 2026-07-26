@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  DGTL PITCH TEMPLATE — Influencer Brand Activation / UGC Campaign
+  ============================================================================
+  This file is a personalization TEMPLATE. The app should locate elements by
+  their data-slot attribute and replace innerText/innerHTML per prospect.
+
+  DATA-SLOT MANIFEST
+  ------------------
+  page-title            <title> — "[Brand] × DGTL — ..." page title.
+  meta-description      <meta name="description"> content attribute.
+  brand-name            The prospect's brand name. OCCURS MULTIPLE TIMES —
+                        replace every element carrying this slot.
+  prepared-for          Hero eyebrow line: "Prepared for [Brand] · by DGTL".
+  hero-headline         Big emotional hero headline, personalized to the
+                        brand's category / moment (1 line, ~6-12 words).
+  hero-subhead          2–3 sentence hero subhead referencing the brand's
+                        audience, product, or upcoming release.
+  opportunity-headline  Section 01 H2 — the untapped upside, named.
+  opportunity-body      Section 01 body — 2 short paragraphs (keep <p> tags)
+                        grounding the opportunity in the brand's reality
+                        (audience size, category, launch, perception goal).
+  pillar-1-context      One sentence inside Pillar 01 intro tying the
+                        activation to the brand's product or campaign goal.
+  pillar-2-context      One sentence inside Pillar 02 intro tying paid
+                        amplification to the brand's conversion goal.
+  keep-headline         Section 03 H2 — what the brand keeps, personalized.
+  closing-headline      Closing CTA H2 — bold, brand-specific send-off.
+  closing-body          One sentence under the closing headline.
+  footer-prepared-for   Footer line: "Prepared for [Brand] · [city/address
+                        or category]".
+
+  FIXED CONTENT (do not personalize): DGTL contact info (705-391-8417,
+  stephen@dgtlgroup.io), client logo row, stat cards, case-study cards,
+  "Who you'd be working with", "Also available".
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title data-slot="page-title">Your Brand × DGTL — Creators your audience already trusts</title>
+<meta name="description" data-slot="meta-description" content="A dark, gold-accented proposal: DGTL Group's influencer brand activation and UGC campaign engine — hand-picked creators, coordinated rollouts and paid amplification, built in-house for Your Brand." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg: #0a0a0b;
+    --bg-soft: #101012;
+    --bg-card: #141416;
+    --line: rgba(255,255,255,0.08);
+    --line-strong: rgba(255,255,255,0.14);
+    --ink: #f2efe9;
+    --ink-dim: #a9a49b;
+    --ink-faint: #6f6b64;
+    --gold: #c9a45c;
+    --gold-soft: rgba(201,164,92,0.14);
+    --gold-line: rgba(201,164,92,0.35);
+    --serif: "Cormorant Garamond", Georgia, serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --max: 1120px;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 17px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection{ background: var(--gold); color: #0a0a0b; }
+  a{ color: inherit; }
+  .wrap{ max-width: var(--max); margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px); }
+
+  /* ---------- Typography ---------- */
+  h1, h2, .display{
+    font-family: var(--serif);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+  }
+  h1{ font-size: clamp(2.6rem, 6.4vw, 4.9rem); }
+  h2{ font-size: clamp(2rem, 4.4vw, 3.4rem); }
+  h2 em, h1 em{ font-style: italic; color: var(--gold); }
+  .eyebrow{
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+  .eyebrow::after{
+    content:"";
+    flex: 0 0 56px;
+    height: 1px;
+    background: var(--gold-line);
+  }
+  .lead{ font-size: clamp(1.02rem, 1.6vw, 1.2rem); color: var(--ink-dim); max-width: 640px; }
+  .lead strong, p strong{ color: var(--ink); font-weight: 500; }
+  .lead em, p em{ font-family: var(--serif); font-size: 1.12em; color: var(--gold); }
+
+  /* ---------- Reveal ---------- */
+  .rv{ opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2,.6,.2,1), transform .9s cubic-bezier(.2,.6,.2,1); }
+  .rv.in{ opacity: 1; transform: none; }
+  .rv.d1{ transition-delay: .12s; } .rv.d2{ transition-delay: .24s; } .rv.d3{ transition-delay: .36s; }
+  @media (prefers-reduced-motion: reduce){
+    .rv{ opacity:1; transform:none; transition:none; }
+    html{ scroll-behavior:auto; }
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    position: fixed; inset: 0 0 auto 0; z-index: 50;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    background: rgba(10,10,11,0.72);
+    border-bottom: 1px solid var(--line);
+  }
+  .header-in{
+    max-width: var(--max); margin: 0 auto;
+    padding: 0 clamp(20px, 5vw, 48px);
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo{
+    font-family: var(--sans); font-weight: 600; font-size: 0.95rem;
+    letter-spacing: 0.42em; text-decoration: none; color: var(--ink);
+  }
+  .logo span{ color: var(--gold); }
+  .header-cta{ display: flex; align-items: center; gap: 22px; font-size: 0.83rem; }
+  .header-cta a{ text-decoration: none; color: var(--ink-dim); transition: color .3s; }
+  .header-cta a:hover{ color: var(--ink); }
+  .btn-call{
+    border: 1px solid var(--gold-line); color: var(--gold) !important;
+    padding: 8px 18px; border-radius: 999px; letter-spacing: 0.06em;
+    transition: background .3s, color .3s;
+  }
+  .btn-call:hover{ background: var(--gold); color: #0a0a0b !important; }
+  .header-email{ display: inline; }
+  @media (max-width: 640px){ .header-email{ display: none; } }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    min-height: 100svh;
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative;
+    padding: 130px 0 90px;
+    background:
+      radial-gradient(ellipse 70% 55% at 78% 8%, rgba(201,164,92,0.10), transparent 60%),
+      radial-gradient(ellipse 60% 45% at 12% 92%, rgba(201,164,92,0.05), transparent 55%),
+      var(--bg);
+  }
+  .hero::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 120px 120px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(0,0,0,0.5), transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(0,0,0,0.5), transparent 75%);
+  }
+  .hero .wrap{ position: relative; }
+  .hero h1{ max-width: 15ch; margin-bottom: 30px; }
+  .hero .lead{ margin-bottom: 44px; }
+  .cta-row{ display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .btn{
+    display: inline-block; text-decoration: none;
+    padding: 15px 32px; border-radius: 999px;
+    font-size: 0.88rem; font-weight: 500; letter-spacing: 0.05em;
+    transition: transform .3s, background .3s, color .3s, border-color .3s;
+  }
+  .btn:hover{ transform: translateY(-2px); }
+  .btn-gold{ background: var(--gold); color: #0a0a0b; }
+  .btn-gold:hover{ background: #dcb96e; }
+  .btn-ghost{ border: 1px solid var(--line-strong); color: var(--ink); }
+  .btn-ghost:hover{ border-color: var(--gold-line); color: var(--gold); }
+  .scroll-cue{
+    position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%);
+    font-size: 0.68rem; letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--ink-faint); display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .scroll-cue::after{
+    content:""; width:1px; height: 44px;
+    background: linear-gradient(var(--gold), transparent);
+    animation: cue 2.4s ease-in-out infinite;
+  }
+  @keyframes cue{ 0%,100%{ opacity:.25; transform: scaleY(.6); transform-origin: top; } 50%{ opacity:1; transform: scaleY(1); } }
+
+  /* ---------- Sections ---------- */
+  section{ padding: clamp(88px, 12vw, 150px) 0; position: relative; }
+  section + section{ border-top: 1px solid var(--line); }
+  .two-col{ display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: clamp(36px, 6vw, 90px); align-items: start; }
+  @media (max-width: 860px){ .two-col{ grid-template-columns: 1fr; } }
+  .body-copy p + p{ margin-top: 1.2em; }
+  .body-copy{ color: var(--ink-dim); font-size: 1.02rem; max-width: 560px; }
+
+  /* ---------- Pillars ---------- */
+  .pillar{ background: var(--bg-soft); }
+  .pillar .eyebrow{ color: var(--ink-faint); }
+  .pillar .eyebrow b{ color: var(--gold); font-weight: 500; }
+  .deliverables{ list-style: none; margin-top: 40px; display: grid; gap: 0; }
+  .deliverables li{
+    display: grid; grid-template-columns: 44px 1fr; gap: 18px;
+    padding: 26px 0; border-top: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .deliverables li:last-child{ border-bottom: 1px solid var(--line); }
+  .deliverables .num{
+    font-family: var(--serif); font-style: italic; font-size: 1.1rem; color: var(--gold);
+  }
+  .deliverables h3{ font-family: var(--sans); font-weight: 500; font-size: 1.02rem; margin-bottom: 6px; letter-spacing: 0.01em; }
+  .deliverables p{ color: var(--ink-dim); font-size: 0.95rem; max-width: 52ch; }
+  .pillar-note{
+    margin-top: 44px; padding: 26px 30px;
+    border-left: 2px solid var(--gold);
+    background: var(--gold-soft);
+    font-size: 0.98rem; color: var(--ink-dim); max-width: 620px;
+    border-radius: 0 10px 10px 0;
+  }
+  .pillar-note strong{ color: var(--ink); }
+
+  /* ---------- Add-on ---------- */
+  .addon-card{
+    border: 1px solid var(--gold-line); border-radius: 20px;
+    padding: clamp(36px, 5vw, 64px);
+    background:
+      radial-gradient(ellipse 60% 80% at 90% 0%, rgba(201,164,92,0.10), transparent 60%),
+      var(--bg-card);
+    display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(30px, 5vw, 70px); align-items: center;
+  }
+  @media (max-width: 860px){ .addon-card{ grid-template-columns: 1fr; } }
+  .addon-tag{
+    display: inline-block; font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--gold); border: 1px solid var(--gold-line); border-radius: 999px;
+    padding: 7px 16px; margin-bottom: 24px;
+  }
+  .addon-list{ list-style: none; display: grid; gap: 14px; }
+  .addon-list li{
+    display: flex; gap: 14px; align-items: baseline;
+    color: var(--ink-dim); font-size: 0.96rem;
+  }
+  .addon-list li::before{ content:"—"; color: var(--gold); flex: 0 0 auto; }
+
+  /* ---------- Keep ---------- */
+  .keep-tiles{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 54px; }
+  @media (max-width: 720px){ .keep-tiles{ grid-template-columns: 1fr; } }
+  .keep-tile{
+    border: 1px solid var(--line); border-radius: 16px;
+    background: var(--bg-card);
+    padding: 40px 30px 34px;
+    transition: border-color .4s, transform .4s;
+  }
+  .keep-tile:hover{ border-color: var(--gold-line); transform: translateY(-4px); }
+  .keep-tile .glyph{
+    font-family: var(--serif); font-style: italic; font-size: 1.9rem; color: var(--gold);
+    display: block; margin-bottom: 20px; line-height: 1;
+  }
+  .keep-tile h3{ font-family: var(--serif); font-weight: 500; font-size: 1.5rem; line-height: 1.2; margin-bottom: 10px; }
+  .keep-tile p{ color: var(--ink-dim); font-size: 0.93rem; }
+
+  /* ---------- Proof ---------- */
+  .logo-row{
+    display: flex; flex-wrap: wrap; gap: 14px 34px;
+    align-items: center; justify-content: space-between;
+    margin: 50px 0 70px; padding: 34px 0;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .logo-mark{
+    font-family: var(--sans); font-weight: 600; font-size: 0.98rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-faint); transition: color .4s;
+    white-space: nowrap;
+  }
+  .logo-mark:hover{ color: var(--ink); }
+  .logo-mark.serifed{ font-family: var(--serif); font-weight: 500; font-size: 1.25rem; text-transform: none; letter-spacing: 0.04em; }
+  .stats{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 70px; }
+  @media (max-width: 720px){ .stats{ grid-template-columns: 1fr; } }
+  .stat{
+    border: 1px solid var(--line); border-radius: 16px;
+    padding: 36px 30px; background: var(--bg-card);
+  }
+  .stat .n{
+    font-family: var(--serif); font-size: clamp(2.6rem, 4vw, 3.4rem);
+    color: var(--gold); line-height: 1; display: block; margin-bottom: 14px;
+  }
+  .stat p{ color: var(--ink-dim); font-size: 0.92rem; }
+  .stat p strong{ color: var(--ink); font-weight: 500; }
+  .cases{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 860px){ .cases{ grid-template-columns: 1fr; } }
+  .case{
+    border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+    background: var(--bg-card);
+    display: flex; flex-direction: column;
+    transition: border-color .4s, transform .4s;
+  }
+  .case:hover{ border-color: var(--gold-line); transform: translateY(-4px); }
+  .case-visual{
+    height: 150px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .case-visual span{
+    font-family: var(--serif); font-style: italic;
+    font-size: 2.2rem; color: rgba(242,239,233,0.85); letter-spacing: 0.02em;
+  }
+  .cv-1{ background: radial-gradient(ellipse 90% 120% at 20% 0%, rgba(201,164,92,0.28), transparent 60%), linear-gradient(160deg, #1d1a13, #101012); }
+  .cv-2{ background: radial-gradient(ellipse 90% 120% at 80% 100%, rgba(120,140,160,0.22), transparent 60%), linear-gradient(200deg, #14171b, #101012); }
+  .cv-3{ background: radial-gradient(ellipse 100% 130% at 50% 120%, rgba(160,120,80,0.24), transparent 65%), linear-gradient(180deg, #17130f, #101012); }
+  .case-body{ padding: 26px 26px 30px; }
+  .case-meta{
+    font-size: 0.68rem; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 12px;
+  }
+  .case-body h3{ font-family: var(--serif); font-weight: 500; font-size: 1.35rem; line-height: 1.25; margin-bottom: 10px; }
+  .case-body p{ color: var(--ink-dim); font-size: 0.92rem; }
+
+  /* ---------- Also ---------- */
+  .also{ background: var(--bg-soft); }
+  .also .body-copy{ max-width: 660px; }
+
+  /* ---------- Closing ---------- */
+  .closing{
+    text-align: center;
+    background:
+      radial-gradient(ellipse 60% 70% at 50% 110%, rgba(201,164,92,0.13), transparent 65%),
+      var(--bg);
+  }
+  .closing .logo{ display: inline-block; margin-bottom: 40px; font-size: 1.05rem; }
+  .closing h2{ max-width: 22ch; margin: 0 auto 22px; }
+  .closing .lead{ margin: 0 auto 44px; }
+  .closing .cta-row{ justify-content: center; }
+  .closing .plain-email{
+    font-size: 0.95rem; color: var(--ink-dim); text-decoration: none;
+    border-bottom: 1px solid var(--line-strong); padding-bottom: 2px;
+    transition: color .3s, border-color .3s;
+  }
+  .closing .plain-email:hover{ color: var(--gold); border-color: var(--gold-line); }
+
+  /* ---------- Footer ---------- */
+  footer{
+    border-top: 1px solid var(--line);
+    padding: 46px 0 60px;
+    font-size: 0.84rem; color: var(--ink-faint);
+  }
+  .footer-in{ display: flex; flex-wrap: wrap; gap: 20px 40px; justify-content: space-between; align-items: flex-start; }
+  footer a{ color: var(--ink-dim); text-decoration: none; transition: color .3s; }
+  footer a:hover{ color: var(--gold); }
+  .footer-contact{ display: flex; gap: 22px; }
+</style>
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header>
+  <div class="header-in">
+    <a class="logo" href="#top">DGTL<span>.</span></a>
+    <nav class="header-cta">
+      <a class="header-email" href="mailto:stephen@dgtlgroup.io">stephen@dgtlgroup.io</a>
+      <a class="btn-call" href="tel:7053918417">Call 705-391-8417</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <p class="eyebrow rv" data-slot="prepared-for">Prepared for <span data-slot="brand-name">Your Brand</span> · by DGTL</p>
+    <h1 class="rv d1" data-slot="hero-headline">The fastest way into your audience's feed is someone already in it.</h1>
+    <p class="lead rv d2" data-slot="hero-subhead">DGTL activates creators and public figures your customers already follow — one voice hand-picked for niche fit, or a coordinated roster — to launch your next release with reach, credibility and conversions built in from day one. Planned, not posted-and-prayed.</p>
+    <div class="cta-row rv d3">
+      <a class="btn btn-gold" href="tel:7053918417">Call 705-391-8417</a>
+      <a class="btn btn-ghost" href="mailto:stephen@dgtlgroup.io">Email Stephen &rarr;</a>
+    </div>
+  </div>
+  <div class="scroll-cue">Scroll</div>
+</section>
+
+<!-- ================= 01 — THE OPPORTUNITY ================= -->
+<section>
+  <div class="wrap two-col">
+    <div>
+      <p class="eyebrow rv">01 — The opportunity</p>
+      <h2 class="rv d1" data-slot="opportunity-headline">The trust is already out there. It just isn't working for <em>you</em> yet.</h2>
+    </div>
+    <div class="body-copy rv d2" data-slot="opportunity-body">
+      <p>Your audience spends hours a day with creators they trust — and about three seconds with ads they don't. Every launch that leads with a cold ad is paying full price to introduce itself to people who were already listening to someone else.</p>
+      <p>Influencer activation flips that: <strong>the introduction comes from a voice your audience already believes,</strong> and the content it produces keeps selling long after the post goes live. That's the upside sitting untapped right now — and it's exactly the part we're built to close.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 — WHO YOU'D BE WORKING WITH ================= -->
+<section>
+  <div class="wrap two-col">
+    <div>
+      <p class="eyebrow rv">02 — Who you'd be working with</p>
+      <h2 class="rv d1">One team, end-to-end.</h2>
+    </div>
+    <div class="body-copy rv d2">
+      <p>DGTL is a full-service creative and marketing group — <em>branding, content, advertising and web, crafted with brilliance, attention, precision.</em></p>
+      <p>Everything below is built and run in-house. No handoffs, no middle layer — the people who match your creators are the people who brief them, license the content, cut it into ad creative, and optimize the spend behind it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PILLAR 01 — THE ACTIVATION ================= -->
+<section class="pillar">
+  <div class="wrap">
+    <p class="eyebrow rv"><b>Pillar 01</b>&nbsp;· The activation</p>
+    <h2 class="rv d1" style="max-width:18ch;">The right voices, saying it like they mean it.</h2>
+    <p class="lead rv d2" style="margin-top:26px;">We don't send a press kit to a spreadsheet of handles. We build a cast. <span data-slot="pillar-1-context">Every creator is chosen for genuine fit with your product and the audience you're trying to move — whether that's one perfect voice or a synchronized roster.</span></p>
+    <ul class="deliverables">
+      <li class="rv"><span class="num">i</span><div><h3>Creator matching, hand-picked</h3><p>Drawn from DGTL's network of creators and our public-figure PR list — filtered for niche fit, audience quality and real engagement, not follower counts.</p></div></li>
+      <li class="rv"><span class="num">ii</span><div><h3>Coordinated rollout</h3><p>Posts sequenced around your release or campaign window, so the launch lands as one wave — not scattered mentions weeks apart.</p></div></li>
+      <li class="rv"><span class="num">iii</span><div><h3>UGC + professional placements</h3><p>From native, shot-on-phone UGC to polished creator features — each brief matched to the format that converts in that creator's feed.</p></div></li>
+      <li class="rv"><span class="num">iv</span><div><h3>Organic reach, engineered</h3><p>Hooks, angles and messaging directed by us so every post earns exposure, shifts perception and pulls new audience toward the brand.</p></div></li>
+    </ul>
+    <div class="pillar-note rv">Works at <strong>any brand size</strong> — a single hand-picked creator for a focused niche play, or a full roster activation for a major release. Same system, scaled to the moment.</div>
+  </div>
+</section>
+
+<!-- ================= PILLAR 02 — PAID AMPLIFICATION ================= -->
+<section class="pillar">
+  <div class="wrap">
+    <p class="eyebrow rv"><b>Pillar 02</b>&nbsp;· The amplification</p>
+    <h2 class="rv d1" style="max-width:18ch;">Then we put money behind what's already winning.</h2>
+    <p class="lead rv d2" style="margin-top:26px;">Organic tells us which creators and angles hit. Paid makes them go further. <span data-slot="pillar-2-context">This is where the activation stops being a moment and becomes a measurable conversion engine.</span></p>
+    <ul class="deliverables">
+      <li class="rv"><span class="num">i</span><div><h3>Whitelisting &amp; spark ads</h3><p>Winning posts run as paid ads from the creators' own handles — borrowed trust at ad-platform scale, far beyond their followers.</p></div></li>
+      <li class="rv"><span class="num">ii</span><div><h3>Conversion tracking &amp; data</h3><p>Full pixel and server-side tracking, so every campaign is read against real revenue and tuned — nothing goes unmeasured.</p></div></li>
+      <li class="rv"><span class="num">iii</span><div><h3>Creative testing at speed</h3><p>Hooks, cuts and creators tested head-to-head; budget flows to the combinations that convert, automatically and continuously.</p></div></li>
+      <li class="rv"><span class="num">iv</span><div><h3>An ad engine, not an ad buy</h3><p>The best creator content becomes a durable paid system across Meta and TikTok — refreshed with new UGC before fatigue sets in.</p></div></li>
+    </ul>
+    <div class="pillar-note rv">Why this order? Because across the industry, <strong>great creative is the single biggest driver of ad results</strong> — more than targeting, more than budget. The activation manufactures the creative; the paid layer makes it compound.</div>
+  </div>
+</section>
+
+<!-- ================= OPTIONAL ADD-ON ================= -->
+<section>
+  <div class="wrap">
+    <div class="addon-card rv">
+      <div>
+        <span class="addon-tag">Optional add-on</span>
+        <h2 style="font-size:clamp(1.8rem,3.4vw,2.6rem); max-width:16ch;">Production and momentum, on tap.</h2>
+        <p class="body-copy" style="margin-top:18px;">When the campaign calls for more than creator phones can deliver, DGTL's in-house production arm steps in — and when one activation proves the model, a retainer keeps the flywheel turning.</p>
+      </div>
+      <ul class="addon-list">
+        <li><strong style="color:var(--ink);font-weight:500;">Full production support</strong>&nbsp;— on-site shoots, direction, edit and finishing to pair polished brand assets with creator content.</li>
+        <li><strong style="color:var(--ink);font-weight:500;">Ongoing content retainer</strong>&nbsp;— fresh UGC and creator drops every month, so the ad engine never runs out of fuel.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 — WHAT YOU KEEP ================= -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow rv">03 — What you keep</p>
+    <h2 class="rv d1" style="max-width:20ch;" data-slot="keep-headline">Own a creator content library, not a campaign that expires.</h2>
+    <p class="lead rv d2" style="margin-top:26px;">Every piece of creator content is licensed to you. When the campaign ends, the assets don't — they become a bank of proven, audience-tested material you redeploy anywhere.</p>
+    <div class="keep-tiles">
+      <div class="keep-tile rv"><span class="glyph">i.</span><h3>Licensed UGC &amp; creator cuts</h3><p>Every video, photo and testimonial, cleared for your ongoing use across channels.</p></div>
+      <div class="keep-tile rv d1"><span class="glyph">ii.</span><h3>Ad-ready creative</h3><p>The winning hooks and edits, packaged to keep running in paid long after the activation.</p></div>
+      <div class="keep-tile rv d2"><span class="glyph">iii.</span><h3>Site, email &amp; social proof</h3><p>Creator content repurposed for product pages, email campaigns and organic feeds.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 04 — PROOF ================= -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow rv">04 — Proof</p>
+    <h2 class="rv d1">The receipts.</h2>
+    <p class="lead rv d2" style="margin-top:22px;">Brands we've created and run performance work for:</p>
+
+    <div class="logo-row rv">
+      <span class="logo-mark serifed">Canon</span>
+      <span class="logo-mark">On&nbsp;Running</span>
+      <span class="logo-mark">Walmart</span>
+      <span class="logo-mark serifed">DJI</span>
+      <span class="logo-mark">GameStop</span>
+      <span class="logo-mark serifed">Epidemic&nbsp;Sound</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat rv"><span class="n">12M+</span><p>views from one creator-led content system — <strong>Epidemic Sound</strong></p></div>
+      <div class="stat rv d1"><span class="n">2&times;</span><p>organic traffic in 12 months — <strong>The 400 Market</strong></p></div>
+      <div class="stat rv d2"><span class="n">75+</span><p>projects shipped across 12+ countries — <strong>DGTL</strong></p></div>
+    </div>
+
+    <div class="cases">
+      <article class="case rv">
+        <div class="case-visual cv-1"><span>ES</span></div>
+        <div class="case-body">
+          <p class="case-meta">Content · 2023</p>
+          <h3>Epidemic Sound — Creator-Led Relaunch</h3>
+          <p>A pillar-based short-form system &rarr; 12M+ views across organic and paid.</p>
+        </div>
+      </article>
+      <article class="case rv d1">
+        <div class="case-visual cv-2"><span>400</span></div>
+        <div class="case-body">
+          <p class="case-meta">Web · Performance · 2024–25</p>
+          <h3>The 400 Market — Speed &amp; SEO</h3>
+          <p>Mobile Lighthouse 45&rarr;86, organic traffic doubled in a year.</p>
+        </div>
+      </article>
+      <article class="case rv d2">
+        <div class="case-visual cv-3"><span>SS</span></div>
+        <div class="case-body">
+          <p class="case-meta">Production · 2024</p>
+          <h3>Six Senses Ibiza — One Shoot, Four Streams</h3>
+          <p>A single production block &rarr; a full multi-channel asset library.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 05 — ALSO AVAILABLE ================= -->
+<section class="also">
+  <div class="wrap">
+    <p class="eyebrow rv">05 — Also available</p>
+    <div class="body-copy rv d1" style="font-size:1.08rem;">
+      <p>Branding, website development, high-performance content production, full-funnel advertising and custom software are all in-house too — available whenever you need them, never the thing that gets in the way of the work above.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CLOSING CTA ================= -->
+<section class="closing">
+  <div class="wrap">
+    <span class="logo rv">DGTL<span style="color:var(--gold)">.</span></span>
+    <h2 class="rv d1" data-slot="closing-headline">Let's put <span data-slot="brand-name">Your Brand</span> in the feeds your customers actually trust.</h2>
+    <p class="lead rv d2" data-slot="closing-body">One call is all it takes to map the creator cast, the rollout and the paid engine behind it.</p>
+    <div class="cta-row rv d3">
+      <a class="btn btn-gold" href="tel:7053918417">Call 705-391-8417</a>
+      <a class="plain-email" href="mailto:stephen@dgtlgroup.io">stephen@dgtlgroup.io</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap footer-in">
+    <div>
+      <p data-slot="footer-prepared-for">Prepared for <span data-slot="brand-name">Your Brand</span> · by DGTL Group</p>
+      <p>DGTL Group — influencer activation, content, advertising &amp; creative, in-house.</p>
+    </div>
+    <div class="footer-contact">
+      <a href="tel:7053918417">705-391-8417</a>
+      <a href="mailto:stephen@dgtlgroup.io">stephen@dgtlgroup.io</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var els = document.querySelectorAll('.rv');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    els.forEach(function(el){ io.observe(el); });
+  })();
+</script>
+
+</body>
+</html>

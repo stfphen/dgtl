@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  DGTL — Pitch template: Full Graphic Brand Redesign / Branding Development Kit
+  ============================================================================
+  PERSONALIZATION MANIFEST — data-slot attributes the app should inject into.
+  All other content (DGTL contact info, proof stats, client logos, case
+  studies, service descriptions) is FIXED and must not be overwritten.
+
+  data-slot="brand-name"            Prospect's brand name. Appears multiple
+                                    times (hero eyebrow, add-on copy, closing
+                                    headline, footer). Replace text content of
+                                    EVERY element carrying this slot.
+  data-slot="prepared-for"          Full hero eyebrow line, e.g.
+                                    "Prepared for Acme Co. · by DGTL".
+                                    Contains a nested brand-name span.
+  data-slot="hero-headline"         Big emotional hero headline, personalized
+                                    to the prospect's category/legacy.
+  data-slot="hero-subhead"          2–3 sentence hero subhead referencing the
+                                    prospect's history, market, and why their
+                                    current branding undersells them.
+  data-slot="opportunity-headline"  Section 01 H2 — the untapped upside.
+  data-slot="opportunity-body"      Section 01 body — 2 short paragraphs
+                                    (keep the two <p> structure) naming what
+                                    the prospect has built and where the
+                                    current identity is costing them.
+  data-slot="pillar-01-context"     One sentence inside Pillar 01 intro tying
+                                    the identity redesign to the prospect
+                                    (optional; generic default provided).
+  data-slot="addon-body"            Optional add-on paragraph — tailor the
+                                    suggested add-on (content production or
+                                    website refresh) to the prospect.
+  data-slot="closing-headline"      Closing CTA H2. Contains a nested
+                                    brand-name span.
+  data-slot="closing-body"          One-line closing subhead.
+  data-slot="footer-prepared-for"   Footer line, e.g. "Prepared for Acme Co.
+                                    · 123 Main St, Toronto". Contains a
+                                    nested brand-name span.
+
+  FIXED CONTENT (do not personalize): phone 705-391-8417, email
+  stephen@dgtlgroup.io, client logo row (Canon, On Running, Walmart, DJI,
+  GameStop, Epidemic Sound), stat cards (12M+ / 2× / 75+), and the three
+  case-study cards.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your Brand × DGTL — A rebrand that looks like the company you've become</title>
+<meta name="description" content="A dark, gold-accented proposal: DGTL Group's full graphic brand redesign and branding development kit — identity, logos, guidelines, print, signage and NFC, delivered front to back by one in-house team.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0a08;
+    --bg-2:#12100c;
+    --bg-3:#181510;
+    --ink:#ece7dd;
+    --ink-dim:#a49c8f;
+    --ink-faint:#6f6a60;
+    --gold:#c8a24b;
+    --gold-bright:#e3c47c;
+    --line:rgba(200,162,75,.18);
+    --line-soft:rgba(236,231,221,.08);
+    --serif:"Fraunces",Georgia,serif;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --max:1120px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--gold);color:#0b0a08}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 28px}
+
+  /* ---------- reveal ---------- */
+  .rv{opacity:0;transform:translateY(26px);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)}
+  .rv.on{opacity:1;transform:none}
+  .rv.d1{transition-delay:.12s}.rv.d2{transition-delay:.24s}.rv.d3{transition-delay:.36s}
+  @media (prefers-reduced-motion:reduce){
+    .rv{opacity:1;transform:none;transition:none}
+    html{scroll-behavior:auto}
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    transition:background .4s,border-color .4s,backdrop-filter .4s;
+    border-bottom:1px solid transparent;
+  }
+  header.scrolled{
+    background:rgba(11,10,8,.82);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom-color:var(--line-soft);
+  }
+  .header-in{
+    max-width:var(--max);margin:0 auto;padding:18px 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+  }
+  .logo{
+    font-family:var(--serif);font-weight:600;font-size:22px;letter-spacing:.14em;
+  }
+  .logo span{color:var(--gold)}
+  .header-cta{display:flex;align-items:center;gap:22px}
+  .header-email{font-size:13px;letter-spacing:.04em;color:var(--ink-dim);transition:color .3s}
+  .header-email:hover{color:var(--gold-bright)}
+  .btn{
+    display:inline-block;
+    font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+    padding:13px 26px;border-radius:100px;
+    transition:transform .3s,box-shadow .3s,background .3s,color .3s,border-color .3s;
+    white-space:nowrap;
+  }
+  .btn-gold{background:var(--gold);color:#0b0a08}
+  .btn-gold:hover{background:var(--gold-bright);transform:translateY(-2px);box-shadow:0 12px 34px rgba(200,162,75,.28)}
+  .btn-ghost{border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold-bright);transform:translateY(-2px)}
+  .header-cta .btn{padding:11px 22px}
+  @media (max-width:640px){.header-email{display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{
+    min-height:100svh;
+    display:flex;flex-direction:column;justify-content:center;
+    position:relative;padding:140px 0 90px;
+    background:
+      radial-gradient(1100px 620px at 78% -10%,rgba(200,162,75,.13),transparent 62%),
+      radial-gradient(800px 520px at -12% 108%,rgba(200,162,75,.07),transparent 60%),
+      var(--bg);
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:radial-gradient(rgba(236,231,221,.028) 1px,transparent 1px);
+    background-size:26px 26px;
+    mask-image:radial-gradient(900px 600px at 70% 10%,black,transparent 75%);
+    -webkit-mask-image:radial-gradient(900px 600px at 70% 10%,black,transparent 75%);
+  }
+  .eyebrow{
+    font-size:12px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:30px;display:flex;align-items:center;gap:16px;
+  }
+  .eyebrow::before{content:"";width:44px;height:1px;background:var(--gold);flex:none}
+  h1{
+    font-family:var(--serif);font-weight:400;
+    font-size:clamp(42px,6.4vw,82px);
+    line-height:1.06;letter-spacing:-.015em;
+    max-width:15ch;margin-bottom:34px;
+  }
+  h1 em{font-style:italic;color:var(--gold-bright)}
+  .hero-sub{
+    max-width:56ch;color:var(--ink-dim);font-size:clamp(16px,1.6vw,19px);
+    margin-bottom:44px;
+  }
+  .hero-ctas{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  .scroll-cue{
+    position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
+    font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-faint);
+    display:flex;flex-direction:column;align-items:center;gap:12px;
+  }
+  .scroll-cue::after{
+    content:"";width:1px;height:44px;
+    background:linear-gradient(var(--gold),transparent);
+    animation:cue 2.2s ease-in-out infinite;
+  }
+  @keyframes cue{0%,100%{opacity:.25;transform:scaleY(.6);transform-origin:top}50%{opacity:1;transform:scaleY(1)}}
+
+  /* ---------- sections ---------- */
+  section{padding:118px 0;position:relative}
+  .sec-eyebrow{
+    font-size:12px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:26px;display:flex;align-items:center;gap:16px;
+  }
+  .sec-eyebrow::before{content:"";width:44px;height:1px;background:var(--gold);flex:none}
+  h2{
+    font-family:var(--serif);font-weight:400;
+    font-size:clamp(32px,4.4vw,54px);
+    line-height:1.12;letter-spacing:-.01em;
+    max-width:22ch;margin-bottom:28px;
+  }
+  h2 em{font-style:italic;color:var(--gold-bright)}
+  .body-col{max-width:62ch;color:var(--ink-dim)}
+  .body-col p+p{margin-top:18px}
+  .body-col strong,.pillar-copy strong{color:var(--ink);font-weight:600}
+  .alt{background:var(--bg-2)}
+  .hairline{border-top:1px solid var(--line-soft)}
+
+  /* ---------- pillars ---------- */
+  .pillar-tag{
+    display:inline-flex;align-items:center;gap:12px;
+    font-size:12px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--gold);border:1px solid var(--line);
+    padding:9px 20px;border-radius:100px;margin-bottom:28px;
+  }
+  .pillar-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:72px;align-items:start}
+  @media (max-width:880px){.pillar-grid{grid-template-columns:1fr;gap:44px}}
+  .pillar-copy{color:var(--ink-dim)}
+  .pillar-copy p+p{margin-top:18px}
+  ul.deliv{list-style:none;display:grid;gap:0}
+  ul.deliv li{
+    padding:22px 0 22px 34px;position:relative;
+    border-bottom:1px solid var(--line-soft);color:var(--ink-dim);
+  }
+  ul.deliv li:first-child{border-top:1px solid var(--line-soft)}
+  ul.deliv li::before{
+    content:"";position:absolute;left:2px;top:31px;
+    width:7px;height:7px;transform:rotate(45deg);background:var(--gold);
+  }
+  ul.deliv b{display:block;color:var(--ink);font-weight:600;margin-bottom:4px;font-size:16.5px}
+  ul.deliv li{font-size:15px;line-height:1.6}
+  .aside-card{
+    background:linear-gradient(160deg,var(--bg-3),var(--bg-2));
+    border:1px solid var(--line);border-radius:18px;
+    padding:34px 32px;margin-top:8px;
+  }
+  .aside-card .num{
+    font-family:var(--serif);font-size:34px;color:var(--gold-bright);line-height:1.1;margin-bottom:8px;
+  }
+  .aside-card p{font-size:14.5px;color:var(--ink-dim);line-height:1.6}
+  .aside-card + .aside-card{margin-top:20px}
+
+  /* ---------- add-on ---------- */
+  .addon{
+    background:
+      radial-gradient(760px 400px at 88% 0%,rgba(200,162,75,.1),transparent 65%),
+      var(--bg-2);
+  }
+  .addon-badge{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;
+    color:#0b0a08;background:var(--gold);padding:7px 16px;border-radius:100px;margin-bottom:26px;
+  }
+
+  /* ---------- keep ---------- */
+  .keep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px}
+  @media (max-width:820px){.keep-grid{grid-template-columns:1fr}}
+  .keep-card{
+    border:1px solid var(--line-soft);border-radius:18px;
+    padding:38px 30px;background:var(--bg-2);
+    transition:border-color .4s,transform .4s;
+  }
+  .keep-card:hover{border-color:var(--line);transform:translateY(-4px)}
+  .keep-card .k-icon{
+    font-family:var(--serif);font-style:italic;font-size:26px;color:var(--gold);
+    margin-bottom:18px;
+  }
+  .keep-card h3{font-family:var(--serif);font-weight:500;font-size:22px;line-height:1.25;margin-bottom:12px}
+  .keep-card p{font-size:14.5px;color:var(--ink-dim)}
+
+  /* ---------- proof ---------- */
+  .logo-row{
+    display:flex;flex-wrap:wrap;gap:14px 44px;align-items:center;
+    margin:46px 0 70px;
+  }
+  .cl{
+    font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-faint);font-size:15px;
+    transition:color .35s;padding:8px 0;
+  }
+  .cl:hover{color:var(--ink)}
+  .cl.serifed{font-family:var(--serif);font-weight:600;text-transform:none;letter-spacing:.02em;font-size:18px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:70px}
+  @media (max-width:820px){.stats{grid-template-columns:1fr}}
+  .stat{
+    border:1px solid var(--line);border-radius:18px;padding:36px 30px;
+    background:linear-gradient(165deg,rgba(200,162,75,.06),transparent 55%),var(--bg);
+  }
+  .stat .n{
+    font-family:var(--serif);font-size:clamp(44px,4.6vw,58px);line-height:1;
+    color:var(--gold-bright);margin-bottom:14px;
+  }
+  .stat p{font-size:14.5px;color:var(--ink-dim)}
+  .cases{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  @media (max-width:880px){.cases{grid-template-columns:1fr}}
+  .case{
+    border:1px solid var(--line-soft);border-radius:18px;overflow:hidden;
+    background:var(--bg-2);transition:transform .4s,border-color .4s;
+  }
+  .case:hover{transform:translateY(-5px);border-color:var(--line)}
+  .case-visual{
+    height:170px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  }
+  .case-visual .mark{
+    font-family:var(--serif);font-size:52px;font-weight:500;letter-spacing:.02em;
+    color:rgba(236,231,221,.92);position:relative;z-index:1;
+  }
+  .cv-1{background:radial-gradient(140% 130% at 20% 0%,#2a2413,#14110a 70%)}
+  .cv-2{background:radial-gradient(140% 130% at 80% 0%,#1d2118,#10120c 70%)}
+  .cv-3{background:radial-gradient(140% 130% at 50% 110%,#241a20,#120e11 70%)}
+  .case-visual::after{
+    content:"";position:absolute;inset:0;
+    background-image:radial-gradient(rgba(236,231,221,.05) 1px,transparent 1px);
+    background-size:18px 18px;
+  }
+  .case-body{padding:26px 26px 30px}
+  .case-tag{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+  .case-body h3{font-family:var(--serif);font-weight:500;font-size:21px;line-height:1.3;margin-bottom:10px}
+  .case-body p{font-size:14px;color:var(--ink-dim)}
+
+  /* ---------- also ---------- */
+  .also p{max-width:60ch;color:var(--ink-dim);font-size:clamp(17px,1.8vw,20px);line-height:1.7}
+
+  /* ---------- closing ---------- */
+  .closing{
+    padding:150px 0 130px;text-align:center;
+    background:
+      radial-gradient(900px 520px at 50% 0%,rgba(200,162,75,.12),transparent 65%),
+      var(--bg);
+  }
+  .closing .logo{font-size:26px;margin-bottom:38px;display:inline-block}
+  .closing h2{margin:0 auto 22px;max-width:19ch}
+  .closing .sub{color:var(--ink-dim);max-width:46ch;margin:0 auto 44px}
+  .closing .hero-ctas{justify-content:center}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line-soft);padding:46px 0 60px;font-size:13.5px;color:var(--ink-faint)}
+  .foot-grid{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .foot-contact{display:flex;gap:26px;flex-wrap:wrap}
+  .foot-contact a{color:var(--ink-dim);transition:color .3s}
+  .foot-contact a:hover{color:var(--gold-bright)}
+  footer .fine{margin-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <div class="header-in">
+    <a class="logo" href="#top">DGTL<span>.</span></a>
+    <nav class="header-cta">
+      <a class="header-email" href="mailto:stephen@dgtlgroup.io">stephen@dgtlgroup.io</a>
+      <a class="btn btn-gold" href="tel:7053918417">Call 705-391-8417</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <p class="eyebrow rv" data-slot="prepared-for">Prepared for <span data-slot="brand-name">Your&nbsp;Brand</span> · by DGTL</p>
+    <h1 class="rv d1" data-slot="hero-headline">You've outgrown your branding. <em>Time it caught up.</em></h1>
+    <p class="hero-sub rv d2" data-slot="hero-subhead">You've spent years building something real — the reputation, the customers, the trust. The visual identity just hasn't kept pace. This is how we redesign it front to back, without losing an ounce of the equity you've earned.</p>
+    <div class="hero-ctas rv d3">
+      <a class="btn btn-gold" href="tel:7053918417">Call 705-391-8417</a>
+      <a class="btn btn-ghost" href="mailto:stephen@dgtlgroup.io">Email Stephen →</a>
+    </div>
+  </div>
+  <div class="scroll-cue">Scroll</div>
+</section>
+
+<!-- ============ 01 · OPPORTUNITY ============ -->
+<section class="alt">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">01 — The opportunity</p>
+    <h2 class="rv d1" data-slot="opportunity-headline">The equity is real. The identity undersells it.</h2>
+    <div class="body-col rv d2" data-slot="opportunity-body">
+      <p>Your customers already believe in the work. But every touchpoint that still carries the old branding — the logo, the signage, the business card, the email footer — quietly tells them you're a smaller operation than you've become.</p>
+      <p>That gap is the upside. A brand that finally <strong>looks like what it's worth</strong> raises the perceived value of everything it touches: your pricing, your proposals, your storefront, your inbox. Closing that gap, cleanly and completely, is exactly what we're built for.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 · WHO ============ -->
+<section class="hairline">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">02 — Who you'd be working with</p>
+    <h2 class="rv d1">One team, front to back.</h2>
+    <div class="body-col rv d2">
+      <p>DGTL is a full-service creative and marketing group — <em style="color:var(--gold-bright)">branding, content, advertising and web, crafted with brilliance, attention, precision.</em></p>
+      <p>Everything below is designed and produced in-house. No handoffs, no juggling a logo designer, a printer, a signage shop and a template builder — the people who redesign your identity are the people who roll it out onto every surface it lives on.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PILLAR 01 ============ -->
+<section class="alt">
+  <div class="wrap">
+    <div class="pillar-grid">
+      <div>
+        <p class="pillar-tag rv">Pillar 01 · The identity</p>
+        <h2 class="rv d1">A modern identity that keeps everything you've earned.</h2>
+        <div class="pillar-copy rv d2">
+          <p data-slot="pillar-01-context">A rebrand isn't a restart. We begin with what your brand has already built — the recognition, the goodwill, the story — and redesign around it.</p>
+          <p>The result is an identity system that feels current, confident and expensive, while your longest-standing customers still recognize it as <strong>unmistakably yours</strong>.</p>
+        </div>
+        <div class="aside-card rv d3">
+          <div class="num">Old → New</div>
+          <p>Every decision is documented and defended: why this mark, why this palette, why this type. You get a rationale, not just artwork — so the brand holds up in every future decision.</p>
+        </div>
+      </div>
+      <ul class="deliv rv d2">
+        <li><b>Brand audit</b>Where the current identity works, where it leaks value, and what equity must carry forward.</li>
+        <li><b>Full identity system</b>Color palette, typography, graphic language, photography direction and voice — one coherent system.</li>
+        <li><b>Complete logo suite</b>Primary mark, secondary lockups, monogram and icon — built for every size and surface, print to favicon.</li>
+        <li><b>Brand guidelines</b>A definitive, usable guide so every future hire, printer and partner applies the brand correctly.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PILLAR 02 ============ -->
+<section>
+  <div class="wrap">
+    <div class="pillar-grid">
+      <div>
+        <p class="pillar-tag rv">Pillar 02 · The rollout kit</p>
+        <h2 class="rv d1">Every touchpoint, produced and delivered.</h2>
+        <div class="pillar-copy rv d2">
+          <p>Most rebrands die at the handoff — a beautiful logo file, then months of chasing printers and template builders. We don't hand off. <strong>We produce the entire kit</strong>, physical and digital, and deliver it ready to deploy.</p>
+          <p>One team, front to back. No vendors to juggle, no inconsistencies to chase.</p>
+        </div>
+        <div class="aside-card rv d3">
+          <div class="num">Tap → Save</div>
+          <p>NFC-enabled cards and tags turn a physical handshake into a digital one — a tap saves your details, opens your site or drops a review link. The rebrand works even after you leave the room.</p>
+        </div>
+      </div>
+      <ul class="deliv rv d2">
+        <li><b>Graphic media assets</b>Social templates, branded carousels, banners and campaign-ready graphics in the new system.</li>
+        <li><b>Email marketing templates</b>Designed, coded and tested — newsletters, promotions and transactional sends that match the brand.</li>
+        <li><b>Signage</b>Storefront, interior, wayfinding and vehicle-ready artwork, prepared to production spec.</li>
+        <li><b>Print &amp; promotional materials</b>Business cards, flyers, brochures and branded promo pieces — designed, printed and in your hands.</li>
+        <li><b>NFC tags &amp; smart cards</b>Tap-to-connect cards and tags programmed to your links, ready to hand out on day one.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ADD-ON ============ -->
+<section class="addon">
+  <div class="wrap">
+    <span class="addon-badge rv">Optional add-on</span>
+    <h2 class="rv d1">A launch that looks like a launch.</h2>
+    <div class="body-col rv d2">
+      <p data-slot="addon-body">When the new identity is ready, we can put it to work immediately — a content and media production sprint to announce the rebrand, or a website refresh so <span data-slot="brand-name">your brand</span>'s digital home matches the new standard from the first click. Available whenever you want the relaunch to land loud.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 · WHAT YOU KEEP ============ -->
+<section class="alt">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">03 — What you keep</p>
+    <h2 class="rv d1">Own the whole system, not a logo file.</h2>
+    <div class="body-col rv d2">
+      <p>Everything we build is yours — source files, guidelines, templates and physical stock. No retainers required to use your own brand, no assets held hostage.</p>
+    </div>
+    <div class="keep-grid">
+      <div class="keep-card rv">
+        <div class="k-icon">Aa</div>
+        <h3>The master brand system</h3>
+        <p>Full identity files and the guidelines that govern them — every logo, color, typeface and rule, documented and owned outright.</p>
+      </div>
+      <div class="keep-card rv d1">
+        <div class="k-icon">⧉</div>
+        <h3>Editable templates</h3>
+        <p>Email, social and print templates your team can deploy and adapt forever — on-brand by default, no designer required.</p>
+      </div>
+      <div class="keep-card rv d2">
+        <div class="k-icon">◈</div>
+        <h3>Physical materials, in hand</h3>
+        <p>Printed cards, flyers, signage artwork and programmed NFC tags — produced, delivered and ready to use on day one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 · PROOF ============ -->
+<section class="hairline">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">04 — Proof</p>
+    <h2 class="rv d1">The receipts.</h2>
+    <p class="body-col rv d2">Brands we've created and shipped work for:</p>
+
+    <div class="logo-row rv d2" aria-label="Client logos">
+      <span class="cl serifed">Canon</span>
+      <span class="cl">On Running</span>
+      <span class="cl serifed">Walmart</span>
+      <span class="cl">DJI</span>
+      <span class="cl">GameStop</span>
+      <span class="cl serifed">Epidemic Sound</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat rv"><div class="n">12M+</div><p>views from one creator-led content system — Epidemic Sound</p></div>
+      <div class="stat rv d1"><div class="n">2×</div><p>organic traffic in 12 months — The 400 Market</p></div>
+      <div class="stat rv d2"><div class="n">75+</div><p>projects shipped across 12+ countries — DGTL</p></div>
+    </div>
+
+    <div class="cases">
+      <article class="case rv">
+        <div class="case-visual cv-1"><span class="mark">ES</span></div>
+        <div class="case-body">
+          <p class="case-tag">Content · 2023</p>
+          <h3>Epidemic Sound — Creator-Led Relaunch</h3>
+          <p>A pillar-based short-form system → 12M+ views across organic and paid.</p>
+        </div>
+      </article>
+      <article class="case rv d1">
+        <div class="case-visual cv-2"><span class="mark">400</span></div>
+        <div class="case-body">
+          <p class="case-tag">Web · Performance · 2024–25</p>
+          <h3>The 400 Market — Speed &amp; SEO</h3>
+          <p>Mobile Lighthouse 45→86, organic traffic doubled in a year.</p>
+        </div>
+      </article>
+      <article class="case rv d2">
+        <div class="case-visual cv-3"><span class="mark">SS</span></div>
+        <div class="case-body">
+          <p class="case-tag">Production · 2024</p>
+          <h3>Six Senses Ibiza — One Shoot, Four Streams</h3>
+          <p>A single production block → a full multi-channel asset library.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 · ALSO AVAILABLE ============ -->
+<section class="alt also">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">05 — Also available</p>
+    <p class="rv d1">Content production, paid advertising, website development, ongoing maintenance and custom software are all in-house too — ready whenever the new brand needs an engine behind it, never the thing that gets in the way of the work above.</p>
+  </div>
+</section>
+
+<!-- ============ CLOSING ============ -->
+<section class="closing">
+  <div class="wrap">
+    <span class="logo rv">DGTL<span>.</span></span>
+    <h2 class="rv d1" data-slot="closing-headline">Let's make <span data-slot="brand-name">your brand</span> look like the company it's become.</h2>
+    <p class="sub rv d2" data-slot="closing-body">One call is all it takes to map the redesign and the full rollout behind it.</p>
+    <div class="hero-ctas rv d3">
+      <a class="btn btn-gold" href="tel:7053918417">Call 705-391-8417</a>
+      <a class="btn btn-ghost" href="mailto:stephen@dgtlgroup.io">stephen@dgtlgroup.io</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <p data-slot="footer-prepared-for">Prepared for <span data-slot="brand-name">Your Brand</span> · by DGTL Group</p>
+        <p class="fine">DGTL Group — branding, content, advertising &amp; web, in-house.</p>
+      </div>
+      <div class="foot-contact">
+        <a href="tel:7053918417">705-391-8417</a>
+        <a href="mailto:stephen@dgtlgroup.io">stephen@dgtlgroup.io</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // sticky header state
+  var hdr=document.getElementById('hdr');
+  var onScroll=function(){hdr.classList.toggle('scrolled',window.scrollY>24)};
+  window.addEventListener('scroll',onScroll,{passive:true});
+  onScroll();
+
+  // scroll reveal
+  var els=document.querySelectorAll('.rv');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}
+      });
+    },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+    els.forEach(function(el){io.observe(el)});
+  }else{
+    els.forEach(function(el){el.classList.add('on')});
+  }
+</script>
+</body>
+</html>

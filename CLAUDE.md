@@ -99,6 +99,32 @@ the index, sitemap and cross-links are generated from the manifests.
 - Before marking publishing work complete: run `python3 tools/check-links.py` — it must report
   `missing=0`. If you added a pack, confirm `pack.json` exists and the journal index links it.
 
+## Pitches — same model, one folder per pitch
+
+`pitches/<slug>/` with `index.html` as the hub, `teaser.html` beside it when there is a short
+front-of-funnel version, `media/` for its own assets, and a `pitch.json` manifest. Registered in
+`pitches/pitches.index.json`. Deploy scheme is `https://pitch.dgtlmedia.io/<slug>/`.
+
+- **`pitches/_templates/` holds the generic "Your Brand × DGTL" offer pages** — website overhaul,
+  brand redesign kit, influencer activation. These are cloned per prospect; they are not pitches.
+  Never send a `_templates/` page to a client, and never personalise one in place — copy it to a
+  new `pitches/<slug>/` first.
+- **Personalisation is by `data-slot`.** The offer templates carry a `DATA-SLOT MANIFEST` comment
+  in their `<head>` listing every replaceable element. Replace by slot; leave the fixed content
+  (DGTL contact details, proof stats, client logos, case studies) alone.
+- **No domain-absolute links.** A teaser links its full pitch as `index.html`, not `/full/`. Root
+  paths only resolve when served from the domain root, so they break both locally and under the
+  `/<slug>/` deploy scheme. The link checker reports these as `root_absolute`.
+- **Declare missing assets, don't leave them broken.** If a pitch ships before its photos arrive,
+  list them in `pendingAssets` in `pitch.json`. The checker then reports them as `pending` instead
+  of `missing`, so the check stays green and a real break is still visible. A permanently red check
+  gets ignored, which is how the ESCOTT photos went unnoticed.
+- Pitch pages are self-contained by design (inlined styles, often inlined images) — they are sent
+  as one-off artifacts and must survive being served from anywhere. Do **not** refactor them onto
+  `journal/_shared/`.
+- Before marking pitch work complete: `python3 tools/check-links.py` must report `missing=0`, and
+  any new pitch needs a `pitch.json` plus an entry in `pitches.index.json`.
+
 ## About `brain/`
 
 Carried over wholesale from `content-checkout-funnel`. Because `platform/` lives here too, the
