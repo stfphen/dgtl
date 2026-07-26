@@ -15,7 +15,13 @@ import os, re, glob, sys, json
 REPO = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 EXT = (".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".mp4", ".webp", ".html", ".json", ".webm")
 
-# Each entry: (label, list of glob patterns relative to the repo root)
+# Each entry: (label, glob patterns relative to the repo root, root_absolute_ok)
+#
+# root_absolute_ok=False  → an href="/foo" is a DEFECT. journal/ and pitches/ are served from a
+#                           subfolder (/packs/<slug>/, /<slug>/), so a root path cannot resolve.
+# root_absolute_ok=True   → an href="/foo" is CORRECT. Each site in sites/ deploys at its own
+#                           domain root, and a 404 page in particular is served from arbitrary
+#                           paths, so root-absolute is the only thing that works there.
 SCOPES = [
     ("journal", [
         "journal/packs/**/*.html",
@@ -23,11 +29,14 @@ SCOPES = [
         "journal/cases/*.html",
         "journal/_templates/*.html",
         "journal/_templates/examples/*.html",
-    ]),
+    ], False),
     ("pitches", [
         "pitches/*/*.html",
         "pitches/_templates/*.html",
-    ]),
+    ], False),
+    ("sites", [
+        "sites/**/*.html",
+    ], True),
 ]
 
 
@@ -56,7 +65,7 @@ def main():
     pending_hits = []
     declared = pending_assets()
 
-    for label, patterns in SCOPES:
+    for label, patterns, root_abs_ok in SCOPES:
         files = []
         for pat in patterns:
             files += glob.glob(os.path.join(REPO, pat), recursive=True)
@@ -67,9 +76,10 @@ def main():
             for _attr, m in re.findall(r'(src|href)="([^"]+)"', html):
                 if re.match(r'^(https?:|#|mailto:|tel:|data:|javascript:|//)', m) or m in ('', '…'):
                     continue
-                # root-absolute local path: cannot resolve from a subfolder deploy
+                # root-absolute local path: only meaningful if this scope deploys at a domain root
                 if m.startswith('/'):
-                    absolutes.append((rel, m))
+                    if not root_abs_ok:
+                        absolutes.append((rel, m))
                     continue
                 u = m.split('#')[0].split('?')[0]
                 if not u or not u.lower().endswith(EXT):

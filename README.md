@@ -2,13 +2,17 @@
 
 The DGTL monorepo — the platform we run on and everything we publish, under one brand.
 
-Two halves, one identity:
+Four surfaces, one identity:
 
 - **`platform/`** — the DGTL Growth Platform: a multi-tenant Next.js app with the admin panel,
   lead pipeline, prospecting, batch builder, outreach engine, telephony, checkout and funding
   modules.
 - **`journal/`, `pitches/`, `deploy/`, `engine/`** — the publishing operation: Influence Journal
   creator packs, pitch and offer pages, deploy runbooks, and the tooling that generates them.
+- **`apps/`** — standalone products. `apps/dgtl-os/` is the DGTL OS terminal with its Worker API
+  and Mac-local server.
+- **`sites/`** — client deliverables that aren't tenant funnels: static client sites and one-off
+  client tools.
 
 Built to scale on both sides. Every creator is a self-contained, manifest-described **pack** and
 every pitch a **pitch folder**, so adding talent or a proposal is one folder from a template. Every
@@ -38,6 +42,13 @@ dgtl/
 ├── pitches/                    # pitch + offer pages
 │   ├── _templates/             # generic "Your Brand × DGTL" offers, cloned per prospect
 │   └── <slug>/                 # index.html, optional teaser.html, media/, pitch.json
+│
+├── apps/                       # standalone products (not platform, not publishing)
+│   └── dgtl-os/                # terminal.html + api/ (CF Worker) + local/ (Mac server)
+│
+├── sites/                      # per-client deliverables that aren't tenant funnels
+│   ├── polishstone/            # 13-page static site, deploys at its own domain root
+│   └── on-home-decor/          # local SEO launch tracker
 │
 ├── engine/                     # the pack-generating skill, versioned with its output
 ├── deploy/                     # domain + deploy blueprints, runbooks, the decks hosting rig

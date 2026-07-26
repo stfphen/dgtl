@@ -11,7 +11,7 @@ Populate the DGTL creator-feature template from a fields.json.
 Usage:
   python3 populate.py --template assets/creator-feature-template.html \
                       --fields <slug>.fields.json \
-                      --out /path/to/influence-journal/creators/<slug>.html
+                      --out journal/packs/<slug>/index.html
 """
 import argparse, json, re, sys, html
 from pathlib import Path

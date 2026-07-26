@@ -181,3 +181,23 @@ rest — don't run both effects at once (honours the "one confident accent momen
 - [ ] Republish the skill from your source, or update via **Settings → Capabilities**.
 - [ ] Regenerate one page + one teaser and confirm the headline cycles 5–7s and holds line 0 under
       reduced motion.
+
+---
+
+## APPLIED — 2026-07-25
+
+Applied to the skill sources in `engine/`, which is now the source of truth (see `engine/README.md`).
+This patch is kept as the record of *why* the change was made; do not re-apply it.
+
+- [x] Shared block (§2) added to `design-system.md` in `dgtl-pitch-pages`, `dgtl-pitch-teasers` **and
+      `dgtl-pitch-composer`** — the composer did not exist when this patch was written but shares the
+      same design system, so it was included to keep the three in lockstep.
+- [x] Teaser `teaser-blueprint.md` §2 Hero patched.
+- [x] Pages `page-blueprint.md` §2 Hero + agent prompt (STEP 3) patched; the same agent-prompt line in
+      the composer's `build-verify-deploy.md` patched too.
+- [x] Copy rules (§5) folded into the shared block rather than kept separate, so they travel with the
+      markup they govern.
+- [x] Archetype E note (§6) added to `variance-system.md`.
+- [ ] **Re-export to the installed skills** — `python3 tools/export-skills.py --all --to <dir>`.
+- [ ] **Regenerate one page + one teaser** and confirm the headline cycles 5–7s and holds line 0
+      under reduced motion. Not yet done — the rotation ships untested against a real build.

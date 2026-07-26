@@ -5,6 +5,8 @@ dist/
 build/
 coverage/
 *.tgz
+__pycache__/
+*.pyc
 
 # Secrets — .env.example is the only env file that ships
 .env
@@ -32,3 +34,7 @@ Thumbs.db
 
 # Redundant build archives (source dirs are tracked instead)
 *.zip
+
+# DGTL OS — the local server reads its key from this file; never commit one
+**/api-key.txt
+apps/dgtl-os/local/knowledge/knowledge.json.local

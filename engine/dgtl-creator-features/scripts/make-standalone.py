@@ -17,15 +17,16 @@ What it does:
 
 Usage:
   # preview-ready (assets inlined, links left relative)
-  python3 make-standalone.py --file creators/shane-boyer.html --out creators/shane-boyer.standalone.html
+  python3 make-standalone.py --file journal/packs/shane-boyer/index.html \
+      --out journal/packs/shane-boyer/index.standalone.html
 
   # deploy-ready (also absolutizes cross-links to the live slug graph).
   # --page-url is this page's FILE-style live URL — it must mirror the page's path under the
   # site root (end in the real filename, not a trailing slash), so relative links like
   # "../index.html" and "peter-mckinnon.html" resolve to the correct absolute targets.
-  python3 make-standalone.py --file creators/shane-boyer.html \
-      --out creators/shane-boyer.standalone.html \
-      --page-url https://pitch.dgtlmedia.io/journal/creators/shane-boyer.html
+  python3 make-standalone.py --file journal/packs/shane-boyer/index.html \
+      --out journal/packs/shane-boyer/index.standalone.html \
+      --page-url <the pack's real published URL>
 """
 import argparse, base64, re
 from pathlib import Path
@@ -46,7 +47,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--page-url", default=None,
                     help="This page's FILE-style live URL, mirroring its path under the site root "
-                         "(e.g. https://pitch.dgtlmedia.io/journal/creators/<slug>.html). If set, local "
+                         "(ask the user - the scheme is unsettled; see SKILL.md Deploy). If set, local "
                          ".html cross-links are resolved against it into absolute URLs for connectivity.")
     args = ap.parse_args()
     src = Path(args.file); base = src.parent

@@ -13,7 +13,7 @@
  *   node capture_media.mjs --jobs jobs.json
  *
  * jobs.json: [
- *   { "url": "https://…", "out": "/abs/path/assets/media/<slug>/work-1.png",
+ *   { "url": "https://…", "out": "/abs/path/journal/packs/<slug>/media/work-1.png",
  *     "width": 1200, "height": 1500, "fullPage": false, "waitMs": 1500,
  *     "clip": { "x": 0, "y": 0, "width": 1080, "height": 1350 } }   // clip optional
  * ]
