@@ -1,0 +1,25 @@
+# No Git LFS. Prototypes and rendered video were deliberately left out of this repo, so
+# nothing here is large enough to need it — largest asset is ~530 KB. Keep it that way: if you
+# ever need to add video, host it and reference the URL rather than committing the file.
+
+# Normalize text
+*.html text
+*.css  text
+*.js   text
+*.jsx  text
+*.mjs  text
+*.ts   text
+*.md   text
+*.json text
+*.sql  text
+*.sh   text eol=lf
+*.py   text eol=lf
+
+# Treat as binary
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.wav  binary
+
+# Keep generated lockfile diffs out of review noise
+package-lock.json linguist-generated=true -diff

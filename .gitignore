@@ -1,0 +1,34 @@
+# Dependencies & build output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.tgz
+
+# Secrets — .env.example is the only env file that ships
+.env
+.env.*
+!.env.example
+
+# Platform runtime state (JSON fallback store + media-library uploads)
+platform/data/
+platform/public/uploads/
+backups/
+*.dump
+
+# Generated standalone pages (built on demand from source via engine/)
+**/*.standalone.html
+
+# Obsidian: vault config is tracked, vendored plugin bundles are not
+brain/.obsidian/plugins/
+brain/.obsidian/workspace.json
+
+# OS / editor cruft
+.DS_Store
+._*
+Thumbs.db
+*.log
+
+# Redundant build archives (source dirs are tracked instead)
+*.zip
