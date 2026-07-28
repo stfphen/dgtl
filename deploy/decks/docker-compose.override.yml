@@ -1,0 +1,4 @@
+services:
+  dgtl-decks:
+    volumes:
+      - /opt/dgtl-decks/site/pitch:/usr/share/nginx/html/pitch:ro
