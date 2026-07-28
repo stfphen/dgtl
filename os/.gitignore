@@ -1,0 +1,3 @@
+# never commit secrets
+.env
+api-key.txt
