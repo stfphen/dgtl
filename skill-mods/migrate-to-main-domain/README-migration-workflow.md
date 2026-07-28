@@ -89,3 +89,22 @@ swallowed by the Next app or 404. The nginx `location /pitch/` block is matched 
 This can become a **companion skill** (e.g. `dgtl-promote-page`) or a one-line hook appended to your
 deploy shortcut, so "promote to main domain" is a single command right after a page is built with the
 pitch/teaser skills. Say the word and I'll package it.
+
+---
+
+## Relationship to the skills (2026-07-25)
+
+The skills in `engine/` are now written so that this migration does **not** require patching them
+when it runs:
+
+- No skill hardcodes a published URL. `canonicalUrl` stays empty in `pitch.json` / `pack.json` until
+  a page is actually live, and `canonical` / `og:url` are set to whatever the real URL is at that
+  point — `pitch.dgtlmedia.io/<slug>/` today, `dgtlgroup.io/pitch/<slug>/` after promotion.
+- Links inside a pitch folder are **relative** (`index.html`, `teaser.html`, `media/…`), so they
+  survive promotion untouched. That is the main reason the relative-link rule is enforced by
+  `tools/check-links.py` rather than left to taste.
+- Cross-*pitch* links are the only absolute ones, and they are the set this workflow has to rewrite.
+  Keep them few.
+
+When you promote a page with `promote-page.sh`, update that pitch's `canonicalUrl` in its
+`pitch.json` in the same pass, or the repo and the live page will disagree about where it lives.

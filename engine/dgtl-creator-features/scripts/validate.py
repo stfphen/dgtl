@@ -5,7 +5,7 @@ Validate a populated creator feature before publishing.
 Fails on the things that quietly break SEO or the page; warns on soft issues.
 
 Usage:
-  python3 validate.py --file /path/to/influence-journal/creators/<slug>.html --name "Creator Name"
+  python3 validate.py --file journal/packs/<slug>/index.html --name "Creator Name"
 """
 import argparse, json, re, sys
 from pathlib import Path

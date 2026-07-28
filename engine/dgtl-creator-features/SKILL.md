@@ -53,7 +53,7 @@ Read `references/sourcing-and-rights.md` before writing anything — it defines 
 
 The page is only as good as its images. Prefer, in order: (1) media the user supplied, (2) official embeds / oEmbed thumbnails, (3) **screenshots of public pages**.
 
-Social posts, reels and news articles are JavaScript-heavy and often need a real rendered browser, so **use the Chrome browser tools** (`mcp__claude-in-chrome__navigate` then a screenshot) to capture them — that renders the page the way a human sees it. For batch screenshots of simple public URLs you can use `scripts/capture_media.mjs` (headless helper). Save everything to `influence-journal/assets/media/<slug>/`.
+Social posts, reels and news articles are JavaScript-heavy and often need a real rendered browser, so **use the Chrome browser tools** (`mcp__claude-in-chrome__navigate` then a screenshot) to capture them — that renders the page the way a human sees it. For batch screenshots of simple public URLs you can use `scripts/capture_media.mjs` (headless helper). Save everything into the pack's own media folder, `journal/packs/<slug>/media/`.
 
 Rules that keep this clean and lawful (details in `references/sourcing-and-rights.md`):
 - Screenshots are **editorial reference** — always attribute (creator handle + link to the source) in the caption/alt.
@@ -74,11 +74,14 @@ The single most important SEO move: **the person's name is the primary keyword.*
 
 Don't hand-edit 40 placeholders — you'll miss one. Instead build a `fields.json` (every token is a key; see `references/field-guide.md` for what each one wants and how long it should be), then run the populate script. It replaces text tokens **and** injects your captured images into the hero and portfolio slots.
 
+Keep the `fields.json` inside the pack (`journal/packs/<slug>/media/<slug>.fields.json`) — every
+existing pack does, and it's what makes a page rebuildable a year later.
+
 ```bash
-python3 scripts/populate.py \
-  --template assets/creator-feature-template.html \
-  --fields <slug>.fields.json \
-  --out <path-to>/influence-journal/creators/<slug>.html
+python3 engine/dgtl-creator-features/scripts/populate.py \
+  --template engine/dgtl-creator-features/assets/creator-feature-template.html \
+  --fields journal/packs/<slug>/media/<slug>.fields.json \
+  --out    journal/packs/<slug>/index.html
 ```
 
 `fields.json` shape (full reference in `references/field-guide.md`):
@@ -86,70 +89,166 @@ python3 scripts/populate.py \
 {
   "tokens": { "TITLE": "...", "HEADLINE_A": "...", "HEADLINE_GOLD": "...", "...": "..." },
   "media": {
-    "hero": { "src": "../assets/media/<slug>/hero.jpg", "alt": "<Name> — ..." },
-    "pf1":  { "src": "../assets/media/<slug>/work-1.jpg", "alt": "..." }
+    "hero": { "src": "media/hero.jpg", "alt": "<Name> — ..." },
+    "pf1":  { "src": "media/work-1.jpg", "alt": "..." }
   }
 }
 ```
-Paths in `media` are written **as they must appear in the final page** (i.e. relative to `creators/`, so `../assets/...`). Any hero/pf slot you omit keeps its on-brand gradient placeholder.
+
+Paths in `media` are written **as they must appear in the final page**, so they depend on where the
+page sits in the pack:
+
+| Page | shared CSS/JS | own media | pack hub |
+|---|---|---|---|
+| hub — `packs/<slug>/index.html` | `../../_shared/…` | `media/…` | — |
+| feature — `packs/<slug>/features/<x>.html` | `../../../_shared/…` | `../media/…` | `../index.html` |
+
+Any hero/pf slot you omit keeps its on-brand gradient placeholder.
 
 ### 5. Validate
 
 ```bash
-python3 scripts/validate.py --file <path-to>/influence-journal/creators/<slug>.html --name "<Creator Name>"
+python3 engine/dgtl-creator-features/scripts/validate.py \
+  --file journal/packs/<slug>/index.html --name "<Creator Name>"
 ```
 This fails loudly on the things that quietly break SEO or the page: leftover `{{TOKENS}}`, invalid JSON-LD, broken local links, `<img>` missing alt text, a title/description that's too long or too short, or an H1 that doesn't contain the creator's name. Fix anything it flags and re-run.
+
+Then run the repo-wide link check, which is the gate that actually blocks completion:
+
+```bash
+python3 tools/check-links.py        # must report missing=0
+```
 
 ### 6. Verify it looks right
 
 Screenshot the finished page (desktop + mobile) and actually look at it — real images seated correctly, gold used as an accent, nothing overflowing on mobile. Validate the schema against Google's Rich Results Test (paste the JSON-LD) when you can. A page that fails the eyeball test isn't done.
 
-### 7. Wire it into the network & deliver
+### 7. Write the manifest and register the pack
 
-- Add a card for the new piece to `influence-journal/index.html` (copy an existing `.wcard`, point it at `creators/<slug>.html`, give it a ghost metric). This is an internal backlink and how the hub passes authority to the new page.
-- Cross-link: from the new page's "More from the Journal" cards, point at 2 existing pieces; add the new piece to those pages' related cards where it fits. Dense, relevant internal linking is the backbone of ranking.
-- Deliver to the user: the page, the `Sources` list, and a short **backlink kit** (per `references/seo-and-backlinks.md`) — a ready-to-post caption/snippet the featured creator can share that links back to the page. The two-way link (you link to their work, they link to their feature) is the mechanism that builds traffic and authority for both sides.
+**A pack that isn't manifested and registered does not exist.** The journal index, the sitemap and
+the cross-links are all generated from the manifests — skipping this is how a page ends up live but
+orphaned.
 
-### 8. Build the deploy artifact (standalone) & ship
+Write `journal/packs/<slug>/pack.json`:
 
-DGTL hosts **one self-contained HTML per slug** (see *Deploy & connectivity* below), so the multi-file page must be flattened into a single file before it goes live. Run:
-
-```bash
-python3 scripts/make-standalone.py \
-  --file influence-journal/creators/<slug>.html \
-  --out  influence-journal/creators/<slug>.standalone.html \
-  --page-url https://pitch.dgtlmedia.io/journal/creators/<slug>.html
+```json
+{
+  "slug": "<slug>",
+  "name": "<Creator Name>",
+  "type": "creator",
+  "status": "published",
+  "hub": "index.html",
+  "features": ["features/<brand>.html"],
+  "cases": [],
+  "sources": "sources.md",
+  "backlinkKit": "backlink-kit.md",
+  "hasMedia": true,
+  "updated": "<YYYY-MM-DD>",
+  "canonicalUrl": ""
+}
 ```
 
-This inlines the CSS/JS/logos/images **and** rewrites the cross-page links to absolute
-`pitch.dgtlmedia.io` URLs, so the page renders anywhere (double-click, preview) *and* connects
-to the rest of the build. The `.standalone.html` is the exact file you upload to the portal.
+- `features` — brand/partnership pieces owned by this creator, as paths relative to the pack.
+- `cases` — a case study **owned by this creator** lives in `packs/<slug>/cases/` and is listed
+  here. An agency case not owned by one creator goes in `journal/cases/` and is registered under the
+  `cases` key of `packs.index.json` instead.
+- `sources` / `backlinkKit` — `null` if absent. Both should exist for a page you actually publish.
+- `canonicalUrl` — leave `""` until the deploy domain is settled (see *Deploy* below). Do not
+  invent one; every existing pack has this empty on purpose.
 
-Present **both** the editable multi-file page and the `.standalone.html`, plus the `Sources`
-list and the **backlink kit**. Tell the user: upload the standalone to **deploy.dgtlmedia.io**,
-note the slug, and hand the creator the backlink kit.
+Then add the slug to the `packs` array in `journal/packs/packs.index.json` and bump its `updated`
+date.
 
-## Where things live
+### 8. Wire it into the network & deliver
 
-This skill produces pages **inside the DGTL Influence Journal project** (the folder containing `influence-journal/index.html`, `creators/`, and `assets/dgtl-editorial.css`). The editable page and its shared assets live there; the **deploy artifact** is the flattened `.standalone.html`. If that project isn't present, create the piece there or tell the user you need the Journal project to publish into.
+- Add a card for the new piece to `journal/index.html` (copy an existing `.wcard`, point it at
+  `packs/<slug>/index.html`, give it a ghost metric). This is an internal backlink and how the hub
+  passes authority to the new page.
+- Cross-link: from the new page's "More from the Journal" cards, point at 2 existing packs; add the new piece to those pages' related cards where it fits. Dense, relevant internal linking is the backbone of ranking.
+- Write `sources.md` into the pack, and a `backlink-kit.md` (per `references/seo-and-backlinks.md`) — a ready-to-post caption/snippet the featured creator can share that links back to the page. The two-way link (you link to their work, they link to their feature) is the mechanism that builds traffic and authority for both sides.
+- Deliver to the user: the pack path, the `Sources` list, and the backlink kit.
 
-## Deploy & connectivity (DGTL VPS)
+### 9. Build the deploy artifact (standalone) & ship
 
-DGTL does **not** use Netlify. Publishing goes through the DGTL portal at **deploy.dgtlmedia.io**:
-upload the finished **single self-contained HTML** (the `.standalone.html`), which the portal
-indexes and serves at a slug under **https://pitch.dgtlmedia.io/<slug>**. One file per slug — so
-the deploy artifact must inline everything (no sibling folders); `scripts/make-standalone.py` is
-what produces it.
+DGTL hosts **one self-contained HTML per slug** (see *Deploy & connectivity* below), so the
+multi-file pack page must be flattened into a single file before it goes live. Run:
 
-Because every DGTL page — teaser, full pitch, and creator feature — lives at its own
-pitch.dgtlmedia.io slug, **cross-page links must be absolute** `https://pitch.dgtlmedia.io/…`
-URLs, and pages should link to **each other** so the VPS indexes a connected graph, not orphan
-pages:
+```bash
+python3 engine/dgtl-creator-features/scripts/make-standalone.py \
+  --file journal/packs/<slug>/index.html \
+  --out  journal/packs/<slug>/index.standalone.html \
+  --page-url <the page's real published URL>
+```
 
-- Creator feature ⇄ **Journal hub** — the hub card is the primary inbound link; the feature links back to the hub and related creators.
-- Creator feature ⇄ **the teaser / full pitch** the creator appears in — link both ways, so a prospect on a pitch can meet the creators, and a creator's fans can find the offer.
-- Set `canonical`, `og:url`, and every JSON-LD `@id` to the page's real pitch.dgtlmedia.io slug (already absolute in `fields.json`).
-- Keep a simple **slug registry** (offer / creator → slug) so links stay consistent as the build grows. When you feature a creator who appears in an existing pitch, add a link from that pitch to the new feature, and vice-versa. This two-way indexing is the point — it compounds across future builds.
+This inlines the CSS/JS/logos/images **and** rewrites cross-page links to absolute URLs, so the page
+renders anywhere (double-click, preview) *and* connects to the rest of the build.
+
+`.standalone.html` files are **generated build artifacts**. They are git-ignored, never hand-edited,
+and always regenerated from the pack — if you find yourself editing one, edit the pack and re-run.
+
+Present the pack, the standalone, the `Sources` list and the backlink kit. Tell the user which slug
+to upload it under, and hand the creator the backlink kit.
+
+## Where things live — the pack model
+
+Every creator is a **self-contained pack**: `journal/packs/<slug>/`, described by `pack.json`.
+
+```
+journal/
+  index.html                      # the hub — carries a .wcard per pack
+  _shared/                        # dgtl-editorial.css, journal.js, logos — the ONLY design source
+  cases/                          # agency cases not owned by one creator
+  packs/
+    packs.index.json              # the register: every pack slug + agency cases
+    <slug>/
+      index.html                  # the pack hub
+      pack.json                   # the manifest
+      media/                      # this pack's images + its <slug>.fields.json
+      features/<brand>.html       # optional brand/partnership pieces
+      cases/<case>.html           # optional, owned by this creator
+      sources.md
+      backlink-kit.md
+```
+
+Two rules that break things when ignored:
+
+- **Shared design lives only in `journal/_shared/`.** Never fork or copy CSS/JS into a pack. If a
+  pack needs a new visual treatment, add it to the shared stylesheet.
+- **A pack is self-contained otherwise.** Its media lives in its own `media/`, never in a global
+  asset pool.
+
+## Deploy & connectivity
+
+Publishing goes through the DGTL portal at **deploy.dgtlmedia.io**: upload the finished
+**single self-contained HTML** (the `.standalone.html`), which the portal indexes and serves at a
+slug. One file per slug — so the deploy artifact must inline everything (no sibling folders);
+`scripts/make-standalone.py` is what produces it.
+
+**The published URL scheme is not settled — do not hardcode one.** Journal pages historically sat at
+`pitch.dgtlmedia.io/journal/creators/<slug>.html`, which no longer matches the pack layout, and
+`skill-mods/migrate-to-main-domain/` moves ranking pages to `dgtlgroup.io/pitch/<slug>/` for the SEO
+authority. Until that migration lands:
+
+- Leave `canonicalUrl` empty in `pack.json` and ask the user for the real URL at publish time.
+- Set `canonical`, `og:url`, and every JSON-LD `@id` to that URL — one address, consistently, or
+  Google splits the signal.
+- Pass the same URL to `make-standalone.py --page-url`.
+
+Pages should link to **each other** so the host indexes a connected graph, not orphan pages:
+
+- Creator pack ⇄ **Journal hub** — the hub `.wcard` is the primary inbound link; the pack links back to the hub and related packs.
+- Creator pack ⇄ **the pitch** the creator appears in — link both ways, so a prospect on a pitch can meet the creators, and a creator's fans can find the offer.
+- `packs.index.json` and `pitches/pitches.index.json` **are** the slug registry — keep them accurate rather than tracking slugs anywhere else. When you feature a creator who appears in an existing pitch, add a link from that pitch to the new pack, and vice-versa. This two-way indexing is the point — it compounds across future builds.
+
+## Definition of done
+
+Do not call a pack finished until all five are true, and report the commands you actually ran:
+
+1. `journal/packs/<slug>/index.html` exists and `validate.py` passes on it.
+2. `journal/packs/<slug>/pack.json` exists and is accurate.
+3. The slug is listed in `journal/packs/packs.index.json`, whose `updated` date is bumped.
+4. `journal/index.html` carries a `.wcard` pointing at the pack.
+5. `python3 tools/check-links.py` reports **`missing=0`**.
 
 ## Guardrails (read `references/sourcing-and-rights.md` for the full version)
 

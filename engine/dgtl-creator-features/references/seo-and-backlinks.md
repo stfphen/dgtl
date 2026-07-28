@@ -46,9 +46,12 @@ These map 1:1 to the template's `FAQ_Q1..Q4` / `FAQ_A1..A4` and the FAQPage sche
 ## 4. Internal links — the authority backbone
 
 A new page ranks faster when the site points at it:
-- **Add a hub card** on `influence-journal/index.html` linking to the new page (copy a `.wcard`).
-- **Cross-link** the new page's "More from the Journal" cards to 2 existing pieces, and add the new
-  piece to those pieces' related cards where relevant.
+- **Add a hub card** on `journal/index.html` linking to `packs/<slug>/index.html` (copy a `.wcard`).
+- **Register the pack** — add the slug to `journal/packs/packs.index.json`. The sitemap and generated
+  cross-links come from the manifests, so an unregistered pack is invisible to them no matter how
+  many pages link to it.
+- **Cross-link** the new page's "More from the Journal" cards to 2 existing packs, and add the new
+  piece to those packs' related cards where relevant.
 - Use the creator's **name as anchor text** for at least one internal link to the page.
 - **Link across the funnel** — connect the feature to the teaser and/or full pitch the creator appears
   in, both ways (a prospect reading a pitch can meet the creators; a creator's audience can find the offer).

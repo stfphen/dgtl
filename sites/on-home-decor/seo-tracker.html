@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ON Home Decor — Local SEO Launch Tracker</title>
+<style>
+:root{
+  --s0:#0c0c0f; --s1:#131317; --s1h:#17171c; --s2:#1a1a20; --s3:#20202a;
+  --line:#232329; --line2:#2d2d36; --line3:#3a3a46;
+  --ink:#ececf3; --muted:#9797a8; --faint:#63636f;
+  --accent:#e2b84c; --accent2:#f2cf63; --accent-soft:#e2b84c1c; --accent-line:#e2b84c55;
+  --green:#5fcf8a; --red:#ef7676; --blue:#7aa7f7;
+  --radius:9px; --radius-lg:13px; --radius-sm:6px;
+  --ease:cubic-bezier(.22,1,.36,1); --dur:.15s;
+  --shadow-pop:0 12px 40px -10px #000d, 0 3px 10px -4px #0009;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--s0);color:var(--ink);font-family:var(--font);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent-soft)}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:920px;margin:0 auto;padding:0 20px 80px}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:20;background:#0c0c0fee;backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:18px 0 14px;margin-bottom:8px}
+.topbar .wrap{padding-top:0;padding-bottom:0}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{font-size:18px;font-weight:700;letter-spacing:-.015em;margin:0}
+.brand .sub{color:var(--muted);font-size:12.5px}
+.meta{color:var(--faint);font-size:11.5px;margin-top:2px}
+
+/* progress */
+.progress-row{display:flex;align-items:center;gap:14px;margin-top:14px}
+.bar{flex:1;height:8px;background:var(--s2);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width .4s var(--ease)}
+.pct{font-variant-numeric:tabular-nums;font-weight:700;font-size:13px;min-width:150px;text-align:right;color:var(--muted)}
+.pct b{color:var(--accent2)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;margin:22px 0 18px;flex-wrap:wrap}
+.tab{appearance:none;border:1px solid var(--line);background:var(--s1);color:var(--muted);
+  padding:8px 14px;border-radius:999px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  transition:all var(--dur) var(--ease)}
+.tab:hover{border-color:var(--line2);color:var(--ink)}
+.tab.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent2)}
+
+.panel{display:none;animation:fade .25s var(--ease)}
+.panel.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* section */
+.sec{margin:26px 0 14px}
+.sec-h{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.sec-h h2{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0}
+.sec-h .tag{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--accent2);background:var(--accent-soft);border:1px solid var(--accent-line);
+  padding:3px 8px;border-radius:999px}
+.sec-h .cnt{margin-left:auto;color:var(--faint);font-size:12px;font-variant-numeric:tabular-nums}
+.sec-desc{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+
+/* task */
+.task{display:flex;gap:12px;padding:13px 14px;background:var(--s1);border:1px solid var(--line);
+  border-radius:var(--radius);margin-bottom:8px;transition:border-color var(--dur) var(--ease),background var(--dur) var(--ease)}
+.task:hover{border-color:var(--line2);background:var(--s1h)}
+.task.done{opacity:.55}
+.task.done .t-title{text-decoration:line-through;text-decoration-color:var(--faint)}
+.cb{flex:none;width:20px;height:20px;margin-top:1px;border:1.5px solid var(--line3);border-radius:6px;
+  background:var(--s2);cursor:pointer;position:relative;transition:all var(--dur) var(--ease)}
+.cb:hover{border-color:var(--accent-line)}
+.cb.on{background:var(--accent);border-color:var(--accent)}
+.cb.on::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;
+  border:solid #14140a;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.t-body{flex:1;min-width:0}
+.t-title{font-weight:600;font-size:13.5px}
+.t-why{color:var(--muted);font-size:12.5px;margin-top:3px}
+.t-why b{color:var(--ink);font-weight:600}
+.prio{flex:none;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 7px;border-radius:6px;height:fit-content;margin-top:1px}
+.p-hi{color:var(--red);background:#ef76761a;border:1px solid #ef767644}
+.p-med{color:var(--accent2);background:var(--accent-soft);border:1px solid var(--accent-line)}
+.p-low{color:var(--blue);background:#7aa7f71a;border:1px solid #7aa7f744}
+
+/* asset blocks */
+.asset{background:var(--s1);border:1px solid var(--line);border-radius:var(--radius-lg);
+  padding:16px 18px;margin-bottom:16px}
+.asset h3{font-size:14px;font-weight:700;margin:0 0 3px;letter-spacing:-.01em}
+.asset .note{color:var(--muted);font-size:12px;margin:0 0 12px}
+.copybox{position:relative;background:var(--s0);border:1px solid var(--line);border-radius:var(--radius);
+  padding:13px 14px;font-size:13px;white-space:pre-wrap;color:#dcdce6;margin-bottom:10px}
+.copybox:last-child{margin-bottom:0}
+.copybtn{position:absolute;top:8px;right:8px;appearance:none;border:1px solid var(--line2);
+  background:var(--s2);color:var(--muted);font:inherit;font-size:11px;font-weight:600;
+  padding:4px 10px;border-radius:6px;cursor:pointer;opacity:0;transition:all var(--dur) var(--ease)}
+.copybox:hover .copybtn{opacity:1}
+.copybtn:hover{color:var(--ink);border-color:var(--line3)}
+.copybtn.copied{color:var(--green);border-color:#5fcf8a55}
+.lbl{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:14px 0 6px}
+.lbl:first-child{margin-top:0}
+.pill{display:inline-block;font-size:12px;font-weight:600;color:var(--accent2);background:var(--accent-soft);
+  border:1px solid var(--accent-line);padding:2px 9px;border-radius:999px;margin:0 5px 5px 0}
+.callout{background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:var(--radius);
+  padding:12px 14px;font-size:12.5px;color:#f0dfae;margin-top:8px}
+.callout b{color:var(--accent2)}
+
+/* calendar */
+.wk{margin-bottom:18px}
+.wk-h{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent2);
+  border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:10px}
+.post{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.post:last-child{border-bottom:none}
+.post .day{flex:none;width:70px;color:var(--faint);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+.post .pc{flex:1;min-width:0}
+.post .ptype{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:5px;margin-bottom:6px;color:var(--accent2);background:var(--accent-soft);border:1px solid var(--accent-line)}
+.post .ptext{font-size:13px;color:#dcdce6}
+.post .pimg{color:var(--muted);font-size:11.5px;margin-top:5px}
+.post .pimg b{color:var(--faint);font-weight:600}
+footer{color:var(--faint);font-size:11.5px;text-align:center;margin-top:40px;line-height:1.7}
+footer a{color:var(--muted)}
+.reset{appearance:none;border:1px solid var(--line);background:transparent;color:var(--faint);
+  font:inherit;font-size:11px;padding:5px 11px;border-radius:6px;cursor:pointer;margin-top:14px}
+.reset:hover{color:var(--red);border-color:#ef767644}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <h1>ON Home Decor</h1>
+      <span class="sub">Local SEO &amp; Google Profile Launch Tracker</span>
+    </div>
+    <div class="meta">Goal: turn on-homedecor.com + the verified Google Business Profile into inbound calls · 647-627-3803</div>
+    <div class="progress-row">
+      <div class="bar"><span id="barFill"></span></div>
+      <div class="pct"><b id="pctDone">0</b> of <span id="pctTotal">0</span> done · <span id="pctPct">0%</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab on" data-tab="plan">✓ Action Plan</button>
+    <button class="tab" data-tab="gbp">Google Profile Copy</button>
+    <button class="tab" data-tab="reviews">Review Requests</button>
+    <button class="tab" data-tab="calendar">Posting Calendar</button>
+  </div>
+
+  <!-- ACTION PLAN -->
+  <div class="panel on" id="plan">
+    <div class="sec">
+      <div class="sec-h"><h2>This week</h2><span class="tag">Fastest path to calls</span><span class="cnt" id="cnt-week"></span></div>
+      <p class="sec-desc">Google Profile moves respond in 2–4 weeks. Do these first — they're the levers you fully control.</p>
+      <div id="list-week"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-h"><h2>This month</h2><span class="tag">Compounds over 1–3 months</span><span class="cnt" id="cnt-month"></span></div>
+      <p class="sec-desc">These build lasting relevance so you rank for non-branded searches, not just "on home decor".</p>
+      <div id="list-month"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-h"><h2>Ongoing rhythm</h2><span class="tag">Keep the signal alive</span><span class="cnt" id="cnt-ongoing"></span></div>
+      <p class="sec-desc">Local ranking rewards steady activity. Keep these on repeat every week.</p>
+      <div id="list-ongoing"></div>
+    </div>
+    <button class="reset" id="resetBtn">Reset all progress</button>
+  </div>
+
+  <!-- GBP COPY -->
+  <div class="panel" id="gbp">
+    <div class="asset">
+      <h3>Categories</h3>
+      <p class="note">Your #1 controllable ranking lever. Set the primary exactly, then add the secondaries.</p>
+      <div class="lbl">Primary category</div>
+      <span class="pill">Interior Designer</span>
+      <div class="lbl">Secondary categories</div>
+      <span class="pill">Interior Decorator</span><span class="pill">Interior Architect</span><span class="pill">Home Staging Service</span>
+      <div class="callout"><b>Why:</b> Switching to the most specific correct primary category moves Maps visibility more than any other single profile edit.</div>
+    </div>
+
+    <div class="asset">
+      <h3>Business description</h3>
+      <p class="note">Paste into GBP → Edit profile → About. Keyword-rich, under the 750-character limit.</p>
+      <div class="copybox"><button class="copybtn">Copy</button>ON Home Decor is a boutique interior design studio led by Elena, serving Toronto and the GTA. We create warm, cohesive homes through paint colour consultation, room styling, kitchen and bathroom design, renovation planning, and full-home interior design. Whether you're choosing one colour for a north-facing room or reimagining an entire property, we bring colour, materials, lighting, and layout into one clear direction. We also design boutique commercial interiors for restaurants, cafés, salons, and studios. Proudly serving Toronto, North York, Scarborough, Etobicoke, Mississauga, Vaughan, Markham, Oakville, and Muskoka. Call 647-627-3803 to start your project.</div>
+    </div>
+
+    <div class="asset">
+      <h3>Services (with descriptions)</h3>
+      <p class="note">Add each under GBP → Edit services. Use the exact service names people search; descriptions feed long-tail matches.</p>
+      <div class="lbl">Paint Colour Consultation · $200 per colour</div>
+      <div class="copybox"><button class="copybtn">Copy</button>A designer-led paint colour consultation for Toronto and GTA homes. Elena selects colours for the real light, finishes, and mood of your room — not a swatch viewed in isolation. $200 per curated colour.</div>
+      <div class="lbl">Room Styling · from $500</div>
+      <div class="copybox"><button class="copybtn">Copy</button>A cohesive room styling plan that brings layout, palette, lighting, furniture, and finishing details into one clear direction for your Toronto or GTA home. From $500.</div>
+      <div class="lbl">Kitchen &amp; Bathroom Design · from $2,500</div>
+      <div class="copybox"><button class="copybtn">Copy</button>Interior design for kitchens and bathrooms — layout, hard finishes, fixtures, colour, and practical use resolved as one system. High-impact rooms done right. From $2,500.</div>
+      <div class="lbl">Renovation Design &amp; Planning · from $8,000</div>
+      <div class="copybox"><button class="copybtn">Copy</button>Whole-project renovation design direction across Toronto and the GTA that connects rooms, materials, and decisions before construction makes them expensive to change. From $8,000.</div>
+      <div class="lbl">Full-Home Interior Design · by application</div>
+      <div class="copybox"><button class="copybtn">Copy</button>A designer-led full-home transformation for homeowners who want one trusted creative partner guiding the home from initial vision through final styling. By application.</div>
+      <div class="lbl">Commercial Interior Design · custom scope</div>
+      <div class="copybox"><button class="copybtn">Copy</button>Interior design for restaurants, cafés, studios, salons, clinics, retail spaces, and boutique offices across Toronto that need atmosphere as well as function. Custom scope.</div>
+    </div>
+
+    <div class="asset">
+      <h3>Profile completeness checklist</h3>
+      <p class="note">A fully filled profile tells Google you're a real, active business worth showing.</p>
+      <div class="callout">Phone <b>647-627-3803</b> must match the website character-for-character · website URL added · service areas set (Toronto, North York, Scarborough, Etobicoke, Mississauga, Vaughan, Markham, Oakville, Muskoka) · hours · 10+ real project photos (Muskoka cottage, café repaint, walnut condo) · logo · opening date · Instagram linked.</div>
+    </div>
+  </div>
+
+  <!-- REVIEWS -->
+  <div class="panel" id="reviews">
+    <div class="asset">
+      <h3>How to run the review push</h3>
+      <p class="note">The rules that make reviews actually move rankings in 2026.</p>
+      <div class="callout">
+        <b>Pace it — don't dump.</b> 2–3 new reviews per week beats 30 at once then silence. Reviews from the last 30 days carry full weight; older ones decay.<br><br>
+        <b>Seed keywords.</b> Ask clients to name the <b>service + neighbourhood</b> in their own words ("paint colour consultation for our Rosedale home"). Google ties that phrase to your profile.<br><br>
+        <b>Reply to every one</b> (aim 80%+), working the service name in naturally. Don't fear a 4.5–4.9 average — a flat 5.0 can read as fake.
+      </div>
+    </div>
+    <div class="asset">
+      <h3>Text message (SMS)</h3>
+      <p class="note">Best response rates. Send individually, personalised. Swap the bracketed bits.</p>
+      <div class="copybox"><button class="copybtn">Copy</button>Hi [Name], it's Elena at ON Home Decor. It was such a pleasure working on your [Rosedale colour consultation]! If you have a moment, a short Google review would mean the world — it helps other homeowners find the studio. Even a line about what we did and where would be wonderful. Here's the link: [REVIEW LINK]. Thank you so much!</div>
+    </div>
+    <div class="asset">
+      <h3>Email</h3>
+      <p class="note">For clients you'd rather email. Keep the direct Google review link prominent.</p>
+      <div class="lbl">Subject line</div>
+      <div class="copybox"><button class="copybtn">Copy</button>A quick favour, [Name]?</div>
+      <div class="lbl">Body</div>
+      <div class="copybox"><button class="copybtn">Copy</button>Hi [Name],
+
+Working on your [project — e.g. Warm Walnut condo in Etobicoke] was a real pleasure, and I hope the space still feels just right.
+
+If you have two minutes, would you leave the studio a short Google review? A sentence on what we worked on and your neighbourhood is perfect — it genuinely helps other Toronto and GTA homeowners find us.
+
+Here's the direct link: [REVIEW LINK]
+
+Thank you so much — it means a lot to a small studio.
+
+Warmly,
+Elena
+ON Home Decor · 647-627-3803</div>
+      <div class="callout"><b>Get your review link:</b> Google Business Profile → Read reviews → Get more reviews → copy the short link. Use that same link everywhere.</div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="panel" id="calendar">
+    <div class="asset">
+      <h3>4-week Google Profile posting calendar</h3>
+      <p class="note">Two posts a week. Active profiles outrank static listings, and offer posts surface right in Maps. Post copy is ready to paste; add the noted photo.</p>
+
+      <div class="wk">
+        <div class="wk-h">Week 1 — Introduce &amp; offer</div>
+        <div class="post"><div class="day">Mon</div><div class="pc"><span class="ptype">Offer</span><div class="ptext">Start with one colour. A designer-approved paint consultation for the real light and mood of your room — $200 per curated colour. A simple first step before bigger decisions. Book: on-homedecor.com/contact</div><div class="pimg"><b>Photo:</b> café deep-green wall / a styled room corner</div></div></div>
+        <div class="post"><div class="day">Thu</div><div class="pc"><span class="ptype">Project</span><div class="ptext">Inside our Muskoka cottage redesign — black pendants, warm timber shelving, stone counters. A full-property transformation in progress. See the case study on our site.</div><div class="pimg"><b>Photo:</b> Muskoka cottage kitchen</div></div></div>
+      </div>
+
+      <div class="wk">
+        <div class="wk-h">Week 2 — Teach &amp; prove</div>
+        <div class="post"><div class="day">Mon</div><div class="pc"><span class="ptype">Tip</span><div class="ptext">Choosing paint for a north-facing Toronto room? Cool daylight can turn a "warm" white grey and flat. We test colours against your room's real light before you commit. Ask about a colour consultation.</div><div class="pimg"><b>Photo:</b> paint swatches / bright styled room</div></div></div>
+        <div class="post"><div class="day">Thu</div><div class="pc"><span class="ptype">Project</span><div class="ptext">Café repaint: a commercial colour refresh into deep green with tan leather and a gallery wall. Atmosphere as well as function — that's boutique commercial design.</div><div class="pimg"><b>Photo:</b> café repaint before/after</div></div></div>
+      </div>
+
+      <div class="wk">
+        <div class="wk-h">Week 3 — Range of services</div>
+        <div class="post"><div class="day">Mon</div><div class="pc"><span class="ptype">Service</span><div class="ptext">Room styling from $500: one clear plan for layout, palette, lighting, and furniture so a space finally feels cohesive. Perfect for a living room or bedroom that never quite comes together.</div><div class="pimg"><b>Photo:</b> styled living space</div></div></div>
+        <div class="post"><div class="day">Thu</div><div class="pc"><span class="ptype">Project</span><div class="ptext">Warm Walnut Condo — a residential interior with black metal, glass, and framed art against warm walnut tones. Small footprint, big point of view.</div><div class="pimg"><b>Photo:</b> Warm Walnut condo dining nook</div></div></div>
+      </div>
+
+      <div class="wk">
+        <div class="wk-h">Week 4 — Bigger scope &amp; call to action</div>
+        <div class="post"><div class="day">Mon</div><div class="pc"><span class="ptype">Journal</span><div class="ptext">Planning a renovation in the GTA? The most expensive mistakes happen before demo day. Renovation design direction connects every room and material decision first. From $8,000.</div><div class="pimg"><b>Photo:</b> basement suite renovation / bathroom reno</div></div></div>
+        <div class="post"><div class="day">Thu</div><div class="pc"><span class="ptype">CTA</span><div class="ptext">Now booking interior design projects across Toronto &amp; the GTA — from a single colour to a full home. Tell Elena what you're planning: 647-627-3803 or on-homedecor.com/contact</div><div class="pimg"><b>Photo:</b> Elena / studio or flagship project hero</div></div></div>
+      </div>
+      <div class="callout"><b>After week 4:</b> repeat the rhythm — one offer or tip post + one project post each week. Recycle top performers.</div>
+    </div>
+  </div>
+
+  <footer>
+    Progress saves automatically in this browser. Keep this file bookmarked.<br>
+    ON Home Decor · Toronto interior design · <a href="https://on-homedecor.com">on-homedecor.com</a>
+  </footer>
+</div>
+
+<script>
+const TASKS = {
+  week: [
+    {id:'cat', p:'hi', t:'Set the Google Profile primary category to "Interior Designer" + add secondaries', w:'Single biggest controllable lever. Add Interior Decorator, Interior Architect, Home Staging Service. Copy is on the <b>Google Profile Copy</b> tab.'},
+    {id:'desc', p:'hi', t:'Paste the business description & all 6 service descriptions', w:'Keyword-rich copy is ready to paste — feeds long-tail searches like "paint colour consultation Toronto".'},
+    {id:'photos', p:'hi', t:'Upload 10+ real project photos to the profile', w:'Muskoka cottage, café repaint, walnut condo. Profiles with photos get far more <b>calls</b> and direction requests.'},
+    {id:'nap', p:'med', t:'Confirm phone 647-627-3803 & website match the site exactly', w:'NAP consistency. Same number and URL character-for-character across profile and website.'},
+    {id:'revlink', p:'hi', t:'Grab your Google review short-link', w:'Profile → Get more reviews → copy link. You need this for every review request.'},
+    {id:'revsend', p:'hi', t:'Text/email 8–10 past clients for reviews (pace 2–3/week)', w:'Templates on the <b>Review Requests</b> tab. Ask them to name the <b>service + neighbourhood</b>.'},
+    {id:'track', p:'med', t:'Start tracking calls — ask every caller "how did you find us?"', w:'Also check Profile Insights weekly. Calls/clicks are themselves a 2026 ranking signal.'},
+  ],
+  month: [
+    {id:'post', p:'med', t:'Publish the 4-week posting schedule (2 posts/week)', w:'Ready-to-paste calendar on the <b>Posting Calendar</b> tab. Active profiles outrank static ones.'},
+    {id:'houzz', p:'hi', t:'Create/claim a Houzz profile', w:'Interior-design clients search Houzz directly — it can drive its own calls, and it’s a strong citation.'},
+    {id:'cites', p:'med', t:'List on Yelp, Bing Places, Apple Business Connect, YellowPages.ca, HomeStars', w:'Consistent NAP citations build local prominence. Use identical name, area, phone everywhere.'},
+    {id:'reply', p:'med', t:'Reply to every review (target 80%+ response rate)', w:'Measurable ranking boost. Work the service name into replies naturally.'},
+    {id:'content', p:'low', t:'Publish 2–3 journal posts targeting real searches', w:'e.g. "Choosing paint for north-facing Toronto rooms", "What a full-home redesign costs in the GTA". Link to matching service + area pages.'},
+    {id:'ig', p:'low', t:'Point Instagram bio at the site + call CTA; mention Toronto/GTA', w:'@on_homedecor — social signals feed prominence and drive direct inquiries.'},
+  ],
+  ongoing: [
+    {id:'o-rev', p:'hi', t:'Keep 2–3 fresh reviews coming in every week', w:'Recency & velocity beat total count. Last-30-day reviews carry full weight.'},
+    {id:'o-post', p:'med', t:'Post to the profile weekly (1 offer/tip + 1 project)', w:'Freshness signal + your offers surface directly in Maps.'},
+    {id:'o-insights', p:'low', t:'Review Profile Insights weekly (calls, clicks, directions)', w:'See which searches and posts drive contact; double down on what works.'},
+  ]
+};
+
+const KEY='onhd_seo_tracker_v1';
+let done = {};
+try{ done = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ done = {}; }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(done)); }catch(e){} }
+
+function taskHTML(x){
+  const on = done[x.id] ? 'on':'';
+  const dcls = done[x.id] ? 'done':'';
+  const pcls = x.p==='hi'?'p-hi':x.p==='med'?'p-med':'p-low';
+  const plabel = x.p==='hi'?'Do first':x.p==='med'?'Important':'Nice to have';
+  return `<div class="task ${dcls}" data-id="${x.id}">
+    <div class="cb ${on}" role="checkbox" tabindex="0" aria-checked="${!!done[x.id]}"></div>
+    <div class="t-body"><div class="t-title">${x.t}</div><div class="t-why">${x.w}</div></div>
+    <span class="prio ${pcls}">${plabel}</span>
+  </div>`;
+}
+
+function render(){
+  document.getElementById('list-week').innerHTML = TASKS.week.map(taskHTML).join('');
+  document.getElementById('list-month').innerHTML = TASKS.month.map(taskHTML).join('');
+  document.getElementById('list-ongoing').innerHTML = TASKS.ongoing.map(taskHTML).join('');
+  updateCounts();
+}
+
+function groupCount(arr){ return arr.filter(x=>done[x.id]).length; }
+function updateCounts(){
+  document.getElementById('cnt-week').textContent = groupCount(TASKS.week)+' / '+TASKS.week.length;
+  document.getElementById('cnt-month').textContent = groupCount(TASKS.month)+' / '+TASKS.month.length;
+  document.getElementById('cnt-ongoing').textContent = groupCount(TASKS.ongoing)+' / '+TASKS.ongoing.length;
+  const all = [...TASKS.week,...TASKS.month,...TASKS.ongoing];
+  const d = all.filter(x=>done[x.id]).length;
+  const total = all.length;
+  const pct = total? Math.round(d/total*100):0;
+  document.getElementById('pctDone').textContent = d;
+  document.getElementById('pctTotal').textContent = total;
+  document.getElementById('pctPct').textContent = pct+'%';
+  document.getElementById('barFill').style.width = pct+'%';
+}
+
+function toggle(id){
+  done[id] = !done[id];
+  save();
+  const el = document.querySelector('.task[data-id="'+id+'"]');
+  if(el){
+    el.classList.toggle('done', !!done[id]);
+    const cb = el.querySelector('.cb');
+    cb.classList.toggle('on', !!done[id]);
+    cb.setAttribute('aria-checked', !!done[id]);
+  }
+  updateCounts();
+}
+
+document.addEventListener('click', e=>{
+  const task = e.target.closest('.task');
+  if(task){ toggle(task.dataset.id); return; }
+  const tab = e.target.closest('.tab');
+  if(tab){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+    tab.classList.add('on');
+    document.getElementById(tab.dataset.tab).classList.add('on');
+    return;
+  }
+  const cbtn = e.target.closest('.copybtn');
+  if(cbtn){
+    e.stopPropagation();
+    const box = cbtn.closest('.copybox');
+    const text = box.textContent.replace(/^Copy/, '').trim();
+    navigator.clipboard && navigator.clipboard.writeText(text);
+    cbtn.textContent='Copied'; cbtn.classList.add('copied');
+    setTimeout(()=>{ cbtn.textContent='Copy'; cbtn.classList.remove('copied'); },1400);
+    return;
+  }
+  if(e.target.id==='resetBtn'){
+    if(confirm('Reset all progress?')){ done={}; save(); render(); }
+  }
+});
+
+document.addEventListener('keydown', e=>{
+  if((e.key===' '||e.key==='Enter') && e.target.classList.contains('cb')){
+    e.preventDefault();
+    toggle(e.target.closest('.task').dataset.id);
+  }
+});
+
+render();
+</script>
+</body>
+</html>
