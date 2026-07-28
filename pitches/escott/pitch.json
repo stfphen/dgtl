@@ -1,18 +1,15 @@
 {
   "slug": "escott",
-  "name": "ESCOTT \u2014 A Family Brand Concept",
-  "type": "concept",
+  "name": "ERYTHROX \u2014 Licensed Controlled Substance Manufacturing \u00b7 Demo Concept",
+  "type": "concept-site",
   "client": "ESCOTT",
-  "status": "draft",
+  "status": "delivered",
   "hub": "index.html",
   "teaser": null,
   "canonicalUrl": "",
-  "media": "media/",
-  "notes": "Renders placeholders until the three pendingAssets are supplied \u2014 see media/README.txt (export from the iMessage thread). Declared here so the link checker reports them as pending rather than broken.",
-  "updated": "2026-07-25",
-  "pendingAssets": [
-    "media/crew.jpg",
-    "media/throw-it-back.jpg",
-    "media/workwear.jpg"
-  ]
+  "media": "assets/",
+  "spa": true,
+  "source": "vps-offboard-20260721",
+  "notes": "ERYTHROX demo concept site, variant 1. Part of the escott discovery set (portal \u2192 samples \u2192 report) \u2014 see _templates/PORTAL-PATTERN.md. Slug kept = live URL. Former repo draft moved to ../escott-brand/.",
+  "updated": "2026-07-28"
 }

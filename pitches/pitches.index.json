@@ -1,15 +1,34 @@
 {
   "collection": "DGTL pitches",
-  "updated": "2026-07-25",
+  "updated": "2026-07-28",
   "deployScheme": "https://pitch.dgtlmedia.io/<slug>/",
   "pitches": [
-    "escott",
+    "auckland247",
+    "cottage",
     "dmtv-bose",
-    "the-climb"
+    "elixr",
+    "escott",
+    "escott-brand",
+    "escott-portal",
+    "escott-report",
+    "escott2",
+    "gold",
+    "gold-teaser",
+    "hotels",
+    "india",
+    "india-gov",
+    "main1",
+    "mainone",
+    "modern-sense",
+    "nfc",
+    "projects-landing-page",
+    "the-climb",
+    "titan"
   ],
   "templates": [
     "_templates/website-overhaul.html",
     "_templates/brand-redesign-kit.html",
     "_templates/influencer-activation.html"
-  ]
+  ],
+  "note": "Slugs mirror live pitch.dgtlmedia.io URLs. 18 sites imported from the vps-offboard-20260721 bundle; escott family forms a portal-led discovery set."
 }

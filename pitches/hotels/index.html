@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Destination Content Residency — DGTL Group</title>
+<meta name="description" content="Host DGTL on select quiet dates and leave with a professionally produced content library built to sell the stay. The short version — see the full pitch inside.">
+
+<!-- ═══ ANALYTICS — paste ONE provider tag below, or leave empty to disable ═══
+     Plausible: <script defer data-domain="YOURDOMAIN" src="https://plausible.io/js/script.js"></script>
+     Fathom:    <script src="https://cdn.usefathom.com/script.js" data-site="ABCDEFGH" defer></script>
+     GA4:       <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXX"></script>
+                <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XXXX')</script>
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<script>
+  window.track = function (name, props) {
+    try {
+      if (window.plausible)      window.plausible(name, { props: props || {} });
+      else if (window.fathom)    window.fathom.trackEvent(name);
+      else if (window.gtag)      window.gtag('event', name, props || {});
+    } catch (e) {}
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --panel:rgba(0,0,0,.45); --border:#2a2a2a; --hair:rgba(255,255,255,.08);
+    --gold:#F0CF50; --text:#F0F0F0; --muted:#D0D0D0; --dim:#8a8a8a; --dimmer:#5a5a56;
+    --maxw:1120px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--text); font-family:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .gold{color:var(--gold)}
+
+  /* grain overlay */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:9;opacity:.5;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+
+  /* ── Nav ── */
+  .nav{position:fixed;top:0;left:0;right:0;height:73px;z-index:50;
+    background:rgba(0,0,0,.45);backdrop-filter:blur(8px) saturate(1.8);-webkit-backdrop-filter:blur(8px) saturate(1.8);
+    border-bottom:1px solid var(--hair)}
+  .nav .wrap{height:100%;display:flex;align-items:center;justify-content:space-between}
+  .nav-logo img{height:26px}
+  .nav-links{display:flex;align-items:center;gap:28px}
+  .nav-links a{font-size:14px;font-weight:500;color:var(--muted);transition:color .2s}
+  .nav-links a:hover{color:#fff}
+  .nav-cta{display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:#000!important;
+    font-weight:700;font-size:14px;padding:9px 16px;border-radius:7px;transition:filter .2s,transform .2s}
+  .nav-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .burger{display:none;flex-direction:column;gap:5px;background:none;border:0;cursor:pointer;padding:6px}
+  .burger span{width:22px;height:2px;background:#fff;transition:.3s}
+  .mobile{display:none;position:fixed;inset:73px 0 auto 0;z-index:49;background:rgba(0,0,0,.96);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:18px 24px}
+  .mobile a{display:block;padding:12px 0;font-size:16px;font-weight:600;border-bottom:1px solid var(--border)}
+  .mobile a:last-child{border-bottom:0}
+
+  /* ── Buttons ── */
+  .btn{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:16px;border-radius:7px;
+    padding:15px 26px;cursor:pointer;transition:filter .2s,transform .2s,background .2s,border-color .2s;border:1px solid transparent}
+  .btn-primary{background:var(--gold);color:#000}
+  .btn-primary:hover{filter:brightness(1.08);transform:translateY(-2px)}
+  .btn-secondary{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)}
+  .btn-secondary:hover{border-color:#fff;background:rgba(255,255,255,.05)}
+  .btn .arw{transition:transform .2s}
+  .btn-primary:hover .arw{transform:translateX(3px)}
+
+  .kicker{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:#b3a06a}
+  .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#b3a06a}
+
+  /* ── HERO (Full-bleed Showcase — variance archetype C) ── */
+  .hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;
+    padding:120px 0 90px}
+  .hero-bg{position:absolute;inset:0;z-index:0}
+  /* art-directed destination atmosphere: warm gold sun-bloom + horizon, all CSS, no external media */
+  .hero-bg .sky{position:absolute;inset:0;
+    background:
+      radial-gradient(120% 80% at 72% 8%, rgba(240,207,80,.20), rgba(240,207,80,.05) 34%, transparent 60%),
+      radial-gradient(90% 60% at 80% 66%, rgba(240,180,70,.22), transparent 55%),
+      linear-gradient(180deg,#0a0805 0%,#000 62%)}
+  .hero-bg .sun{position:absolute;right:12%;top:34%;width:340px;height:340px;border-radius:50%;
+    background:radial-gradient(circle,rgba(240,207,80,.55),rgba(240,207,80,.12) 42%,transparent 68%);filter:blur(6px)}
+  .hero-bg .horizon{position:absolute;left:0;right:0;bottom:0;height:46%;
+    background:linear-gradient(180deg,transparent,rgba(0,0,0,.65) 40%,#000);}
+  .hero-bg .ridge{position:absolute;left:-5%;right:-5%;bottom:20%;height:180px;opacity:.5;
+    background:radial-gradient(60% 100% at 30% 100%,#0d0d0d,transparent 70%),
+               radial-gradient(70% 100% at 78% 100%,#111,transparent 72%)}
+  .hero-spark{position:absolute;top:-8%;right:-6%;width:640px;max-width:70vw;opacity:.06;transform:rotate(14deg);z-index:0;pointer-events:none}
+  .hero-scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.42) 46%,transparent 82%)}
+  .hero .wrap{position:relative;z-index:2;width:100%}
+  .hero-inner{max-width:760px}
+  .hero h1{font-size:clamp(40px,6.4vw,74px);line-height:1.02;font-weight:800;letter-spacing:-1.6px;margin:22px 0 0}
+  .hero .sub{font-size:clamp(16px,1.8vw,19px);color:var(--muted);margin:22px 0 0;max-width:600px;line-height:1.55}
+  .hero .accent-line{position:relative;display:inline-block}
+  .hero .accent-line::after{content:"";position:absolute;left:0;bottom:-6px;height:3px;width:100%;
+    background:var(--gold);border-radius:2px;transform:scaleX(0);transform-origin:left;animation:swipe 1s .5s ease forwards}
+  @keyframes swipe{to{transform:scaleX(1)}}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
+  .hero-meta{display:flex;gap:26px;margin-top:40px;flex-wrap:wrap}
+  .hero-meta .m{font-size:13px;color:var(--dim)}
+  .hero-meta .m b{display:block;color:#fff;font-size:15px;font-weight:700;margin-bottom:2px}
+  .scroll-ind{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:2;
+    width:24px;height:38px;border:2px solid rgba(255,255,255,.3);border-radius:14px;display:flex;justify-content:center;padding-top:7px}
+  .scroll-ind span{width:3px;height:8px;background:var(--gold);border-radius:2px;animation:sc 1.6s infinite}
+  @keyframes sc{0%{opacity:0;transform:translateY(-4px)}40%{opacity:1}100%{opacity:0;transform:translateY(10px)}}
+
+  /* ── Concept beats ── */
+  .concept{padding:84px 0 20px;position:relative}
+  .concept .lead{max-width:680px;margin:0 auto 44px;text-align:center}
+  .concept .lead h2{font-size:clamp(24px,3vw,34px);font-weight:700;letter-spacing:-.5px;margin-top:14px}
+  .beats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .beat{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:26px 24px;
+    box-shadow:0 6px 6px rgba(0,0,0,.3)}
+  .beat .num{font-size:13px;font-weight:800;color:var(--gold);letter-spacing:.1em}
+  .beat h3{font-size:18px;font-weight:700;margin:10px 0 8px}
+  .beat p{font-size:14px;color:var(--muted);line-height:1.55}
+  .beat .node{position:absolute;top:26px;right:24px;width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+
+  /* ── Portfolio: Cinematic Bands (variance layout P5) ── */
+  .work{padding:80px 0 30px}
+  .work .head{text-align:center;margin-bottom:46px}
+  .work .head h2{font-size:clamp(26px,3.4vw,40px);font-weight:700;letter-spacing:-.6px;margin-top:12px}
+  .work .head p{color:var(--muted);margin-top:12px;font-size:15px}
+  .band{display:grid;grid-template-columns:1.15fr .85fr;gap:38px;align-items:center;padding:34px 0}
+  .band + .band{border-top:1px solid var(--border)}
+  .band.flip .media{order:2}
+  .media{position:relative;aspect-ratio:16/10;border-radius:16px;border:1px solid var(--border);overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .media .ghost{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-weight:800;letter-spacing:-.03em;color:rgba(255,255,255,.06);white-space:nowrap;font-size:clamp(48px,9vw,120px)}
+  .media .mlogo{position:absolute;left:20px;bottom:18px;height:26px;opacity:.92;filter:brightness(0) invert(1)}
+  .media .mlogo.svg{filter:none}
+  .media .tag-cat{position:absolute;left:20px;top:18px;font-size:10.5px;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;color:#cbbd88;background:rgba(0,0,0,.35);padding:5px 10px;border-radius:9999px;border:1px solid var(--hair)}
+  /* per-band art direction */
+  .m1{background:radial-gradient(120% 90% at 85% 12%,rgba(240,207,80,.30),transparent 52%),
+      radial-gradient(80% 70% at 20% 90%,rgba(240,170,60,.16),transparent 60%),linear-gradient(160deg,#100d06,#000)}
+  .m2{background:radial-gradient(110% 80% at 12% 88%,rgba(240,207,80,.30),transparent 55%),
+      radial-gradient(70% 60% at 90% 10%,rgba(200,160,70,.14),transparent 60%),linear-gradient(200deg,#0d0b07,#000)}
+  .m3{background:radial-gradient(90% 90% at 50% 42%,rgba(240,207,80,.26),transparent 55%),
+      radial-gradient(60% 60% at 82% 82%,rgba(180,150,80,.12),transparent 60%),linear-gradient(180deg,#0c0a06,#000)}
+  .band .info .eyebrow{margin-bottom:12px;display:block}
+  .band .info h3{font-size:clamp(22px,2.6vw,30px);font-weight:700;letter-spacing:-.5px}
+  .band .info p{color:var(--muted);font-size:15px;line-height:1.6;margin:12px 0 16px;max-width:460px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px}
+  .pill{font-size:11px;font-weight:600;color:var(--gold);background:rgba(240,207,80,.08);
+    border-radius:9999px;padding:4px 11px}
+
+  /* ── Proof moment (single testimonial) ── */
+  .proof{position:relative;padding:96px 0;margin-top:40px;overflow:hidden}
+  .proof .bloom{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:720px;max-width:90vw;height:420px;
+    background:radial-gradient(closest-side,rgba(240,207,80,.10),transparent);z-index:0;pointer-events:none}
+  .proof .wrap{position:relative;z-index:1;text-align:center;max-width:820px}
+  .proof .big{font-size:clamp(30px,4.4vw,52px);font-weight:700;line-height:1.18;letter-spacing:-.6px;color:#e9e9e6}
+  .proof .big .gold{white-space:nowrap}
+  .proof .attrib{display:inline-flex;align-items:center;gap:14px;margin-top:34px}
+  .proof .av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#1a1a1a,#0a0a0a);
+    border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--gold);font-size:15px}
+  .proof .who{text-align:left}
+  .proof .who b{display:block;font-size:14px;font-weight:700}
+  .proof .who span{font-size:12.5px;color:var(--dim)}
+
+  /* ── Closing CTA ── */
+  .final{padding:20px 0 96px}
+  .final .card{position:relative;background:linear-gradient(180deg,#0b0a07,#050505);border:1px solid var(--border);
+    border-radius:24px;padding:64px 40px;text-align:center;overflow:hidden}
+  .final .card::before{content:"";position:absolute;top:-40%;right:-10%;width:420px;height:420px;
+    background:radial-gradient(circle,rgba(240,207,80,.16),transparent 60%);pointer-events:none}
+  .final h2{position:relative;font-size:clamp(28px,3.6vw,44px);font-weight:800;letter-spacing:-.8px}
+  .final p{position:relative;color:var(--muted);max-width:520px;margin:16px auto 0;font-size:16px}
+  .final .cta{position:relative;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:32px}
+  .final .fine{position:relative;margin-top:22px;font-size:12.5px;color:var(--dim)}
+
+  /* ── Slim footer ── */
+  footer{border-top:1px solid var(--border);padding:40px 0 34px}
+  footer .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  footer img{height:24px;opacity:.9}
+  .foot-links{display:flex;gap:22px;flex-wrap:wrap}
+  .foot-links a{font-size:14px;color:var(--muted);transition:color .2s}
+  .foot-links a:hover{color:#fff}
+  .copy{font-size:12px;color:var(--dim)}
+
+  /* reveals */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (max-width:860px){
+    .nav-links{display:none}
+    .burger{display:flex}
+    .beats{grid-template-columns:1fr}
+    .band{grid-template-columns:1fr;gap:20px}
+    .band.flip .media{order:0}
+    .hero-scrim{background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.35) 50%,rgba(0,0,0,.75))}
+    .hero{min-height:auto;padding:120px 0 70px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{scroll-behavior:auto!important}
+    .reveal{opacity:1!important;transform:none!important;transition:none!important}
+    .hero .accent-line::after{animation:none;transform:scaleX(1)}
+    .scroll-ind span{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="wrap">
+    <a class="nav-logo" href="https://dgtlgroup.io" aria-label="DGTL Group"><img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22/%3E%0A%3C/svg%3E" alt="DGTL Group"></a>
+    <div class="nav-links">
+      <a href="https://dgtlgroup.io">Home</a>
+      <a href="https://dgtlgroup.io/services">Services</a>
+      <a href="https://dgtlgroup.io/work">Work</a>
+      <a href="https://dgtlgroup.io/about">About</a>
+      <a href="/full/" class="nav-cta" onclick="track('view_full_pitch',{loc:'nav'})">Full Pitch <span>→</span></a>
+    </div>
+    <button class="burger" aria-label="Menu" onclick="document.getElementById('mobile').style.display= (document.getElementById('mobile').style.display==='block'?'none':'block')">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile" id="mobile">
+  <a href="https://dgtlgroup.io">Home</a>
+  <a href="https://dgtlgroup.io/services">Services</a>
+  <a href="https://dgtlgroup.io/work">Work</a>
+  <a href="https://dgtlgroup.io/about">About</a>
+  <a href="/full/" onclick="track('view_full_pitch',{loc:'nav-mobile'})">See the Full Pitch →</a>
+</div>
+
+<!-- HERO — Full-bleed Showcase (variance C) -->
+<header class="hero">
+  <div class="hero-bg">
+    <div class="sky"></div><div class="sun"></div><div class="ridge"></div><div class="horizon"></div>
+  </div>
+  <img class="hero-spark" src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%22222%20160%20327%20450%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M529.17%20383.142V383.083C529.17%20383.015%20529.161%20382.947%20529.161%20382.887C529.153%20382.743%20529.153%20382.598%20529.136%20382.462C528.804%20375.126%20522.769%20369.278%20515.356%20369.278H434.789C427.164%20369.278%20420.976%20375.458%20420.976%20383.091V383.678C420.976%20391.303%20427.156%20397.491%20434.789%20397.491H480.989L348.144%20528.1L463.274%20195.138C465.221%20189.519%20463.308%20183.51%20458.964%20179.948C458.88%20179.863%20458.812%20179.769%20458.727%20179.676C453.261%20174.117%20444.335%20174.049%20438.776%20179.506L242.016%20372.976C239.033%20375.908%20237.647%20379.844%20237.834%20383.72C237.834%20383.746%20237.834%20383.78%20237.834%20383.805V384.392C237.834%20392.017%20244.014%20398.205%20251.648%20398.205H332.954C340.579%20398.205%20346.767%20392.025%20346.767%20384.392V383.805C346.767%20376.18%20340.588%20369.992%20332.954%20369.992H285.301L418.128%20239.391L302.965%20572.43C300.474%20579.638%20304.299%20587.501%20311.508%20590L312.06%20590.196C312.077%20590.204%20312.103%20590.204%20312.12%20590.213C317.305%20592.635%20323.655%20591.751%20327.973%20587.501L524.97%20393.81C527.946%20390.886%20529.331%20386.993%20529.17%20383.142Z%22%20fill%3D%22%23F0CF50%22/%3E%0A%3C/svg%3E" alt="">
+  <div class="hero-scrim"></div>
+  <div class="wrap">
+    <div class="hero-inner">
+      <span class="kicker"><span class="dot"></span> Destination Content Residency</span>
+      <h1>Turn Quiet Dates Into Content That <span class="accent-line gold">Sells the Stay</span>.</h1>
+      <p class="sub">Host DGTL on select low-occupancy dates. Leave with a professionally produced content library — built to fill rooms long after we check out.</p>
+      <div class="hero-cta">
+        <a href="/full/" class="btn btn-primary" onclick="track('view_full_pitch',{loc:'hero'})">See the Full Pitch <span class="arw">→</span></a>
+        <a href="https://dgtlgroup.io/book-a-call" class="btn btn-secondary" onclick="track('book_a_call',{loc:'hero'})">Book a Call</a>
+      </div>
+      <div class="hero-meta">
+        <div class="m"><b>You host</b> select quiet dates</div>
+        <div class="m"><b>We produce</b> on-property, end-to-end</div>
+        <div class="m"><b>You keep</b> a reusable library</div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-ind"><span></span></div>
+</header>
+
+<!-- CONCEPT BEATS -->
+<section class="concept">
+  <div class="wrap">
+    <div class="lead reveal">
+      <span class="eyebrow">The partnership, in brief</span>
+      <h2>You host the stay. We build the content library.</h2>
+    </div>
+    <div class="beats">
+      <div class="beat reveal"><span class="node"></span><div class="num">01</div><h3>You host</h3><p>Give us access and hospitality on dates you choose — the calm ones you'd love to fill.</p></div>
+      <div class="beat reveal"><span class="node"></span><div class="num">02</div><h3>We produce</h3><p>Strategy, photography, video, and FPV drone — a full production block, run on your property.</p></div>
+      <div class="beat reveal"><span class="node"></span><div class="num">03</div><h3>You keep the library</h3><p>A reusable asset set for every stage of the guest journey — not a one-off post.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO — Cinematic Bands (variance P5) -->
+<section class="work">
+  <div class="wrap">
+    <div class="head reveal">
+      <span class="eyebrow">Production built for destinations</span>
+      <h2>The work does the talking.</h2>
+      <p>A look at residencies and shoots in the same world as yours.</p>
+    </div>
+
+    <div class="band reveal">
+      <div class="media m1">
+        <span class="tag-cat">Resort Content · 2024</span>
+        <div class="ghost">FPV</div>
+        <img class="mlogo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHAAAABgCAQAAABvPz5bAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAD/h4/MvwAAAAlwSFlzAAAOwwAADsMBx2+oZAAAAAd0SU1FB+oHChQGOMPhuoQAAArUSURBVHja7Zx7cFTVHcc/9+5NNtm8N09CQlRIACMPCZpQpCqP1iJ2HG2HNiNItahMUWx91P5BtVrrMHY6Dj46U0esOlYrIFVRVGRggCAwEpE3WMMjgSQkIQkJYTf7+PWPXK73Zh/J2s1KmPz2j+z+zvmd3/mec+55fM/vRhFiInGMRWUvCQzDiUoNp2PjWIkJQBsLuYpXmMpsRpGCynYe42BMEEosPtNkjyyVDeKVb+VjKYyF71j0YAbLuQovk3vp3+A+ugbauTbw+BjFNFJJCdDP5Ar2DbRzNQYAc8ggI0hTZnHFwDuPBUCNhKB6G9mXBsAmOoPqfbRcGgCP8nVQfStHLw2ADazCG0T/Nodj4D0m66BTVkpvqZaSWPiODUBkouwUnwHOI1vluth4js1WDRQKuY0fMwIPh9nAh5yMkeMYAewBmYATL610x9BpDAF+LxKLWXQI4BDAIYChZSCOS/E4yUTooAlXP/Ir+t8Bme+iDdDGtVTyA5wIzWxlBQfwh7UYTiqHSSGfPGzspTHKNYrqviFVFkmtaTvmln1yh2hhLCrkRZkm98tGOSUdclbWydSw+b/XrVq8PCuugD3nUSkLaVEgG+U5WWvhanbL1IsVYIU0SqD45RlRguZX5Ak5JlUBFmujSUdFcxa9iZwgWoWZ5IZ4+n5GLmUB+huZEr1KRQ9gAuNCpAzDGVQ/kiISsAfoHUyIXr2iB1AJOSN78ATVJwUB1yOlIVO+R4DnORIipYOzQfUnaQ1hcQbfxQcQtnE+CIgO9nEmaP566oLqu1gbvQNVNAFuZlsvTSObaeT1EEO0iVVBe2o7m6NYq2iuOfJDOWxM9l6plnvkVblbbCHzZ8qqgEXioMyIZp2ie+BVmMxCSjjPcT5nM1fj4pOwz1Mhf6QSh/7LTxWPsj2qVYr6DlfDjgcPQhy5NAQlDM2SxBxmkEIqnezgbU5FtzoXA2WhoGJDw4enj435IAU4oHLJH3iHAA52icUNb48o2EglCxfNA39x/f8AVEinCzcKoPScKfvlZwZzuZJ8ujnAW3wQ4s4wUNLwcg5QIvBmrm6EFnH8CD/VTKKMy3BwgNc50aeVg/t5mCzjdxfvsZRv+uGvgFmsJ5spjCGTM6xia4Qb8Yg2PqosktelUjbKOeO8vqHPazBFfiNdAVuy98TZp78SWSEL5HlpEL9uVS/zQ/ADUaEsrpdDssJCK4mIvCoJYa0mybEgVEa3/LoPb9myWtbL+l52NTJpoAAmyRppkaMBVW2RaWHtnpTgsk6SwtrNlXOyXzwBdssi6cNIlgkn43FyWRD9zLB2GSH0JSG4mgtSjoMxQabBqaT3v9KRAEwgPkRKchgrG6khUs7QHtYuP0T9Lg9KbkUBYHzIRSVcMIGEpO9Phl0qlBDRNaBi63+lI1kHO0NUqDPsQuEPGkTSho2duMM2TCgS/3gk9H4kPdjA1qD6vXwV1m41u3tpuqjiIO+HtfKxLkSDfhpRAFFEy8TVJkrigrTLvD7t5kidyaJJ/iIvhaUyej6Z8lmQufcrGTNw6yByS69VsF2ekuQ+rVSplL1yQv4rW+U5mSbXyi/6YYVMl13iNnnzyBqZNJALPaLKbPlQWsQvfmmTvbJIUvtlp8lwGSVFki6qpEuxJPbT3yh5WvZLo7TKKamS30l2hPX9Tif6DMq4kW6+5ADH+uRcrKKgoOCn/27tFJBDKk3UfhdCeIiyGOwyBHCwyxDAwS5DAAe7DAEc7HLJA7xw4FWIbjBcT4BdtEvsf3mGfw3I4hoycHKatQap7mQCqZxhNx0ApDOeDDqopg2V0RTTwh49LbDw0ZSSTDo72KFXSqWYUYAPjURa2WwKMxiB13TtqXIFJXjZZTrWOriGPNIQPqBB1yUzniw8QByJ7LG8jZjLZNJxUsfHKlkswccGdjCXK40snYznTYoNwF04WM4DeAE/V7MUJSTXUs48DvAJrdxHoq4T2rmXx4FusphvIaIqeNb0FpNwlju5xXR/oXE3I9nCBiZys6F14eDvTOc8Psq5yVReDkvoYj27qKRUYzo5bMRDIy+YKIJu9nGWI8bxpJtPeJEHmEAViVzHcyHoC1CYyy4OAivpMm5shQZqSGATLjQO9bp++TldPEKbnvM0+2kyhaQUMZ3FnAJeMtH/Xg7RxhE2AV9SYCptOqlsQjiNgw6VHLJ1OrCKGlM2D27LWU9YwQEWY+cGWllNKFHJ10O3XHxkoZXcOlwfVZaIGjfvMJMnTW8YnrM0QDLD9DCFI5YABS8e/QFopNqkzyaTOAC2UKOyl/HMww50W8Jv/AHH0maWcS0LmMI/w0Ty+tjPr7gGBaHLUsKF5hK6LXqVD3iIW3nc4FfdlvLr8fEgTr3RrTW84NPcFfsop5J4wI3H9kQ96TzKWOposLgt5FZW93o/pZY8lvAWmwgnx5jFPSTyTS9W7EbG8TXDKUW18GKlaKyknt/i5HM8wETOcsjUnx08wAxaOWEB4uAOOuhkFCU0m6A3kMcjjOQETYhKN8t4lPGsZpGFuQ42JXupws7YPojX49zFuyxmZUBYpJ18Cqmg2KK1oQHv8BiVLCUpoEfgXe7EwyssI7NXiRkUcjnTjckMwMWfWEoFa1hAXA81o8hweVbq5XYTXTNVvpGKXhROtjwpj0uN3NAPkqlCNsgOS2jrn+UjsQuSICmWvHfI3TqhNV9OyjNilwXyk4AS0+QeqZWnRDU0ObJLt0wPCINWpEiWS53crpFKJ35OspQcfsp/jHlTwdZrn6NSySHeZxy/Z0+IADuII44uvGxnMf9mCrUmexUFcOFCw2eMkUR9RPh5E42n8VJvIZcS8eKhnX9gZx4vGLy2opcHbahoeq8rJNGFn+P8gTzmqszRH20X21FMkFS0XsT+9YzmIzr5K1dyl/EyQG/JZZr+rYbDlvuFb8uzUWZKSTaiQ328xlMsZKElIKjcuNHahsv0eCjYjF9ZlBoNPFMfsOfYiaYyQw8qjmMEW0xxgQ6SjRgygALu533agJ28wRKuCwEwgdv0JyUfH1+YUlJIIwkNjVJmmxrIaXqyfLzM3xhhab7RzNK/jWEXTSZPSThR0bBzs/Fcq1yvxx7byedTjc9ZQAYtlFDH24ZxBuOo4Sq+oBlQKOJO4vVtkp9tzGIeLRwMMhU1cJaH+QwbE3nN2EApjCUFNw/STiITqTYWguHkkMxkdutDzMPzxFmWiS94iG6OkEchy40uSKSMBibxCEIWpfxF17v4invJpY0xHOJfimgUkI+fJk6Y+i+RNPyodOgRDqk48OOmHUEhDTsKbtqCzrUORpKKizpOG+kK6djxo6GiIrQYS3kyyYDPQuo6UDhnGorZXI6Ndo6ZtPFkIChoKNhw02TYa4wgDz+N1OIdIn4HuwwBHOwyBHCwyxDAwS5DAAe7XPIAByqkWcGGglc/VXrxARoKXiAOG4IfL36iTznHCKBQxgRexcZ8mrCxnnYmM47XSGA2DSQyiZc5DYzFYTlURVkGcog68eAmjRPkMRIQ0uhGqGILwzimH8TKmRNJcN3FA9CLGxB8lOCjAfDSDXRQSzmZrMEP5FKPQtFgBHhBhGZa9DN5zzl9GLNYRRcqPQO0m4rBCFAjkZ43e5v5knzAhh2FeH5JNcfJo4g0clnHO0wM8n/zLnqAcXhIIA4fxRSzDojHTzwF5OFjJreRQgkKLhroYORAVeN/9PysBfPwbuIAAAAASUVORK5CYII=" alt="Six Senses Ibiza">
+      </div>
+      <div class="info">
+        <span class="eyebrow">Six Senses Ibiza</span>
+        <h3>One stay, four content streams.</h3>
+        <p>A single on-property production block turned into photography, video, FPV drone, and an influencer activation — enough to cover the resort's next campaign cycle.</p>
+        <div class="pills"><span class="pill">Photography</span><span class="pill">Video</span><span class="pill">FPV Drone</span><span class="pill">Influencer</span></div>
+      </div>
+    </div>
+
+    <div class="band flip reveal">
+      <div class="media m2">
+        <span class="tag-cat">Villa Content · 2024</span>
+        <div class="ghost">5 DAYS</div>
+        <img class="mlogo svg" src="data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22280%22%20height%3D%2270%22%20viewBox%3D%220%200%20280%2070%22%3E%3Ctext%20x%3D%220%22%20y%3D%2238%22%20font-family%3D%22Georgia%2C%20serif%22%20font-size%3D%2230%22%20font-weight%3D%22bold%22%20fill%3D%22white%22%20letter-spacing%3D%224%22%3EART%20VILLAS%3C/text%3E%3Ctext%20x%3D%221%22%20y%3D%2260%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2213%22%20fill%3D%22white%22%20letter-spacing%3D%227%22%20opacity%3D%220.75%22%3ECOSTA%20RICA%3C/text%3E%3C/svg%3E" alt="Art Villas Costa Rica" style="height:30px">
+      </div>
+      <div class="info">
+        <span class="eyebrow">Art Villas Costa Rica</span>
+        <h3>A full library in five shooting days.</h3>
+        <p>A luxury villa collection, captured across five days into a content set the property still runs on — the kind of turnaround that makes a residency pay for itself.</p>
+        <div class="pills"><span class="pill">Photography</span><span class="pill">Video</span><span class="pill">Brand</span></div>
+      </div>
+    </div>
+
+    <div class="band reveal">
+      <div class="media m3">
+        <span class="tag-cat">Talent Doc · 2024</span>
+        <div class="ghost">A DAY WITH</div>
+        <img class="mlogo" src="data:image/png;base64,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" alt="Swae Lee">
+      </div>
+      <div class="info">
+        <span class="eyebrow">Swae Lee — "A Day With"</span>
+        <h3>A single day, a story worth sharing.</h3>
+        <p>A one-day embed — hotel pickup through the encore — cut into a recap film and a press-grade gallery. Proof we can turn a stay into a narrative, not just a shoot list.</p>
+        <div class="pills"><span class="pill">Documentary</span><span class="pill">Film</span><span class="pill">Gallery</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF MOMENT -->
+<section class="proof">
+  <div class="bloom"></div>
+  <div class="wrap">
+    <span class="eyebrow">In their words</span>
+    <p class="big" style="margin-top:18px">"Their creativity, work ethic, skills and drive are exceptional. Just look at what they did for Art Villas in only <span class="gold">5 shooting days</span>!"</p>
+    <div class="attrib">
+      <div class="av">FŽ</div>
+      <div class="who"><b>Filip Žák</b><span>Founder, Art Villas Costa Rica</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSING CTA -->
+<section class="final">
+  <div class="wrap">
+    <div class="card reveal">
+      <h2>See exactly what a residency delivers.</h2>
+      <p>The full pitch has the deliverables, the process, the sample library, and the terms. Two minutes to read.</p>
+      <div class="cta">
+        <a href="/full/" class="btn btn-primary" onclick="track('view_full_pitch',{loc:'final'})">See the Full Pitch <span class="arw">→</span></a>
+        <a href="https://dgtlgroup.io/book-a-call" class="btn btn-secondary" onclick="track('book_a_call',{loc:'final'})">Book a Call</a>
+      </div>
+      <div class="fine">No obligation — the residency runs on dates you choose.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIM FOOTER -->
+<footer>
+  <div class="wrap">
+    <a href="https://dgtlgroup.io" aria-label="DGTL Group"><img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22/%3E%0A%3C/svg%3E" alt="DGTL Group"></a>
+    <div class="foot-links">
+      <a href="https://dgtlgroup.io/work">Work</a>
+      <a href="https://dgtlgroup.io/services">Services</a>
+      <a href="https://dgtlgroup.io/about">About</a>
+      <a href="https://dgtlgroup.io/contact">Contact</a>
+      <a href="/full/" onclick="track('view_full_pitch',{loc:'footer'})">Full Pitch →</a>
+    </div>
+    <div class="copy">© 2026 DGTL. All Rights Reserved.</div>
+  </div>
+</footer>
+
+<script>
+  // reveal on scroll
+  (function(){
+    var els=document.querySelectorAll('.reveal');
+    if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+    var io=new IntersectionObserver(function(en){en.forEach(function(x){if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target);}})},{threshold:.14});
+    els.forEach(function(e){io.observe(e)});
+  })();
+  // close mobile menu on nav
+  document.querySelectorAll('.mobile a').forEach(function(a){a.addEventListener('click',function(){document.getElementById('mobile').style.display='none';});});
+</script>
+</body>
+</html>

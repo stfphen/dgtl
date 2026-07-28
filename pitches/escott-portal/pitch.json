@@ -1,0 +1,15 @@
+{
+  "slug": "escott-portal",
+  "name": "Brand Direction Preview \u00b7 DGTL Group",
+  "type": "portal",
+  "client": "ESCOTT",
+  "status": "delivered",
+  "hub": "index.html",
+  "teaser": null,
+  "canonicalUrl": "",
+  "media": null,
+  "spa": true,
+  "source": "vps-offboard-20260721",
+  "notes": "Client discovery portal fronting the escott pitch set \u2014 the reusable pattern, see _templates/PORTAL-PATTERN.md.",
+  "updated": "2026-07-28"
+}
