@@ -1,0 +1,18 @@
+{
+  "slug": "escott-brand",
+  "name": "ESCOTT \u2014 A Family Brand Concept",
+  "type": "concept",
+  "client": "ESCOTT",
+  "status": "draft",
+  "hub": "index.html",
+  "teaser": null,
+  "canonicalUrl": "",
+  "media": "media/",
+  "notes": "Renders placeholders until the three pendingAssets are supplied \u2014 see media/README.txt (export from the iMessage thread). Declared here so the link checker reports them as pending rather than broken. Renamed from pitches/escott on 2026-07-28: the live escott/ slug belongs to the deployed ERYTHROX concept site imported from the VPS.",
+  "updated": "2026-07-28",
+  "pendingAssets": [
+    "media/crew.jpg",
+    "media/throw-it-back.jpg",
+    "media/workwear.jpg"
+  ]
+}

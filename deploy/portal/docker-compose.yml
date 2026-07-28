@@ -1,0 +1,24 @@
+services:
+  dgtl-deploy:
+    build: .
+    image: dgtl-deploy
+    container_name: dgtl-deploy
+    restart: unless-stopped
+    environment:
+      DEPLOY_TOKEN: ${DEPLOY_TOKEN:?set DEPLOY_TOKEN in .env}
+      PITCH_DIR: /data/pitch
+      BASE_URL: https://pitch.dgtlmedia.io
+    volumes:
+      - /opt/dgtl-decks/site/pitch:/data/pitch
+    networks:
+      - traefik-public
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "traefik-public"
+      traefik.http.routers.dgtl-deploy.rule: "Host(`deploy.dgtlmedia.io`)"
+      traefik.http.routers.dgtl-deploy.entrypoints: "websecure"
+      traefik.http.routers.dgtl-deploy.tls.certresolver: "letsencrypt"
+      traefik.http.services.dgtl-deploy.loadbalancer.server.port: "80"
+networks:
+  traefik-public:
+    external: true

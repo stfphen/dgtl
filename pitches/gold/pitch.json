@@ -1,0 +1,15 @@
+{
+  "slug": "gold",
+  "name": "Sego Resources &times; Thunder Gold \u2014 Combined Investor Growth Engagement \u2014 DGTL Group",
+  "type": "client-pitch",
+  "client": "Sego Resources \u00d7 Thunder Gold",
+  "status": "delivered",
+  "hub": "index.html",
+  "teaser": null,
+  "canonicalUrl": "",
+  "media": null,
+  "spa": false,
+  "source": "vps-offboard-20260721",
+  "notes": "Combined investor graphic. Teaser lives at ../gold-teaser/ (kept as own slug for live-URL parity).",
+  "updated": "2026-07-28"
+}

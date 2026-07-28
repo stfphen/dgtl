@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<template id="__bundler_thumbnail" data-bg-color="#000000">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#000000"/>
+    <g fill="#F0CF50" opacity="0.5">
+      <circle cx="220" cy="180" r="3"/><circle cx="980" cy="150" r="2.5"/><circle cx="640" cy="90" r="2"/>
+      <circle cx="140" cy="520" r="2.5"/><circle cx="1060" cy="600" r="3"/><circle cx="820" cy="700" r="2"/>
+      <circle cx="380" cy="680" r="2.5"/><circle cx="500" cy="300" r="2"/>
+    </g>
+    <g stroke="#F0CF50" stroke-opacity="0.18" stroke-width="1.5">
+      <line x1="360" y1="300" x2="840" y2="300"/><line x1="360" y1="300" x2="600" y2="560"/>
+      <line x1="840" y1="300" x2="600" y2="560"/>
+    </g>
+    <g fill="#F0CF50">
+      <path d="M362 268 l-14 26 h10 l-6 20 h-2 l18 -30 h-11 l11 -18 z" transform="translate(-8,10) scale(1.6)"/>
+    </g>
+    <circle cx="360" cy="300" r="46" fill="none" stroke="#F0CF50" stroke-opacity="0.55"/>
+    <circle cx="840" cy="300" r="46" fill="none" stroke="#F0CF50" stroke-opacity="0.55"/>
+    <circle cx="600" cy="560" r="46" fill="none" stroke="#F0CF50" stroke-opacity="0.55"/>
+    <text x="600" y="740" font-family="Manrope,sans-serif" font-size="40" font-weight="700" fill="#F0F0F0" text-anchor="middle" letter-spacing="2">DGTL PROJECT NETWORK</text>
+  </svg>
+</template>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;background:#000;color:#F0F0F0;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+  a{color:#F0CF50;text-decoration:none}
+  a:hover{color:#f6dd7e}
+  ::selection{background:#F0CF50;color:#000}
+  input,textarea,select{font-family:inherit}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  @keyframes pnPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+  @keyframes pnFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes pnUp{0%{opacity:0;transform:translateY(18px)}100%{opacity:1;transform:translateY(0)}}
+  @keyframes pnFadeIn{0%{opacity:0}100%{opacity:1}}
+  @keyframes pnSlideIn{0%{transform:translateX(40px);opacity:.4}100%{transform:translateX(0);opacity:1}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.001ms!important}}
+</style>
+<script src="projects-data.js"></script>
+<script src="image-slot.js"></script>
+</helmet>
+
+<div style="position:fixed;inset:0;overflow:hidden;background:#000">
+
+  <canvas ref="{{ setCanvas }}" style="position:absolute;inset:0;width:100%;height:100%;z-index:0"></canvas>
+
+  <div style="position:absolute;right:-8%;bottom:-14%;width:60vmax;height:60vmax;opacity:.05;pointer-events:none;z-index:0;color:#F0CF50">
+    <svg viewBox="0 0 100 100" width="100%" height="100%" fill="currentColor"><path d="M54 4 L26 56 H46 L40 96 L74 40 H52 Z"/></svg>
+  </div>
+
+  <!-- ============ DESKTOP CONSTELLATION ============ -->
+  <sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}">
+  <div onClick="{{ onViewportClick }}" style="position:absolute;inset:0;z-index:1;cursor:default">
+    <div style="position:absolute;left:0;top:0;transition:transform 1.15s cubic-bezier(.66,0,.2,1);will-change:transform;transform-origin:0 0;transform:{{ worldTransform }}">
+
+      <svg width="{{ worldW }}" height="{{ worldH }}" style="position:absolute;left:0;top:0;overflow:visible;pointer-events:none">
+        <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="6">
+          <line x1="{{ ln.x1 }}" y1="{{ ln.y1 }}" x2="{{ ln.x2 }}" y2="{{ ln.y2 }}" stroke="{{ ln.color }}" stroke-width="{{ ln.w }}" stroke-opacity="{{ ln.op }}" style="transition:stroke-opacity .8s ease"></line>
+        </sc-for>
+      </svg>
+
+      <!-- group nodes -->
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+        <div data-gi="{{ g.gi }}" onClick="{{ onGroupClick }}" style="position:absolute;left:{{ g.gx }}px;top:{{ g.gy }}px;width:230px;margin-left:-115px;margin-top:-115px;display:flex;flex-direction:column;align-items:center;cursor:pointer;opacity:{{ g.op }};transition:opacity .9s ease {{ g.delay }}s;text-align:center" style-hover="opacity:1">
+          <div style="position:relative;width:132px;height:132px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 50% 42%, {{ g.tintStrong }}, {{ g.tint }} 55%, rgba(0,0,0,0) 72%);border:1px solid {{ g.ring }};box-shadow:0 0 46px {{ g.tint }}, inset 0 0 26px {{ g.tint }};animation:pnFloat 7s ease-in-out infinite">
+            <div style="position:absolute;width:132px;height:132px;border-radius:50%;border:1px solid {{ g.ring }};animation:pnPulse 4.5s ease-in-out infinite"></div>
+            <svg viewBox="0 0 100 100" width="34" height="34" fill="{{ g.accent }}" style="filter:drop-shadow(0 0 8px {{ g.accent }})"><path d="M54 4 L26 56 H46 L40 96 L74 40 H52 Z"/></svg>
+          </div>
+          <div style="margin-top:16px;font-size:26px;font-weight:700;letter-spacing:-.5px;color:#F0F0F0;text-wrap:balance">{{ g.name }}</div>
+          <div style="margin-top:5px;font-size:13px;color:#8a8a8a;max-width:210px;line-height:1.45;text-wrap:pretty">{{ g.tagline }}</div>
+          <div style="margin-top:10px;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:{{ g.accent }};border:1px solid {{ g.ring }};border-radius:999px;padding:4px 11px;background:rgba(0,0,0,.4)">{{ g.countLabel }}</div>
+        </div>
+      </sc-for>
+
+      <!-- project nodes -->
+      <sc-for list="{{ projectNodes }}" as="p" hint-placeholder-count="6">
+        <div data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" onClick="{{ onProjectClick }}" style="position:absolute;left:{{ p.px }}px;top:{{ p.py }}px;width:200px;margin-left:-100px;margin-top:-38px;display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;opacity:{{ p.op }};pointer-events:{{ p.pe }};transition:opacity .6s ease {{ p.delay }}s,transform .3s ease" style-hover="transform:translateY(-3px)">
+          <div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle,{{ p.tint }},rgba(0,0,0,0) 70%);border:1px solid #2a2a2a">
+            <div style="width:12px;height:12px;border-radius:50%;background:{{ p.statusColor }};box-shadow:0 0 12px {{ p.statusColor }}"></div>
+          </div>
+          <div style="margin-top:8px;font-size:15px;font-weight:600;color:#F0F0F0;line-height:1.25;text-wrap:balance">{{ p.name }}</div>
+          <sc-if value="{{ showStatus }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:5px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:{{ p.statusColor }}">{{ p.statusLabel }}</div>
+          </sc-if>
+        </div>
+      </sc-for>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ MOBILE LIST ============ -->
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:1;overflow-y:auto;padding:88px 18px 120px">
+    <div style="text-align:center;margin-bottom:26px;animation:pnUp .7s ease both">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#b3a06a">DGTL</div>
+      <div style="font-size:30px;font-weight:700;letter-spacing:-.6px;margin-top:8px;text-wrap:balance">{{ brandTitle }}</div>
+      <div style="font-size:14px;color:#D0D0D0;margin-top:8px;line-height:1.5">{{ brandSubtitle }}</div>
+    </div>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+      <div style="margin-bottom:30px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <svg viewBox="0 0 100 100" width="18" height="18" fill="{{ g.accent }}"><path d="M54 4 L26 56 H46 L40 96 L74 40 H52 Z"/></svg>
+          <div style="font-size:20px;font-weight:700;letter-spacing:-.3px">{{ g.name }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ g.projects }}" as="p" hint-placeholder-count="2">
+            <div data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" onClick="{{ onProjectClick }}" style="background:rgba(0,0,0,.5);border:1px solid #2a2a2a;border-radius:16px;padding:16px 18px;cursor:pointer">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <div style="font-size:16px;font-weight:600">{{ p.name }}</div>
+                <div style="flex-shrink:0;width:9px;height:9px;border-radius:50%;background:{{ p.statusColor }};box-shadow:0 0 8px {{ p.statusColor }}"></div>
+              </div>
+              <div style="font-size:13px;color:#8a8a8a;margin-top:6px;line-height:1.45">{{ p.blurb }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <!-- ============ TOP BAR ============ -->
+  <div style="position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:20px 24px;pointer-events:none">
+    <div onClick="{{ backToGalaxy }}" style="display:flex;align-items:center;gap:9px;pointer-events:auto;cursor:pointer">
+      <svg viewBox="0 0 100 100" width="20" height="20" fill="#F0CF50"><path d="M54 4 L26 56 H46 L40 96 L74 40 H52 Z"/></svg>
+      <div style="font-size:16px;font-weight:800;letter-spacing:1px">DGTL</div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#8a8a8a;margin-left:2px">Project Network</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;pointer-events:auto">
+      <button onClick="{{ toggleAdmin }}" title="Admin (A)" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);border:1px solid #2a2a2a;border-radius:8px;color:#8a8a8a;cursor:pointer;transition:all .15s ease" style-hover="color:#F0CF50;border-color:#3a3a3a">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+      <button onClick="{{ openInquiry }}" style="display:flex;align-items:center;gap:7px;background:#F0CF50;color:#000;border:none;border-radius:7px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;transition:filter .15s ease,transform .15s ease" style-hover="filter:brightness(1.06);transform:translateY(-1px)">Start a project</button>
+    </div>
+  </div>
+
+  <!-- ============ GALAXY HERO ============ -->
+  <sc-if value="{{ showHero }}" hint-placeholder-val="{{ true }}">
+  <div style="position:absolute;top:9vh;left:0;right:0;z-index:10;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:0 20px">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#b3a06a;animation:pnUp .7s ease both">Everything we've built</div>
+    <div style="font-size:clamp(34px,5.4vw,60px);font-weight:700;letter-spacing:-1.4px;margin-top:12px;line-height:1.02;text-wrap:balance;animation:pnUp .8s ease .1s both">{{ brandTitle }}</div>
+    <div style="font-size:clamp(15px,1.5vw,19px);color:#D0D0D0;margin-top:14px;max-width:560px;line-height:1.5;text-wrap:pretty;animation:pnUp .8s ease .2s both">{{ brandSubtitle }}</div>
+  </div>
+  </sc-if>
+
+  <!-- ============ GROUP HEADER ============ -->
+  <sc-if value="{{ inGroup }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;top:15vh;left:0;right:0;z-index:10;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:0 20px;animation:pnFadeIn .5s ease both">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#b3a06a">Cluster</div>
+    <div style="font-size:clamp(30px,4vw,46px);font-weight:700;letter-spacing:-1px;margin-top:8px">{{ focusedName }}</div>
+    <div style="font-size:15px;color:#8a8a8a;margin-top:8px;max-width:520px;line-height:1.5">{{ focusedTagline }}</div>
+  </div>
+  </sc-if>
+
+  <!-- ============ BOTTOM HINT / BACK ============ -->
+  <div style="position:absolute;bottom:26px;left:0;right:0;z-index:10;display:flex;justify-content:center;pointer-events:none">
+    <sc-if value="{{ inGroup }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ backToGalaxy }}" style="pointer-events:auto;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.5);border:1px solid #2a2a2a;border-radius:999px;padding:10px 18px;color:#D0D0D0;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s ease" style-hover="border-color:#3a3a3a;color:#fff">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"></path></svg>Back to network
+      </button>
+    </sc-if>
+    <sc-if value="{{ showHero }}" hint-placeholder-val="{{ true }}">
+      <div style="font-size:12.5px;letter-spacing:.06em;color:#5a5a56;font-weight:500">Select a cluster to explore its projects</div>
+    </sc-if>
+  </div>
+
+  <!-- ============ PROJECT PREVIEW PANEL ============ -->
+  <sc-if value="{{ previewOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closePreview }}" style="position:absolute;inset:0;z-index:40;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;justify-content:flex-end;animation:pnFadeIn .3s ease both">
+    <div onClick="{{ stop }}" style="width:min(560px,100%);height:100%;background:#0a0a0a;border-left:1px solid #2a2a2a;box-shadow:-30px 0 80px rgba(0,0,0,.6);overflow-y:auto;padding:0;transform:translateX(0);animation:pnSlideIn .45s cubic-bezier(.5,0,.2,1) both">
+      <div style="position:relative;width:100%;height:280px;background:#111;border-bottom:1px solid #2a2a2a">
+        <image-slot id="{{ pvSlotId }}" shape="rect" fit="cover" placeholder="Drop a screenshot of this project"></image-slot>
+        <button onClick="{{ closePreview }}" style="position:absolute;top:16px;right:16px;z-index:2;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);border:1px solid #2a2a2a;border-radius:8px;color:#D0D0D0;cursor:pointer;backdrop-filter:blur(4px)" style-hover="color:#fff">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div style="padding:30px 34px 44px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#b3a06a">{{ pvGroup }}</div>
+          <div style="width:4px;height:4px;border-radius:50%;background:#3a3a3a"></div>
+          <div style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:{{ pvStatusColor }};background:{{ pvStatusTint }};border-radius:999px;padding:4px 11px">
+            <span style="width:7px;height:7px;border-radius:50%;background:{{ pvStatusColor }}"></span>{{ pvStatusLabel }}
+          </div>
+        </div>
+        <div style="font-size:34px;font-weight:700;letter-spacing:-.9px;margin-top:16px;line-height:1.08;text-wrap:balance">{{ pvName }}</div>
+        <div style="font-size:16px;color:#D0D0D0;margin-top:14px;line-height:1.6;text-wrap:pretty">{{ pvBlurb }}</div>
+        <sc-if value="{{ pvHasDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:15px;color:#8a8a8a;margin-top:16px;line-height:1.65;text-wrap:pretty">{{ pvDetail }}</div>
+        </sc-if>
+        <sc-if value="{{ pvHasStack }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:22px">
+            <sc-for list="{{ pvStack }}" as="t" hint-placeholder-count="3">
+              <div style="font-size:12px;font-weight:600;color:#D0D0D0;background:rgba(255,255,255,.04);border:1px solid #2a2a2a;border-radius:999px;padding:6px 13px">{{ t }}</div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pvHasNext }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:26px;border-left:3px solid #F0CF50;background:rgba(240,207,80,.05);border-radius:0 12px 12px 0;padding:14px 18px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#b3a06a">What's next</div>
+            <div style="font-size:15px;color:#F0F0F0;margin-top:6px;line-height:1.5">{{ pvNext }}</div>
+          </div>
+        </sc-if>
+        <div style="margin-top:30px;display:flex;gap:12px;flex-wrap:wrap">
+          <sc-if value="{{ pvHasLink }}" hint-placeholder-val="{{ false }}">
+            <a href="{{ pvLink }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#F0CF50;color:#000;border-radius:7px;padding:12px 20px;font-size:14px;font-weight:700;transition:filter .15s ease" style-hover="filter:brightness(1.06)">
+              Open project
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"></path></svg>
+            </a>
+          </sc-if>
+          <sc-if value="{{ pvNoLink }}" hint-placeholder-val="{{ false }}">
+            <div style="display:inline-flex;align-items:center;gap:8px;border:1px solid #2a2a2a;color:#8a8a8a;border-radius:7px;padding:12px 20px;font-size:14px;font-weight:600">Link coming soon</div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ INQUIRY MODAL ============ -->
+  <sc-if value="{{ inquiryOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeInquiry }}" style="position:absolute;inset:0;z-index:50;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;animation:pnFadeIn .25s ease both">
+    <div onClick="{{ stop }}" style="width:min(480px,100%);background:#0a0a0a;border:1px solid #2a2a2a;border-radius:16px;box-shadow:0 40px 100px rgba(0,0,0,.6);padding:34px 34px 30px">
+      <sc-if value="{{ inquiryNotSent }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#b3a06a">Start a project</div>
+        <div style="font-size:26px;font-weight:700;letter-spacing:-.6px;margin-top:10px">Tell us what you're building</div>
+        <form onSubmit="{{ submitInquiry }}" style="margin-top:24px;display:flex;flex-direction:column;gap:14px">
+          <input name="name_" required placeholder="Your name" style="background:#111;border:1px solid #2a2a2a;border-radius:7px;padding:12px 16px;color:#F0F0F0;font-size:15px;outline:none" style-focus="border-color:#F0CF50;box-shadow:0 0 0 3px rgba(240,207,80,.15)">
+          <input name="email_" type="email" required placeholder="Email" style="background:#111;border:1px solid #2a2a2a;border-radius:7px;padding:12px 16px;color:#F0F0F0;font-size:15px;outline:none" style-focus="border-color:#F0CF50;box-shadow:0 0 0 3px rgba(240,207,80,.15)">
+          <textarea name="message_" required rows="4" placeholder="What do you have in mind?" style="background:#111;border:1px solid #2a2a2a;border-radius:7px;padding:12px 16px;color:#F0F0F0;font-size:15px;outline:none;resize:vertical;min-height:100px" style-focus="border-color:#F0CF50;box-shadow:0 0 0 3px rgba(240,207,80,.15)"></textarea>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button type="submit" style="flex:1;background:#F0CF50;color:#000;border:none;border-radius:7px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;transition:filter .15s ease" style-hover="filter:brightness(1.06)">Send inquiry</button>
+            <button type="button" onClick="{{ closeInquiry }}" style="background:transparent;color:#8a8a8a;border:1px solid #2a2a2a;border-radius:7px;padding:13px 18px;font-size:15px;font-weight:600;cursor:pointer">Cancel</button>
+          </div>
+        </form>
+      </div>
+      </sc-if>
+      <sc-if value="{{ inquirySent }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:16px 0">
+        <div style="width:56px;height:56px;margin:0 auto;border-radius:50%;background:rgba(240,207,80,.1);display:flex;align-items:center;justify-content:center;color:#F0CF50">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"></path></svg>
+        </div>
+        <div style="font-size:24px;font-weight:700;margin-top:18px">Your draft is ready</div>
+        <div style="font-size:15px;color:#8a8a8a;margin-top:10px;line-height:1.55">We opened an email to <span style="color:#F0CF50">hello@dgtlgroup.io</span> with your message. Hit send and we'll be in touch.</div>
+        <button onClick="{{ closeInquiry }}" style="margin-top:22px;background:#F0CF50;color:#000;border:none;border-radius:7px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer">Done</button>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ ADMIN PANEL ============ -->
+  <sc-if value="{{ adminOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;justify-content:flex-end;animation:pnFadeIn .25s ease both">
+    <div style="width:min(620px,100%);height:100%;background:#0a0a0a;border-left:1px solid #2a2a2a;overflow-y:auto">
+      <div style="position:sticky;top:0;z-index:2;background:rgba(10,10,10,.85);backdrop-filter:blur(8px);border-bottom:1px solid #2a2a2a;padding:20px 26px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#b3a06a">Admin</div>
+          <div style="font-size:20px;font-weight:700;margin-top:3px">Edit the network</div>
+        </div>
+        <button onClick="{{ toggleAdmin }}" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #2a2a2a;border-radius:8px;color:#D0D0D0;cursor:pointer" style-hover="color:#fff">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div style="padding:22px 26px 40px">
+        <div style="font-size:13px;color:#8a8a8a;line-height:1.55;margin-bottom:18px">Changes save to this browser instantly. Use <b style="color:#D0D0D0">Export data file</b> to download an updated <code style="color:#F0CF50">projects-data.js</code> to commit.</div>
+
+        <sc-for list="{{ adminGroups }}" as="g" hint-placeholder-count="4">
+          <div style="border:1px solid #2a2a2a;border-radius:14px;padding:18px;margin-bottom:16px;background:rgba(255,255,255,.015)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <input value="{{ g.name }}" data-scope="group" data-gi="{{ g.gi }}" data-field="name" onInput="{{ onFieldInput }}" placeholder="Cluster name" style="flex:1;background:#111;border:1px solid #2a2a2a;border-radius:7px;padding:9px 12px;color:#F0F0F0;font-size:16px;font-weight:700;outline:none" style-focus="border-color:#F0CF50">
+              <button data-action="del-group" data-gi="{{ g.gi }}" onClick="{{ onAdminAction }}" title="Delete cluster" style="flex-shrink:0;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #2a2a2a;border-radius:7px;color:#8a8a8a;cursor:pointer" style-hover="color:#E5484D;border-color:#E5484D">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"></path></svg>
+              </button>
+            </div>
+            <input value="{{ g.tagline }}" data-scope="group" data-gi="{{ g.gi }}" data-field="tagline" onInput="{{ onFieldInput }}" placeholder="Cluster tagline" style="width:100%;background:#111;border:1px solid #2a2a2a;border-radius:7px;padding:8px 12px;color:#D0D0D0;font-size:13px;outline:none;margin-bottom:14px" style-focus="border-color:#F0CF50">
+
+            <sc-for list="{{ g.projects }}" as="p" hint-placeholder-count="2">
+              <div style="border:1px solid #222;border-radius:10px;padding:14px;margin-bottom:10px;background:#0d0d0d">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+                  <input value="{{ p.name }}" data-scope="project" data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" data-field="name" onInput="{{ onFieldInput }}" placeholder="Project name" style="flex:1;background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:8px 11px;color:#F0F0F0;font-size:14px;font-weight:600;outline:none" style-focus="border-color:#F0CF50">
+                  <select value="{{ p.status }}" data-scope="project" data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" data-field="status" onChange="{{ onFieldInput }}" style="background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:8px;color:#D0D0D0;font-size:12px;outline:none;cursor:pointer">
+                    <option value="working">Working</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="in-progress">In progress</option>
+                    <option value="needs-finishing">Needs finishing</option>
+                  </select>
+                  <button data-action="del-project" data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" onClick="{{ onAdminAction }}" title="Delete" style="flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #2a2a2a;border-radius:6px;color:#8a8a8a;cursor:pointer" style-hover="color:#E5484D;border-color:#E5484D">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"></path></svg>
+                  </button>
+                </div>
+                <input value="{{ p.blurb }}" data-scope="project" data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" data-field="blurb" onInput="{{ onFieldInput }}" placeholder="Short description" style="width:100%;background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:8px 11px;color:#D0D0D0;font-size:13px;outline:none;margin-bottom:8px" style-focus="border-color:#F0CF50">
+                <textarea data-scope="project" data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" data-field="detail" value="{{ p.detail }}" onChange="{{ onFieldInput }}" placeholder="Longer detail (optional)" rows="2" style="width:100%;background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:8px 11px;color:#8a8a8a;font-size:13px;outline:none;resize:vertical;margin-bottom:8px" style-focus="border-color:#F0CF50"></textarea>
+                <input value="{{ p.next }}" data-scope="project" data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" data-field="next" onInput="{{ onFieldInput }}" placeholder="What's next (optional)" style="width:100%;background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:8px 11px;color:#D0D0D0;font-size:13px;outline:none;margin-bottom:8px" style-focus="border-color:#F0CF50">
+                <input value="{{ p.link }}" data-scope="project" data-gi="{{ p.gi }}" data-pi="{{ p.pi }}" data-field="link" onInput="{{ onFieldInput }}" placeholder="Live link URL (optional)" style="width:100%;background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:8px 11px;color:#F0CF50;font-size:13px;outline:none" style-focus="border-color:#F0CF50">
+              </div>
+            </sc-for>
+
+            <button data-action="add-project" data-gi="{{ g.gi }}" onClick="{{ onAdminAction }}" style="width:100%;background:transparent;border:1px dashed #2a2a2a;border-radius:8px;padding:10px;color:#8a8a8a;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s ease" style-hover="border-color:#F0CF50;color:#F0CF50">+ Add project</button>
+          </div>
+        </sc-for>
+
+        <button data-action="add-group" onClick="{{ onAdminAction }}" style="width:100%;background:rgba(240,207,80,.06);border:1px solid #2a2a2a;border-radius:10px;padding:13px;color:#F0CF50;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:22px" style-hover="border-color:#F0CF50">+ Add cluster</button>
+
+        <div style="display:flex;gap:10px;border-top:1px solid #2a2a2a;padding-top:20px">
+          <button onClick="{{ exportData }}" style="flex:1;background:#F0CF50;color:#000;border:none;border-radius:7px;padding:12px;font-size:14px;font-weight:700;cursor:pointer" style-hover="filter:brightness(1.06)">Export data file</button>
+          <button onClick="{{ revertToFile }}" style="background:transparent;color:#8a8a8a;border:1px solid #2a2a2a;border-radius:7px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer" style-hover="color:#E5484D;border-color:#E5484D">Revert to file</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#F0CF50&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Look&quot;},&quot;showStatus&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Look&quot;},&quot;starDensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0,&quot;max&quot;:2,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Look&quot;}}">
+class Component extends DCLogic {
+  state = {
+    view: 'galaxy', focusedGroupId: null,
+    previewOpen: false, previewGroupIdx: null, previewProjIdx: null,
+    entered: false, vw: 0, vh: 0, isMobile: false,
+    adminOpen: false, inquiryOpen: false, inquirySent: false,
+    data: null,
+  };
+
+  GROUP_POS = [
+    { x: 1010, y: 650 }, { x: 2190, y: 660 },
+    { x: 990, y: 1360 }, { x: 2210, y: 1350 },
+  ];
+  WORLD = { w: 3200, h: 2000 };
+  RING = 300;
+  STORAGE_KEY = 'dgtl-project-network-data';
+
+  STATUS = {
+    'working': { c: '#7BC47F', t: 'rgba(123,196,127,.12)', l: 'Working' },
+    'delivered': { c: '#F0CF50', t: 'rgba(240,207,80,.12)', l: 'Delivered' },
+    'in-progress': { c: '#E8A33D', t: 'rgba(232,163,61,.12)', l: 'In progress' },
+    'needs-finishing': { c: '#6E9FDB', t: 'rgba(110,159,219,.12)', l: 'Needs finishing' },
+  };
+
+  componentDidMount() {
+    const base = (typeof window !== 'undefined' && window.PROJECT_DATA)
+      ? JSON.parse(JSON.stringify(window.PROJECT_DATA))
+      : { groups: [], brand: {} };
+    let data = base;
+    try {
+      const saved = localStorage.getItem(this.STORAGE_KEY);
+      if (saved) { const p = JSON.parse(saved); if (p && Array.isArray(p.groups)) data = p; }
+    } catch (e) {}
+    this.setState({ data, vw: window.innerWidth, vh: window.innerHeight, isMobile: window.innerWidth < 760 });
+    this._onResize = () => this.setState({ vw: window.innerWidth, vh: window.innerHeight, isMobile: window.innerWidth < 760 });
+    window.addEventListener('resize', this._onResize);
+    this._onKey = (e) => {
+      const tag = (e.target && e.target.tagName || '').toLowerCase();
+      const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+      if (e.key === 'Escape') {
+        if (this.state.previewOpen) this.setState({ previewOpen: false });
+        else if (this.state.adminOpen) this.setState({ adminOpen: false });
+        else if (this.state.inquiryOpen) this.setState({ inquiryOpen: false });
+        else if (this.state.view === 'group') this.backToGalaxy();
+      } else if ((e.key === 'a' || e.key === 'A') && !typing) {
+        this.setState(s => ({ adminOpen: !s.adminOpen }));
+      }
+    };
+    window.addEventListener('keydown', this._onKey);
+    this._entTimer = setTimeout(() => this.setState({ entered: true }), 90);
+    this._startStars();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._onResize);
+    window.removeEventListener('keydown', this._onKey);
+    clearTimeout(this._entTimer);
+    if (this._raf) cancelAnimationFrame(this._raf);
+  }
+
+  setCanvas = (el) => { this.canvas = el; if (el) this._startStars(); };
+
+  _startStars() {
+    if (this._raf || !this.canvas) return;
+    const cv = this.canvas;
+    const ctx = cv.getContext('2d');
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0, H = 0, stars = [];
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    const density = (typeof this.props?.starDensity === 'number' ? this.props.starDensity : 1);
+    const build = () => {
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = Math.max(1, W * dpr); cv.height = Math.max(1, H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = Math.min(220, Math.floor((W * H) / 13000 * density));
+      stars = [];
+      for (let i = 0; i < n; i++) {
+        stars.push({
+          x: Math.random() * W, y: Math.random() * H,
+          z: 0.3 + Math.random() * 0.7, r: 0.5 + Math.random() * 1.4,
+          vx: (Math.random() - 0.5) * 0.12, vy: (Math.random() - 0.5) * 0.12,
+        });
+      }
+    };
+    build();
+    this._starBuild = build;
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+      const cam = this._cam || { tx: 0, ty: 0, s: 1 };
+      for (const st of stars) {
+        if (!reduced) { st.x += st.vx * st.z; st.y += st.vy * st.z; }
+        if (st.x < -5) st.x = W + 5; if (st.x > W + 5) st.x = -5;
+        if (st.y < -5) st.y = H + 5; if (st.y > H + 5) st.y = -5;
+        const px = st.x + (cam.tx * 0.018 * st.z);
+        const py = st.y + (cam.ty * 0.018 * st.z);
+        ctx.beginPath();
+        ctx.arc(px, py, st.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(240,207,80,${0.10 + st.z * 0.28})`;
+        ctx.fill();
+      }
+      // faint links between nearby stars
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i < stars.length; i++) {
+        for (let j = i + 1; j < stars.length; j++) {
+          const a = stars[i], b = stars[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < 12000) {
+            const o = (1 - d2 / 12000) * 0.10;
+            ctx.strokeStyle = `rgba(240,207,80,${o})`;
+            ctx.beginPath();
+            ctx.moveTo(a.x + cam.tx * 0.018 * a.z, a.y + cam.ty * 0.018 * a.z);
+            ctx.lineTo(b.x + cam.tx * 0.018 * b.z, b.y + cam.ty * 0.018 * b.z);
+            ctx.stroke();
+          }
+        }
+      }
+      this._raf = requestAnimationFrame(draw);
+    };
+    let last = 0;
+    const resizeCheck = () => {
+      if (cv.clientWidth !== W || cv.clientHeight !== H) build();
+    };
+    this._resizeCheckTimer = setInterval(resizeCheck, 500);
+    draw();
+  }
+
+  // ---- coordinate helpers ----
+  _groupPos(gi, total) {
+    if (gi < this.GROUP_POS.length) return this.GROUP_POS[gi];
+    const extra = gi - this.GROUP_POS.length;
+    const ring = Math.max(4, total - this.GROUP_POS.length);
+    const ang = (extra / ring) * Math.PI * 2 - Math.PI / 2;
+    return { x: 1600 + Math.cos(ang) * 900, y: 1000 + Math.sin(ang) * 620 };
+  }
+
+  // ---- navigation ----
+  focusGroup(id) { this.setState({ view: 'group', focusedGroupId: id, previewOpen: false }); }
+  backToGalaxy = () => this.setState({ view: 'galaxy', focusedGroupId: null, previewOpen: false });
+  onViewportClick = (e) => {
+    if (e.target === e.currentTarget && this.state.view === 'group' && !this.state.previewOpen) this.backToGalaxy();
+  };
+  onGroupClick = (e) => {
+    e.stopPropagation();
+    const gi = +e.currentTarget.dataset.gi;
+    const g = this.state.data.groups[gi];
+    if (g) this.focusGroup(g.id);
+  };
+  onProjectClick = (e) => {
+    e.stopPropagation();
+    const gi = +e.currentTarget.dataset.gi, pi = +e.currentTarget.dataset.pi;
+    const g = this.state.data.groups[gi];
+    this.setState({ view: 'group', focusedGroupId: g ? g.id : null, previewOpen: true, previewGroupIdx: gi, previewProjIdx: pi });
+  };
+  closePreview = () => this.setState({ previewOpen: false });
+  stop = (e) => e.stopPropagation();
+
+  toggleAdmin = () => this.setState(s => ({ adminOpen: !s.adminOpen }));
+  openInquiry = () => this.setState({ inquiryOpen: true, inquirySent: false });
+  closeInquiry = () => this.setState({ inquiryOpen: false });
+  submitInquiry = (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const name = f.name_.value, email = f.email_.value, msg = f.message_.value;
+    const body = encodeURIComponent(msg + '\n\n\u2014 ' + name + ' (' + email + ')');
+    const subj = encodeURIComponent('New project inquiry \u2014 ' + name);
+    try { window.location.href = 'mailto:hello@dgtlgroup.io?subject=' + subj + '&body=' + body; } catch (err) {}
+    this.setState({ inquirySent: true });
+  };
+
+  // ---- admin editing ----
+  _persist(data) { try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data)); } catch (e) {} }
+  onFieldInput = (e) => {
+    const t = e.target, ds = t.dataset;
+    const data = JSON.parse(JSON.stringify(this.state.data));
+    if (ds.scope === 'group') data.groups[+ds.gi][ds.field] = t.value;
+    else data.groups[+ds.gi].projects[+ds.pi][ds.field] = t.value;
+    this.setState({ data });
+    this._persist(data);
+  };
+  onAdminAction = (e) => {
+    const b = e.currentTarget, ds = b.dataset;
+    const data = JSON.parse(JSON.stringify(this.state.data));
+    const uid = () => Math.random().toString(36).slice(2, 8);
+    if (ds.action === 'add-group') {
+      data.groups.push({ id: 'group-' + uid(), name: 'New cluster', tagline: '', projects: [] });
+    } else if (ds.action === 'del-group') {
+      data.groups.splice(+ds.gi, 1);
+    } else if (ds.action === 'add-project') {
+      data.groups[+ds.gi].projects.push({ id: 'p-' + uid(), name: 'New project', status: 'in-progress', blurb: '', detail: '', next: '', stack: [], link: '', image: '' });
+    } else if (ds.action === 'del-project') {
+      data.groups[+ds.gi].projects.splice(+ds.pi, 1);
+    }
+    this.setState({ data });
+    this._persist(data);
+  };
+  exportData = () => {
+    const json = JSON.stringify(this.state.data, null, 2);
+    const text = '/* DGTL PROJECT NETWORK \u2014 data file (exported ' + new Date().toISOString().slice(0, 10) + ') */\nwindow.PROJECT_DATA = ' + json + ';\n';
+    const blob = new Blob([text], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'projects-data.js';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  revertToFile = () => {
+    try { localStorage.removeItem(this.STORAGE_KEY); } catch (e) {}
+    const base = (window.PROJECT_DATA) ? JSON.parse(JSON.stringify(window.PROJECT_DATA)) : { groups: [] };
+    this.setState({ data: base });
+  };
+
+  renderVals() {
+    const accent = this.props?.accent || '#F0CF50';
+    const showStatus = this.props?.showStatus ?? true;
+    const data = this.state.data || (typeof window !== 'undefined' && window.PROJECT_DATA) || { groups: [], brand: {} };
+    const gs = data.groups || [];
+    const total = gs.length;
+    const vw = this.state.vw || (typeof window !== 'undefined' ? window.innerWidth : 1280) || 1280;
+    const vh = this.state.vh || (typeof window !== 'undefined' ? window.innerHeight : 800) || 800;
+    const entered = this.state.entered;
+    const view = this.state.view;
+    const focusedId = this.state.focusedGroupId;
+
+    // group + project node geometry
+    const positions = gs.map((g, gi) => this._groupPos(gi, total));
+    const groups = gs.map((g, gi) => {
+      const pos = positions[gi];
+      const ac = g.accent || accent;
+      const isFocused = focusedId === g.id;
+      let op = 1;
+      if (view === 'group') op = isFocused ? 1 : 0.22;
+      if (!entered) op = 0;
+      const n = (g.projects || []).length;
+      return {
+        gi, id: g.id, name: g.name || 'Untitled', tagline: g.tagline || '',
+        gx: pos.x, gy: pos.y, accent: ac,
+        tint: this._alpha(ac, 0.16), tintStrong: this._alpha(ac, 0.34), ring: this._alpha(ac, 0.5),
+        op, delay: (entered ? gi * 0.1 : 0),
+        countLabel: n + (n === 1 ? ' project' : ' projects'),
+        projects: (g.projects || []).map((p, pi) => this._projMeta(p, gi, pi, showStatus)),
+      };
+    });
+
+    // flattened project nodes positioned on a ring around their group
+    const projectNodes = [];
+    gs.forEach((g, gi) => {
+      const pos = positions[gi];
+      const ps = g.projects || [];
+      const isFocused = focusedId === g.id;
+      ps.forEach((p, pi) => {
+        const ang = (pi / Math.max(1, ps.length)) * Math.PI * 2;
+        const rad = this.RING;
+        const meta = this._projMeta(p, gi, pi, showStatus);
+        projectNodes.push({
+          ...meta,
+          px: pos.x + Math.cos(ang) * rad,
+          py: pos.y + Math.sin(ang) * rad,
+          op: (view === 'group' && isFocused && entered) ? 1 : 0,
+          pe: (view === 'group' && isFocused) ? 'auto' : 'none',
+          delay: (view === 'group' && isFocused) ? pi * 0.06 : 0,
+          tint: this._alpha(meta.statusColor, 0.18),
+        });
+      });
+    });
+
+    // constellation lines
+    const lines = [];
+    gs.forEach((g, gi) => {
+      const pos = positions[gi];
+      // group -> world centre (structural web)
+      lines.push({ x1: pos.x, y1: pos.y, x2: 1600, y2: 1000, color: accent, w: 1, op: view === 'galaxy' ? 0.1 : 0.04 });
+      const ps = g.projects || [];
+      const isFocused = focusedId === g.id;
+      ps.forEach((p, pi) => {
+        const ang = (pi / Math.max(1, ps.length)) * Math.PI * 2;
+        const rad = this.RING;
+        lines.push({
+          x1: pos.x, y1: pos.y,
+          x2: pos.x + Math.cos(ang) * rad, y2: pos.y + Math.sin(ang) * rad,
+          color: accent, w: 1,
+          op: (view === 'group' && isFocused) ? 0.4 : 0,
+        });
+      });
+    });
+
+    // camera
+    let fx = 1600, fy = 1000, s;
+    if (positions.length) {
+      const xs = positions.map(p => p.x), ys = positions.map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      const spanX = (maxX - minX) + 640, spanY = (maxY - minY) + 900;
+      const galaxyScale = this._clamp(Math.min((vw * 0.86) / spanX, (vh * 0.9) / spanY), 0.3, 0.9);
+      const focusScale = this._clamp(Math.min((vw * 0.8) / (this.RING * 2 + 300), (vh * 0.66) / (this.RING * 2 + 340)), 0.85, 1.9);
+      if (view === 'group' && focusedId) {
+        const idx = gs.findIndex(g => g.id === focusedId);
+        if (idx >= 0) { fx = positions[idx].x; fy = positions[idx].y; }
+        s = focusScale;
+      } else {
+        fx = (minX + maxX) / 2; fy = (minY + maxY) / 2; s = galaxyScale;
+      }
+    } else { s = 0.6; }
+    const galaxyYOffset = (view === 'galaxy') ? vh * 0.09 : 0;
+    const tx = vw / 2 - fx * s, ty = vh / 2 - fy * s + galaxyYOffset;
+    this._cam = { tx, ty, s };
+    const worldTransform = 'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px) scale(' + s.toFixed(4) + ')';
+
+    // preview
+    let pv = {};
+    if (this.state.previewOpen && data.groups[this.state.previewGroupIdx]) {
+      const g = data.groups[this.state.previewGroupIdx];
+      const p = g.projects[this.state.previewProjIdx];
+      if (p) {
+        const st = this.STATUS[p.status] || this.STATUS['in-progress'];
+        const stack = Array.isArray(p.stack) ? p.stack : [];
+        pv = {
+          pvName: p.name, pvGroup: g.name, pvBlurb: p.blurb || '',
+          pvDetail: p.detail || '', pvHasDetail: !!p.detail,
+          pvNext: p.next || '', pvHasNext: !!p.next,
+          pvStack: stack, pvHasStack: stack.length > 0,
+          pvLink: p.link || '', pvHasLink: !!p.link, pvNoLink: !p.link,
+          pvStatusColor: st.c, pvStatusTint: st.t, pvStatusLabel: st.l,
+          pvSlotId: 'img-' + p.id,
+        };
+      }
+    }
+
+    const focused = gs.find(g => g.id === focusedId);
+
+    return {
+      desktop: !this.state.isMobile,
+      isMobile: this.state.isMobile,
+      groups, projectNodes, lines,
+      worldTransform, worldW: this.WORLD.w, worldH: this.WORLD.h,
+      showStatus,
+      brandTitle: (data.brand && data.brand.title) || 'The DGTL Project Network',
+      brandSubtitle: (data.brand && data.brand.subtitle) || "Everything we've built, mapped as one constellation.",
+      showHero: view === 'galaxy' && !this.state.isMobile,
+      inGroup: view === 'group' && !this.state.isMobile,
+      focusedName: focused ? focused.name : '',
+      focusedTagline: focused ? (focused.tagline || '') : '',
+      previewOpen: this.state.previewOpen,
+      adminOpen: this.state.adminOpen,
+      inquiryOpen: this.state.inquiryOpen,
+      inquirySent: this.state.inquirySent,
+      inquiryNotSent: !this.state.inquirySent,
+      adminGroups: groups,
+      // handlers / refs
+      setCanvas: this.setCanvas,
+      onViewportClick: this.onViewportClick,
+      onGroupClick: this.onGroupClick,
+      onProjectClick: this.onProjectClick,
+      backToGalaxy: this.backToGalaxy,
+      closePreview: this.closePreview,
+      stop: this.stop,
+      toggleAdmin: this.toggleAdmin,
+      openInquiry: this.openInquiry,
+      closeInquiry: this.closeInquiry,
+      submitInquiry: this.submitInquiry,
+      onFieldInput: this.onFieldInput,
+      onAdminAction: this.onAdminAction,
+      exportData: this.exportData,
+      revertToFile: this.revertToFile,
+      ...pv,
+    };
+  }
+
+  _projMeta(p, gi, pi, showStatus) {
+    const st = this.STATUS[p.status] || this.STATUS['in-progress'];
+    return {
+      gi, pi, id: p.id, name: p.name || 'Untitled', blurb: p.blurb || '',
+      status: p.status || 'in-progress',
+      statusColor: st.c, statusLabel: st.l,
+      detail: p.detail || '', next: p.next || '', link: p.link || '',
+    };
+  }
+
+  _clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  _alpha(hex, a) {
+    const h = (hex || '#F0CF50').replace('#', '');
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+}
+</script>
+</body>
+</html>

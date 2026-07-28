@@ -3,7 +3,7 @@ title: 51 · Project Timeline
 type: log
 tags: [audit]
 status: living
-updated: 2026-07-25
+updated: 2026-07-28
 ---
 
 # Project Timeline
@@ -12,6 +12,8 @@ Chronological history, reconstructed from repo docs + git. **Append newest entri
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
 
 ## 2026-07
+- 2026-07-28 — **VPS offboard consolidation** (branch `consolidate-vps`): audited `dgtl-offboard-20260721` against the monorepo. VPS app source = `fe2d78a` (nothing newer than `platform/`); decks rig identical. Imported the VPS-only material: 18 live pitch sites into `pitches/` (live-URL slugs kept; old escott draft → `escott-brand`; escott set documented as the portal-led pattern in `pitches/_templates/PORTAL-PATTERN.md`), deploy portal source → `deploy/portal/`, prod decks override, DGTL OS → `os/` (secrets stripped, brain/data wiring in its README). assets.dgtlgroup.io confirmed stale → retired. Data/secrets remain only in the offline bundle. See MIGRATION.md addendum.
+
 - **07-25 (b)** — **All pitches consolidated into `pitches/` on the pack model.** Six of the seven
   pitch artifacts were tracked in **no repo at all**: five sat under the gitignored `prototypes/pitches/`
   and THE CLIMB was a loose 344 KB file at the archive repo root. Now `pitches/<slug>/` with

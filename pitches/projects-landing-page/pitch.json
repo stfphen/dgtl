@@ -1,0 +1,15 @@
+{
+  "slug": "projects-landing-page",
+  "name": "projects-landing-page",
+  "type": "landing",
+  "client": "",
+  "status": "delivered",
+  "hub": "index.html",
+  "teaser": null,
+  "canonicalUrl": "",
+  "media": null,
+  "spa": true,
+  "source": "vps-offboard-20260721",
+  "notes": "Data-driven (projects-data.js); shipped with netlify.toml + standalone.html.",
+  "updated": "2026-07-28"
+}
