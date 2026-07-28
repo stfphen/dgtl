@@ -35,6 +35,6 @@ All keys + procedure: [[44-Secrets-And-Rotation]]. The four provider keys (Resen
 
 ## Hosting status (2026-07-28)
 
-Origin VPS (62.72.16.32 — the IP in the Google Places key restriction) was offboarded 2026-07-21; all stacks archived in the `dgtl-offboard-20260721` bundle and source consolidated into this repo (`pitches/`, `deploy/portal/`, `os/`). pitch/app/deploy.dgtlmedia.io are **down pending re-host** (target TBD; compose files still assume `traefik-public`). assets.dgtlgroup.io retired — nothing references it. On re-host: update the Places key IP restriction, restore DBs + secrets from the bundle.
+Origin VPS (62.72.16.32 — the IP in the Google Places key restriction) was offboarded 2026-07-21; all stacks archived in the `dgtl-offboard-20260721` bundle and source consolidated into this repo (`pitches/`, `deploy/portal/`, `apps/dgtl-os/`). pitch/app/deploy.dgtlmedia.io are **down pending re-host** (target TBD; compose files still assume `traefik-public`). assets.dgtlgroup.io retired — nothing references it. On re-host: update the Places key IP restriction, restore DBs + secrets from the bundle.
 
 Up: [[60-Reference-MOC]]

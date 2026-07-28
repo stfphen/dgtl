@@ -68,3 +68,21 @@ unidentified developer — right-click `start.command` → **Open** → **Open**
 - **Local quality:** small models are quick but less sharp than the cloud model —
   bump `MODEL` to `llama3.1:8b` if your Mac has the RAM and you want better answers.
 - **Not for public exposure:** no auth. To host DGTL OS online, use `../dgtl-os-api/`.
+
+## Monorepo wiring (2026-07-28)
+
+Consolidated from the VPS (`dgtl-os-local`) into `stfphen/dgtl` (now at `apps/dgtl-os/local/`), beside the things it
+needs access to:
+
+- **Agency brain** — `knowledge/ingest.mjs` indexes `.md`/`.txt` under `knowledge/docs/`
+  (per-client subfolders = client-scoped). Give the OS the brain with
+  `rsync -a --delete ../../../brain/ knowledge/docs/brain/ && node knowledge/ingest.mjs`.
+  Re-run after brain updates. Journal/pitch notes can be synced the same way.
+- **RAG store** — pgvector DB `dgtlkb` (compose in `deploy/docker/`). Seed by running ingest,
+  or restore the Jul-21 state from the offboard bundle: `db-dumps/dgtlkb.sql`.
+- **Platform data** — the funnel DB (`content_funnel`) restores from the same bundle when
+  `platform/` re-hosts; point OS integrations at that instance.
+- **Secrets** — `.env` and `api-key.txt` are gitignored here; template is `.env.example`.
+  Live values: offboard bundle `env/dgtl-os.env` → move to a password manager.
+- **Hosting TBD** — domain structure undecided. `deploy/` in this folder holds the full kit
+  (Caddyfile, systemd unit, Docker); adjust proxy/TLS once the host is chosen.

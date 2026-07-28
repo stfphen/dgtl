@@ -52,7 +52,6 @@ dgtl/
 │
 ├── engine/                     # the pack-generating skill, versioned with its output
 ├── deploy/                     # domain + deploy blueprints, runbooks, the decks hosting rig + deploy portal
-├── os/                         # DGTL OS assistant: terminal UI + RAG knowledge (VPS-consolidated)
 ├── skill-mods/                 # hero-rotation patch, migrate-to-main-domain scripts
 ├── tools/                      # check-links.py
 └── brain/                      # Obsidian knowledge vault (authoritative copy)
