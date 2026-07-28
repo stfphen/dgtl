@@ -20,8 +20,8 @@ services:
       PORT: "8787"
       PROVIDER: "ollama"
       OLLAMA_URL: "http://host.docker.internal:11434"       # host Ollama (chat + embeddings)
-      MODEL: "llama3.2:3b"
-      EMBED_MODEL: "llama3.2:3b"
+      MODEL: "llama3.1:8b"
+      EMBED_MODEL: "llama3.1:8b"
       PGVECTOR_URL: "postgres://dgtl:dgtl@pgvector:5432/dgtlkb"
       RAG_TOPK: "5"
       RATE_PER_MIN: "20"
@@ -42,8 +42,8 @@ services:
       - "traefik.http.routers.dgtl-os.tls.certresolver=letsencrypt"
       - "traefik.http.services.dgtl-os.loadbalancer.server.port=8787"
       - "traefik.http.routers.dgtl-os.middlewares=dgtl-os-auth"
-      # basic-auth login. Replace dgtl:$$apr1$$7Hr6KEPr$$SjyoWt1rNQhoursGFsZ5J/ with the escaped user:hash (see DEPLOY-DOCKER.md)
-      - "traefik.http.middlewares.dgtl-os-auth.basicauth.users=dgtl:$$apr1$$7Hr6KEPr$$SjyoWt1rNQhoursGFsZ5J/"
+      # basic-auth login. Replace __BASICAUTH__ with the escaped user:hash (see DEPLOY-DOCKER.md)
+      - "traefik.http.middlewares.dgtl-os-auth.basicauth.users=__BASICAUTH__"
 
   pgvector:
     image: pgvector/pgvector:pg16
