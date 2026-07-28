@@ -31,7 +31,10 @@ export const dgtlPlatformTenant = normalizeTenantConfig({
   // Canonical app host. dgtlmag.com (Content Day) and dgtlgroup.io (agency
   // page) keep their own tenants; this domain must be claimed by no other
   // tenant — tests enforce the exclusivity.
-  domains: ["app.dgtlmedia.io"],
+  // app.dgtlmedia.io is deliberately unclaimed: the app host's root goes
+  // straight to /admin (see app/page.jsx). This marketing page remains
+  // reachable at /t/dgtl-platform.
+  domains: [],
   defaultPackageId: "platform-access",
   brand: {
     name: "DGTL Growth Platform",

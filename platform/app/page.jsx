@@ -1,19 +1,22 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { resolveTemplate } from "../components/templates/registry";
-import { getTenantForHost, resolveTenantMediaConfig } from "../lib/store";
+import { getTenantClaimingHost, resolveTenantMediaConfig } from "../lib/store";
 
 export const dynamic = "force-dynamic";
 
-// Host-resolved metadata, mirroring app/t/[slug]/page.jsx: templates that own
-// their metadata (platform, agency, showcase, authority) build it from the
-// tenant config; funnel tenants return {} and keep inheriting the layout's
-// static metadata exactly as before. Without this, custom-domain tenants
-// (e.g. the DGTL Growth Platform on app.dgtlmedia.io) titled themselves
-// "Content Day".
+// The root page is host-resolved. A host explicitly claimed by a tenant
+// (e.g. dgtlmag.com -> Content Day) renders that tenant's page, so client
+// custom domains keep working. Any unclaimed host — app.dgtlmedia.io, local
+// dev, the bare VPS hostname — goes straight to the admin panel: the app's
+// front door is the login, not a marketing funnel. Tenant pages (including
+// Content Day at /t/dgtlmag and the Growth Platform page at /t/dgtl-platform)
+// remain reachable under /t/[slug].
 export async function generateMetadata() {
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") || headerList.get("host") || "";
-  const tenant = await getTenantForHost(host);
+  const tenant = await getTenantClaimingHost(host);
+  if (!tenant) return {};
   const template = resolveTemplate(tenant);
   return template.buildMetadata ? template.buildMetadata(tenant) : {};
 }
@@ -21,7 +24,8 @@ export async function generateMetadata() {
 export default async function HomePage() {
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") || headerList.get("host") || "";
-  const tenant = await getTenantForHost(host);
+  const tenant = await getTenantClaimingHost(host);
+  if (!tenant) redirect("/admin");
   // Media-library references (mediaId) become plain src urls server-side.
   const resolved = await resolveTenantMediaConfig(tenant, { teamId: tenant.teamId });
 

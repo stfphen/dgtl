@@ -52,6 +52,18 @@ docker compose up -d --build                               # app (migrate is a n
 docker compose exec content-funnel node scripts/migrate.js # confirm "up to date"
 ```
 
+**Post-restore domain cleanup (required):** the July-21 dump's tenant rows still carry
+old host claims (localhost, app.dgtlmedia.io). The app root now sends unclaimed hosts to
+`/admin` — stale claims would resurrect the Content Day funnel on the app host. Fix:
+
+```bash
+docker exec -it content-funnel-postgres psql -U content_funnel -d content_funnel \
+  -c "select slug, domains from tenants;" \
+  -c "update tenants set domains = '[\"dgtlmag.com\",\"www.dgtlmag.com\"]' where slug = 'dgtlmag';"
+```
+
+Review the `select` output and strip `localhost`/`app.dgtlmedia.io` entries from any other row.
+
 ## 5 · Decks + portal (pitch hosting)
 
 ```bash
