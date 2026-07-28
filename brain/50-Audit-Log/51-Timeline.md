@@ -14,6 +14,25 @@ Dates are from doc timestamps / commit themes; treat older "status" claims as po
 ## 2026-07
 - 2026-07-28 — **VPS offboard consolidation** (branch `consolidate-vps`): audited `dgtl-offboard-20260721` against the monorepo. VPS app source = `fe2d78a` (nothing newer than `platform/`); decks rig identical. Imported the VPS-only material: 18 live pitch sites into `pitches/` (live-URL slugs kept; old escott draft → `escott-brand`; escott set documented as the portal-led pattern in `pitches/_templates/PORTAL-PATTERN.md`), deploy portal source → `deploy/portal/`, prod decks override, DGTL OS → `os/` (secrets stripped, brain/data wiring in its README). assets.dgtlgroup.io confirmed stale → retired. Data/secrets remain only in the offline bundle. See MIGRATION.md addendum.
 
+- **07-25 (c)** — **The last untracked work brought into `dgtl` as `apps/` and `sites/`.** Seven items
+  existed *only* as untracked files in the retired archive — tracked in no repo at all. Now:
+  `apps/dgtl-os/` (terminal.html + `api/` Cloudflare Worker + `local/` Mac server) and
+  `sites/polishstone/` (13-page static site) + `sites/on-home-decor/seo-tracker.html`. Two new top-level
+  surfaces because DGTL OS is a standalone product per the 07-18 decision and a client's static site is
+  neither a pitch nor a tenant funnel; both had been homeless, which is why they were never committed.
+  **`zilHu3WT` identified** — not mystery data, a 7.6 MB **zip** of the PolishStone site
+  (`oakville-stone-tile/…`), same family as `polishstone-netlify-staging.zip`; both excluded as
+  redundant build archives. PolishStone existed as **four** near-identical 7.9 MB copies; kept only the
+  newest (`polishstone-site`, 21:30, vs 21:24/19:55/19:38) as the single source. Also de-duped an
+  identical copy of the terminal inside `local/`.
+  **Secret hygiene:** `dgtl-os-local/api-key.txt` was left behind deliberately — the product reads its
+  key from that file and its own `.gitignore` forbids committing it. It currently holds only
+  instructions, but the repo root `.gitignore` now carries `**/api-key.txt` so a real key can never
+  land. Scan of everything new found one hit: the `sk-ant-xxxx…` placeholder in `.env.example`.
+  `tools/check-links.py` now covers `sites/` too and is **scope-aware** about root-absolute links —
+  a defect in `journal/`/`pitches/` (served from subfolders) but correct in `sites/` (each deploys at a
+  domain root, and PolishStone's `404.html` legitimately uses them). 842 refs, `missing=0`; both
+  positive and negative tests pass.
 - **07-25 (b)** — **All pitches consolidated into `pitches/` on the pack model.** Six of the seven
   pitch artifacts were tracked in **no repo at all**: five sat under the gitignored `prototypes/pitches/`
   and THE CLIMB was a loose 344 KB file at the archive repo root. Now `pitches/<slug>/` with

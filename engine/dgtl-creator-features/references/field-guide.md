@@ -21,7 +21,7 @@ omit keeps its on-brand gradient placeholder — fine when you don't have that i
 | `TITLE` | Title tag. **Name first**, then a hook. | ≤ ~60 chars |
 | `META_DESCRIPTION` | Search snippet. Name in first ~10 words + hook + one association. | 120–160 chars |
 | `KEYWORDS` | Comma list: name, aliases, associated brands/works, "creator profile", "influencer marketing". | — |
-| `CANONICAL_URL` | The real published URL, e.g. `https://pitch.dgtlmedia.io/journal/creators/<slug>/`. Used in canonical, OG, Twitter, and every JSON-LD `@id`. | — |
+| `CANONICAL_URL` | The real published URL for this pack. Used in canonical, OG, Twitter, and every JSON-LD `@id`. **The scheme is unsettled — ask the user rather than guessing**; see *Deploy & connectivity* in `SKILL.md`. Mirror whatever you use into `pack.json`'s `canonicalUrl`. | — |
 | `OG_IMAGE` | Absolute URL to the share image (usually the hero, once hosted). | — |
 | `PUBLISH_ISO` / `MODIFIED_ISO` | ISO 8601 with offset, e.g. `2026-07-15T09:00:00-04:00`. | — |
 | `PUBLISH_DATE` | `YYYY-MM-DD` (used in `<time datetime>`). | — |
@@ -92,12 +92,19 @@ omit keeps its on-brand gradient placeholder — fine when you don't have that i
 
 | Slot key | Where it lands | src path is relative to |
 |---|---|---|
-| `hero` | The hero figure (removes the ghost metric) | `creators/` → `../assets/media/<slug>/hero.jpg` |
-| `pf1`…`pf6` | Portfolio tiles 1–6 in order | same (`../assets/...`) |
+| `hero` | The hero figure (removes the ghost metric) | the page being written |
+| `pf1`…`pf6` | Portfolio tiles 1–6 in order | same |
 
 Each slot is `{ "src": "...", "alt": "..." }`. **alt is required** and should describe the image and
-include the creator's name where natural. Write `src` exactly as it must appear in the final page (the page
-lives in `creators/`, so paths start with `../assets/`).
+include the creator's name where natural. Write `src` exactly as it must appear in the final page,
+which depends on where that page sits in the pack:
+
+| Page being populated | own media | shared CSS/JS | pack hub |
+|---|---|---|---|
+| `journal/packs/<slug>/index.html` | `media/hero.jpg` | `../../_shared/…` | — |
+| `journal/packs/<slug>/features/<x>.html` | `../media/hero.jpg` | `../../../_shared/…` | `../index.html` |
+
+Media always lives inside the pack's own `media/` folder — never a shared asset pool.
 
 ## Example
 

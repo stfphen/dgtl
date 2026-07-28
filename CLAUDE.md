@@ -1,14 +1,24 @@
 # DGTL — Claude Instructions
 
-This is the DGTL monorepo. It holds **two** things under one brand:
+This is the DGTL monorepo. It holds **four** surfaces under one brand:
 
 1. **`platform/`** — the DGTL Growth Platform, a multi-tenant Next.js app: admin panel, lead
    pipeline, prospecting, batch builder, outreach engine, telephony, checkout, funding.
 2. **The publishing operation** — `journal/` (Influence Journal creator packs), `pitches/`,
    `deploy/`, `skill-mods/`, `engine/`.
+3. **`apps/`** — standalone products that are not the platform and not publishing. Currently
+   `apps/dgtl-os/` (the terminal, its Cloudflare Worker API, and the Mac-local server).
+4. **`sites/`** — per-client deliverables that aren't tenant funnels: static client websites and
+   one-off client tools. Currently `sites/polishstone/` and `sites/on-home-decor/`.
 
-They have different tooling and different release cadences. Know which half you are in before
-you edit, and do not blur them: no app code in `journal/`, no publication HTML in `platform/`.
+They have different tooling and different release cadences. Know which surface you are in before
+you edit, and do not blur them: no app code in `journal/`, no publication HTML in `platform/`, and
+nothing from `apps/` or `sites/` importing out of `platform/`.
+
+**Why `apps/` and `sites/` exist as their own top level:** DGTL OS is shipped as a standalone
+product — not a tenant, not an admin feature (see the decision log) — and a client's static site is
+not a pitch and not a funnel. Both were sitting untracked in the retired archive because there was
+nowhere obvious to put them. Put new work of either kind here rather than at the repo root.
 
 ## This repo is authoritative. `content-checkout-funnel` is retired.
 
@@ -124,6 +134,29 @@ front-of-funnel version, `media/` for its own assets, and a `pitch.json` manifes
   `journal/_shared/`.
 - Before marking pitch work complete: `python3 tools/check-links.py` must report `missing=0`, and
   any new pitch needs a `pitch.json` plus an entry in `pitches.index.json`.
+
+## `apps/` — standalone products
+
+`apps/<product>/`, self-contained, with its own README and deploy instructions. `apps/dgtl-os/` is
+`terminal.html` + `api/` (Cloudflare Worker) + `local/` (Mac-local Node server).
+
+- **Never commit a key.** DGTL OS reads its key from `api-key.txt`, which is gitignored at the repo
+  root (`**/api-key.txt`) *and* by `apps/dgtl-os/local/.gitignore`. Only `.env.example` ships, with
+  placeholders. The whole point of its three-mode design is that the key never reaches a client-side
+  file — do not undo that.
+- An app must not import from `platform/`. If they need shared code, that is a conversation, not a
+  relative path.
+
+## `sites/` — client deliverables
+
+`sites/<client>/` holding a static site or a one-off client tool. No build step; served as files.
+
+- **Each site deploys at its own domain root**, so root-absolute links (`/assets/site.css`) are
+  correct here — unlike in `journal/` and `pitches/`, which are served from subfolders. The link
+  checker knows the difference per scope; don't "fix" root paths in `sites/`.
+- Deploy artifacts and staging copies are **not** committed. PolishStone arrived as four
+  near-identical copies plus two zips; only the newest source lives here. If you generate a build,
+  it belongs in a gitignored `dist/`, not beside the source with a suffix.
 
 ## About `brain/`
 

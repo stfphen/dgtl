@@ -1,0 +1,67 @@
+# DGTL OS — Traefik-routed container + knowledge layer (pgvector RAG)
+#
+#   Route : terminal.dgtlmedia.io  ->  dgtl-os :8787   (via Traefik, with basic-auth)
+#   Model : your host's Ollama (chat + embeddings) via host.docker.internal
+#   Data  : Level 1 facts from knowledge/knowledge.json + Level 2 RAG in pgvector
+#
+#   Deploy:  cd /root/dgtl-os-local/deploy/docker && docker compose up -d --build
+#   Index docs after deploy:  docker compose exec dgtl-os node knowledge/ingest.mjs
+
+services:
+  dgtl-os:
+    build:
+      context: ../..                     # the dgtl-os-local folder
+      dockerfile: deploy/docker/Dockerfile
+    image: dgtl-os:latest
+    container_name: dgtl-os
+    restart: unless-stopped
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8787"
+      PROVIDER: "ollama"
+      OLLAMA_URL: "http://host.docker.internal:11434"       # host Ollama (chat + embeddings)
+      MODEL: "llama3.1:8b"
+      EMBED_MODEL: "nomic-embed-text"
+      PGVECTOR_URL: "postgres://dgtl:dgtl@pgvector:5432/dgtlkb"
+      RAG_TOPK: "5"
+      RATE_PER_MIN: "20"
+    volumes:
+      - ../../knowledge:/app/knowledge     # edit data on the host, no rebuild needed
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - traefik-public
+      - dgtl-internal
+    depends_on:
+      - pgvector
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.dgtl-os.entrypoints=websecure"
+      - "traefik.http.routers.dgtl-os.rule=Host(`terminal.dgtlmedia.io`)"
+      - "traefik.http.routers.dgtl-os.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dgtl-os.loadbalancer.server.port=8787"
+      - "traefik.http.routers.dgtl-os.middlewares=dgtl-os-auth"
+      # basic-auth login. Replace __BASICAUTH__ with the escaped user:hash (see DEPLOY-DOCKER.md)
+      - "traefik.http.middlewares.dgtl-os-auth.basicauth.users=__BASICAUTH__"
+
+  pgvector:
+    image: pgvector/pgvector:pg16
+    container_name: dgtl-pgvector
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dgtl
+      POSTGRES_PASSWORD: dgtl
+      POSTGRES_DB: dgtlkb
+    volumes:
+      - dgtl-pgdata:/var/lib/postgresql/data
+    networks:
+      - dgtl-internal            # private only — never exposed publicly
+
+networks:
+  traefik-public:
+    external: true
+  dgtl-internal: {}
+
+volumes:
+  dgtl-pgdata: {}
