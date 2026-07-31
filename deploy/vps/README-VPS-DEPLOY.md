@@ -38,13 +38,26 @@ git clone https://github.com/stfphen/dgtl.git dgtl
 docker network create traefik-public
 ```
 
-## 3 · Traefik
+## 3 · Front proxy — Coolify (already running)
+
+This VPS runs **Coolify**; its `coolify-proxy` container is Traefik and already owns 80/443.
+**Do not start `deploy/vps/traefik/`** — every stack's labels now target Coolify directly:
+network `coolify`, entrypoints `http`/`https`, certresolver `letsencrypt`, with per-host
+http→https redirects built into the labels. There is nothing to start in this step.
+
+Verify Coolify's names once (defaults shown are what our labels expect):
 
 ```bash
-cd /opt/dgtl/deploy/vps/traefik
-echo "ACME_EMAIL=you@example.com" > .env
-docker compose up -d
+docker network ls | grep coolify                       # network "coolify" must exist
+docker inspect coolify-proxy --format '{{json .Args}}' | tr ',' '\n' | grep -iE 'entrypoints|resolvers' | head
+# expect: entrypoints.http / entrypoints.https and certificatesresolvers.letsencrypt
 ```
+
+If you ever ran our traefik here, clean it up: `cd /opt/dgtl/deploy/vps/traefik && docker compose down -v`.
+
+> **Security note:** Docker-published ports bypass ufw. Coolify's dashboard (`:8000`) and the
+> proxy API (`:8080`) are internet-reachable — set a strong Coolify admin password and, ideally,
+> add a provider-level (Hetzner) firewall restricting 8000/8080/6001-6002 to your own IP.
 
 ## 4 · Platform (+ its Postgres, data restore)
 

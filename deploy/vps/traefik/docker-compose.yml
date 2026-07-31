@@ -1,3 +1,5 @@
+# NOTE (2026-07-28): the production VPS runs Coolify, whose proxy already owns 80/443.
+# Do NOT start this on a Coolify host — it is kept only for plain-Docker hosts.
 # Traefik front for the whole DGTL stack.
 # Every stack's labels expect: network "traefik-public", entrypoint "websecure",
 # certresolver "letsencrypt" — this file provides exactly those names.

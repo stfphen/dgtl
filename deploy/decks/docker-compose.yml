@@ -4,21 +4,25 @@ services:
     container_name: dgtl-decks
     restart: unless-stopped
     networks:
-      - traefik-public
+      - coolify
     # Local-only publish so you can curl the container directly on the VPS while
-    # debugging. Traefik reaches it over the traefik-public network, not this port.
+    # debugging. Traefik reaches it over the coolify network, not this port.
     ports:
       - "127.0.0.1:8090:80"
     labels:
       traefik.enable: "true"
-      traefik.docker.network: "traefik-public"
+      traefik.docker.network: "coolify"
       # Dedicated subdomain — apex dgtlgroup.io keeps serving its own homepage, untouched.
       traefik.http.routers.dgtl-decks.rule: "Host(`pitch.dgtlmag.com`)"
-      traefik.http.routers.dgtl-decks.entrypoints: "websecure"
+      traefik.http.routers.dgtl-decks.entrypoints: "https"
       traefik.http.routers.dgtl-decks.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtl-decks-http.rule: "Host(`pitch.dgtlmag.com`)"
+      traefik.http.routers.dgtl-decks-http.entrypoints: "http"
+      traefik.http.routers.dgtl-decks-http.middlewares: "decks-redirect"
+      traefik.http.middlewares.decks-redirect.redirectscheme.scheme: "https"
       traefik.http.services.dgtl-decks.loadbalancer.server.port: "80"
 
 networks:
-  # Same external network the app + Traefik already share. Do NOT recreate it.
-  traefik-public:
+  # Coolify's proxy network (external). The coolify-proxy Traefik routes to us via labels.
+  coolify:
     external: true

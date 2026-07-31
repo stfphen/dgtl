@@ -11,14 +11,18 @@ services:
     volumes:
       - /opt/dgtl-decks/site/pitch:/data/pitch
     networks:
-      - traefik-public
+      - coolify
     labels:
       traefik.enable: "true"
-      traefik.docker.network: "traefik-public"
+      traefik.docker.network: "coolify"
       traefik.http.routers.dgtl-deploy.rule: "Host(`deploy.dgtlmag.com`)"
-      traefik.http.routers.dgtl-deploy.entrypoints: "websecure"
+      traefik.http.routers.dgtl-deploy.entrypoints: "https"
       traefik.http.routers.dgtl-deploy.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtl-deploy-http.rule: "Host(`deploy.dgtlmag.com`)"
+      traefik.http.routers.dgtl-deploy-http.entrypoints: "http"
+      traefik.http.routers.dgtl-deploy-http.middlewares: "deploy-redirect"
+      traefik.http.middlewares.deploy-redirect.redirectscheme.scheme: "https"
       traefik.http.services.dgtl-deploy.loadbalancer.server.port: "80"
 networks:
-  traefik-public:
+  coolify:
     external: true
