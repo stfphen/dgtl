@@ -716,6 +716,27 @@ export function getRenderableTenantConfig(tenant, mode = "published") {
   });
 }
 
+// Explicit-claim-only host resolution: returns the tenant whose domains list
+// contains the host, or null. Unlike getTenantForHost there is NO fallback —
+// the root page uses this to send unclaimed hosts to /admin instead of
+// rendering a default funnel.
+export async function getTenantClaimingHost(host) {
+  const normalized = normalizeHost(host);
+  const matchesHost = (tenant) => {
+    const published = getRenderableTenantConfig(tenant, "published");
+    return published.status === "active" && published.domains.map(normalizeHost).includes(normalized);
+  };
+  const pool = await ensureSchema();
+  if (pool) {
+    const result = await pool.query("select * from tenants where status = 'active'");
+    const match = result.rows.map(mapTenantRow).find(matchesHost);
+    return match || builtInTenants().find(matchesHost) || null;
+  }
+  const store = await readFileStore();
+  const fileTenants = store.tenants.map(normalizeTenantConfig).filter((tenant) => tenant.status === "active");
+  return fileTenants.find(matchesHost) || builtInTenants().find(matchesHost) || null;
+}
+
 export async function getTenantForHost(host) {
   const normalized = normalizeHost(host);
   const matchesHost = (tenant) => {

@@ -13,7 +13,7 @@ services:
       traefik.enable: "true"
       traefik.docker.network: "traefik-public"
       # Dedicated subdomain — apex dgtlgroup.io keeps serving its own homepage, untouched.
-      traefik.http.routers.dgtl-decks.rule: "Host(`pitch.dgtlmedia.io`)"
+      traefik.http.routers.dgtl-decks.rule: "Host(`pitch.dgtlmag.com`)"
       traefik.http.routers.dgtl-decks.entrypoints: "websecure"
       traefik.http.routers.dgtl-decks.tls.certresolver: "letsencrypt"
       traefik.http.services.dgtl-decks.loadbalancer.server.port: "80"

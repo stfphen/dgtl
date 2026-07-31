@@ -7,7 +7,7 @@ services:
     environment:
       DEPLOY_TOKEN: ${DEPLOY_TOKEN:?set DEPLOY_TOKEN in .env}
       PITCH_DIR: /data/pitch
-      BASE_URL: https://pitch.dgtlmedia.io
+      BASE_URL: https://pitch.dgtlmag.com
     volumes:
       - /opt/dgtl-decks/site/pitch:/data/pitch
     networks:
@@ -15,7 +15,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: "traefik-public"
-      traefik.http.routers.dgtl-deploy.rule: "Host(`deploy.dgtlmedia.io`)"
+      traefik.http.routers.dgtl-deploy.rule: "Host(`deploy.dgtlmag.com`)"
       traefik.http.routers.dgtl-deploy.entrypoints: "websecure"
       traefik.http.routers.dgtl-deploy.tls.certresolver: "letsencrypt"
       traefik.http.services.dgtl-deploy.loadbalancer.server.port: "80"

@@ -9,18 +9,23 @@ a password manager with **rotated** values (see §8), and DNS control.
 
 ## 1 · DNS
 
+Domain plan (2026-07-28): everything lives under **dgtlmag.com** — dgtlmedia.io is not under
+our control, so all old `*.dgtlmedia.io` URLs are dead history. `dgtlinfluence.com` is reserved
+for the Influence Journal (`journal/`) when it deploys.
+
 Point A records at the VPS IP:
 
 | Record | Serves |
 |---|---|
-| `app.dgtlmedia.io`, `dgtlmag.com`, `www.dgtlmag.com` | platform (funnels + admin) |
-| `pitch.dgtlmedia.io` | decks (pitch sites) |
-| `deploy.dgtlmedia.io` | deploy portal |
-| `terminal.dgtlmedia.io` | DGTL OS |
+| `dgtlmag.com`, `www.dgtlmag.com` | platform — root goes to /admin; tenant funnels at /t/[slug] |
+| `funding.dgtlmag.com` | funded-growth tenant (built-in host routing) |
+| `pitch.dgtlmag.com` | decks (pitch sites) |
+| `deploy.dgtlmag.com` | deploy portal |
+| `terminal.dgtlmag.com` | DGTL OS |
 
 `sites/polishstone` is **not** seeded to the pitch host: it uses root-absolute links and its own
-sitemap/robots — it wants a domain root (client domain or e.g. `polishstone.dgtlmedia.io` with its
-own nginx/label block). Decide separately.
+sitemap/robots — it wants a domain root (the client's own domain, or `polishstone.dgtlmag.com`
+with its own nginx/label block). Decide separately.
 
 ## 2 · Host prep
 
@@ -52,6 +57,19 @@ docker compose up -d --build                               # app (migrate is a n
 docker compose exec content-funnel node scripts/migrate.js # confirm "up to date"
 ```
 
+**Post-restore domain cleanup (required):** the July-21 dump's tenant rows still carry
+old host claims (localhost, app.dgtlmedia.io, dgtlmag.com). The app root now sends unclaimed
+hosts to `/admin` — a stale dgtlmag.com claim would resurrect the Content Day funnel on the
+app's own root. Content Day is slug-only now (/t/dgtlmag). Fix:
+
+```bash
+docker exec -it content-funnel-postgres psql -U content_funnel -d content_funnel \
+  -c "select slug, domains from tenants;" \
+  -c "update tenants set domains = '[]' where slug = 'dgtlmag';"
+```
+
+Review the `select` output and strip `localhost`/`app.dgtlmedia.io` entries from any other row.
+
 ## 5 · Decks + portal (pitch hosting)
 
 ```bash
@@ -60,7 +78,7 @@ cd /opt/dgtl && deploy/vps/seed-pitches.sh /opt/dgtl /opt/dgtl-decks/site/pitch
 cd deploy/decks   && docker compose up -d --build          # override file mounts /opt/dgtl-decks/site/pitch
 cd ../portal      && cp ../vps/env-templates/portal.env.example .env  # fresh DEPLOY_TOKEN
 docker compose up -d --build
-curl -X POST https://deploy.dgtlmedia.io/api/reindex -H "x-deploy-token: $DEPLOY_TOKEN"  # builds hub index
+curl -X POST https://deploy.dgtlmag.com/api/reindex -H "x-deploy-token: $DEPLOY_TOKEN"  # builds hub index
 ```
 
 ## 6 · DGTL OS (+ pgvector)

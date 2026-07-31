@@ -257,9 +257,11 @@ export function validateTenantConfig(input) {
     addError(errors, "brand.name", "Brand name is required.");
   }
 
+  // An empty domains array is valid: such a tenant is reachable only at
+  // /t/[slug] (custom-domain roots are opt-in; unclaimed hosts go to /admin).
   if (!hasOwnPath(source, ["domains"]) || !Array.isArray(source.domains)) {
-    addError(errors, "domains", "At least one domain is required.");
-  } else if (!tenant.domains.length || tenant.domains.some((domain) => !domain)) {
+    addError(errors, "domains", "Domains must be an array (may be empty).");
+  } else if (tenant.domains.some((domain) => !domain)) {
     addError(errors, "domains", "Domains must be non-empty strings.");
   }
 

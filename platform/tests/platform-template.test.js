@@ -63,15 +63,11 @@ test("proof roster links to live tenant slugs", () => {
   assert.equal(onHomeDecorTenant.slug, "on-home-decor");
 });
 
-test("dgtl-platform exclusively owns the canonical app host", () => {
-  assert.ok(
-    dgtlPlatformTenant.domains.includes("app.dgtlmedia.io"),
-    "dgtl-platform must claim app.dgtlmedia.io"
-  );
-  // Guard against regressions (e.g. a merge resurrecting main@fe2d78a's
-  // defaultTenant domain line): no other tenant may claim the host, otherwise
-  // built-in resolution order hands the root page back to Content Day.
-  const others = [
+test("no tenant claims the canonical app host — its root is the admin door", () => {
+  // app.dgtlmedia.io root redirects to /admin (app/page.jsx). If any tenant
+  // claims it, the root renders a funnel again — that is a regression.
+  const all = [
+    dgtlPlatformTenant,
     defaultTenant,
     fundedGrowthTenant,
     dgtlGroupTenant,
@@ -80,10 +76,10 @@ test("dgtl-platform exclusively owns the canonical app host", () => {
     elixrTenant,
     onHomeDecorTenant
   ];
-  for (const other of others) {
+  for (const tenant of all) {
     assert.ok(
-      !other.domains.includes("app.dgtlmedia.io"),
-      `app.dgtlmedia.io must not be claimed by ${other.slug}`
+      !tenant.domains.includes("app.dgtlmedia.io"),
+      `app.dgtlmedia.io must not be claimed by ${tenant.slug}`
     );
   }
 });

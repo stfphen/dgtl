@@ -4,14 +4,11 @@ export const defaultTenant = {
   id: "tenant_dgtlmag",
   slug: "dgtlmag",
   status: "active",
-  // app.dgtlmedia.io (the canonical app host) is deliberately NOT here: the
-  // root of that host serves the DGTL Growth Platform marketing funnel
-  // (lib/tenants/dgtlPlatform.js, template "platform"). Content Day stays on
-  // dgtlmag.com + local dev hosts. Exactly one tenant may claim each domain —
-  // enforced by tests/platform-template.test.js. (Supersedes main@fe2d78a,
-  // which parked app.dgtlmedia.io on this tenant before the platform page
-  // existed — resolve any merge conflict here by keeping THIS version.)
-  domains: ["dgtlmag.com", "www.dgtlmag.com", "localhost:8088", "127.0.0.1:8088"],
+  // Content Day claims no domains: dgtlmag.com's root is now the APP's front
+  // door (redirects to /admin — see app/page.jsx). Content Day is reachable
+  // at /t/dgtlmag like every other tenant. If it ever gets its own domain
+  // again, claim it here.
+  domains: [],
   defaultPackageId: "pro-content-day",
   brand: {
     name: "Content Day",
