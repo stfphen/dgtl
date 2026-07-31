@@ -1,4 +1,4 @@
-# Deploy portal — deploy.dgtlmedia.io
+# Deploy portal — deploy.dgtlmag.com
 
 Token-auth zip-deploy service for the pitch host. Source recovered from the VPS
 (`opt-dgtl-deploy`) — the engine skill and journal backlink kits reference this endpoint.

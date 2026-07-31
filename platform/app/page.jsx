@@ -6,9 +6,9 @@ import { getTenantClaimingHost, resolveTenantMediaConfig } from "../lib/store";
 export const dynamic = "force-dynamic";
 
 // The root page is host-resolved. A host explicitly claimed by a tenant
-// (e.g. dgtlmag.com -> Content Day) renders that tenant's page, so client
-// custom domains keep working. Any unclaimed host — app.dgtlmedia.io, local
-// dev, the bare VPS hostname — goes straight to the admin panel: the app's
+// renders that tenant's page, so client custom domains keep working. Any
+// unclaimed host — dgtlmag.com (the app host), local dev, the bare VPS
+// hostname — goes straight to the admin panel: the app's
 // front door is the login, not a marketing funnel. Tenant pages (including
 // Content Day at /t/dgtlmag and the Growth Platform page at /t/dgtl-platform)
 // remain reachable under /t/[slug].

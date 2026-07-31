@@ -4,12 +4,11 @@ export const defaultTenant = {
   id: "tenant_dgtlmag",
   slug: "dgtlmag",
   status: "active",
-  // Content Day lives on its own domain only. Local dev and app.dgtlmedia.io
-  // roots are deliberately unclaimed — unclaimed hosts redirect to /admin
-  // (see app/page.jsx). Content Day is still reachable at /t/dgtlmag like
-  // every other tenant. Exactly one tenant may claim each domain — enforced
-  // by tests/platform-template.test.js.
-  domains: ["dgtlmag.com", "www.dgtlmag.com"],
+  // Content Day claims no domains: dgtlmag.com's root is now the APP's front
+  // door (redirects to /admin — see app/page.jsx). Content Day is reachable
+  // at /t/dgtlmag like every other tenant. If it ever gets its own domain
+  // again, claim it here.
+  domains: [],
   defaultPackageId: "pro-content-day",
   brand: {
     name: "Content Day",

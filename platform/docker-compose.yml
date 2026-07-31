@@ -58,7 +58,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: "traefik-public"
-      traefik.http.routers.dgtlmag.rule: "Host(`dgtlmag.com`) || Host(`www.dgtlmag.com`) || Host(`app.dgtlmedia.io`)"
+      traefik.http.routers.dgtlmag.rule: "Host(`dgtlmag.com`) || Host(`www.dgtlmag.com`)"
       traefik.http.routers.dgtlmag.entrypoints: "websecure"
       traefik.http.routers.dgtlmag.tls.certresolver: "letsencrypt"
       traefik.http.services.dgtlmag.loadbalancer.server.port: "3000"

@@ -1,6 +1,6 @@
 # DGTL OS — Traefik-routed container + knowledge layer (pgvector RAG)
 #
-#   Route : terminal.dgtlmedia.io  ->  dgtl-os :8787   (via Traefik, with basic-auth)
+#   Route : terminal.dgtlmag.com  ->  dgtl-os :8787   (via Traefik, with basic-auth)
 #   Model : your host's Ollama (chat + embeddings) via host.docker.internal
 #   Data  : Level 1 facts from knowledge/knowledge.json + Level 2 RAG in pgvector
 #
@@ -38,7 +38,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
       - "traefik.http.routers.dgtl-os.entrypoints=websecure"
-      - "traefik.http.routers.dgtl-os.rule=Host(`terminal.dgtlmedia.io`)"
+      - "traefik.http.routers.dgtl-os.rule=Host(`terminal.dgtlmag.com`)"
       - "traefik.http.routers.dgtl-os.tls.certresolver=letsencrypt"
       - "traefik.http.services.dgtl-os.loadbalancer.server.port=8787"
       - "traefik.http.routers.dgtl-os.middlewares=dgtl-os-auth"
