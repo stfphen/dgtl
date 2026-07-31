@@ -30,16 +30,20 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - traefik-public
+      - coolify
       - dgtl-internal
     depends_on:
       - pgvector
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-public"
-      - "traefik.http.routers.dgtl-os.entrypoints=websecure"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.dgtl-os.entrypoints=https"
       - "traefik.http.routers.dgtl-os.rule=Host(`terminal.dgtlmag.com`)"
       - "traefik.http.routers.dgtl-os.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dgtl-os-http.rule=Host(`terminal.dgtlmag.com`)"
+      - "traefik.http.routers.dgtl-os-http.entrypoints=http"
+      - "traefik.http.routers.dgtl-os-http.middlewares=os-redirect"
+      - "traefik.http.middlewares.os-redirect.redirectscheme.scheme=https"
       - "traefik.http.services.dgtl-os.loadbalancer.server.port=8787"
       - "traefik.http.routers.dgtl-os.middlewares=dgtl-os-auth"
       # basic-auth login. Replace __BASICAUTH__ with the escaped user:hash (see DEPLOY-DOCKER.md)
@@ -59,7 +63,7 @@ services:
       - dgtl-internal            # private only — never exposed publicly
 
 networks:
-  traefik-public:
+  coolify:
     external: true
   dgtl-internal: {}
 

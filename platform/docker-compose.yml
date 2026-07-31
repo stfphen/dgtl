@@ -51,16 +51,20 @@ services:
       # time, so runtime uploads must live on a mount or they vanish on rebuild.
       - ./uploads:/app/public/uploads
     networks:
-      - traefik-public
+      - coolify
       - content-funnel-internal
     ports:
       - "127.0.0.1:8088:3000"
     labels:
       traefik.enable: "true"
-      traefik.docker.network: "traefik-public"
+      traefik.docker.network: "coolify"
       traefik.http.routers.dgtlmag.rule: "Host(`dgtlmag.com`) || Host(`www.dgtlmag.com`)"
-      traefik.http.routers.dgtlmag.entrypoints: "websecure"
+      traefik.http.routers.dgtlmag.entrypoints: "https"
       traefik.http.routers.dgtlmag.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtlmag-http.rule: "Host(`dgtlmag.com`) || Host(`www.dgtlmag.com`)"
+      traefik.http.routers.dgtlmag-http.entrypoints: "http"
+      traefik.http.routers.dgtlmag-http.middlewares: "dgtlmag-redirect"
+      traefik.http.middlewares.dgtlmag-redirect.redirectscheme.scheme: "https"
       traefik.http.services.dgtlmag.loadbalancer.server.port: "3000"
 
   content-funnel-postgres:
@@ -77,7 +81,7 @@ services:
       - content-funnel-internal
 
 networks:
-  traefik-public:
+  coolify:
     external: true
   content-funnel-internal:
     internal: true
