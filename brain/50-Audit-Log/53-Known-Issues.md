@@ -177,3 +177,20 @@ Code-side C2/H2/M1/M2/L1 and login-H1 are **done**. Remaining, in order:
 5. Stripe idempotency + outreach double-send + file-store write mutex.
 
 Up: [[50-Audit-Log-MOC]]
+
+## Creator-feature template ships stale relative paths (found 2026-08-01)
+
+`engine/dgtl-creator-features/assets/creator-feature-template.html` still references the **pre-pack**
+layout — `../assets/dgtl-editorial.css`, `../assets/journal.js`, `../assets/logos/*.svg`,
+`../index.html#creators`, `../cases/a-day-with-swae-lee.html`, and a related-card pointing at a
+sibling `peter-mckinnon.html`. Under the pack model a hub sits at `journal/packs/<slug>/index.html`
+and needs `../../_shared/…` and `../../index.html`.
+
+So `populate.py` reports "all tokens filled" and then `validate.py` immediately fails with ~25
+broken local refs. Every pack built from this template has needed the same manual post-populate
+rewrite (Shane Boyer's page carries the corrected paths; Casper's needed it too). It is a silent
+tax on every new pack and it makes the skill's documented workflow wrong as written.
+
+**Fix:** update the template to the pack-relative paths and repoint the related-cards at real pages,
+or teach `populate.py` to rewrite them. Not done here — it changes the shared engine and belongs in
+its own PR, not one adding a creator.

@@ -1,0 +1,14 @@
+# Build context is the repo root (see Dockerfile), so trim it to just what the image needs.
+# BuildKit reads "<dockerfile-path>.dockerignore" in preference to a context-root .dockerignore,
+# which lets this stay scoped to the Journal image instead of adding a repo-root file that would
+# also affect platform/ builds. Harmlessly ignored by builders that don't support it.
+*
+!journal/
+!deploy/journal/nginx.conf
+!deploy/journal/404.html
+
+# Never ship build artifacts or local cruft even from the paths we did allow.
+journal/**/*.standalone.html
+**/.DS_Store
+**/._*
+**/*.bak
