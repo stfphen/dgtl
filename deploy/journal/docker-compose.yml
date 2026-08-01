@@ -1,0 +1,33 @@
+services:
+  dgtl-journal:
+    # Context is the repo root so the image can COPY journal/. See Dockerfile header.
+    build:
+      context: ../..
+      dockerfile: deploy/journal/Dockerfile
+    container_name: dgtl-journal
+    restart: unless-stopped
+    networks:
+      - coolify
+    # Local-only publish so you can curl the container directly on the VPS while debugging.
+    # 8090 is taken by dgtl-decks, so the Journal uses 8091. Traefik reaches this container
+    # over the coolify network, not through this port.
+    ports:
+      - "127.0.0.1:8091:80"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "coolify"
+      # Apex + www. dgtlinfluence.com is reserved for the Influence Journal; dgtlmag.com and
+      # pitch.dgtlmag.com keep serving their own things, untouched.
+      traefik.http.routers.dgtl-journal.rule: "Host(`dgtlinfluence.com`) || Host(`www.dgtlinfluence.com`)"
+      traefik.http.routers.dgtl-journal.entrypoints: "https"
+      traefik.http.routers.dgtl-journal.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtl-journal-http.rule: "Host(`dgtlinfluence.com`) || Host(`www.dgtlinfluence.com`)"
+      traefik.http.routers.dgtl-journal-http.entrypoints: "http"
+      traefik.http.routers.dgtl-journal-http.middlewares: "journal-redirect"
+      traefik.http.middlewares.journal-redirect.redirectscheme.scheme: "https"
+      traefik.http.services.dgtl-journal.loadbalancer.server.port: "80"
+
+networks:
+  # Coolify's proxy network (external). The coolify-proxy Traefik routes to us via the labels above.
+  coolify:
+    external: true

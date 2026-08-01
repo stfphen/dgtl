@@ -1,0 +1,14 @@
+{
+  "slug": "casper",
+  "name": "Casper",
+  "type": "creator",
+  "status": "draft",
+  "hub": "index.html",
+  "features": [],
+  "cases": [],
+  "sources": "sources.md",
+  "backlinkKit": "backlink-kit.md",
+  "hasMedia": true,
+  "updated": "2026-08-01",
+  "canonicalUrl": "https://dgtlinfluence.com/packs/casper/"
+}
