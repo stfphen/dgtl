@@ -1,30 +1,35 @@
 ---
-title: 41 · Deployment Runbook (Hostinger VPS)
+title: 41 · Deployment Runbook (Hetzner VPS)
 type: runbook
 tags: [ops]
 status: stable
-updated: 2026-06-27
+updated: 2026-08-01
 source: DEPLOY_HOSTINGER.md, PRE_DEPLOY_CHECKLIST.md, RESUME_HERE.md
 ---
 
-# Deployment Runbook — Hostinger VPS
+# Deployment Runbook — Hetzner VPS
 
-Target: `dgtlmag.com` on VPS `62.72.16.32` (Ubuntu + Docker + Traefik). App = Next.js container +
-private Postgres container, published through the existing `traefik-public` network.
+> **Host changed 2026-07-21.** Target is now **`37.27.198.189`** (Hetzner, host `DGTLapps`), and the
+> edge is **Coolify** — stacks attach to the `coolify` network, not `traefik-public`. The Hostinger
+> box `62.72.16.32` is gone. For a from-scratch rebuild follow `deploy/vps/README-VPS-DEPLOY.md`;
+> this note covers the app's own deploy loop.
+
+Target: `dgtlmag.com` on VPS `37.27.198.189` (Ubuntu + Docker + Coolify). App = Next.js container +
+private Postgres container, published through Coolify's `coolify` network.
 
 ## 0. Hard gate — do NOT deploy unless ALL true
-1. `npm test` green. 2. `npm run build` succeeds locally. 3. DNS for `@`/`www` → `62.72.16.32`.
+1. `npm test` green. 2. `npm run build` succeeds locally. 3. DNS for `@`/`www` → `37.27.198.189`.
 4. VPS `/opt/content-checkout-funnel/.env` has **real** secrets (diff before overwriting; never clobber).
 5. Fresh Postgres dump exists (`scripts/backup-db.sh`). 6. Post-deploy `curl -I https://dgtlmag.com/` → **200**.
 
 > ⚠️ **Deploy from a branch that contains the Funding Survey** — `main` historically did not. Merge it first or deploy the feature branch, or the survey/CTA/subdomains won't be in the build.
 
-## 1. DNS (Hostinger)
+## 1. DNS (managed at Hostinger; hosting is Hetzner)
 ```
-A   @         62.72.16.32
-A   www       62.72.16.32
-A   funding   62.72.16.32     # → funded-growth tenant
-A   grants    62.72.16.32     # → funded-growth tenant
+A   @         37.27.198.189
+A   www       37.27.198.189
+A   funding   37.27.198.189     # → funded-growth tenant
+A   grants    37.27.198.189     # → funded-growth tenant
 ```
 `getTenantForHost` resolves `funding.`/`grants.` to the `funded-growth` tenant ([[15-Multi-Tenancy]]).
 Verify a host route: `curl -I -H "Host: funding.dgtlmag.com" http://127.0.0.1:8088/`.
@@ -36,10 +41,10 @@ cd /Users/emery/content-checkout-funnel
 COPYFILE_DISABLE=1 tar --exclude=".git" --exclude=".DS_Store" --exclude="._*" \
   --exclude="node_modules" --exclude=".next" --exclude="data" \
   -czf /tmp/content-funnel-clean.tgz .
-scp /tmp/content-funnel-clean.tgz root@62.72.16.32:/root/content-funnel-clean.tgz
+scp /tmp/content-funnel-clean.tgz root@37.27.198.189:/root/content-funnel-clean.tgz
 
 # On VPS
-ssh root@62.72.16.32
+ssh root@37.27.198.189
 mkdir -p /opt/content-checkout-funnel && cd /opt/content-checkout-funnel
 # Create/update .env (preserved across deploys). Generate strong values:
 umask 077; POSTGRES_PASSWORD="$(openssl rand -base64 32)"
@@ -67,10 +72,10 @@ no built-in tenants or leads. Brand name is set by tenant config, not the team s
 ## 6. Verify
 ```bash
 curl -I http://127.0.0.1:8088/                      # 200 (host 8088 → container 3000)
-docker inspect content-checkout-funnel --format '{{range $k,$v := .NetworkSettings.Networks}}{{println $k}}{{end}}'  # traefik-public
+docker inspect content-checkout-funnel --format '{{range $k,$v := .NetworkSettings.Networks}}{{println $k}}{{end}}'  # coolify
 curl -I https://dgtlmag.com/                        # 200 + valid TLS
 docker logs content-checkout-funnel --tail=80
-docker logs traefik --tail=80
+docker logs coolify-proxy --tail=80
 ```
 
 ## 502 remediation (this has happened — see [[51-Timeline]])
@@ -84,7 +89,7 @@ docker compose up -d --build content-funnel
 curl -I http://127.0.0.1:8088/                      # want 200
 ```
 Common causes: boot crash on missing/invalid env (`DATABASE_URL`/`SESSION_SECRET`); container not on
-`traefik-public`; loadbalancer port label ≠ container port `3000`. **Root cause of the historical 502:**
+the `coolify` network; loadbalancer port label ≠ container port `3000`. **Root cause of the historical 502:**
 Next.js 15 bound to the container-id hostname instead of `0.0.0.0` → fixed with `HOSTNAME=0.0.0.0` in `docker-compose.yml`.
 
 ## One-command deploys (after first setup)

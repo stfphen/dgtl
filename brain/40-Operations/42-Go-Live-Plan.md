@@ -9,7 +9,7 @@ source: GO_LIVE_PLAN.md
 
 # Go-Live Plan (12 phases)
 
-Owner: FAYELLA. Target: `dgtlmag.com` (VPS 62.72.16.32). The master ops checklist to go from
+Owner: FAYELLA. Target: `dgtlmag.com` (VPS 37.27.198.189 — Hetzner; the old Hostinger 62.72.16.32 is retired). The master ops checklist to go from
 half-deployed to fully live with roles, AI, payments, email, telephony, and the funding survey.
 Phases are dependency-ordered; 4–9 can run in parallel once the app + auth/DB are live.
 

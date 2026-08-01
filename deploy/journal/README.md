@@ -10,33 +10,62 @@ serves at the **domain root**, not a subpath.
 > that compose file's own header says not to run it here. This resource attaches to Coolify's
 > existing `coolify` network instead.
 
-## Nothing here is applied yet
+## Status: LIVE since 2026-08-01
 
-This folder is **configuration only**. Two things still have to happen by hand, both outside this
-repo — see the checklist below.
+`https://dgtlinfluence.com/` and `https://www.dgtlinfluence.com/` serve this container, with a
+LetsEncrypt cert (`CN=dgtlinfluence.com`, issued 2026-08-01). Deployed by hand on the VPS with
+`docker compose up -d --build`; Coolify's proxy picks the container up from the Traefik labels,
+so no Coolify dashboard resource was needed.
 
-### 1. DNS (registrar — the user has to do this)
+### DNS (done)
 
 ```
-A     @      62.72.16.32
-A     www    62.72.16.32
+A     @      37.27.198.189
+A     www    37.27.198.189
 ```
 
-Same VPS already serving `dgtlmag.com` (per `deploy/LIVE-SETUP-RUNBOOK.md`). Let these propagate
-before the first HTTPS hit, or LetsEncrypt's challenge fails and Traefik backs off for a while.
+Same VPS already serving `dgtlmag.com`. DNS is managed at **Hostinger** (nameservers
+`ns1/ns2.dns-parking.com`).
 
-### 2. The Coolify resource (Coolify dashboard or its API)
+> **The IP is `37.27.198.189` (Hetzner), not the `62.72.16.32` you will find in
+> `deploy/LIVE-SETUP-RUNBOOK.md` and `DGTL-Domain-and-Deploy-Blueprint.md`.** Those describe the
+> retired Hostinger box, offboarded 2026-07-21. `deploy/vps/README-VPS-DEPLOY.md` is the current
+> runbook. Confirm with `dig +short dgtlmag.com A` before pointing anything.
 
-Either route works:
+Let DNS propagate before the first HTTPS hit, or LetsEncrypt's challenge fails and Traefik backs
+off for a while. If a domain was previously parked, its old record can sit in resolver caches for
+hours after you change it — check against the authority (`dig +short @ns1.dns-parking.com <domain>`)
+rather than your own resolver before concluding something is broken.
 
-- **Git deploy (preferred).** New resource → *Docker Compose* → point it at this repo, branch
-  `main`, and set the compose file to `deploy/journal/docker-compose.yml`. The build context is
-  the repo root (`context: ../..`), which is what lets the image reach `journal/`. Every push then
-  redeploys.
-- **Paste.** New resource → *Docker Compose* → paste `docker-compose.yml`. Note this only works if
-  Coolify also has the repo checked out, since the build needs `journal/` and the Dockerfile.
+### Deploy / redeploy
 
-Then let Traefik issue the cert on the first HTTPS request.
+No Coolify dashboard resource is required — its proxy routes by container label, the same way
+`deploy/decks/` is brought up in `deploy/vps/README-VPS-DEPLOY.md` §5:
+
+```bash
+ssh root@37.27.198.189
+cd /opt/dgtl && git checkout main && git pull
+cd deploy/journal && docker compose up -d --build
+```
+
+The build context is the repo root (`context: ../..`), which is why this runs from
+`/opt/dgtl/deploy/journal` and not from a copy of this folder on its own.
+
+One-liner from the Mac:
+
+```bash
+ssh root@37.27.198.189 'cd /opt/dgtl && git pull && cd deploy/journal && docker compose up -d --build'
+```
+
+**Optional — auto-deploy on push.** New Coolify resource → *Docker Compose* → this repo, branch
+`main`, compose file `deploy/journal/docker-compose.yml`. Run `docker compose down` on the manual
+container first, or both will claim the `dgtlinfluence.com` router.
+
+**Rollback** (removes only the Journal; platform, decks and the proxy are untouched):
+
+```bash
+ssh root@37.27.198.189 'cd /opt/dgtl/deploy/journal && docker compose down'
+```
 
 ## Build context — the one thing that trips people up
 
