@@ -30,7 +30,7 @@ not two slugs. This is the single most common mistake when generating from these
 | `teaser.html` | the full pitch | `index.html` |
 | `index.html` | the teaser | `teaser.html` |
 | either | own media | `media/photo.jpg` |
-| either | a *different* pitch | `https://pitch.dgtlmedia.io/<other-slug>/` |
+| either | a *different* pitch | `https://pitch.dgtlmag.com/<other-slug>/` |
 
 **Never a root-absolute link** (`/full/`, `/media/x.jpg`). Those only resolve when the page is served
 from a domain root, so they break locally *and* under the `/<slug>/` deploy scheme. This is not
@@ -101,7 +101,7 @@ structure the template can't carry. Say which path you took and why.
 
 ## 7. The published URL is not fixed — don't bake one in
 
-Default deploy is **deploy.dgtlmedia.io** → served at `https://pitch.dgtlmedia.io/<slug>/`.
+Default deploy is **deploy.dgtlmag.com** → served at `https://pitch.dgtlmag.com/<slug>/`.
 
 But `skill-mods/migrate-to-main-domain/` exists to **promote** hand-picked pages onto
 `https://dgtlgroup.io/pitch/<slug>/`, because a subdirectory of the established domain inherits its
@@ -114,7 +114,7 @@ So:
 - Set `canonical` / `og:url` to the page's **real** published URL — one address, consistently, or
   the ranking signal splits across two.
 - Keep intra-folder links relative (§2). Relative links survive promotion unchanged; hardcoded
-  `pitch.dgtlmedia.io` links have to be rewritten and one will be missed.
+  `pitch.dgtlmag.com` links have to be rewritten and one will be missed.
 
 That last point is the practical reason the relative rule matters beyond the local-preview case.
 

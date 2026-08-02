@@ -14,12 +14,12 @@ The four pages link to each other, the hub is linked from the Journal index, and
 
 ## Deploy
 
-Upload each `*.standalone.html` to **deploy.dgtlmedia.io**. They publish at:
+Upload each `*.standalone.html` to **deploy.dgtlmag.com**. They publish at:
 
-- https://pitch.dgtlmedia.io/journal/creators/5a1ive.html
-- https://pitch.dgtlmedia.io/journal/creators/5a1ive-gshock.html
-- https://pitch.dgtlmedia.io/journal/creators/5a1ive-eyewear.html
-- https://pitch.dgtlmedia.io/journal/creators/5a1ive-scene.html
+- https://pitch.dgtlmag.com/journal/creators/5a1ive.html
+- https://pitch.dgtlmag.com/journal/creators/5a1ive-gshock.html
+- https://pitch.dgtlmag.com/journal/creators/5a1ive-eyewear.html
+- https://pitch.dgtlmag.com/journal/creators/5a1ive-scene.html
 
 Keep the slugs stable once live (changing a URL sheds ranking).
 
@@ -27,10 +27,10 @@ Keep the slugs stable once live (changing a URL sheds ranking).
 
 **Ready-to-post caption (IG / story / link-in-bio):**
 > Featured in the DGTL Influence Journal — the full write-up on the custom crystal G-Shocks + the
-> 55555stuff eyewear line. → https://pitch.dgtlmedia.io/journal/creators/5a1ive.html
+> 55555stuff eyewear line. → https://pitch.dgtlmag.com/journal/creators/5a1ive.html
 
 **Link-in-bio / press ("as seen in") line:**
-> As seen in the DGTL Influence Journal → https://pitch.dgtlmedia.io/journal/creators/5a1ive.html
+> As seen in the DGTL Influence Journal → https://pitch.dgtlmag.com/journal/creators/5a1ive.html
 
 **Suggested anchor text for any site linking back:** `5a1ive in the DGTL Influence Journal`
 

@@ -13,4 +13,4 @@ for d in "$REPO"/pitches/*/; do
   echo "seeded $slug"
 done
 cp "$REPO/deploy/decks/site/pitch/404.html" "$DEST/404.html"
-echo "now: curl -X POST https://deploy.dgtlmedia.io/api/reindex -H \"x-deploy-token: \$DEPLOY_TOKEN\""
+echo "now: curl -X POST https://deploy.dgtlmag.com/api/reindex -H \"x-deploy-token: \$DEPLOY_TOKEN\""

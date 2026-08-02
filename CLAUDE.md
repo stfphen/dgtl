@@ -113,7 +113,7 @@ the index, sitemap and cross-links are generated from the manifests.
 
 `pitches/<slug>/` with `index.html` as the hub, `teaser.html` beside it when there is a short
 front-of-funnel version, `media/` for its own assets, and a `pitch.json` manifest. Registered in
-`pitches/pitches.index.json`. Deploy scheme is `https://pitch.dgtlmedia.io/<slug>/`.
+`pitches/pitches.index.json`. Deploy scheme is `https://pitch.dgtlmag.com/<slug>/`.
 
 - **`pitches/_templates/` holds the generic "Your Brand × DGTL" offer pages** — website overhaul,
   brand redesign kit, influencer activation. These are cloned per prospect; they are not pitches.

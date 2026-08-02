@@ -94,7 +94,7 @@ than leaving the check red.
 | `escott` | ESCOTT — a family brand concept | concept | draft |
 | `the-climb` | THE CLIMB — DGTL Originals documentary | concept | draft |
 
-Deploy scheme: `https://pitch.dgtlmedia.io/<slug>/`.
+Deploy scheme: `https://pitch.dgtlmag.com/<slug>/`.
 
 ## Brand
 

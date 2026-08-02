@@ -108,7 +108,7 @@ out.
 - **Preview locally:** open `index.html` in a browser (assets load via relative paths).
 - **Deploy:** drop the `influence-journal/` folder onto Netlify (or any static host). The
   `_headers` file sets `X-Content-Type-Options: nosniff`. Suggested live path: `/journal/`
-  on `pitch.dgtlmedia.io` — update the `canonical` / `og:url` / JSON-LD `@id` URLs if you host elsewhere.
+  on `pitch.dgtlmag.com` — update the `canonical` / `og:url` / JSON-LD `@id` URLs if you host elsewhere.
 
 ---
 © 2026 DGTL. Powered by DGTL Influence.
