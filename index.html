@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DGTL Pay — non-custodial USDC settlement for creator campaigns</title>
+<meta name="description" content="DGTL Pay settles creator campaigns in USDC. The brand funds escrow from its own wallet, the creator is paid directly to theirs, and DGTL holds $0 in transit. $DGTL is a proposed Phase 3 utility token — not minted, not sold.">
+<link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%22222%20160%20327%20450%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M529.17%20383.142V383.083C529.17%20383.015%20529.161%20382.947%20529.161%20382.887C529.153%20382.743%20529.153%20382.598%20529.136%20382.462C528.804%20375.126%20522.769%20369.278%20515.356%20369.278H434.789C427.164%20369.278%20420.976%20375.458%20420.976%20383.091V383.678C420.976%20391.303%20427.156%20397.491%20434.789%20397.491H480.989L348.144%20528.1L463.274%20195.138C465.221%20189.519%20463.308%20183.51%20458.964%20179.948C458.88%20179.863%20458.812%20179.769%20458.727%20179.676C453.261%20174.117%20444.335%20174.049%20438.776%20179.506L242.016%20372.976C239.033%20375.908%20237.647%20379.844%20237.834%20383.72C237.834%20383.746%20237.834%20383.78%20237.834%20383.805V384.392C237.834%20392.017%20244.014%20398.205%20251.648%20398.205H332.954C340.579%20398.205%20346.767%20392.025%20346.767%20384.392V383.805C346.767%20376.18%20340.588%20369.992%20332.954%20369.992H285.301L418.128%20239.391L302.965%20572.43C300.474%20579.638%20304.299%20587.501%20311.508%20590L312.06%20590.196C312.077%20590.204%20312.103%20590.204%20312.12%20590.213C317.305%20592.635%20323.655%20591.751%20327.973%20587.501L524.97%20393.81C527.946%20390.886%20529.331%20386.993%20529.17%20383.142Z%22%20fill%3D%22%23F0CF50%22/%3E%0A%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== DGTL brand tokens (dgtl-brand-kit / assets/dgtl-tokens.css, inlined) ===== */
+:root{
+  --bg:#000000; --surface-1:#0a0a0a; --surface-2:#111111;
+  --surface-card:rgba(0,0,0,0.45);
+  --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
+  --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
+  --gold-ring:rgba(240,207,80,0.15);
+  --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.4);
+  --success:#7BC47F; --success-tint:rgba(123,196,127,0.10);
+  --warning:#E8A33D; --warning-tint:rgba(232,163,61,0.10);
+  --info:#6E9FDB;    --info-tint:rgba(110,159,219,0.10);
+  --r-control:7px; --r-card:16px; --r-pill:9999px;
+  --shadow-card:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15);
+  --glass-bg:rgba(0,0,0,0.45);
+  --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);scroll-behavior:smooth}
+body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
+     background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--gold);color:#000}
+:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+a{color:inherit}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);
+     font-weight:700;font-size:16px;border-radius:var(--r-control);
+     padding:15px 24px;border:1px solid transparent;cursor:pointer;
+     text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
+.btn-secondary:hover{border-color:#fff;transform:translateY(-1px)}
+.btn-sm{padding:10px 18px;font-size:14px}
+.card{background:var(--surface-card);border:1px solid var(--border);
+      border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:24px}
+.card-callout{border-left:3px solid var(--gold)}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-pill);
+      font-size:11px;padding:3px 10px;background:var(--gold-tint);color:var(--gold);
+      font-weight:600;letter-spacing:.04em}
+.h-display{font-size:clamp(40px,6vw,70px);font-weight:700;letter-spacing:-1.4px;
+           line-height:1.08;color:#fff}
+.h-section{font-size:clamp(28px,4.2vw,40px);font-weight:700;color:#fff;letter-spacing:-.8px;line-height:1.14}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan);font-weight:600}
+.gold{color:var(--gold)}
+.dim{color:var(--text-dim)}
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th{background:var(--surface-2);color:var(--text-dim);font-size:11px;
+          text-transform:uppercase;letter-spacing:.1em;font-weight:600;
+          text-align:left;padding:12px 16px}
+.table td{padding:14px 16px;border-top:1px solid #1c1c1c;color:var(--text);vertical-align:top}
+.table td.pct{font-variant-numeric:tabular-nums;font-weight:700;color:var(--gold);white-space:nowrap}
+.table-wrap{border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+
+/* ===== page ===== */
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+/* clip decorative vignettes: they are wider than the viewport and positioned negative, which
+   otherwise grows document scrollWidth to ~460px on a 390px screen */
+.sec{padding:84px 0;position:relative;overflow-x:clip}
+.sec-head{max-width:780px;margin-bottom:44px}
+.sec-head .eyebrow{display:block;margin-bottom:14px}
+.sec-head h2{margin-bottom:18px}
+.lede{color:var(--text-muted);font-size:17px;line-height:1.65}
+.hair{border:0;border-top:1px solid #171717;margin:0}
+.vignette{position:absolute;pointer-events:none;z-index:0}
+.grid{display:grid;gap:24px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+
+/* nav */
+.nav{position:fixed;top:0;left:0;right:0;height:73px;z-index:60;
+     background:var(--glass-bg);backdrop-filter:blur(8px) saturate(1.8);
+     -webkit-backdrop-filter:blur(8px) saturate(1.8);
+     border-bottom:1px solid var(--border-subtle)}
+.nav-in{max-width:1120px;margin:0 auto;padding:0 24px;height:73px;
+        display:flex;align-items:center;justify-content:space-between;gap:20px}
+.nav-logo{display:inline-flex;align-items:center;min-height:40px}
+.nav-logo img{height:26px;display:block}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:14px;font-weight:500;color:var(--text-muted);text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:#fff}
+.nav-links a.current{color:#fff;font-weight:600}
+/* .nav-links a (0,1,1) outranks .btn-primary (0,1,0) and was painting the CTA #D0D0D0 on gold.
+   Text on a gold fill is always #000 per the brand kit. */
+.nav-links a.btn-primary,.nav-links a.btn-primary:hover{color:#000}
+.burger{display:none;background:none;border:0;cursor:pointer;padding:8px;color:#fff}
+.burger svg{display:block}
+.mobile-menu{position:fixed;inset:0;background:#000;z-index:70;display:none;
+             flex-direction:column;padding:24px}
+.mobile-menu.open{display:flex}
+.mm-top{display:flex;align-items:center;justify-content:space-between;height:49px}
+.mm-links{display:flex;flex-direction:column;gap:6px;margin-top:36px}
+.mm-links a{font-size:20px;font-weight:600;color:var(--text-muted);text-decoration:none;
+            padding:12px 0;min-height:44px;display:flex;align-items:center}
+.mm-links a:hover{color:#fff}
+.mm-cta{margin-top:24px}
+
+/* hero */
+.hero{padding:150px 0 72px;position:relative;overflow:hidden}
+.hero-spark{position:absolute;top:-90px;right:-140px;width:620px;opacity:.055;
+            transform:rotate(14deg);pointer-events:none;z-index:0}
+.hero .wrap{position:relative;z-index:2}
+.hero h1{margin:20px 0 22px;max-width:15ch}
+.hero-lede{color:var(--text-muted);font-size:19px;line-height:1.6;max-width:60ch}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
+.hero-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:64px;
+            border-top:1px solid var(--border);padding-top:32px}
+.fact .v{font-size:clamp(34px,4.6vw,48px);font-weight:800;color:var(--gold);
+         font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-1px}
+.fact .l{color:var(--text-dim);font-size:13.5px;margin-top:10px;line-height:1.5;max-width:30ch}
+.fact .v.word{font-size:clamp(24px,3vw,32px);color:#F0F0F0}
+
+/* statement band */
+.band{padding:64px 0;border-top:1px solid #171717;border-bottom:1px solid #171717;
+      background:linear-gradient(180deg,#050505,#000)}
+.band-line{font-size:clamp(24px,3.4vw,34px);font-weight:700;letter-spacing:-.8px;
+           color:var(--text-ghost);line-height:1.25;margin-bottom:18px}
+.band p:last-child{color:var(--text-muted);max-width:72ch;font-size:16px;line-height:1.65}
+
+/* cards / lists */
+.card h3{font-size:17px;font-weight:700;margin-bottom:10px;color:#fff}
+.card p{color:var(--text-muted);font-size:14.5px;line-height:1.65}
+.card ul{list-style:none;margin-top:4px}
+.card ul li{color:var(--text-muted);font-size:14.5px;line-height:1.55;
+            padding:7px 0 7px 20px;position:relative}
+.card ul li::before{content:"";position:absolute;left:0;top:14px;width:6px;height:6px;
+                    border-radius:50%;background:var(--gold);opacity:.55}
+.col-never ul li::before{background:var(--text-dim)}
+
+/* roadmap */
+.timeline{position:relative;padding-left:34px}
+.timeline::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:1px;background:var(--border)}
+.tl-item{position:relative;padding-bottom:40px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-34px;top:4px;width:15px;height:15px;border-radius:50%;
+        border:1px solid var(--border);background:#000;display:flex;align-items:center;justify-content:center}
+.tl-dot i{width:5px;height:5px;border-radius:50%;background:var(--text-ghost);display:block}
+.tl-item.active .tl-dot{border-color:var(--gold)}
+.tl-item.active .tl-dot i{background:var(--gold)}
+.tl-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.tl-ph{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--gold-tan);font-weight:600}
+.tag{font-size:11px;border-radius:var(--r-pill);padding:3px 10px;background:var(--surface-2);
+     color:var(--text-dim);border:1px solid var(--border);font-weight:600}
+.tag.live{background:var(--gold-tint);color:var(--gold);border-color:transparent}
+.tag.now{background:var(--success-tint);color:var(--success);border-color:transparent}
+.tl-title{font-size:21px;font-weight:700;color:#fff;width:100%;letter-spacing:-.3px}
+.tl-body{color:var(--text-muted);font-size:15px;line-height:1.65;max-width:74ch}
+.gate{margin-top:20px;border:1px solid var(--border);border-radius:var(--r-card);
+      padding:22px;background:var(--surface-1)}
+.gk{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--gold-tan);font-weight:700;margin-bottom:18px}
+.mcard .v{font-size:30px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;
+          line-height:1;letter-spacing:-.6px}
+.mcard .l{color:var(--text-dim);font-size:12.5px;margin-top:9px;line-height:1.45}
+.gate-note{margin-top:18px;color:var(--text-dim);font-size:13px;line-height:1.6;
+           border-top:1px solid #1c1c1c;padding-top:14px}
+
+/* diagram */
+.diagram{border:1px solid var(--border);border-radius:var(--r-card);
+         background:var(--surface-1);padding:26px;margin-bottom:32px}
+.diagram-scroll{overflow-x:auto}
+.diagram svg{display:block;min-width:720px;width:100%;height:auto}
+.diagram-note{margin-top:18px;color:var(--text-dim);font-size:13px;line-height:1.6;
+              border-top:1px solid #1c1c1c;padding-top:14px}
+
+/* database test */
+.rule-quote{font-size:clamp(20px,2.6vw,26px);font-weight:700;color:#fff;letter-spacing:-.5px;
+            border-left:3px solid var(--gold);padding-left:20px;margin-bottom:26px;line-height:1.35}
+.db-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px}
+.db-col h3{font-size:13px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;
+           margin-bottom:14px}
+.db-col.row h3{color:var(--text-dim)}
+.db-col.tok h3{color:var(--gold)}
+.db-list{list-style:none;border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+.db-list li{padding:14px 18px;font-size:14.5px;color:var(--text-muted);border-top:1px solid #1c1c1c;line-height:1.5}
+.db-list li:first-child{border-top:0}
+.db-col.tok .db-list li{color:var(--text)}
+.db-col.tok .db-list{border-color:rgba(240,207,80,.22)}
+.db-close{margin-top:26px;color:var(--text-dim);font-size:14px;line-height:1.65;max-width:78ch}
+
+/* token panel */
+.token-panel{border:1px solid var(--border);border-radius:var(--r-card);
+             background:var(--surface-1);padding:34px}
+.token-panel h2{font-size:clamp(24px,3.2vw,32px);font-weight:700;color:#fff;letter-spacing:-.6px}
+.token-panel h2 em{font-style:normal;color:var(--gold)}
+.tk-facts{list-style:none;margin:24px 0 32px}
+.tk-facts li{color:var(--text-muted);font-size:14.5px;line-height:1.6;padding:9px 0 9px 22px;
+             position:relative;border-top:1px solid #1c1c1c}
+.tk-facts li:first-child{border-top:0}
+.tk-facts li::before{content:"";position:absolute;left:0;top:17px;width:7px;height:1.5px;background:var(--gold-tan)}
+.alloc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.alloc-head h3{font-size:17px;font-weight:700;color:#fff}
+.tk-legal{margin-top:16px;color:var(--text-dim);font-size:12.5px;line-height:1.6}
+
+/* faq */
+.faq{border-top:1px solid var(--border)}
+.faq details{border-bottom:1px solid var(--border)}
+.faq summary{cursor:pointer;list-style:none;padding:22px 44px 22px 0;position:relative;
+             font-size:16.5px;font-weight:600;color:#fff}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:8px;top:19px;font-size:22px;
+                    color:var(--gold);font-weight:400;line-height:1}
+.faq details[open] summary::after{content:"–"}
+.faq .a{padding:0 44px 24px 0;color:var(--text-muted);font-size:15px;line-height:1.7;max-width:80ch}
+.faq .a p+p{margin-top:12px}
+
+/* close band */
+.close-band{padding:88px 0;border-top:1px solid #171717;
+            background:radial-gradient(1000px 400px at 50% 0%,rgba(240,207,80,.05),transparent 70%)}
+.close-band h2{margin-bottom:18px;max-width:20ch}
+.close-band .lede{max-width:64ch;margin-bottom:30px}
+
+/* footer */
+.foot{border-top:1px solid var(--border);padding:56px 0 40px;background:#000}
+.foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:32px}
+.foot-brand img{height:24px;margin-bottom:16px;display:block}
+.foot-brand p{color:var(--text-dim);font-size:13.5px;line-height:1.6;max-width:34ch}
+.foot-brand p.tag-line{color:var(--text-muted);margin-top:10px}
+.foot h4{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--gold-tan);
+         font-weight:700;margin-bottom:14px}
+.foot ul{list-style:none}
+.foot ul li{margin-bottom:9px}
+.foot ul a{color:var(--text-dim);font-size:13.5px;text-decoration:none;transition:color .15s}
+.foot ul a:hover{color:#fff}
+.socials{display:flex;gap:12px}
+.socials a{width:40px;height:40px;border:1px solid var(--border);border-radius:var(--r-control);
+           display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:.15s}
+.socials a:hover{color:var(--gold);border-color:#3a3a3a}
+.legal{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+.legal p{color:var(--text-dim);font-size:12px;line-height:1.65;max-width:96ch}
+.legal p+p{margin-top:12px}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.rv.in{opacity:1;transform:none}
+
+@media (max-width:900px){
+  .nav-links{display:none}
+  .burger{display:block}
+  .g2,.g3,.g4,.db-grid,.hero-facts,.foot-grid{grid-template-columns:1fr}
+  .foot-grid{gap:34px}
+  .hero{padding:118px 0 56px}
+  .hero-facts{margin-top:44px}
+  .sec{padding:64px 0}
+  .token-panel{padding:24px}
+  .timeline{padding-left:28px}
+  .tl-dot{left:-28px}
+  /* footer links are the only sub-40px tap targets on this page at 390px */
+  .foot ul li{margin-bottom:2px}
+  .foot ul a{display:inline-flex;align-items:center;min-height:40px}
+}
+@media (max-width:640px){
+  .gate .g4{grid-template-columns:1fr 1fr}
+  .hero-cta .btn{width:100%;justify-content:center}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .rv{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<nav class="nav">
+  <div class="nav-in">
+    <a class="nav-logo" href="https://dgtlgroup.io" aria-label="DGTL Group home">
+      <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22/%3E%0A%3C/svg%3E" alt="DGTL">
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="current">Overview</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#token">$DGTL</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn btn-primary btn-sm" href="join.html">Join the waitlist →</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mm-top">
+    <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22/%3E%0A%3C/svg%3E" alt="DGTL" style="height:26px">
+    <button class="burger" id="closeMenu" aria-label="Close menu" style="display:block">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="mm-links">
+    <a href="index.html">Overview</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#token">$DGTL</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <a class="btn btn-primary mm-cta" href="join.html">Join the waitlist →</a>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <img class="hero-spark" src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%22222%20160%20327%20450%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M529.17%20383.142V383.083C529.17%20383.015%20529.161%20382.947%20529.161%20382.887C529.153%20382.743%20529.153%20382.598%20529.136%20382.462C528.804%20375.126%20522.769%20369.278%20515.356%20369.278H434.789C427.164%20369.278%20420.976%20375.458%20420.976%20383.091V383.678C420.976%20391.303%20427.156%20397.491%20434.789%20397.491H480.989L348.144%20528.1L463.274%20195.138C465.221%20189.519%20463.308%20183.51%20458.964%20179.948C458.88%20179.863%20458.812%20179.769%20458.727%20179.676C453.261%20174.117%20444.335%20174.049%20438.776%20179.506L242.016%20372.976C239.033%20375.908%20237.647%20379.844%20237.834%20383.72C237.834%20383.746%20237.834%20383.78%20237.834%20383.805V384.392C237.834%20392.017%20244.014%20398.205%20251.648%20398.205H332.954C340.579%20398.205%20346.767%20392.025%20346.767%20384.392V383.805C346.767%20376.18%20340.588%20369.992%20332.954%20369.992H285.301L418.128%20239.391L302.965%20572.43C300.474%20579.638%20304.299%20587.501%20311.508%20590L312.06%20590.196C312.077%20590.204%20312.103%20590.204%20312.12%20590.213C317.305%20592.635%20323.655%20591.751%20327.973%20587.501L524.97%20393.81C527.946%20390.886%20529.331%20386.993%20529.17%20383.142Z%22%20fill%3D%22%23F0CF50%22/%3E%0A%3C/svg%3E" alt="" aria-hidden="true">
+  <div class="vignette" style="width:900px;height:900px;top:-260px;left:-320px;background:radial-gradient(circle,rgba(240,207,80,0.05) 0%,rgba(0,0,0,0) 68%)"></div>
+  <div class="wrap">
+    <span class="pill">Phase 1 · in build</span>
+    <h1 class="h-display">Creator campaigns, settled without a <span class="gold">black box</span>.</h1>
+    <p class="hero-lede">DGTL Pay settles creator campaigns in USDC. The brand funds escrow from its own
+      wallet, the creator is paid directly to theirs, and DGTL originates the invoice, verifies delivery and
+      reconciles the ledger — without ever holding the funds in transit.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="join.html">Join the waitlist →</a>
+      <a class="btn btn-secondary" href="#architecture">See the architecture →</a>
+    </div>
+    <div class="hero-facts">
+      <div class="fact">
+        <div class="v" data-count="0" data-prefix="$">$0</div>
+        <div class="l">held by DGTL in transit — by architecture, not by policy</div>
+      </div>
+      <div class="fact">
+        <div class="v word">2-of-3</div>
+        <div class="l">signatures release escrow: brand, creator, DGTL as arbiter</div>
+      </div>
+      <div class="fact">
+        <div class="v word">Not minted</div>
+        <div class="l">$DGTL is a proposed Phase 3 utility token with no supply and no price</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== POSITIONING BAND ===================== -->
+<section class="band">
+  <div class="wrap">
+    <p class="band-line rv">USDC moves the money. <span class="gold">$DGTL unlocks the network.</span></p>
+    <p class="rv">Two things, two names, deliberately separated so nobody confuses them. The rail is what
+      gets built and it ships first. The token is a dated roadmap phase that exists only for the jobs a
+      database genuinely cannot do.</p>
+  </div>
+</section>
+
+<!-- ===================== WHY WE'RE BUILDING IT ===================== -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="eyebrow">Why we're building it</span>
+      <h2 class="h-section">This is not a payments company. It is how DGTL keeps <span class="gold">creators</span>.</h2>
+      <p class="lede">Worth saying plainly, because it changes what you should expect from us. DGTL Pay
+        charges no take rate and is not built to. Creators are the scarce input to a creator agency, and how
+        fast and how visibly they get paid is one of the few things an agency can be genuinely better at.
+        That is the whole thesis, and it is the only thing this project is measured on.</p>
+    </div>
+    <div class="grid g2">
+      <article class="card rv">
+        <h3>What we are not claiming</h3>
+        <p>No take rate on your settlement. No fee schedule to grow into. No forecast of what the rail
+          earns, because it is not built to earn — it is funded as an internal programme with a budget, the
+          way any agency funds the tools that make it better at its job.</p>
+      </article>
+      <article class="card rv">
+        <h3>What we actually measure</h3>
+        <p>Whether creators reply to our briefs faster, book with us again more often, and stay on the
+          roster longer than before the rail existed. Those numbers get a baseline recorded before a line of
+          it ships, and they are the ones that decide whether the project continues.</p>
+      </article>
+    </div>
+    <div class="card card-callout rv" style="margin-top:24px">
+      <h3>The rule that keeps it honest</h3>
+      <p>Every proposed addition answers one question first: does it move the creator supply number? If it
+        moves settled volume, partner count or holder count without moving reply rate, repeat bookings or
+        retention, it does not get built — however reasonable it sounds. That rule is the entire defence
+        against this quietly becoming something else.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="hair">
+
+<!-- ===================== ROADMAP ===================== -->
+<section class="sec" id="roadmap">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="eyebrow">Phasing</span>
+      <h2 class="h-section">Four phases. Each one has a numeric door.</h2>
+      <p class="lede">No phase begins because the previous one felt done. Every gate is a number, published
+        in advance. Phase 2 does not begin until Phase 1's gate is met — and Phase 1 does not get engineered
+        until the evidence phase below clears.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item active rv">
+        <span class="tl-dot"><i></i></span>
+        <div class="tl-head">
+          <span class="tl-ph">Phase 0 · Aug – Sep 2026</span>
+          <span class="tag now">In progress</span>
+          <span class="tl-title">Evidence — six weeks, no engineering</span>
+        </div>
+        <p class="tl-body">Before anything is built: capture the baseline the project will be judged
+          against, interview ten creators about briefs they actually took or declined, price the boring
+          alternatives, name the Tier-1 markets, and put the arbiter question to counsel. Nothing is
+          engineered in this phase, deliberately.</p>
+
+        <div class="gate">
+          <span class="gk">Phase 1 engineering does not begin until</span>
+          <div class="grid g4">
+            <div class="mcard"><div class="v">4 / 4</div><div class="l">baseline metrics captured before anything ships</div></div>
+            <div class="mcard"><div class="v" data-count="6">6</div><div class="l">of ten creators naming a specific past brief where payment terms changed what they did</div></div>
+            <div class="mcard"><div class="v">0</div><div class="l">cheaper alternatives that deliver escrow visible before delivery</div></div>
+            <div class="mcard"><div class="v">1</div><div class="l">named engineering owner, plus a counsel opinion on the arbiter role</div></div>
+          </div>
+          <p class="gate-note">Condition two is deliberately written as revealed preference. Asked whether
+            faster payment would matter, a person who is owed money says yes every time — and a question that
+            cannot fail is not a gate. If any of the four conditions fails, the rail does not get built.</p>
+        </div>
+      </div>
+
+      <div class="tl-item rv">
+        <span class="tl-dot"><i></i></span>
+        <div class="tl-head">
+          <span class="tl-ph">Phase 1 · Now → Q1 2027</span>
+          <span class="tag live">In build</span>
+          <span class="tl-title">The Rail</span>
+        </div>
+        <p class="tl-body">Non-custodial USDC escrow, cross-border payouts, invoicing, reconciliation,
+          creator wallets — for one corridor, the one where DGTL already pays the most creators. Every
+          database-row feature ships here too: tiers, rebates, booking priority, loyalty points, free and
+          instant with no token attached.</p>
+
+        <div class="gate">
+          <span class="gk">Phase 2 does not begin until</span>
+          <div class="grid g4">
+            <div class="mcard"><div class="v" data-count="15" data-prefix="+" data-suffix="%">+15%</div><div class="l">brief reply rate against the Phase 0 baseline</div></div>
+            <div class="mcard"><div class="v" data-count="10" data-prefix="+" data-suffix="%">+10%</div><div class="l">repeat-booking rate against the Phase 0 baseline</div></div>
+            <div class="mcard"><div class="v" data-count="20">20</div><div class="l">creators who would decline an equal-fee brief elsewhere to stay</div></div>
+            <div class="mcard"><div class="v" data-count="0">0</div><div class="l">disputes escalated outside the 2-of-3 process</div></div>
+          </div>
+          <p class="gate-note">Settled volume is recorded every month and is deliberately not a gate. DGTL
+            could route its own campaigns, clear a large number, and not one creator would have changed which
+            agency they answer. The gates measure creator behaviour because that is what the rail is for.</p>
+        </div>
+      </div>
+
+      <div class="tl-item rv">
+        <span class="tl-dot"><i></i></span>
+        <div class="tl-head">
+          <span class="tl-ph">Phase 2 · 2027</span>
+          <span class="tag">Gate-triggered</span>
+          <span class="tl-title">Token Definition</span>
+        </div>
+        <p class="tl-body">Rights memo with outside counsel, supply and vesting schedule, contract and
+          audit, testnet deployment, closed-beta redemption. The second corridor opens here. The chain
+          decision is made here too — not before, because the evidence that settles it does not exist yet.</p>
+      </div>
+
+      <div class="tl-item rv">
+        <span class="tl-dot"><i></i></span>
+        <div class="tl-head">
+          <span class="tl-ph">Phase 3 · 2027–28</span>
+          <span class="tag">Gate-triggered</span>
+          <span class="tl-title">Utility Activation</span>
+        </div>
+        <p class="tl-body">$DGTL mainnet. Distribution to creators and partners by earned allocation only.
+          Redemption live, creator-fund governance live. The five surviving utilities switch on here and
+          nothing else does.</p>
+      </div>
+
+      <div class="tl-item rv">
+        <span class="tl-dot"><i></i></span>
+        <div class="tl-head">
+          <span class="tl-ph">Phase 4 · 2028+</span>
+          <span class="tag">Gate-triggered</span>
+          <span class="tl-title">Open Network</span>
+        </div>
+        <p class="tl-body">Public liquidity, partner redemption at scale, and exchange listings supported by
+          a data room assembled continuously across Phases 1 to 3 rather than scrambled together in week
+          one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="hair">
+
+<!-- ===================== ARCHITECTURE ===================== -->
+<section class="sec" id="architecture">
+  <div class="vignette" style="width:760px;height:760px;top:80px;left:-300px;background:radial-gradient(circle,rgba(240,207,80,0.04) 0%,rgba(0,0,0,0) 68%)"></div>
+  <div class="wrap" style="position:relative;z-index:2">
+    <div class="sec-head rv">
+      <span class="eyebrow">The founding constraint</span>
+      <h2 class="h-section">Non-custodial, by architecture — not by policy.</h2>
+      <p class="lede">Almost every serious risk in cross-border settlement descends from one behaviour:
+        holding someone else's money in transit. So DGTL Pay doesn't. The money path is brand wallet →
+        escrow contract → creator wallet. DGTL sits beside it.</p>
+    </div>
+
+    <div class="diagram rv">
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 960 470" role="img" aria-labelledby="archTitle archDesc" xmlns="http://www.w3.org/2000/svg">
+          <title id="archTitle">DGTL Pay non-custodial settlement flow</title>
+          <desc id="archDesc">A brand wallet funds an escrow smart contract, which releases to a creator wallet when the milestone is met. A licensed ramp partner handles fiat in and fiat out at the edges. DGTL Pay sits off the money path, connected by dashed instruction lines, and never holds funds.</desc>
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#8a8a8a"/>
+            </marker>
+            <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#F0CF50"/>
+            </marker>
+          </defs>
+
+          <rect x="30" y="20" width="200" height="58" rx="12" fill="#0a0a0a" stroke="#2a2a2a"/>
+          <text x="130" y="45" text-anchor="middle" fill="#F0F0F0" font-family="Manrope,sans-serif" font-size="14.5" font-weight="600">Licensed ramp partner</text>
+          <text x="130" y="63" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="11.5">their licence · their KYC</text>
+
+          <rect x="730" y="20" width="200" height="58" rx="12" fill="#0a0a0a" stroke="#2a2a2a"/>
+          <text x="830" y="45" text-anchor="middle" fill="#F0F0F0" font-family="Manrope,sans-serif" font-size="14.5" font-weight="600">Licensed ramp partner</text>
+          <text x="830" y="63" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="11.5">their licence · their KYC</text>
+
+          <line x1="130" y1="78" x2="130" y2="144" stroke="#8a8a8a" stroke-width="1.6" marker-end="url(#ah)"/>
+          <text x="142" y="116" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="12">fiat in</text>
+          <line x1="830" y1="144" x2="830" y2="78" stroke="#8a8a8a" stroke-width="1.6" marker-end="url(#ah)"/>
+          <text x="842" y="116" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="12">fiat out</text>
+
+          <rect x="30" y="150" width="200" height="86" rx="14" fill="#0a0a0a" stroke="#2a2a2a"/>
+          <text x="130" y="186" text-anchor="middle" fill="#F0F0F0" font-family="Manrope,sans-serif" font-size="16.5" font-weight="700">Brand wallet</text>
+          <text x="130" y="209" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="12">brand controls the keys</text>
+
+          <rect x="380" y="150" width="200" height="86" rx="14" fill="#0a0a0a" stroke="#F0CF50" stroke-width="1.4"/>
+          <text x="480" y="186" text-anchor="middle" fill="#F0CF50" font-family="Manrope,sans-serif" font-size="16.5" font-weight="700">Escrow contract</text>
+          <text x="480" y="209" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="12">multi-sig release</text>
+
+          <rect x="730" y="150" width="200" height="86" rx="14" fill="#0a0a0a" stroke="#2a2a2a"/>
+          <text x="830" y="186" text-anchor="middle" fill="#F0F0F0" font-family="Manrope,sans-serif" font-size="16.5" font-weight="700">Creator wallet</text>
+          <text x="830" y="209" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="12">creator controls the keys</text>
+
+          <line x1="230" y1="193" x2="374" y2="193" stroke="#8a8a8a" stroke-width="1.8" marker-end="url(#ah)"/>
+          <text x="302" y="180" text-anchor="middle" fill="#D0D0D0" font-family="Manrope,sans-serif" font-size="12.5" font-weight="600">1 · funds escrow</text>
+          <text x="302" y="216" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="11.5">USDC</text>
+
+          <line x1="580" y1="193" x2="724" y2="193" stroke="#8a8a8a" stroke-width="1.8" marker-end="url(#ah)"/>
+          <text x="652" y="180" text-anchor="middle" fill="#D0D0D0" font-family="Manrope,sans-serif" font-size="12.5" font-weight="600">2 · milestone met</text>
+          <text x="652" y="216" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="11.5">USDC</text>
+
+          <rect x="330" y="360" width="300" height="80" rx="14" fill="#0a0a0a" stroke="#2a2a2a"/>
+          <text x="480" y="394" text-anchor="middle" fill="#F0F0F0" font-family="Manrope,sans-serif" font-size="16.5" font-weight="700">DGTL Pay</text>
+          <text x="480" y="416" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="12">arbiter and system of record</text>
+
+          <line x1="480" y1="360" x2="480" y2="322" stroke="#2a2a2a" stroke-width="1.6" stroke-dasharray="5 5"/>
+          <line x1="480" y1="290" x2="480" y2="240" stroke="#2a2a2a" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#ah)"/>
+          <text x="480" y="309" text-anchor="middle" fill="#F0CF50" font-family="Manrope,sans-serif" font-size="12.5" font-weight="700">instructs · verifies · reconciles — never holds</text>
+
+          <line x1="380" y1="360" x2="132" y2="242" stroke="#2a2a2a" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#ah)"/>
+          <text x="236" y="332" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="11.5">invoices · reports</text>
+
+          <line x1="580" y1="360" x2="828" y2="242" stroke="#2a2a2a" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#ah)"/>
+          <text x="724" y="332" text-anchor="middle" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="11.5">verifies delivery</text>
+
+          <line x1="330" y1="459" x2="358" y2="459" stroke="#8a8a8a" stroke-width="1.8"/>
+          <text x="366" y="463" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="11.5">money path</text>
+          <line x1="470" y1="459" x2="498" y2="459" stroke="#2a2a2a" stroke-width="1.8" stroke-dasharray="5 5"/>
+          <text x="506" y="463" fill="#8a8a8a" font-family="Manrope,sans-serif" font-size="11.5">instruction path — no funds move here</text>
+        </svg>
+      </div>
+      <p class="diagram-note">Escrow release is multi-signature — brand, creator, and DGTL as tie-breaker.
+        That makes DGTL an arbiter, not a custodian. Whether a regulator agrees is the single question this
+        architecture rests on, which is why it goes to counsel in Phase 0 rather than after a contract is
+        written.</p>
+    </div>
+
+    <div class="grid g3">
+      <article class="card rv">
+        <h3>What DGTL does</h3>
+        <ul>
+          <li>Originates the invoice and defines the escrow terms</li>
+          <li>Verifies deliverables against the agreed brief</li>
+          <li>Reconciles the ledger and exports the reporting</li>
+          <li>Acts as tie-breaker if a release is disputed</li>
+        </ul>
+      </article>
+      <article class="card rv col-never">
+        <h3>What DGTL never does</h3>
+        <ul>
+          <li>Hold the brand's funds</li>
+          <li>Hold the creator's funds</li>
+          <li>Convert fiat</li>
+          <li>Control the escrow release key alone</li>
+          <li>Take a percentage of the settlement</li>
+        </ul>
+      </article>
+      <article class="card rv">
+        <h3>What that buys</h3>
+        <ul>
+          <li>Fiat ramps are a licensed partner's product, surfaced inside DGTL Pay</li>
+          <li>The perimeter question becomes "which ramp partner covers this corridor", not "which licences in forty countries"</li>
+          <li>Funds cannot be trapped by DGTL, because DGTL never has them</li>
+        </ul>
+      </article>
+    </div>
+    <p class="db-close rv">The cost is honest: creators need a wallet, and that is the entire UX problem of
+      Phase 1. It gets solved with embedded wallets and email-based recovery, tested on three real creators
+      before the escrow contract is written — not by holding funds to smooth onboarding.</p>
+  </div>
+</section>
+
+<hr class="hair">
+
+<!-- ===================== DATABASE TEST ===================== -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="eyebrow">The database test</span>
+      <h2 class="h-section">Most "token utility" is a database row wearing a costume.</h2>
+    </div>
+    <p class="rule-quote rv">If a feature can be a row in a database, we build the row — not a token.</p>
+    <p class="lede rv" style="margin-bottom:40px">Every proposed use of $DGTL had to answer one question:
+      <em>could this just be a row in our database?</em> If yes, it ships on the rail in Phase 1 — free,
+      instant, and reversible if the tiering is wrong. Only the uses a database genuinely cannot serve are
+      left to a token. Twelve went in. Five came out.</p>
+
+    <div class="db-grid">
+      <div class="db-col row rv">
+        <h3>Failed the test — ships as a database row, no token</h3>
+        <ul class="db-list">
+          <li>Fee rebates for high-volume brands — a discount tier is a row</li>
+          <li>Studio booking priority — a queue rank is a row</li>
+          <li>Creator loyalty points — points are a row</li>
+          <li>Membership tiers — a flag on an account is a row</li>
+        </ul>
+      </div>
+      <div class="db-col tok rv">
+        <h3>Survived — a database genuinely cannot do these</h3>
+        <ul class="db-list">
+          <li><strong>Portable balance</strong> — value a creator keeps after leaving the platform. A database balance dies with the account.</li>
+          <li><strong>Cross-org redemption</strong> — credit redeemable across DGTL and partner brands. Cross-org settlement of a private ledger does not work.</li>
+          <li><strong>Partner-held balances</strong> — an agency holds value without a DGTL account. An account is required by definition.</li>
+          <li><strong>Creator-fund governance</strong> — external contributors vote on grant allocation. Non-account-holders cannot vote in our database.</li>
+          <li><strong>Programmable campaign incentives</strong> — third parties build on the primitive. A closed database is not composable.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="db-close rv">All five survivors share one property: <em>a party outside DGTL's account system
+      needs to hold or act on value.</em> That property is what a bearer token is actually for, and it is
+      the honest answer to "why does this need a blockchain." The list is closed — it does not get extended
+      for marketing reasons.</p>
+  </div>
+</section>
+
+<hr class="hair">
+
+<!-- ===================== TOKEN STATUS ===================== -->
+<section class="sec" id="token">
+  <div class="wrap">
+    <div class="token-panel rv">
+      <span class="eyebrow" style="display:block;margin-bottom:14px">Token status</span>
+      <h2>$DGTL — status: <em>not minted</em></h2>
+      <ul class="tk-facts">
+        <li>There is no supply. No contract has been deployed to any mainnet.</li>
+        <li>There is no price, and none will be published before a market exists.</li>
+        <li>There is no sale of any kind — no public offering, no private round, no SAFT.</li>
+        <li>There are no allocation promises to anyone, including waitlist members and creators working with DGTL today.</li>
+        <li>When distribution happens, it happens against verified platform activity only. Every token in circulation will have been earned by doing something on the platform.</li>
+        <li>Supply will be fixed at 1,000,000,000 $DGTL with no discretionary mint. Mint authority is renounced or permanently multisig-locked at deployment.</li>
+        <li>Redemption against services is the sink: tokens burn or return to the earn pool. A token with sources and no sinks only moves one direction.</li>
+      </ul>
+
+      <div class="alloc-head">
+        <h3>Proposed allocation</h3>
+        <span class="tag">Proposed, Phase 2 draft — subject to counsel review</span>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th scope="col">Allocation</th><th scope="col">% of fixed supply</th><th scope="col">Unlock terms</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Creator &amp; partner earn pool</td><td class="pct">40%</td><td class="dim">Emitted only against verified platform activity, over eight years or more</td></tr>
+            <tr><td>Ecosystem / creator fund (governed)</td><td class="pct">20%</td><td class="dim">Released by governance vote, quarterly cap</td></tr>
+            <tr><td>Treasury &amp; operations</td><td class="pct">15%</td><td class="dim">12-month cliff, 36-month linear</td></tr>
+            <tr><td>Team &amp; contributors</td><td class="pct">15%</td><td class="dim">12-month cliff, 48-month linear</td></tr>
+            <tr><td>Liquidity provision</td><td class="pct">10%</td><td class="dim">Locked until Phase 4, then protocol-owned</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tk-legal">Figures above are a working draft for Phase 2 and are not final. They carry no
+        price, no valuation, and no entitlement. Nothing in this table is an offer or a commitment to any
+        person.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="hair">
+
+<!-- ===================== FAQ ===================== -->
+<section class="sec" id="faq">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="eyebrow">Straight answers</span>
+      <h2 class="h-section">The questions people actually ask.</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>What does this cost to run, and who pays for it?</summary>
+        <div class="a">
+          <p>DGTL pays for it, out of an internal budget, the way an agency funds any tool that makes it
+            better at its job. There is no take rate on your settlement and no fee schedule to grow into.</p>
+          <p>The honest constraint is the recurring cost, not the build. A build is a one-off. Counsel
+            retainers, contract re-audits, ramp-partner minimums, monitoring and dispute handling arrive
+            every month whether the project is working or not. So the project carries a stated ceiling: if
+            the estimated ongoing run-rate exceeds five thousand dollars a month before a single external
+            creator is onboarded, it pauses and goes back to the board. That number is published here on
+            purpose — a project that cannot say what would stop it is a project nobody can evaluate.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Who owns the build?</summary>
+        <div class="a">
+          <p>As of today, nobody — and that is recorded rather than glossed over. DGTL is concurrently
+            building a CRM, a dashboard and a terminal, and adding a settlement product to that list without
+            naming an owner means the owner is whoever is left at the end of the week.</p>
+          <p>So Phase 0 is deliberately engineering-free: six weeks of interviews, arithmetic and one counsel
+            call, work that runs alongside existing commitments. Naming a Phase 1 engineering owner who is
+            not also delivering the CRM is one of the four conditions in the Phase 0 gate. If that person
+            does not exist and cannot be hired or contracted, Phase 1 does not start — regardless of what the
+            other three conditions say.</p>
+        </div>
+      </details>
+      <details>
+        <summary>What happens if the Phase 0 gate fails?</summary>
+        <div class="a">
+          <p>The rail does not get built, and the project stops. That is the point of running the evidence
+            phase before the engineering phase rather than after it.</p>
+          <p>Two of the four conditions are designed to be genuinely failable. The creator-interview
+            condition asks for a specific past brief where payment terms changed what someone did — not
+            whether faster payment sounds appealing, because that question has never once been answered no.
+            And the alternatives condition asks whether simply paying creators faster out of working capital,
+            or asking a brand to pre-fund an ordinary invoice, buys the same result. If either does, there is
+            no reason to build anything, and six weeks of asking questions is the entire loss.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Is DGTL holding my money at any point?</summary>
+        <div class="a">
+          <p>No. The brand funds escrow from its own wallet and the creator is paid directly to theirs. DGTL
+            is a signer on the release and an arbiter in a dispute, never a custodian of the balance. The
+            figure is zero, and it is zero because of how the system is built rather than because of a policy
+            that could change.</p>
+          <p>Fiat on and off ramps are a licensed partner's product in each corridor, under their licence and
+            their KYC — not DGTL's.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Do I need to touch crypto to work with DGTL?</summary>
+        <div class="a">
+          <p>You need a wallet to be paid on the rail, and that is the honest cost. It is an embedded wallet
+            with email-based recovery, not a seed phrase written on paper, and it gets tested with real
+            creators before the escrow contract is written.</p>
+          <p>You never need to hold, buy or understand $DGTL. It does not exist, it is not required to use
+            DGTL Pay, and it never will be.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Can I buy $DGTL, or get an allocation for joining early?</summary>
+        <div class="a">
+          <p>No, on both counts. $DGTL has not been minted, issued, offered or sold, and there is no
+            mechanism by which anyone can acquire it today. Joining the waitlist carries no allocation, no
+            entitlement and no promise of one — for waitlist members, for creators currently working with
+            DGTL, or for anyone else.</p>
+          <p>If the token ever activates in Phase 3, distribution happens against verified platform activity
+            only. Every token in circulation would have been earned by doing something on the platform.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Why should I believe the phase gates are real?</summary>
+        <div class="a">
+          <p>Because they are numeric, published in advance, and several of them are conditions this project
+            can fail. The Phase 1 gate does not measure settled volume — DGTL could route its own campaigns
+            through the rail, clear a large number, and prove nothing. It measures whether creators reply
+            faster, book again, and stay.</p>
+          <p>The project also publishes what would kill it: cost per retained creator running above what it
+            costs to source a new one for two consecutive quarters, a run-rate above the stated ceiling, a
+            custody determination from counsel, or disputes above ten percent of campaigns. A separate,
+            shorter list would end the token and keep the rail.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CLOSE ===================== -->
+<section class="close-band">
+  <div class="wrap">
+    <h2 class="h-section rv">The rail is being built now. The waitlist is how you get on it.</h2>
+    <p class="lede rv">No allocation, no entitlement, no obligation — just the first corridor, the build
+      notes as they happen, and an early look when there is something real to look at.</p>
+    <a class="btn btn-primary rv" href="join.html">Join the waitlist →</a>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22/%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22/%3E%0A%3C/svg%3E" alt="DGTL">
+        <p>A DGTL Group product.</p>
+        <p class="tag-line">USDC moves the money. $DGTL unlocks the network.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#roadmap">Roadmap</a></li>
+          <li><a href="#token">$DGTL status</a></li>
+          <li><a href="join.html">Join the waitlist</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>DGTL Group</h4>
+        <ul>
+          <li><a href="https://dgtlgroup.io">Home</a></li>
+          <li><a href="https://dgtlgroup.io/services">Services</a></li>
+          <li><a href="https://dgtlgroup.io/work">Work</a></li>
+          <li><a href="https://dgtlgroup.io/about">About</a></li>
+          <li><a href="https://dgtlgroup.io/book-a-call">Book a Call</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Connect</h4>
+        <div class="socials">
+          <a href="https://facebook.com/dgtlgroup.io" aria-label="DGTL on Facebook">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.51 1.49-3.9 3.78-3.9 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.45 2.89h-2.33v6.99A10 10 0 0 0 22 12Z"/></svg>
+          </a>
+          <a href="https://instagram.com/dgtlgroup" aria-label="DGTL on Instagram">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="https://x.com/dgtlgroup" aria-label="DGTL on X">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 3h3.2l-7 8 8.2 10h-6.4l-5-6.1-5.8 6.1H1.5l7.5-8.6L1.1 3h6.6l4.5 5.6L17.5 3Zm-1.1 16.1h1.8L7.7 4.8H5.8l10.6 14.3Z"/></svg>
+          </a>
+          <a href="https://linkedin.com/company/dgtlgroup" aria-label="DGTL on LinkedIn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.7h.05c.53-.95 1.83-1.95 3.77-1.95 4.03 0 4.78 2.5 4.78 5.76V21h-4v-5.7c0-1.36-.03-3.1-1.9-3.1-1.9 0-2.2 1.47-2.2 3v5.8h-4V9Z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="legal">
+      <p>$DGTL is a proposed utility token. It has not been minted, issued, offered, or sold. Nothing on this page is an offer to sell or a solicitation to buy any asset or security. Phase dates are targets, not commitments.</p>
+      <p>© 2026 DGTL. All Rights Reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var burger = document.getElementById('burger'),
+      closeM = document.getElementById('closeMenu'),
+      menu   = document.getElementById('mobileMenu');
+  function setMenu(open){
+    menu.classList.toggle('open', open);
+    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
+  burger.addEventListener('click', function(){ setMenu(true); });
+  closeM.addEventListener('click', function(){ setMenu(false); });
+  menu.addEventListener('click', function(e){ if(e.target.tagName === 'A') setMenu(false); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') setMenu(false); });
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var rv = document.querySelectorAll('.rv');
+  if (reduce || !('IntersectionObserver' in window)) {
+    rv.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    rv.forEach(function(el){ io.observe(el); });
+  }
+
+  // count-up on numeric metrics
+  var nums = document.querySelectorAll('[data-count]');
+  if (!reduce && 'IntersectionObserver' in window) {
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (!en.isIntersecting) return;
+        var el = en.target, target = parseFloat(el.getAttribute('data-count')),
+            pre = el.getAttribute('data-prefix') || '', suf = el.getAttribute('data-suffix') || '',
+            t0 = null, dur = 900;
+        function step(ts){
+          if (!t0) t0 = ts;
+          var p = Math.min((ts - t0) / dur, 1);
+          el.textContent = pre + Math.round(target * (1 - Math.pow(1 - p, 3))) + suf;
+          if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+        nio.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    nums.forEach(function(el){ nio.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>
