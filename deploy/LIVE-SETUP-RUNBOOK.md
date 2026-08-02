@@ -1,5 +1,21 @@
 # Live Setup Runbook — DGTL decks + domain tree
 
+> ## ⚠️ SUPERSEDED — historical record only. Do not execute.
+>
+> **The current runbook is [`vps/README-VPS-DEPLOY.md`](vps/README-VPS-DEPLOY.md).**
+>
+> Every premise below is now false:
+>
+> | This doc says | Reality (verified 2026-08-01) |
+> |---|---|
+> | VPS `62.72.16.32` (Hostinger, FR) | **`37.27.198.189`** (Hetzner, FI) — the Hostinger box was offboarded 2026-07-21 |
+> | Decks at `pitch.dgtlmedia.io` | `pitch.dgtlmag.com` — **`dgtlmedia.io` is no longer under our control**, all `*.dgtlmedia.io` URLs are dead |
+> | Hand-managed Traefik on the `traefik-public` network | **Coolify** owns 80/443; stacks attach to the `coolify` network. Do not start `vps/traefik/`. |
+> | Coolify is "Phase 2, optional" | Coolify is already installed and is the edge |
+>
+> Kept because it records how the original Hostinger setup was built. Following it will point DNS
+> at a machine that is not ours and deploy onto a network that does not exist.
+
 Execute top to bottom. **Phase 1 does not touch the live app** — decks are a separate container on
 a separate path. Phase 2 (Coolify) is optional and should run in a maintenance window.
 

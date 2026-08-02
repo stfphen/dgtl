@@ -2,6 +2,19 @@
 
 *Author: setup session 2026-07-12 · VPS `62.72.16.32` (Hostinger, Ubuntu + Docker + Traefik)*
 
+> ## ⚠️ SUPERSEDED — the domain tree and IPs below are stale.
+>
+> **Current runbook: [`vps/README-VPS-DEPLOY.md`](vps/README-VPS-DEPLOY.md).** Verified 2026-08-01:
+>
+> - **VPS is `37.27.198.189`** (Hetzner), not `62.72.16.32` (Hostinger, offboarded 2026-07-21).
+> - **`dgtlmedia.io` is not ours** — the whole `*.dgtlmedia.io` tier below is dead. Everything
+>   consolidated under **`dgtlmag.com`**.
+> - **`dgtlinfluence.com` is live** as the Influence Journal (`deploy/journal/`), not a "branded
+>   lander" or a redirect.
+> - The edge is **Coolify** (`coolify` network), not hand-managed Traefik on `traefik-public`.
+>
+> The *reasoning* about domain structure and the funnel still reads well; the addresses do not.
+
 This is the plan for (1) a clean domain/subdomain tree across your brands, (2) how the sales
 funnel connects end-to-end, and (3) a Netlify-replacement deploy system that lets you throw up
 pitch decks on your own domain and edit/redeploy them with one command — all on the VPS you

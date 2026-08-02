@@ -3,17 +3,14 @@
 Self-hosted pitch decks on your own domain. Replaces Netlify. Static HTML served by nginx in a
 Docker container, fronted by the Traefik you already run on the VPS.
 
-**Live URL pattern:** `https://pitch.dgtlmedia.io/{client}/`
+**Live URL pattern:** `https://pitch.dgtlmag.com/{client}/`
 
-> This is a **standalone repo**. It currently lives inside the app repo under `dgtl-deploy/decks/`
-> for convenience. Before first use, move it out and give it its own git history:
-> ```bash
-> mv dgtl-deploy/decks ~/dgtl-decks && cd ~/dgtl-decks
-> git init && git add . && git commit -m "init dgtl-decks"
-> # create the GitHub repo, then:
-> git branch -M main && git remote add origin git@github.com:<you>/dgtl-decks.git && git push -u origin main
-> ```
-> (Or keep it here and add `dgtl-deploy/` to the app repo's `.gitignore`.)
+> **Updated 2026-08-01.** This folder is **not** a standalone repo any more — it ships inside
+> `stfphen/dgtl` and deploys from `/opt/dgtl/deploy/decks` on the VPS (see
+> `deploy/vps/README-VPS-DEPLOY.md` §5). The old "move it out and `git init`" instructions, the
+> `pitch.dgtlmedia.io` host, and the IP `62.72.16.32` are all dead — `dgtlmedia.io` is no longer
+> ours and that Hostinger box was offboarded 2026-07-21. The compose file here already routes
+> `pitch.dgtlmag.com` on Coolify's `coolify` network.
 
 ## Make a deck
 ```bash
@@ -25,24 +22,26 @@ chmod +x deploy.sh scripts/*.sh        # first time only
 For a real, polished deck, generate it with the **dgtl-pitch-pages** skill and save the output as
 `site/pitch/<slug>/index.html` instead of the scaffold.
 
-## Ship it (Phase 1 — one command)
+## Ship it (one command)
 ```bash
 git add . && git commit -m "deck: acme-corp" && git push
-ssh root@62.72.16.32 'cd /opt/dgtl-decks && ./deploy.sh'
-# live: https://pitch.dgtlmedia.io/acme-corp/
+ssh root@37.27.198.189 'cd /opt/dgtl && git pull && cd deploy/decks && docker compose up -d --build'
+# live: https://pitch.dgtlmag.com/acme-corp/
 ```
+
+Note the served directory is `/opt/dgtl-decks/site/pitch`, mounted read-only by
+`docker-compose.override.yml` — `deploy/vps/seed-pitches.sh` populates it from `pitches/`.
 
 ## First-time VPS setup
 ```bash
-ssh root@62.72.16.32
-cd /opt && git clone git@github.com:<you>/dgtl-decks.git && cd dgtl-decks
-chmod +x deploy.sh scripts/*.sh
+ssh root@37.27.198.189
+cd /opt/dgtl/deploy/decks
 docker compose up -d --build
 curl -I http://127.0.0.1:8090/sample-client/   # expect 200
 ```
-Requires DNS `A pitch.dgtlmedia.io -> 62.72.16.32` and the external `traefik-public` network
-(already present from the app). Traefik issues the LetsEncrypt cert automatically on first HTTPS
-hit. The apex `dgtlgroup.io` is untouched — decks live on their own subdomain.
+Requires DNS `A pitch.dgtlmag.com -> 37.27.198.189` and Coolify's external `coolify` network
+(already present). Coolify's Traefik issues the LetsEncrypt cert automatically on the first HTTPS
+hit. The apex `dgtlmag.com` is untouched — decks live on their own subdomain.
 
 ## Phase 2 — Coolify (later)
 Connect this repo in Coolify as a **Dockerfile** app; every `git push` then auto-deploys with no
