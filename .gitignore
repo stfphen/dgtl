@@ -38,3 +38,7 @@ Thumbs.db
 # DGTL OS — the local server reads its key from this file; never commit one
 **/api-key.txt
 apps/dgtl-os/local/knowledge/knowledge.json.local
+
+# creator-intake local dev artifacts
+apps/creator-intake/*.sqlite
+apps/creator-intake/dev-mail/

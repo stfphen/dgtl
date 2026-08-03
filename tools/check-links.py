@@ -37,6 +37,11 @@ SCOPES = [
     ("sites", [
         "sites/**/*.html",
     ], True),
+    # Creator intake app deploys at join.dgtlinfluence.com root (Hostinger), so
+    # root-absolute is fine there — same rule as sites/.
+    ("apps-creator-intake", [
+        "apps/creator-intake/site/**/*.html",
+    ], True),
 ]
 
 
