@@ -67,10 +67,15 @@ function mail_encode_word(string $s): string
 
 function smtp_submit(string $from, string $to, string $message): bool
 {
-    $host = env_require('SMTP_HOST');
+    $host = env('SMTP_HOST');
     $port = (int) env('SMTP_PORT', '465');
-    $user = env_require('SMTP_USER');
-    $pass = env_require('SMTP_PASS');
+    $user = env('SMTP_USER');
+    $pass = env('SMTP_PASS');
+    if (!$host || !$user || !$pass) {
+        // Email not configured yet (staging) — never take the request down over it.
+        error_log("creator-intake smtp: not configured, skipped send to $to");
+        return false;
+    }
 
     $fp = @stream_socket_client(
         "ssl://$host:$port", $errno, $errstr, 20,
