@@ -774,13 +774,6 @@
     if (state.dirty) { e.preventDefault(); e.returnValue = ''; }
   });
 
-  // brand spark
-  if (window.DGTL_ASSETS) {
-    const spark = $('#brand-spark');
-    spark.src = DGTL_ASSETS.spark;
-    spark.hidden = false;
-  }
-
   // ── boot ──────────────────────────────────────────────────────────────────
   const params = new URLSearchParams(window.location.search);
   const resumeToken = params.get('resume');

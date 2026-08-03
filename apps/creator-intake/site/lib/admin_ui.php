@@ -20,14 +20,16 @@ function admin_head(string $title): void
         . '<link rel="preconnect" href="https://fonts.googleapis.com">'
         . '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
         . '<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
+        . '<link rel="icon" href="../assets/img/spark.svg" type="image/svg+xml">'
         . '<link rel="stylesheet" href="../assets/intake.css"></head><body>';
 }
 
 function admin_nav(): void
 {
     echo '<header class="nav glass-bar"><div class="nav-inner">'
-        . '<a class="nav-brand" href="index.php"><span>DGTL'
-        . '<span class="kicker">Intake Review</span></span></a>'
+        . '<a class="nav-brand" href="index.php" aria-label="Intake review — queue">'
+        . '<img class="wordmark" src="../assets/img/logo-white-gold.svg" alt="DGTL" width="70" height="26">'
+        . '<span class="kicker">Intake Review</span></a>'
         . '<nav class="nav-actions"><a class="plain" href="index.php">Queue</a>'
         . '<form method="post" action="logout.php" style="display:inline">'
         . '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">'

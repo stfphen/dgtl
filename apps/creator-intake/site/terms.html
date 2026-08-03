@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/intake.css">
+<link rel="icon" href="assets/img/spark.svg" type="image/svg+xml">
 </head>
 <body>
 <!-- LEGAL: draft — not reviewed by counsel. Mirrors the summary shown at apply.html step 4.
@@ -18,9 +19,9 @@
 
 <header class="nav glass-bar">
   <div class="nav-inner">
-    <a class="nav-brand" href="index.html">
-      <img id="brand-spark" alt="" width="18" height="24" hidden>
-      <span>DGTL<span class="kicker">Creator Network</span></span>
+    <a class="nav-brand" href="index.html" aria-label="DGTL Creator Network — home">
+      <img class="wordmark" src="assets/img/logo-white-gold.svg" alt="DGTL" width="70" height="26">
+      <span class="kicker">Creator Network</span>
     </a>
     <nav class="nav-actions" aria-label="Site">
       <a class="plain" href="index.html">About</a>
@@ -129,12 +130,5 @@
   </div>
 </footer>
 
-<script src="assets/logos.js"></script>
-<script>
-if (window.DGTL_ASSETS) {
-  var s = document.getElementById('brand-spark');
-  s.src = DGTL_ASSETS.spark; s.hidden = false;
-}
-</script>
 </body>
 </html>

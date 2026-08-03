@@ -10,15 +10,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/intake.css">
+<link rel="icon" href="assets/img/spark.svg" type="image/svg+xml">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 
 <header class="nav glass-bar">
   <div class="nav-inner">
-    <a class="nav-brand" href="index.html">
-      <img id="brand-spark" alt="" width="18" height="24" hidden>
-      <span>DGTL<span class="kicker">Creator Network</span></span>
+    <a class="nav-brand" href="index.html" aria-label="DGTL Creator Network — home">
+      <img class="wordmark" src="assets/img/logo-white-gold.svg" alt="DGTL" width="70" height="26">
+      <span class="kicker">Creator Network</span>
     </a>
     <nav class="nav-actions" aria-label="Site">
       <a class="plain" href="https://dgtlinfluence.com/">The Journal</a>
@@ -90,13 +91,8 @@
   </div>
 </footer>
 
-<script src="assets/logos.js"></script>
 <script>
 (function () {
-  if (window.DGTL_ASSETS) {
-    var spark = document.getElementById('brand-spark');
-    spark.src = DGTL_ASSETS.spark; spark.hidden = false;
-  }
   var ref = new URLSearchParams(location.search).get('ref');
   if (ref) document.getElementById('ref').textContent = '(' + ref.slice(0, 8) + ')';
   document.getElementById('copy-caption').addEventListener('click', function () {

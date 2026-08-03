@@ -128,11 +128,12 @@ a:hover{text-decoration:underline}
 .nav{position:sticky;top:0;z-index:50}
 .nav-inner{display:flex;align-items:center;justify-content:space-between;
   max-width:1120px;margin:0 auto;padding:14px 24px}
-.nav-brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;
-  letter-spacing:.02em;text-decoration:none;font-size:17px}
+.nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none}
 .nav-brand:hover{text-decoration:none}
+.nav-brand .wordmark{height:26px;width:auto;display:block} /* kit rule: 26px in nav */
 .nav-brand .kicker{font-size:10px;font-weight:600;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--gold-tan);display:block;line-height:1.2}
+  text-transform:uppercase;color:var(--gold-tan);line-height:1.2;
+  padding-left:12px;border-left:1px solid var(--border)}
 .nav-actions{display:flex;align-items:center;gap:18px;font-size:14px}
 .nav-actions a.plain{color:var(--text-muted)}
 
@@ -267,7 +268,11 @@ details.legal-full .body h4{color:var(--text-muted);margin:14px 0 6px;font-size:
 .save-note.saved{color:var(--success)}
 
 /* landing page bits */
-.hero{padding:96px 0 64px}
+.hero{padding:96px 0 64px;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse 80% 60% at 15% 0%, rgba(240,207,80,.045), transparent 60%)}
+.hero .spark-bg{position:absolute;right:-100px;top:-60px;width:420px;height:auto;
+  opacity:.05;transform:rotate(12deg);pointer-events:none;user-select:none}
+.hero .wrap,.hero>*{position:relative}
 .statband{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);
   border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden;margin:48px 0}
 .statband>div{background:var(--surface-1);padding:24px}
@@ -280,7 +285,7 @@ details.legal-full .body h4{color:var(--text-muted);margin:14px 0 6px;font-size:
   padding:28px 0;position:relative}
 .marquee .track{display:flex;align-items:center;gap:64px;width:max-content;
   animation:marq 40s linear infinite}
-.marquee img{height:26px;width:auto;opacity:.65;filter:grayscale(1) brightness(1.4)}
+.marquee img{height:30px;width:auto;opacity:.85;filter:grayscale(1)} /* kit: 28–34px, .85 */
 @keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media (prefers-reduced-motion: reduce){.marquee .track{animation:none;flex-wrap:wrap;width:auto}}
 .steps-3{counter-reset:s;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
