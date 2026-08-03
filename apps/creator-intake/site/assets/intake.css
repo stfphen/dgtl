@@ -335,3 +335,6 @@ details.legal-full .body h4{color:var(--text-muted);margin:14px 0 6px;font-size:
   background:var(--surface-2);padding:10px;font-size:12px;color:var(--text-muted);
   text-align:center;overflow-wrap:anywhere}
 .media-thumb:hover{border-color:var(--gold);text-decoration:none}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;
+  justify-content:center;z-index:60;padding:24px}
+.modal-back[hidden]{display:none}
