@@ -20,10 +20,10 @@ Every third-party service, what it powers, its dashboard, and account notes. All
 | **Twilio** | Telephony (calls, recording) | `lib/telephony/twilioProvider.js` | twilio.com console | Buy +1 voice number; webhook URLs byte-exact. [[28-Telephony]] |
 | **Deepgram** | In-app call transcription (primary) | `lib/telephony/transcribeRecording.js` | deepgram.com | `DEEPGRAM_MODEL` default `nova-3`; Whisper (OpenAI) fallback. |
 | **Resend** | Outreach email sending | `lib/integrations/resend.js` | resend.com | Needs verified sender domain (SPF/DKIM/DMARC on dgtlmag.com) to inbox. [[26-Outreach]] |
-| **Google Places** | Prospecting search | `lib/integrations/googlePlaces.js` | console.cloud.google.com | Needs billing + Places permission; restrict key to Places API + IP 62.72.16.32. |
+| **Google Places** | Prospecting search | `lib/integrations/googlePlaces.js` | console.cloud.google.com | Needs billing + Places permission. ⚠️ **ACTION REQUIRED:** the key's IP allowlist still names the retired `62.72.16.32` — until it is changed to **`37.27.198.189`**, Places calls from the live VPS are rejected. |
 | **Hunter** | Lead domain/email enrichment | `lib/integrations/hunter.js` | hunter.io | Free plan = 50 searches/mo. |
 | **Apollo** | People / decision-maker search | `lib/integrations/apollo.js` | app.apollo.io | People API; may return partial contacts. |
-| **Hostinger VPS** | Hosting | — | hpanel / SSH `root@62.72.16.32` | Ubuntu + Docker + Traefik. [[41-Deployment-Runbook]] |
+| **Hetzner VPS** | Hosting | — | SSH `root@37.27.198.189` (host `DGTLapps`) | Ubuntu + Docker + Coolify (proxy owns 80/443, network `coolify`). Replaced the Hostinger box 2026-07-21. [[41-Deployment-Runbook]] |
 | **LetsEncrypt** | TLS | (Traefik resolver `letsencrypt`) | — | Auto-renew (verify in Phase 12). |
 
 ## What needs FAYELLA's hands

@@ -27,14 +27,14 @@ openssl rand -base64 32     # POSTGRES_PASSWORD (and any SESSION_SECRET placehol
 | Key | Where | Notes |
 |---|---|---|
 | `RESEND_API_KEY` | resend.com → API Keys | create new, delete old. |
-| `GOOGLE_PLACES_API_KEY` | console.cloud.google.com → Credentials | **restrict to Places API + server IP 62.72.16.32**. |
+| `GOOGLE_PLACES_API_KEY` | console.cloud.google.com → Credentials | **restrict to Places API + server IP `37.27.198.189`**. ⚠️ Still allowlisted to the retired `62.72.16.32` — update when rotating, or Places fails in production. |
 | `HUNTER_API_KEY` | hunter.io → API | reset key (Free = 50 searches/mo). |
 | `APOLLO_API_KEY` | app.apollo.io → Settings → Integrations → API | regenerate. |
 Code reads these in `lib/integrations/{resend,googlePlaces,hunter,apollo}.js` — **only the `.env` change is needed.** After rotating, update local `.env` AND VPS `.env`, then `docker compose up -d` on the VPS.
 
 ## DB password rotation (VPS, ordered)
 ```bash
-ssh root@62.72.16.32 && cd /opt/content-checkout-funnel
+ssh root@37.27.198.189 && cd /opt/content-checkout-funnel
 scripts/backup-db.sh                                  # back up first
 # inside Postgres: ALTER USER content_funnel WITH PASSWORD '<new>';
 # update POSTGRES_PASSWORD in .env, then:

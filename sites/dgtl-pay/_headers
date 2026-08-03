@@ -1,0 +1,9 @@
+# DGTL Pay — Netlify headers
+# STAGING: X-Robots-Tag keeps a preview URL out of search results while the product page has
+# no canonical home. DELETE that one line when the real domain goes live, then redeploy.
+
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Robots-Tag: noindex

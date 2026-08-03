@@ -1,10 +1,12 @@
 {
   "collection": "DGTL pitches",
-  "updated": "2026-07-28",
+  "updated": "2026-08-01",
   "deployScheme": "https://pitch.dgtlmag.com/<slug>/",
   "pitches": [
     "auckland247",
     "cottage",
+    "dgtl-pay-for-brands",
+    "dgtl-pay-for-creators",
     "dmtv-bose",
     "elixr",
     "escott",

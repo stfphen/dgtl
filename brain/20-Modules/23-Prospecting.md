@@ -29,7 +29,7 @@ enriches.
 3. Optional: Google import can auto-enrich imported leads (capped) — see `maybeAutoEnrichGoogleLead` in [[24-Enrichment]].
 
 ## Provider notes / quotas
-- **Google Places:** needs billing + Places permission; restrict key to Places API + server IP (`62.72.16.32`).
+- **Google Places:** needs billing + Places permission; restrict key to Places API + server IP. ⚠️ **The allowlist still names the retired `62.72.16.32`** — set it to **`37.27.198.189`** or Places requests from production fail.
 - **Hunter:** Free plan = **50 searches/mo**.
 - **Apollo:** People API; may return partial contact data (not always direct emails/phones).
 - Without a key, each route returns a clear "not configured" notice. See [[64-External-Services]].

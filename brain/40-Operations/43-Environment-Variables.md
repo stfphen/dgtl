@@ -47,7 +47,7 @@ source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 ⚠️ Deploy: `next.config.mjs` uses `output:"standalone"` — `public/` is snapshotted at build, so runtime uploads need `public/uploads` mounted as a **volume** in the container until the S3 provider ships.
 
 ## Prospecting / email providers (the four exposed keys — rotate)
-`RESEND_API_KEY` (outreach send), `GOOGLE_PLACES_API_KEY` (restrict to Places API + IP 62.72.16.32),
+`RESEND_API_KEY` (outreach send), `GOOGLE_PLACES_API_KEY` (restrict to Places API + IP **37.27.198.189** — the allowlist still names the retired 62.72.16.32),
 `HUNTER_API_KEY` (Free=50/mo), `APOLLO_API_KEY`. Read in `lib/integrations/{resend,googlePlaces,hunter,apollo}.js`. [[44-Secrets-And-Rotation]]
 
 ## Outreach batch sending (2026-07-04)
