@@ -148,6 +148,17 @@
         <div class="cell"><div class="num">{{STAT4_NUM}}</div><div class="lbl">{{STAT4_LABEL}}</div></div>
       </div>
       <p class="dim" style="font-size:12.5px;margin-top:12px">{{STAT_FOOTNOTE}}</p>
+
+      <!-- Official links: rel="me" identity links + the deliberate dofollow
+           backlink to the creator's own site with their chosen anchor text.
+           populate.py drops unfilled rows. -->
+      <div class="tagrow" style="margin-top:18px" aria-label="Official links">
+        <span class="dim" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase">Official links</span>
+        <a class="tag" rel="me" href="{{SAMEAS_1}}">{{LINK_1_LABEL}}</a>
+        <a class="tag" rel="me" href="{{SAMEAS_2}}">{{LINK_2_LABEL}}</a>
+        <a class="tag" rel="me" href="{{SAMEAS_3}}">{{LINK_3_LABEL}}</a>
+        <a class="tag gold" href="{{CREATOR_SITE_URL}}">{{PREFERRED_ANCHOR_TEXT}} →</a>
+      </div>
     </div>
 
     <!-- ============ LONG-FORM BODY ============ -->

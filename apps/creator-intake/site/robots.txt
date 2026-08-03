@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /apply.html
+Disallow: /thanks.html
+Disallow: /admin/
+Disallow: /api/
