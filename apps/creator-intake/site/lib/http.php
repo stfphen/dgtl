@@ -59,14 +59,24 @@ function require_json_post(): array
 }
 
 /**
- * Client IP. REMOTE_ADDR only — on Hostinger there is no trusted proxy in
- * front of us. If the subdomain is ever proxied through Cloudflare, set
- * TRUST_CF_HEADER=1 and CF-Connecting-IP becomes authoritative.
+ * Client IP. REMOTE_ADDR by default. Behind a proxy that overwrites/appends
+ * the forwarding headers, opt in explicitly:
+ *   TRUST_CF_HEADER=1 — Cloudflare proxy (CF-Connecting-IP)
+ *   TRUST_XFF=1       — Hostinger CDN (last X-Forwarded-For entry; the CDN
+ *                       appends the address it actually saw, so the last hop
+ *                       is real even if the client sent a forged header)
  */
 function client_ip(): string
 {
     if (env('TRUST_CF_HEADER') === '1' && !empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
         return substr($_SERVER['HTTP_CF_CONNECTING_IP'], 0, 45);
+    }
+    if (env('TRUST_XFF') === '1' && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $hops = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
+        $last = end($hops);
+        if (filter_var($last, FILTER_VALIDATE_IP)) {
+            return substr($last, 0, 45);
+        }
     }
     return substr($_SERVER['REMOTE_ADDR'] ?? '', 0, 45);
 }
