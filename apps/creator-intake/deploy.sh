@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
 # Deploy apps/creator-intake to Hostinger shared hosting over SSH.
 #
-#   ./deploy.sh user@server[:port]         e.g. ./deploy.sh u12345@145.14.1.2:65002
+#   ./deploy.sh user@server[:port] [domain]
+#   e.g. ./deploy.sh u12345@145.14.1.2:65002
+#        ./deploy.sh u12345@145.14.1.2:65002 steelblue-otter-123456.hostingersite.com
 #
+# [domain] defaults to join.dgtlinfluence.com; pass the temporary Hostinger
+# domain while the real one still lives in another account.
 # Never git-deploy the monorepo into public_html — this rsyncs site/ only.
 # One-time manual steps live in README.md (DNS, MySQL import, mailbox, R2, .env).
 set -euo pipefail
 cd "$(dirname "$0")"
 
-TARGET="${1:?usage: ./deploy.sh user@host[:port]}"
+TARGET="${1:?usage: ./deploy.sh user@host[:port] [domain]}"
 HOSTPART="${TARGET%%:*}"
 PORT="${TARGET##*:}"
 [ "$PORT" = "$TARGET" ] && PORT=22
-DOMAIN_DIR="domains/join.dgtlinfluence.com"
+DOMAIN="${2:-join.dgtlinfluence.com}"
+DOMAIN_DIR="domains/$DOMAIN"
 
 echo "→ syncing site/ to $HOSTPART:~/$DOMAIN_DIR/public_html (port $PORT)"
 rsync -avz --delete \
