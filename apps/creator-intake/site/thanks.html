@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Application received — DGTL Creator Network</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://join.dgtlinfluence.com/thanks.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/intake.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav glass-bar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">
+      <img id="brand-spark" alt="" width="18" height="24" hidden>
+      <span>DGTL<span class="kicker">Creator Network</span></span>
+    </a>
+    <nav class="nav-actions" aria-label="Site">
+      <a class="plain" href="https://dgtlinfluence.com/">The Journal</a>
+      <a class="plain" href="terms.html">Rights &amp; terms</a>
+    </nav>
+  </div>
+</header>
+
+<main class="narrow" id="main">
+  <section class="hero" style="padding-bottom:24px">
+    <p class="eyebrow">Application received</p>
+    <h1 class="h-display" style="font-size:clamp(32px,5vw,54px);margin:14px 0 16px">
+      You&rsquo;re in the queue<span class="gold">.</span></h1>
+    <p class="muted" style="font-size:17px;max-width:560px;line-height:1.7">
+      A receipt is on its way to your inbox with your reference number
+      <span id="ref" class="gold" style="font-variant-numeric:tabular-nums"></span> —
+      that email is also how you&rsquo;ll hear our decision.</p>
+  </section>
+
+  <section>
+    <h2 style="color:#fff;font-size:20px;margin-bottom:4px">What happens next</h2>
+    <ol class="timeline">
+      <li>
+        <p class="t">Received — now</p>
+        <p class="d">Your application and media are safely stored. Nothing publishes without your say-so.</p>
+      </li>
+      <li>
+        <p class="t">Editorial review — about 10 business days</p>
+        <p class="d">A human on the editorial team reads every application. We may email you for
+        more detail — that email carries a one-time link back into your application.</p>
+      </li>
+      <li>
+        <p class="t">Decision by email</p>
+        <p class="d">Approved creators get a published Journal profile, the DGTL creator badge,
+        and a link-back kit for their site and bio.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="card card-solid" style="margin:16px 0 48px">
+    <h2 style="color:#fff;font-size:18px;margin-bottom:6px">Tell people you applied</h2>
+    <p class="dim" style="font-size:14px;margin-bottom:16px">Grab the pending badge for your story
+    or feed — the full creator badge comes with approval.</p>
+    <p style="margin-bottom:16px">
+      <img src="assets/img/pending-badge.png" alt="DGTL Influence — application in review badge"
+           width="240" height="240" style="border-radius:12px;border:1px solid var(--border);max-width:100%">
+    </p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <a class="btn btn-secondary btn-sm" href="assets/img/pending-badge.png" download="dgtl-pending-badge.png">Download badge</a>
+      <button type="button" class="btn btn-ghost btn-sm" id="copy-caption">Copy caption</button>
+      <span class="save-note" id="copied" aria-live="polite"></span>
+    </div>
+    <p class="f-hint" style="margin-top:12px" id="caption-text">Just applied to the DGTL Influence
+    creator network — profile pending. @dgtlgroup</p>
+  </section>
+
+  <section style="margin-bottom:64px">
+    <p class="dim" style="font-size:15px">While you wait:
+      <a href="https://dgtlinfluence.com/roster.html">browse the roster</a> ·
+      <a href="https://dgtlinfluence.com/">read the Journal</a> ·
+      <a href="index.html">back to the start</a></p>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap cols">
+    <p>© 2026 DGTL Group · Toronto</p>
+    <p><a href="terms.html">Rights &amp; usage terms</a></p>
+  </div>
+</footer>
+
+<script src="assets/logos.js"></script>
+<script>
+(function () {
+  if (window.DGTL_ASSETS) {
+    var spark = document.getElementById('brand-spark');
+    spark.src = DGTL_ASSETS.spark; spark.hidden = false;
+  }
+  var ref = new URLSearchParams(location.search).get('ref');
+  if (ref) document.getElementById('ref').textContent = '(' + ref.slice(0, 8) + ')';
+  document.getElementById('copy-caption').addEventListener('click', function () {
+    var text = document.getElementById('caption-text').textContent.replace(/\s+/g, ' ').trim();
+    navigator.clipboard && navigator.clipboard.writeText(text).then(function () {
+      document.getElementById('copied').textContent = 'Copied';
+      document.getElementById('copied').classList.add('saved');
+    });
+  });
+})();
+</script>
+</body>
+</html>

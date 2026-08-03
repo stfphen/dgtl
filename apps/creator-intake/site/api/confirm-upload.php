@@ -28,6 +28,20 @@ if (!$media || !$media['r2_key']) {
     fail(404, 'media_not_found');
 }
 if ($media['status'] === 'stored') {
+    // Already verified — this is a metadata update (caption edits after upload).
+    db()->prepare(
+        'UPDATE application_media
+         SET title = ?, credit = ?, date_created = ?, is_owner = ?, third_party_credits = ?, updated_at = ?
+         WHERE id = ?'
+    )->execute([
+        is_string($body['title'] ?? null) ? mb_substr(trim($body['title']), 0, 300) : $media['title'],
+        is_string($body['credit'] ?? null) ? mb_substr(trim($body['credit']), 0, 300) : $media['credit'],
+        is_string($body['date_created'] ?? null) ? mb_substr(trim($body['date_created']), 0, 32) : $media['date_created'],
+        array_key_exists('is_owner', $body) ? (int) (bool) $body['is_owner'] : $media['is_owner'],
+        is_string($body['third_party_credits'] ?? null)
+            ? mb_substr(trim($body['third_party_credits']), 0, 1000) : $media['third_party_credits'],
+        now(), $mediaId,
+    ]);
     json_out(['ok' => true, 'media_id' => $mediaId, 'bytes' => (int) $media['bytes'], 'mime' => $media['mime']]);
 }
 if ($media['status'] !== 'pending') {
