@@ -194,3 +194,12 @@ tax on every new pack and it makes the skill's documented workflow wrong as writ
 **Fix:** update the template to the pack-relative paths and repoint the related-cards at real pages,
 or teach `populate.py` to rewrite them. Not done here — it changes the shared engine and belongs in
 its own PR, not one adding a creator.
+
+## Creator intake — pre-launch gates (2026-08-03)
+
+- **Legal copy unreviewed.** `apps/creator-intake/site/terms.html` and the apply step-4 licence text ship as drafts (`<!-- LEGAL: draft -->`). Counsel sign-off before `join.dgtlinfluence.com` goes live; bump `TERMS_VERSION` if wording changes.
+- **Provisioning not done.** DNS `A join → Hostinger IP`, MySQL import, `join@dgtlinfluence.com` mailbox (verify SPF/DKIM pass at Gmail *before* launch), private R2 bucket + CORS policy, production `.env`. Runbook: `apps/creator-intake/README.md`.
+- **R2 upload path untested against a real bucket** (`SMOKE_R2=1 ./tests/smoke.sh`) — the signer is vector-proven offline, but the bucket CORS policy is the classic prod-only failure; test with one real presigned PUT during provisioning.
+- **Roster launches with 6 creators** (Casper still `draft`); brief wants 10–15 before launch — 4–9 more packs are content work via the dgtl-creator-features skill, not code.
+- **OG image for join.dgtlinfluence.com not produced** (`assets/img/og-join.jpg` referenced in plan, page currently ships without an og:image).
+- **Journal index canonicals still point at `pitch.dgtlmedia.io`** while pack.json canonicalUrls now say `dgtlinfluence.com` — the blanket canonical rewrite remains its own PR per the 2026-08-01 decision.
