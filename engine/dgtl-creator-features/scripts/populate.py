@@ -80,6 +80,16 @@ def main():
     # 4. tidy unused sameAs entries so the JSON-LD stays valid
     text = re.sub(r',\s*"\{\{SAMEAS_[23]\}\}"', "", text)
 
+    # 4b. drop unfilled Official-links rows (rel="me" tags for missing sameAs,
+    #     and the dofollow site anchor when the creator has no site)
+    text = re.sub(r'\s*<a class="tag" rel="me" href="\{\{SAMEAS_[123]\}\}">[^<]*</a>', "", text)
+    text = re.sub(r'\s*<a class="tag gold" href="\{\{CREATOR_SITE_URL\}\}">[^<]*</a>', "", text)
+    # if every row got dropped, remove the whole empty block
+    text = re.sub(
+        r'\s*<!-- Official links:.*?-->\s*<div class="tagrow"[^>]*aria-label="Official links">\s*'
+        r'<span[^>]*>Official links</span>\s*</div>',
+        "", text, flags=re.S)
+
     # 5. report leftovers
     leftover = sorted(set(re.findall(r"\{\{[A-Z0-9_]+\}\}", text)))
     out = Path(args.out)
