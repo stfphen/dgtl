@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apply — DGTL Creator &amp; Brand Network</title>
+<meta name="description" content="Apply to the DGTL creator network. Five steps, about ten minutes, resumable any time.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://join.dgtlinfluence.com/apply.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/intake.css">
+<link rel="icon" href="assets/img/spark.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip-link" href="#apply-form">Skip to the form</a>
+
+<header class="nav glass-bar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html" aria-label="DGTL Creator Network — home">
+      <img class="wordmark" src="assets/img/logo-white-gold.svg" alt="DGTL" width="70" height="26">
+      <span class="kicker">Creator Network</span>
+    </a>
+    <nav class="nav-actions" aria-label="Site">
+      <a class="plain" href="index.html">About</a>
+      <a class="plain" href="terms.html">Rights &amp; terms</a>
+      <button type="button" class="btn btn-ghost btn-sm" id="resume-open">Resume by email</button>
+    </nav>
+  </div>
+</header>
+
+<main class="narrow" id="main">
+  <h1 class="sr-only">Apply to the DGTL creator network</h1>
+
+  <div id="resume-banner" class="card card-callout" hidden style="margin-top:24px">
+    <p class="muted" style="font-size:15px">We restored your draft.
+      <button type="button" class="btn btn-ghost btn-sm" id="start-over">Clear it and start over</button>
+    </p>
+  </div>
+
+  <div id="resume-box" class="card" hidden style="margin-top:24px">
+    <h2 style="font-size:18px;color:#fff;margin-bottom:8px">Resume by email</h2>
+    <p class="dim" style="font-size:14px;margin-bottom:14px">Enter the email you applied with and
+      we&rsquo;ll send a one-time link that restores your draft on any device.</p>
+    <div class="f-row" data-field="resume_email">
+      <label class="f-label" for="resume-email">Email</label>
+      <input class="input" id="resume-email" type="email" autocomplete="email">
+      <p class="f-error"></p>
+    </div>
+    <div style="display:flex;gap:12px">
+      <button type="button" class="btn btn-primary btn-sm" id="resume-send">Send link</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="resume-cancel">Cancel</button>
+    </div>
+    <p class="f-hint" id="resume-sent" hidden>If an application exists for that address, the link is on its way.</p>
+  </div>
+
+  <ol class="step-nav" id="step-nav" aria-label="Application steps"></ol>
+  <p class="step-count" id="step-count" aria-hidden="true"></p>
+
+  <form id="apply-form" novalidate>
+    <!-- honeypot: humans never see it; bots fill it -->
+    <div class="sr-only" aria-hidden="true">
+      <label for="hp-website">Website</label>
+      <input id="hp-website" name="hp_website" type="text" tabindex="-1" autocomplete="off">
+    </div>
+
+    <!-- ══════════ Step 1 · Who you are ══════════ -->
+    <section class="step" data-step="1" role="group" aria-labelledby="s1-h">
+      <h2 id="s1-h" tabindex="-1">Who you are</h2>
+      <p class="step-dek">The basics. Everything saves as you go — you can leave and pick it up later.</p>
+      <div class="err-summary" role="alert" data-for="1"></div>
+
+      <fieldset class="radio-cards f-row" data-field="applicant_type">
+        <legend>I&rsquo;m applying as a&hellip;</legend>
+        <label class="radio-card">
+          <input type="radio" name="applicant_type" value="creator" checked>
+          <span class="body">
+            <span class="t">Creator</span>
+            <span class="d">Artist, influencer, podcaster, athlete, talent — you make the work.</span>
+          </span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="applicant_type" value="brand">
+          <span class="body">
+            <span class="t">Brand / company</span>
+            <span class="d">A business applying to partner, sponsor, or be covered.</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="f-grid">
+        <div class="f-row" data-field="legal_name">
+          <label class="f-label" for="f-legal_name">Legal name</label>
+          <input class="input" id="f-legal_name" name="legal_name" type="text" autocomplete="name" required>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="public_name">
+          <label class="f-label" for="f-public_name" data-creator="Stage / public name" data-brand="Brand name">Stage / public name</label>
+          <input class="input" id="f-public_name" name="public_name" type="text" required>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="email">
+          <label class="f-label" for="f-email">Email</label>
+          <input class="input" id="f-email" name="email" type="email" autocomplete="email" required
+                 aria-describedby="email-hint">
+          <p class="f-hint" id="email-hint">Your resume link and our decision go here.</p>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="phone">
+          <label class="f-label" for="f-phone">Phone</label>
+          <input class="input" id="f-phone" name="phone" type="tel" autocomplete="tel" required>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="city">
+          <label class="f-label" for="f-city">City</label>
+          <input class="input" id="f-city" name="city" type="text" autocomplete="address-level2" required>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="country">
+          <label class="f-label" for="f-country">Country</label>
+          <input class="input" id="f-country" name="country" type="text" autocomplete="country-name" required>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="pronouns" data-who="creator">
+          <label class="f-label" for="f-pronouns">Pronouns <span class="opt">optional</span></label>
+          <input class="input" id="f-pronouns" name="pronouns" type="text">
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="entity_type">
+          <label class="f-label" for="f-entity_type">You operate as</label>
+          <select class="select" id="f-entity_type" name="entity_type" required>
+            <option value="individual">Individual</option>
+            <option value="sole_prop">Sole proprietorship</option>
+            <option value="corp">Corporation</option>
+          </select>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row span-2" data-field="hst_gst_number">
+          <label class="f-label" for="f-hst_gst_number">HST/GST number <span class="opt">optional — Canada</span></label>
+          <input class="input" id="f-hst_gst_number" name="hst_gst_number" type="text">
+          <p class="f-error"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════ Step 2 · What you do ══════════ -->
+    <section class="step" data-step="2" role="group" aria-labelledby="s2-h" hidden>
+      <h2 id="s2-h" tabindex="-1">What you do</h2>
+      <p class="step-dek">How we&rsquo;d introduce you — this feeds your Journal profile if you&rsquo;re approved.</p>
+      <div class="err-summary" role="alert" data-for="2"></div>
+
+      <div class="f-grid">
+        <div class="f-row" data-field="primary_category">
+          <label class="f-label" for="f-primary_category">Primary category</label>
+          <select class="select" id="f-primary_category" name="primary_category" required>
+            <option value="" selected disabled>Choose one</option>
+            <option value="music">Music</option>
+            <option value="fashion">Fashion</option>
+            <option value="sport">Sport</option>
+            <option value="food">Food</option>
+            <option value="tech">Tech</option>
+            <option value="lifestyle">Lifestyle</option>
+            <option value="comedy">Comedy</option>
+            <option value="other">Other</option>
+          </select>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="secondary_categories">
+          <span class="f-label" id="seccat-lbl">Also active in <span class="opt">up to 5</span></span>
+          <div id="secondary-cats" role="group" aria-labelledby="seccat-lbl"
+               style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row span-2" data-field="bio_short">
+          <label class="f-label" for="f-bio_short">One-line bio</label>
+          <input class="input" id="f-bio_short" name="bio_short" type="text" maxlength="160" required
+                 aria-describedby="bio_short-count">
+          <p class="char-count" id="bio_short-count">0 / 160</p>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row span-2" data-field="bio_long">
+          <label class="f-label" for="f-bio_long">Longer bio <span class="opt">optional</span></label>
+          <textarea class="textarea" id="f-bio_long" name="bio_long" maxlength="900"
+                    aria-describedby="bio_long-count"></textarea>
+          <p class="char-count" id="bio_long-count">0 / 900</p>
+          <p class="f-error"></p>
+        </div>
+      </div>
+
+      <div class="f-row" data-field="career_highlights">
+        <span class="f-label">Career highlights <span class="opt">up to 10</span></span>
+        <div class="repeat-list" id="highlights-list"></div>
+        <button type="button" class="btn btn-secondary btn-sm" data-add="highlights">＋ Add a highlight</button>
+        <p class="f-error"></p>
+      </div>
+
+      <div class="f-row" data-field="notable_press">
+        <span class="f-label">Notable press <span class="opt">link + outlet, up to 10</span></span>
+        <div class="repeat-list" id="press-list"></div>
+        <button type="button" class="btn btn-secondary btn-sm" data-add="press">＋ Add press</button>
+        <p class="f-error"></p>
+      </div>
+
+      <fieldset class="f-row" data-field="looking_for" style="border:0;padding:0">
+        <legend class="f-label">What are you looking for?</legend>
+        <div id="looking-for" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <p class="f-error"></p>
+      </fieldset>
+    </section>
+
+    <!-- ══════════ Step 3 · Socials & backlinks ══════════ -->
+    <section class="step" data-step="3" role="group" aria-labelledby="s3-h" hidden>
+      <h2 id="s3-h" tabindex="-1">Socials, links &amp; audience</h2>
+      <p class="step-dek">Where you live online, and the site your profile will send readers to.</p>
+      <div class="err-summary" role="alert" data-for="3"></div>
+
+      <div class="f-row" data-field="socials">
+        <span class="f-label">Your platforms</span>
+        <div class="repeat-list" id="socials-list"></div>
+        <button type="button" class="btn btn-secondary btn-sm" data-add="socials">＋ Add a platform</button>
+        <p class="f-hint" data-who="creator">Add at least one, and mark your main platform as primary.</p>
+        <p class="f-error"></p>
+      </div>
+
+      <h3 style="font-size:17px;color:#fff;margin:34px 0 4px">Your website &amp; link-back</h3>
+      <p class="f-hint" style="margin-bottom:16px">Approved profiles carry a followed link to your
+        site with the anchor text you choose — and we ask that you link your DGTL profile back.</p>
+      <div class="f-grid">
+        <div class="f-row" data-field="website_url">
+          <label class="f-label" for="f-website_url">Website <span class="opt" data-who="creator">optional</span></label>
+          <input class="input" id="f-website_url" name="website_url" type="url" inputmode="url"
+                 placeholder="https://">
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="preferred_anchor_text">
+          <label class="f-label" for="f-preferred_anchor_text">Preferred anchor text <span class="opt">optional</span></label>
+          <input class="input" id="f-preferred_anchor_text" name="preferred_anchor_text" type="text"
+                 aria-describedby="anchor-hint">
+          <p class="f-hint" id="anchor-hint">The clickable words for the link, e.g. &ldquo;Jane Doe — official site&rdquo;.</p>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="epk_url">
+          <label class="f-label" for="f-epk_url">EPK link <span class="opt">optional</span></label>
+          <input class="input" id="f-epk_url" name="epk_url" type="url" inputmode="url" placeholder="https://">
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="press_kit_url">
+          <label class="f-label" for="f-press_kit_url">Press kit link <span class="opt">optional</span></label>
+          <input class="input" id="f-press_kit_url" name="press_kit_url" type="url" inputmode="url" placeholder="https://">
+          <p class="f-error"></p>
+        </div>
+      </div>
+      <label class="check-row" style="margin-top:4px">
+        <input type="checkbox" name="reciprocal_link_agreed">
+        <span class="t">I&rsquo;ll link back to my DGTL profile from my site or link-in-bio once it&rsquo;s live.</span>
+      </label>
+
+      <h3 style="font-size:17px;color:#fff;margin:34px 0 4px">Audience snapshot <span class="opt" style="font-size:13px;color:var(--text-ghost)">all optional for now</span></h3>
+      <p class="f-hint" style="margin-bottom:16px">Rough numbers are fine — you can connect your
+        accounts for verified analytics later.</p>
+      <div class="f-grid">
+        <div class="f-row" data-field="avg_views_30d">
+          <label class="f-label" for="f-avg_views_30d">Average views, last 30 days</label>
+          <input class="input" id="f-avg_views_30d" name="avg_views_30d" type="number" min="0" inputmode="numeric">
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="avg_engagement_rate">
+          <label class="f-label" for="f-avg_engagement_rate">Engagement rate (%)</label>
+          <input class="input" id="f-avg_engagement_rate" name="avg_engagement_rate" type="number"
+                 min="0" step="0.1" inputmode="decimal">
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="audience_top_geo">
+          <label class="f-label" for="f-audience_top_geo">Top audience location</label>
+          <input class="input" id="f-audience_top_geo" name="audience_top_geo" type="text" placeholder="e.g. Toronto / Canada">
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="audience_age_bracket">
+          <label class="f-label" for="f-audience_age_bracket">Main age bracket</label>
+          <input class="input" id="f-audience_age_bracket" name="audience_age_bracket" type="text" placeholder="e.g. 18–24">
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row span-2" data-field="audience_gender_split">
+          <label class="f-label" for="f-audience_gender_split">Audience gender split</label>
+          <input class="input" id="f-audience_gender_split" name="audience_gender_split" type="text" placeholder="e.g. 60% women / 40% men">
+          <p class="f-error"></p>
+        </div>
+      </div>
+
+      <div class="f-row" data-field="analytics_screenshots">
+        <span class="f-label">Analytics screenshots <span class="opt">optional, images, up to 5</span></span>
+        <div class="dropzone" id="shots-drop" tabindex="0" role="button"
+             aria-label="Add analytics screenshots">
+          <p class="big">Drop screenshots or browse</p>
+          <p>From your platform&rsquo;s insights — reach, audience, engagement.</p>
+        </div>
+        <input type="file" id="shots-input" accept="image/*" multiple class="sr-only">
+        <div class="file-list" id="shots-files"></div>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" name="analytics_connect_later">
+        <span class="t">I&rsquo;ll connect my accounts for verified analytics later.</span>
+      </label>
+    </section>
+
+    <!-- ══════════ Step 4 · Media & rights ══════════ -->
+    <section class="step" data-step="4" role="group" aria-labelledby="s4-h" hidden>
+      <h2 id="s4-h" tabindex="-1">Media &amp; rights</h2>
+      <p class="step-dek">The work you want featured, and clear ground rules about how DGTL can use it.</p>
+      <div class="err-summary" role="alert" data-for="4"></div>
+
+      <div class="f-row" data-field="media_files">
+        <span class="f-label">Your media <span class="opt">images, video or audio · up to 10 files · 200MB each</span></span>
+        <div class="dropzone" id="media-drop" tabindex="0" role="button" aria-label="Add media files">
+          <p class="big">Drop files or browse</p>
+          <p>Photos, reels, performances, campaign work — your best material.</p>
+        </div>
+        <input type="file" id="media-input" accept="image/*,video/*,audio/*" multiple class="sr-only">
+        <div class="file-list" id="media-files"></div>
+        <p class="f-error"></p>
+      </div>
+
+      <div class="f-row" data-field="media_links">
+        <span class="f-label">Or link it <span class="opt">Drive, Dropbox, WeTransfer, post URLs — up to 10</span></span>
+        <div class="repeat-list" id="medialinks-list"></div>
+        <button type="button" class="btn btn-secondary btn-sm" data-add="medialinks">＋ Add a link</button>
+        <p class="f-error"></p>
+      </div>
+
+      <h3 style="font-size:17px;color:#fff;margin:36px 0 12px">The rights you&rsquo;re granting</h3>
+      <div class="legal-summary">
+        <ul>
+          <li><strong style="color:#fff">You keep ownership.</strong> Everything stays yours.</li>
+          <li>You give DGTL a <strong style="color:#fff">non-exclusive, revocable licence</strong> to
+            feature this material on DGTL-owned properties and channels, worldwide, for promotion
+            and editorial.</li>
+          <li>You can <strong style="color:#fff">revoke it any time</strong> with 30 days written notice.</li>
+        </ul>
+      </div>
+      <details class="legal-full">
+        <summary>Read the full licence text</summary>
+        <div class="body">
+          <!-- LEGAL: draft — not reviewed. Mirrors terms.html; keep the two in sync. -->
+          <h4>Grant</h4>
+          <p>You grant DGTL Group a non-exclusive, worldwide, royalty-free licence to reproduce and
+          display the material you submit, for promotional and editorial use on DGTL-owned
+          properties and channels. Scope: promotional use on DGTL-owned properties and channels.
+          Territory: worldwide. Term: until revoked by you with 30 days written notice.</p>
+          <h4>What stays yours</h4>
+          <p>Ownership and copyright remain with you. This licence is non-exclusive — you can keep
+          using and licensing your material anywhere.</p>
+          <h4>Separate decisions below</h4>
+          <p>Edits and derivative cuts, broadcast syndication, and AI-training exclusion are separate
+          opt-ins — the blanket grant above does not include them. The full text lives at
+          <a href="terms.html">Rights &amp; usage terms</a> (version 2026-08-v1).</p>
+        </div>
+      </details>
+
+      <div class="f-row" data-field="derivative_ok">
+        <fieldset class="radio-cards" style="grid-template-columns:1fr 1fr">
+          <legend>May DGTL edit this material — cut, crop, reformat for Reels, broadcast or print?</legend>
+          <label class="radio-card">
+            <input type="radio" name="derivative_ok" value="yes">
+            <span class="body"><span class="t">Yes, edits are fine</span>
+              <span class="d">DGTL may recut and reformat for its channels.</span></span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="derivative_ok" value="no">
+            <span class="body"><span class="t">No, publish as-is only</span>
+              <span class="d">Use my material exactly as I supplied it.</span></span>
+          </label>
+        </fieldset>
+        <p class="f-error"></p>
+      </div>
+
+      <div class="f-row" data-field="broadcast_ok">
+        <fieldset class="radio-cards" style="grid-template-columns:1fr 1fr">
+          <legend>Broadcast &amp; syndication — a separate decision: may DGTL pitch this material for radio, TV, satellite or podcast broadcast (e.g. Sirius XM programming)?</legend>
+          <label class="radio-card">
+            <input type="radio" name="broadcast_ok" value="yes">
+            <span class="body"><span class="t">Yes, include broadcast</span>
+              <span class="d">My material can be pitched for broadcast placements.</span></span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="broadcast_ok" value="no">
+            <span class="body"><span class="t">No broadcast</span>
+              <span class="d">Online DGTL properties only.</span></span>
+          </label>
+        </fieldset>
+        <p class="f-error"></p>
+      </div>
+
+      <label class="check-row">
+        <input type="checkbox" name="ai_training_optout" checked>
+        <span class="t"><strong>Do not</strong> allow my content to be used for AI training. <span class="dim">(on by default)</span></span>
+      </label>
+
+      <div class="f-grid" style="margin-top:20px">
+        <div class="f-row" data-field="credit_line">
+          <label class="f-label" for="f-credit_line">Credit line</label>
+          <input class="input" id="f-credit_line" name="credit_line" type="text" required
+                 aria-describedby="credit-hint">
+          <p class="f-hint" id="credit-hint">Exactly how you want to be credited, e.g. &ldquo;Photo: Jane Doe&rdquo;.</p>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="rights_confirmation">
+          <span class="f-label" aria-hidden="true">&nbsp;</span>
+          <label class="check-row" style="margin:0">
+            <input type="checkbox" name="rights_confirmation">
+            <span class="t">I own or control the rights to everything I&rsquo;ve uploaded or linked here.</span>
+          </label>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="signature_name">
+          <label class="f-label" for="f-signature_name">Type your full name to sign</label>
+          <input class="input" id="f-signature_name" name="signature_name" type="text" autocomplete="name" required>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="signature_date">
+          <label class="f-label" for="f-signature_date">Date</label>
+          <input class="input" id="f-signature_date" name="signature_date" type="text" readonly>
+          <p class="f-hint">Terms version 2026-08-v1 · <a href="terms.html">read the full terms</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════ Step 5 · Rates & closing ══════════ -->
+    <section class="step" data-step="5" role="group" aria-labelledby="s5-h" hidden>
+      <h2 id="s5-h" tabindex="-1" data-creator="Rates &amp; availability" data-brand="Almost done">Rates &amp; availability</h2>
+      <p class="step-dek" data-who="creator">All optional — rates help us match you to briefs and are
+        <strong style="color:var(--text-muted)">never published</strong>.</p>
+      <div class="err-summary" role="alert" data-for="5"></div>
+
+      <div data-who="creator">
+        <div class="f-grid">
+          <div class="f-row" data-field="rate_ig_post">
+            <label class="f-label" for="f-rate_ig_post">Instagram post</label>
+            <input class="input" id="f-rate_ig_post" name="rate_ig_post" type="number" min="0" inputmode="numeric">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="rate_ig_reel">
+            <label class="f-label" for="f-rate_ig_reel">Instagram reel</label>
+            <input class="input" id="f-rate_ig_reel" name="rate_ig_reel" type="number" min="0" inputmode="numeric">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="rate_tiktok">
+            <label class="f-label" for="f-rate_tiktok">TikTok</label>
+            <input class="input" id="f-rate_tiktok" name="rate_tiktok" type="number" min="0" inputmode="numeric">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="rate_youtube_integration">
+            <label class="f-label" for="f-rate_youtube_integration">YouTube integration</label>
+            <input class="input" id="f-rate_youtube_integration" name="rate_youtube_integration" type="number" min="0" inputmode="numeric">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="rate_ugc_package">
+            <label class="f-label" for="f-rate_ugc_package">UGC package</label>
+            <input class="input" id="f-rate_ugc_package" name="rate_ugc_package" type="number" min="0" inputmode="numeric">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="rate_appearance">
+            <label class="f-label" for="f-rate_appearance">Appearance</label>
+            <input class="input" id="f-rate_appearance" name="rate_appearance" type="number" min="0" inputmode="numeric">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="rate_day">
+            <label class="f-label" for="f-rate_day">Day rate</label>
+            <input class="input" id="f-rate_day" name="rate_day" type="number" min="0" inputmode="numeric">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="currency">
+            <label class="f-label" for="f-currency">Currency</label>
+            <select class="select" id="f-currency" name="currency">
+              <option value="CAD">CAD</option><option value="USD">USD</option>
+              <option value="EUR">EUR</option><option value="GBP">GBP</option>
+            </select>
+            <p class="f-error"></p>
+          </div>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" name="open_to_gifted">
+          <span class="t">Open to gifted / product-only collaborations.</span>
+        </label>
+        <div class="f-row" data-field="exclusivity_conflicts">
+          <span class="f-label">Exclusivity conflicts <span class="opt">brands you can&rsquo;t work with</span></span>
+          <div class="repeat-list" id="conflicts-list"></div>
+          <button type="button" class="btn btn-secondary btn-sm" data-add="conflicts">＋ Add a brand</button>
+          <p class="f-error"></p>
+        </div>
+        <div class="f-grid">
+          <div class="f-row" data-field="availability_window">
+            <label class="f-label" for="f-availability_window">Availability <span class="opt">optional</span></label>
+            <input class="input" id="f-availability_window" name="availability_window" type="text"
+                   placeholder="e.g. weekdays from September">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="booking_contact">
+            <label class="f-label" for="f-booking_contact">Bookings go through</label>
+            <select class="select" id="f-booking_contact" name="booking_contact">
+              <option value="self">Me directly</option>
+              <option value="manager">My manager</option>
+            </select>
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="manager_name" data-manager hidden>
+            <label class="f-label" for="f-manager_name">Manager name</label>
+            <input class="input" id="f-manager_name" name="manager_name" type="text">
+            <p class="f-error"></p>
+          </div>
+          <div class="f-row" data-field="manager_email" data-manager hidden>
+            <label class="f-label" for="f-manager_email">Manager email</label>
+            <input class="input" id="f-manager_email" name="manager_email" type="email">
+            <p class="f-error"></p>
+          </div>
+        </div>
+        <hr style="border:0;border-top:1px solid var(--border);margin:32px 0">
+      </div>
+
+      <div class="f-grid">
+        <div class="f-row" data-field="how_did_you_hear">
+          <label class="f-label" for="f-how_did_you_hear">How did you hear about us? <span class="opt">optional</span></label>
+          <input class="input" id="f-how_did_you_hear" name="how_did_you_hear" type="text">
+          <p class="f-error"></p>
+        </div>
+        <div class="f-row" data-field="referred_by">
+          <label class="f-label" for="f-referred_by">Referred by <span class="opt">optional</span></label>
+          <input class="input" id="f-referred_by" name="referred_by" type="text">
+          <p class="f-error"></p>
+        </div>
+      </div>
+
+      <h3 style="font-size:17px;color:#fff;margin:24px 0 12px">Separate choices, all optional</h3>
+      <label class="check-row">
+        <input type="checkbox" name="consent_marketing_email">
+        <span class="t">Email me DGTL news, briefs and opportunities. <span class="dim">Express consent
+        under Canada&rsquo;s CASL — unsubscribe any time. DGTL Group, Toronto, Canada.</span></span>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" name="consent_survey_panel">
+        <span class="t">Include me in the DGTL creator survey panel — occasional paid research
+        about the creator economy.</span>
+      </label>
+      <div class="card card-callout" style="margin:16px 0 0;font-size:14px" id="rights-recap">
+        <p class="dim">From step 4: derivative edits <strong id="recap-derivative" class="gold">—</strong> ·
+        broadcast <strong id="recap-broadcast" class="gold">—</strong> ·
+        AI-training opt-out <strong id="recap-ai" class="gold">—</strong>
+        <button type="button" class="btn btn-ghost btn-sm" data-goto="4">Change</button></p>
+      </div>
+    </section>
+
+    <div class="step-actions">
+      <button type="button" class="btn btn-ghost" id="btn-back" hidden>← Back</button>
+      <p class="save-note" id="save-note" aria-live="polite"></p>
+      <button type="button" class="btn btn-primary" id="btn-next">Continue →</button>
+    </div>
+  </form>
+</main>
+
+<footer class="foot">
+  <div class="wrap cols">
+    <p>© 2026 DGTL Group · Toronto</p>
+    <p><a href="terms.html">Rights &amp; usage terms</a> · <a href="https://dgtlinfluence.com/">Influence Journal</a></p>
+  </div>
+</footer>
+
+<template id="tpl-highlight">
+  <div class="repeat-row">
+    <div class="fields"><input class="input span-2" type="text" data-k="value"
+      aria-label="Career highlight" maxlength="300"></div>
+    <button type="button" class="btn btn-icon rm" aria-label="Remove this highlight">✕</button>
+  </div>
+</template>
+<template id="tpl-press">
+  <div class="repeat-row">
+    <div class="fields">
+      <input class="input" type="url" data-k="url" aria-label="Press link" placeholder="https://">
+      <input class="input" type="text" data-k="outlet" aria-label="Outlet name" placeholder="Outlet">
+    </div>
+    <button type="button" class="btn btn-icon rm" aria-label="Remove this press entry">✕</button>
+  </div>
+</template>
+<template id="tpl-social">
+  <div class="repeat-row">
+    <div class="fields">
+      <select class="select" data-k="platform" aria-label="Platform">
+        <option value="instagram">Instagram</option><option value="tiktok">TikTok</option>
+        <option value="youtube">YouTube</option><option value="x">X</option>
+        <option value="spotify">Spotify</option><option value="apple_music">Apple Music</option>
+        <option value="soundcloud">SoundCloud</option><option value="twitch">Twitch</option>
+        <option value="linkedin">LinkedIn</option><option value="snapchat">Snapchat</option>
+        <option value="facebook">Facebook</option><option value="threads">Threads</option>
+        <option value="personal_site">Personal site</option>
+      </select>
+      <input class="input" type="text" data-k="handle" aria-label="Handle" placeholder="@handle">
+      <input class="input" type="url" data-k="profile_url" aria-label="Profile link" placeholder="https://">
+      <input class="input" type="number" min="0" data-k="follower_count" aria-label="Follower count" placeholder="Followers">
+      <label class="check-row span-2" style="margin:0;padding:10px 12px">
+        <input type="checkbox" data-k="verified"><span class="t">Verified account</span>
+      </label>
+      <label class="check-row span-2" style="margin:0;padding:10px 12px">
+        <input type="radio" name="social_primary" data-k="is_primary"><span class="t">This is my primary platform</span>
+      </label>
+    </div>
+    <button type="button" class="btn btn-icon rm" aria-label="Remove this platform">✕</button>
+  </div>
+</template>
+<template id="tpl-medialink">
+  <div class="repeat-row">
+    <div class="fields">
+      <input class="input" type="url" data-k="url" aria-label="Media link" placeholder="https://">
+      <input class="input" type="text" data-k="label" aria-label="What is it?" placeholder="What is it?">
+    </div>
+    <button type="button" class="btn btn-icon rm" aria-label="Remove this link">✕</button>
+  </div>
+</template>
+<template id="tpl-conflict">
+  <div class="repeat-row">
+    <div class="fields"><input class="input span-2" type="text" data-k="value"
+      aria-label="Brand name" maxlength="120"></div>
+    <button type="button" class="btn btn-icon rm" aria-label="Remove this brand">✕</button>
+  </div>
+</template>
+<template id="tpl-file-row">
+  <div class="file-row">
+    <div class="head">
+      <span class="name"></span><span class="size"></span>
+      <button type="button" class="btn btn-ghost btn-sm retry" hidden>Retry</button>
+      <button type="button" class="btn btn-icon rm" aria-label="Remove this file">✕</button>
+    </div>
+    <div class="bar"><i></i></div>
+    <div class="meta">
+      <input class="input" type="text" data-k="title" aria-label="Title" placeholder="Title">
+      <input class="input" type="text" data-k="credit" aria-label="Credit — photographer, label, producer" placeholder="Credit (photographer / label / producer)">
+      <input class="input" type="text" data-k="date_created" aria-label="When was it made?" placeholder="When was it made? e.g. 2026-05">
+      <label class="check-row" style="margin:0;padding:10px 12px">
+        <input type="checkbox" data-k="is_owner" checked><span class="t">I own this</span>
+      </label>
+      <input class="input span-2" type="text" data-k="third_party_credits"
+             aria-label="Third-party credits" placeholder="Anyone else involved? (optional)">
+    </div>
+  </div>
+</template>
+
+<script src="assets/apply.js"></script>
+</body>
+</html>
