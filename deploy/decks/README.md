@@ -8,7 +8,7 @@ Docker container, fronted by the Traefik you already run on the VPS.
 > **Updated 2026-08-01.** This folder is **not** a standalone repo any more — it ships inside
 > `stfphen/dgtl` and deploys from `/opt/dgtl/deploy/decks` on the VPS (see
 > `deploy/vps/README-VPS-DEPLOY.md` §5). The old "move it out and `git init`" instructions, the
-> `pitch.dgtlmedia.io` host, and the IP `62.72.16.32` are all dead — `dgtlmedia.io` is no longer
+> `pitch.dgtlmedia.io` host, and the IP `[retired-vps]` are all dead — `dgtlmedia.io` is no longer
 > ours and that Hostinger box was offboarded 2026-07-21. The compose file here already routes
 > `pitch.dgtlmag.com` on Coolify's `coolify` network.
 

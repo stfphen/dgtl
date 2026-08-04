@@ -1,0 +1,74 @@
+# Deploy-branch pipeline for the Hostinger site fleet.
+#
+# Every mapped folder is split into its own deploy/<name> branch on each push
+# to main. Hostinger's per-site Git deployment (hPanel → Advanced → GIT) points
+# at that branch and auto-pulls via webhook — merge a PR, the site updates.
+#
+# Mapping rules:
+#   - every directory under sites/ (except _* like sites/_briefs) publishes to
+#     deploy/site-<dirname>
+#   - plus the explicit EXTRA_MAP entries below (apps that keep their own home)
+#
+# Branch history is derived with `git subtree split`, so pushes stay
+# fast-forward as long as main's history is append-only (squash merges are).
+name: deploy-sites
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sites/**'
+      - 'apps/creator-intake/site/**'
+      - '.github/workflows/deploy-sites.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-sites
+  cancel-in-progress: false
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # subtree split needs full history
+
+      - name: Split mapped folders into deploy branches
+        run: |
+          set -euo pipefail
+          git config user.name  "dgtl-deploy-bot"
+          git config user.email "deploy@dgtlgroup.io"
+
+          declare -A MAP
+          # explicit entries: source folder -> deploy branch
+          MAP["apps/creator-intake/site"]="deploy/creator-intake"
+          # every real site folder under sites/
+          for d in sites/*/; do
+            name="$(basename "$d")"
+            case "$name" in _*) continue ;; esac
+            MAP["sites/$name"]="deploy/site-$name"
+          done
+
+          for src in "${!MAP[@]}"; do
+            branch="${MAP[$src]}"
+            if [ ! -d "$src" ]; then
+              echo "skip: $src missing"
+              continue
+            fi
+            echo "→ $src  ⇒  $branch"
+            git branch -D _split 2>/dev/null || true
+            git subtree split --prefix="$src" -b _split
+            if git push origin "_split:refs/heads/$branch"; then
+              echo "   pushed (fast-forward)"
+            else
+              # main history was rewritten (rebase/force) — deploy branch
+              # diverged; replace it. Hostinger re-clones on next pull failure.
+              git push --force origin "_split:refs/heads/$branch"
+              echo "   pushed (force — upstream history changed)"
+            fi
+            git branch -D _split
+          done

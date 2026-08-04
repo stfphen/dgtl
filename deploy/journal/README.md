@@ -27,7 +27,7 @@ A     www    37.27.198.189
 Same VPS already serving `dgtlmag.com`. DNS is managed at **Hostinger** (nameservers
 `ns1/ns2.dns-parking.com`).
 
-> **The IP is `37.27.198.189` (Hetzner), not the `62.72.16.32` you will find in
+> **The IP is `37.27.198.189` (Hetzner), not the `[retired-vps]` you will find in
 > `deploy/LIVE-SETUP-RUNBOOK.md` and `DGTL-Domain-and-Deploy-Blueprint.md`.** Those describe the
 > retired Hostinger box, offboarded 2026-07-21. `deploy/vps/README-VPS-DEPLOY.md` is the current
 > runbook. Confirm with `dig +short dgtlmag.com A` before pointing anything.

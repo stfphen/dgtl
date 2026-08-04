@@ -1,12 +1,12 @@
 # DGTL — Domain Tree & Self-Hosted Deploy Blueprint
 
-*Author: setup session 2026-07-12 · VPS `62.72.16.32` (Hostinger, Ubuntu + Docker + Traefik)*
+*Author: setup session 2026-07-12 · VPS `[retired-vps]` (Hostinger, Ubuntu + Docker + Traefik)*
 
 > ## ⚠️ SUPERSEDED — the domain tree and IPs below are stale.
 >
 > **Current runbook: [`vps/README-VPS-DEPLOY.md`](vps/README-VPS-DEPLOY.md).** Verified 2026-08-01:
 >
-> - **VPS is `37.27.198.189`** (Hetzner), not `62.72.16.32` (Hostinger, offboarded 2026-07-21).
+> - **VPS is `37.27.198.189`** (Hetzner), not `[retired-vps]` (Hostinger, offboarded 2026-07-21).
 > - **`dgtlmedia.io` is not ours** — the whole `*.dgtlmedia.io` tier below is dead. Everything
 >   consolidated under **`dgtlmag.com`**.
 > - **`dgtlinfluence.com` is live** as the Influence Journal (`deploy/journal/`), not a "branded
@@ -69,7 +69,7 @@ subdomains so you never need new DNS to ship a feature.
 | `dgtlgroup.io/pitch/{client}` | **Pitch decks** (your chosen scheme) | static, git-deployed |
 | `dgtlgroup.io/pitch` | Deck gallery (internal index) | protect or noindex |
 
-### Tier 2 — Product / app subdomains (all A → `62.72.16.32`, Traefik-routed)
+### Tier 2 — Product / app subdomains (all A → `[retired-vps]`, Traefik-routed)
 | Host | Serves | Why separate |
 |---|---|---|
 | `app.dgtlgroup.io` | The funnel + admin app | canonical app host (today it's `dgtlmag.com`) |
@@ -92,13 +92,13 @@ subdomains so you never need new DNS to ship a feature.
 
 ### DNS records to add at Hostinger (for `dgtlgroup.io`)
 ```
-A     @         62.72.16.32
-A     www       62.72.16.32
-A     app       62.72.16.32
-A     api       62.72.16.32
-A     *         62.72.16.32     # wildcard → tenant funnels, no DNS per client
-A     deploy    62.72.16.32     # Phase 2 (Coolify)
-A     status    62.72.16.32     # optional
+A     @         [retired-vps]
+A     www       [retired-vps]
+A     app       [retired-vps]
+A     api       [retired-vps]
+A     *         [retired-vps]     # wildcard → tenant funnels, no DNS per client
+A     deploy    [retired-vps]     # Phase 2 (Coolify)
+A     status    [retired-vps]     # optional
 ```
 TLS: Traefik issues a per-hostname LetsEncrypt cert on first request via HTTP-01 — the wildcard
 **DNS** record works immediately without a wildcard cert. If you later want a single `*.dgtlgroup.io`
@@ -164,7 +164,7 @@ dgtl-decks/
 *Ship it (Phase 1 — one command, ~30s to live):*
 ```bash
 git add . && git commit -m "deck: acme-corp" && git push
-ssh root@62.72.16.32 'cd /opt/dgtl-decks && ./deploy.sh'
+ssh root@[retired-vps] 'cd /opt/dgtl-decks && ./deploy.sh'
 # live at https://dgtlgroup.io/pitch/acme-corp/
 ```
 *Edit later:* change the file, `git push`, run `deploy.sh` again. Same as Netlify's redeploy,
@@ -201,7 +201,7 @@ labels:
 
 See `LIVE-SETUP-RUNBOOK.md` for the exact copy-paste commands. Summary:
 
-1. **DNS** — add `dgtlgroup.io` A records (Tier 1/2 above). `dig +short dgtlgroup.io` → `62.72.16.32`.
+1. **DNS** — add `dgtlgroup.io` A records (Tier 1/2 above). `dig +short dgtlgroup.io` → `[retired-vps]`.
 2. **Push the decks repo** — create GitHub repo `dgtl-decks`, push this `decks/` folder.
 3. **First deploy on VPS** — `git clone` to `/opt/dgtl-decks`, `docker compose up -d --build`.
    Verify: `curl -I https://dgtlgroup.io/pitch/sample-client/` → `200`.
