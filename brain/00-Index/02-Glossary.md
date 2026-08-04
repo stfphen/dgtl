@@ -38,7 +38,7 @@ Domain terms, internal jargon, and the **easily-confused names** that have cause
 - **`requireRole`** — the RBAC guard wrapping admin/telephony routes. Roles: `owner`, `admin`, `sales`, `contractor`, `viewer`.
 
 ## Key infra constants
-- **VPS:** `37.27.198.189` (Hetzner, host `DGTLapps`, Ubuntu, Docker, **Coolify** proxy on 80/443, network `coolify`). Old Hostinger box `62.72.16.32` offboarded 2026-07-21.
+- **VPS:** `37.27.198.189` (Hetzner, host `DGTLapps`, Ubuntu, Docker, **Coolify** proxy on 80/443, network `coolify`). Old Hostinger box `[retired-vps]` offboarded 2026-07-21.
 - **Domain:** `dgtlmag.com` (+ `www`, `funding`, `grants` subdomains).
 - **Ports:** dev `8088`, container/prod `3000` (Traefik loadbalancer label = 3000).
 - **DB:** Postgres service `content-funnel-postgres`; default team id `team_default`.

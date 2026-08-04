@@ -8,7 +8,7 @@
 >
 > | This doc says | Reality (verified 2026-08-01) |
 > |---|---|
-> | VPS `62.72.16.32` (Hostinger, FR) | **`37.27.198.189`** (Hetzner, FI) — the Hostinger box was offboarded 2026-07-21 |
+> | VPS `[retired-vps]` (Hostinger, FR) | **`37.27.198.189`** (Hetzner, FI) — the Hostinger box was offboarded 2026-07-21 |
 > | Decks at `pitch.dgtlmedia.io` | `pitch.dgtlmag.com` — **`dgtlmedia.io` is no longer under our control**, all `*.dgtlmedia.io` URLs are dead |
 > | Hand-managed Traefik on the `traefik-public` network | **Coolify** owns 80/443; stacks attach to the `coolify` network. Do not start `vps/traefik/`. |
 > | Coolify is "Phase 2, optional" | Coolify is already installed and is the edge |
@@ -19,7 +19,7 @@
 Execute top to bottom. **Phase 1 does not touch the live app** — decks are a separate container on
 a separate path. Phase 2 (Coolify) is optional and should run in a maintenance window.
 
-Legend: `[MAC]` runs on your machine · `[VPS]` runs on `ssh root@62.72.16.32` · `[DNS]` Hostinger panel.
+Legend: `[MAC]` runs on your machine · `[VPS]` runs on `ssh root@[retired-vps]` · `[DNS]` Hostinger panel.
 
 ---
 
@@ -29,11 +29,11 @@ Legend: `[MAC]` runs on your machine · `[VPS]` runs on `ssh root@62.72.16.32` �
 `dgtlmedia.io`'s DNS is managed at **Hostinger** (where you have access). In hPanel → Domains →
 `dgtlmedia.io` → DNS / Nameservers, add ONE record (the apex redirect stays intact):
 ```
-A   pitch   62.72.16.32     # decks live at pitch.dgtlmedia.io
+A   pitch   [retired-vps]     # decks live at pitch.dgtlmedia.io
 ```
 Verify (wait for propagation, usually minutes):
 ```bash
-dig +short pitch.dgtlmedia.io    # -> 62.72.16.32
+dig +short pitch.dgtlmedia.io    # -> [retired-vps]
 ```
 (`dgtlgroup.io` DNS lives on Cloudflare and is left untouched — we're not using it for launch.)
 
@@ -51,7 +51,7 @@ git push -u origin main
 
 ### Step 3 — First deploy `[VPS]`
 ```bash
-ssh root@62.72.16.32
+ssh root@[retired-vps]
 cd /opt && git clone git@github.com:<YOUR_GH>/dgtl-decks.git && cd dgtl-decks
 chmod +x deploy.sh scripts/*.sh
 docker compose up -d --build
@@ -83,7 +83,7 @@ cd /opt/dgtl-decks && ./deploy.sh        # ~30s -> live at pitch.dgtlmedia.io/cl
 ### Optional — one-liner deploy alias `[MAC]`
 Add to `~/.zshrc` so a single command pushes and deploys:
 ```bash
-alias deck-ship='git -C ~/dgtl-decks push && ssh root@62.72.16.32 "cd /opt/dgtl-decks && ./deploy.sh"'
+alias deck-ship='git -C ~/dgtl-decks push && ssh root@[retired-vps] "cd /opt/dgtl-decks && ./deploy.sh"'
 ```
 
 ### Troubleshooting
@@ -124,7 +124,7 @@ Apps Coolify builds attach to `traefik-public` with custom labels; the existing 
 cd /opt/content-checkout-funnel && scripts/backup-db.sh
 # Requirements: 2+ CPU, 2GB+ RAM free (Coolify itself uses ~1GB), 30GB disk, Ubuntu LTS.
 curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
-# Dashboard: http://62.72.16.32:8000  -> create admin, then point deploy.dgtlgroup.io at it.
+# Dashboard: http://[retired-vps]:8000  -> create admin, then point deploy.dgtlgroup.io at it.
 ```
 Then in the UI: connect GitHub → add `dgtl-decks` as a Dockerfile app (auto-deploy on push) →
 optionally import the funnel app the same way. Protect `deploy.dgtlgroup.io` with auth + IP allowlist.
@@ -138,10 +138,10 @@ optionally import the funnel app the same way. Protect `deploy.dgtlgroup.io` wit
 ## DNS quick-reference
 ```
 # dgtlmedia.io (DNS at Hostinger) — add only:
-A   pitch    62.72.16.32     # decks — the only record needed to go live now
+A   pitch    [retired-vps]     # decks — the only record needed to go live now
 # dgtlgroup.io (DNS at Cloudflare) — untouched for launch. To brand decks under the hub later,
 #   add in Cloudflare (DNS-only/grey cloud):  CNAME pitch.dgtlgroup.io -> pitch.dgtlmedia.io
 #   and a matching Host(`pitch.dgtlgroup.io`) router on the same container.
 # dgtlmag.com — unchanged (@, www, funding, grants already set)
-# dgtlinfluence.com — keep redirect, or A -> 62.72.16.32 for a branded lander
+# dgtlinfluence.com — keep redirect, or A -> [retired-vps] for a branded lander
 ```

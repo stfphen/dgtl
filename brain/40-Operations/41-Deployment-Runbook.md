@@ -11,7 +11,7 @@ source: DEPLOY_HOSTINGER.md, PRE_DEPLOY_CHECKLIST.md, RESUME_HERE.md
 
 > **Host changed 2026-07-21.** Target is now **`37.27.198.189`** (Hetzner, host `DGTLapps`), and the
 > edge is **Coolify** — stacks attach to the `coolify` network, not `traefik-public`. The Hostinger
-> box `62.72.16.32` is gone. For a from-scratch rebuild follow `deploy/vps/README-VPS-DEPLOY.md`;
+> box `[retired-vps]` is gone. For a from-scratch rebuild follow `deploy/vps/README-VPS-DEPLOY.md`;
 > this note covers the app's own deploy loop.
 
 Target: `dgtlmag.com` on VPS `37.27.198.189` (Ubuntu + Docker + Coolify). App = Next.js container +
