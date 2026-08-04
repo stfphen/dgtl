@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DGTL Mov — Video Delivery by DGTL Group</title>
+<meta name="description" content="Video delivery — where clients and creators will receive finished motion work. A DGTL Group property.">
+<link rel="canonical" href="https://dgtl.mov/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DGTL Mov">
+<meta property="og:title" content="DGTL Mov — Video Delivery">
+<meta property="og:description" content="Video delivery — where clients and creators will receive finished motion work. A DGTL Group property.">
+<meta property="og:url" content="https://dgtl.mov/">
+<meta name="robots" content="index, follow">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/spark.svg" type="image/svg+xml">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebSite","@id":"https://dgtl.mov/#website",
+  "url":"https://dgtl.mov/","name":"DGTL Mov",
+  "publisher":{"@id":"https://dgtlgroup.io/#organization"}},
+ {"@type":"Organization","@id":"https://dgtlgroup.io/#organization",
+  "name":"DGTL Group","url":"https://dgtlgroup.io/",
+  "sameAs":["https://dgtlinfluence.com/"]}]}
+</script>
+<style>
+/* ==========================================================================
+   DGTL Group — brand tokens + base components (dgtlgroup.io, July 2026)
+   ========================================================================== */
+:root{
+  /* surfaces */
+  --bg:#000000; --surface-1:#0a0a0a; --surface-2:#111111;
+  --surface-card:rgba(0,0,0,0.45);
+  /* text */
+  --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
+  --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  /* accent */
+  --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
+  --gold-ring:rgba(240,207,80,0.15);
+  /* borders */
+  --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.4);
+  /* functional */
+  --success:#7BC47F; --success-tint:rgba(123,196,127,0.10);
+  --warning:#E8A33D; --warning-tint:rgba(232,163,61,0.10);
+  --error:#E5484D;   --error-tint:rgba(229,72,77,0.10);
+  --info:#6E9FDB;    --info-tint:rgba(110,159,219,0.10);
+  /* geometry */
+  --r-control:7px; --r-card:16px; --r-pill:9999px;
+  /* effects */
+  --shadow-card:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15);
+  --glass-bg:rgba(0,0,0,0.45);
+  --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
+     background:var(--bg);-webkit-font-smoothing:antialiased}
+::placeholder{color:var(--placeholder)}
+:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+::selection{background:var(--gold);color:#000}
+
+/* --- buttons --- */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);
+     font-weight:700;font-size:16px;border-radius:var(--r-control);
+     padding:15px 24px;border:1px solid transparent;cursor:pointer;
+     text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
+
+/* --- cards --- */
+.card{background:var(--surface-card);border:1px solid var(--border);
+      border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:24px}
+.card-callout{border-left:3px solid var(--gold)}
+
+/* --- type helpers --- */
+.h-display{font-size:clamp(40px,6vw,70px);font-weight:700;letter-spacing:-1.4px;
+           line-height:1.1;color:#fff}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan)}
+.gold{color:var(--gold)}
+.muted{color:var(--text-muted)} .dim{color:var(--text-dim)}
+
+/* --- glassy bar --- */
+.glass-bar{background:var(--glass-bg);backdrop-filter:blur(8px) saturate(1.8);
+           -webkit-backdrop-filter:blur(8px) saturate(1.8);
+           border-bottom:1px solid var(--border-subtle)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+/* --- page --- */
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--gold);color:#000;
+  padding:10px 16px;border-radius:0 0 var(--r-control) 0;font-weight:700;z-index:20}
+.skip-link:focus{left:0}
+
+.nav{position:sticky;top:0;z-index:10}
+.nav-inner{max-width:1120px;margin:0 auto;padding:14px 24px;display:flex;
+  align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none}
+.nav-brand img{height:26px;width:auto;display:block}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--gold-tan);border-left:1px solid var(--border);padding-left:12px}
+.nav a.plain{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500}
+.nav a.plain:hover{color:#fff}
+
+.hero{position:relative;overflow:hidden;padding:120px 0 96px;
+  background:radial-gradient(ellipse 70% 55% at 50% 0%,rgba(240,207,80,0.06),transparent 70%)}
+.spark-bg{position:absolute;top:-8%;right:-6%;width:min(560px,60vw);opacity:.05;
+  transform:rotate(18deg);pointer-events:none;user-select:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative}
+
+.band{padding:32px 0 88px}
+.band .card{display:flex;align-items:center;justify-content:space-between;
+  gap:24px;flex-wrap:wrap}
+.band p{max-width:560px}
+
+.footer{border-top:1px solid var(--border);padding:32px 0}
+.footer-inner{max-width:1120px;margin:0 auto;padding:0 24px;display:flex;
+  align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.footer a{color:var(--text-dim);text-decoration:none;font-size:13px}
+.footer a:hover{color:var(--text-muted)}
+.footer nav{display:flex;gap:20px;flex-wrap:wrap}
+
+@media (max-width:600px){
+  .hero{padding:88px 0 64px}
+  .kicker{display:none}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav glass-bar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="https://dgtl.mov/" aria-label="DGTL Mov — home">
+      <img src="assets/logo-white-gold.svg" alt="DGTL" width="70" height="26">
+      <span class="kicker">DGTL Mov</span>
+    </a>
+    <nav aria-label="Site">
+      <a class="plain" href="https://dgtlgroup.io/">dgtlgroup.io →</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <img class="spark-bg" src="assets/spark.svg" alt="" aria-hidden="true">
+    <div class="wrap">
+      <p class="eyebrow">Publishing &amp; Delivery · A DGTL Group Property</p>
+      <h1 class="h-display" style="max-width:760px;margin:16px 0 20px">
+        Motion, <span class="gold">mastered</span> and handed over.</h1>
+      <p class="muted" style="font-size:19px;max-width:600px;line-height:1.6">
+        The future home of DGTL video delivery: final cuts and masters, handed over
+        cleanly. Until it opens, delivery continues by direct link.</p>
+      <div style="margin-top:32px">
+        <a class="btn btn-primary" href="mailto:hello@dgtlgroup.io">Question about a delivery? →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" aria-label="Delivery instructions">
+    <div class="wrap">
+      <div class="card card-callout">
+        <p class="muted">Expecting a cut? Your producer will send a direct link
+          until this portal opens.</p>
+        <a class="btn btn-secondary" href="mailto:hello@dgtlgroup.io">hello@dgtlgroup.io</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p class="dim" style="font-size:13px">© 2026 DGTL Group · Toronto</p>
+    <nav aria-label="DGTL properties">
+      <a href="https://dgtlgroup.io/">DGTL Group</a>
+      <a href="https://dgtlinfluence.com/">Influence Journal</a>
+      <a href="https://join.dgtlinfluence.com/">Creator Network</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>
