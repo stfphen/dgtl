@@ -14,6 +14,9 @@ export const state = {
   tasks: [],
   timer: null,
   todayEntries: [],
+  // Time on no project at all. Project rows cannot carry it, so the Projects
+  // screen states it rather than quietly leaving it out of its totals.
+  unassigned: { minutes: 0, billableMinutes: 0 },
   today: new Date().toISOString().slice(0, 10),
   weekStartDate: null,
   timezone: '',
@@ -35,6 +38,7 @@ export async function load() {
     user: data.user,
     users: data.users,
     projects: data.projects,
+    unassigned: data.unassigned ?? { minutes: 0, billableMinutes: 0 },
     tasks: data.tasks,
     timer: data.timer,
     todayEntries: data.todayEntries,

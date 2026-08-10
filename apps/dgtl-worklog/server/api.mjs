@@ -114,6 +114,19 @@ const listProjects = () => all(`
    ORDER BY p.status ASC, p.position ASC, p.id ASC
 `).map(projectRow);
 
+/**
+ * Time that belongs to no project. Every project row counts only entries
+ * carrying its id, so this is the remainder the Projects screen would
+ * otherwise drop on the floor — it is stated there, not hidden.
+ */
+const unassignedTotals = () => {
+  const u = one(`
+    SELECT COALESCE(SUM(minutes), 0) AS minutes,
+           COALESCE(SUM(CASE WHEN billable = 1 THEN minutes ELSE 0 END), 0) AS billable_minutes
+      FROM time_entries WHERE project_id IS NULL`);
+  return { minutes: u.minutes, billableMinutes: u.billable_minutes };
+};
+
 const listTasks = ({ includeArchived = false } = {}) => all(`
   SELECT t.*,
          (SELECT COALESCE(SUM(minutes), 0) FROM time_entries te WHERE te.task_id = t.id) AS logged_minutes
@@ -313,6 +326,7 @@ route('GET', '/api/bootstrap', ({ req }) => {
     weekStartDate: startOfWeek(today, user.weekStart),
     users: all('SELECT * FROM users WHERE active = 1 ORDER BY name').map(userRow),
     projects: listProjects(),
+    unassigned: unassignedTotals(),
     tasks: listTasks(),
     timer: runningTimer(user.id),
     todayEntries: all(`${ENTRY_SELECT} WHERE e.user_id = ? AND e.date = ? ORDER BY e.id DESC`,

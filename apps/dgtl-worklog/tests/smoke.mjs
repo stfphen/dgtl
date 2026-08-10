@@ -259,6 +259,10 @@ try {
   const keep = await call('POST', '/api/tasks', { title: 'Survivor task', projectId: doomed.id });
   await call('POST', '/api/tasks', { title: 'Finished task', projectId: doomed.id, status: 'done' });
 
+  const doomedRow = (await call('GET', '/api/projects')).body.projects.find((p) => p.id === doomed.id);
+  ok('a project row counts every task attached, not only the open ones',
+    doomedRow.taskCount === 2 && doomedRow.openTasks === 1, `${doomedRow.taskCount} / ${doomedRow.openTasks}`);
+
   const del = await call('DELETE', `/api/projects/${doomed.id}`);
   ok('deleting a project reports how many tasks it detached',
     del.status === 200 && del.body.detachedTasks === 2, JSON.stringify(del.body));
@@ -282,11 +286,40 @@ try {
   const mixBoot = await call('GET', '/api/bootstrap');
   const mixRow = mixBoot.body.projects.find((p) => p.id === mix);
   ok('a project row carries per-entry billable minutes', mixRow.billableMinutes === 60, String(mixRow.billableMinutes));
-  ok('the project-level billable flag does not inflate it', mixRow.loggedMinutes === 240, String(mixRow.loggedMinutes));
+  ok('a billable project holding non-billable hours is not fully billable',
+    mixRow.billableMinutes < mixRow.loggedMinutes, `${mixRow.billableMinutes} of ${mixRow.loggedMinutes}`);
   const mixRep = await call('GET', `/api/report?scope=team&from=${mixBoot.body.today}&to=${mixBoot.body.today}`);
   const mixProj = mixRep.body.byProject.find((p) => p.projectId === mix);
   ok('Projects and Reports agree on billable minutes',
     mixProj.billableMinutes === mixRow.billableMinutes, `${mixProj?.billableMinutes} vs ${mixRow.billableMinutes}`);
+
+  // The figures above agree only because every fixture entry landed today. The
+  // project row is all-time and the report is range-bound, so backdating one
+  // entry must pull them apart — otherwise the assertion above proves they read
+  // the same source, not that they cover the same span.
+  const yesterday = new Date(`${mixBoot.body.today}T00:00:00Z`);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const yday = yesterday.toISOString().slice(0, 10);
+  await call('POST', '/api/entries', { projectId: mix, minutes: 30, billable: true, date: yday });
+  const mixRow2 = (await call('GET', '/api/projects')).body.projects.find((p) => p.id === mix);
+  const ydayRep = await call('GET', `/api/report?scope=team&from=${yday}&to=${yday}`);
+  const ydayProj = ydayRep.body.byProject.find((p) => p.projectId === mix);
+  ok('the project row is all-time while a report is bound to its range',
+    mixRow2.billableMinutes === 90 && ydayProj.billableMinutes === 30,
+    `row ${mixRow2.billableMinutes} vs yesterday ${ydayProj?.billableMinutes}`);
+
+  // Time on no project is in no project row, which is the whole reason the
+  // bootstrap reports it separately and the Projects card names it.
+  await call('POST', '/api/entries', { minutes: 45, note: 'no project at all', billable: true });
+  const offBoot = (await call('GET', '/api/bootstrap')).body;
+  const allTime = (await call('GET', `/api/report?scope=team&from=1970-01-01&to=${offBoot.today}`)).body;
+  const rowSum = offBoot.projects.reduce((s, p) => s + p.loggedMinutes, 0);
+  ok('bootstrap reports time that belongs to no project',
+    offBoot.unassigned.minutes >= 45 && offBoot.unassigned.billableMinutes >= 45,
+    JSON.stringify(offBoot.unassigned));
+  ok('project rows plus off-project time equal the report total',
+    rowSum + offBoot.unassigned.minutes === allTime.totals.minutes,
+    `${rowSum} + ${offBoot.unassigned.minutes} vs ${allTime.totals.minutes}`);
 
   console.log('\ntasks');
   const task = await call('POST', '/api/tasks', { title: 'Smoke task', projectId, estimateMinutes: 60 });
@@ -315,8 +348,8 @@ try {
   // Hours people are paid for must never be orphaned by tidying a project list.
   const blocked = await call('DELETE', `/api/projects/${projectId}`);
   ok('a project with logged time still cannot be deleted', blocked.status === 400);
-  ok('and the refusal carries the entry count',
-    blocked.body.details?.timeEntries > 0, JSON.stringify(blocked.body));
+  ok('and the refusal says how much time is in the way',
+    /\d+ time (entry|entries)/.test(blocked.body.error), blocked.body.error);
   ok('zero minutes is rejected', (await call('POST', '/api/entries', { projectId, minutes: 0 })).status === 400);
   ok('26 hours is rejected', (await call('POST', '/api/entries', { projectId, minutes: 1560 })).status === 400);
   ok('bad date is rejected',

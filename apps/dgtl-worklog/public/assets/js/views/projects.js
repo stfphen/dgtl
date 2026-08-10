@@ -13,28 +13,48 @@ export const subtitle = () => 'Where the hours go';
 
 /* The colour palette is named as tokens, never as values — the brand lives in
    tokens.css. A project stores its colour as a #rrggbb string, so each token is
-   put through the browser's own colour parser at pick time. Anything CSS
-   accepts (a keyword, rgb(), hsl(), color-mix(), 3- or 8-digit hex) normalises
-   to #rrggbb, so a slot cannot silently disappear because a token was written
-   in another notation, and a stored lower-case value still matches its swatch. */
+   put through the browser's own colour machinery at pick time. Anything CSS
+   accepts (a keyword, rgb(), hsl(), color-mix(), oklch(), 3- or 8-digit hex)
+   normalises to #rrggbb, so a slot cannot silently disappear because a token
+   was written in another notation, and a colour stored in lower case — which is
+   what scripts/seed.mjs writes — still matches its swatch. */
 const SWATCH_TOKENS = ['--gold', '--gold-tan', '--chart-4', '--chart-5', '--warning', '--error', '--chart-3', '--chart-6'];
 
-/** Any CSS colour → "#RRGGBB". Null when the browser cannot parse it. */
+let probeCanvas;
+
+/**
+ * Any CSS colour → "#RRGGBB". Null when the browser cannot read it as a colour.
+ *
+ * Validity is the CSSOM's answer — a style declaration silently drops what it
+ * cannot parse. The value then comes from painting one pixel and reading it
+ * back, because a computed colour does not always serialise as rgb(): a
+ * color-mix() lands as color(srgb …) and oklch() stays oklch(). Painting
+ * flattens all of them to sRGB bytes, so no swatch is lost to notation.
+ */
 function toHex(value) {
   const raw = String(value ?? '').trim();
   if (!raw) return null;
-  const probe = h('span', { style: { display: 'none' } });
+  const probe = document.createElement('span');
   probe.style.color = raw;
-  if (!probe.style.color) return null;      // the CSS parser rejected it outright
-  // getComputedStyle only resolves for an element that is in the document.
-  document.body.append(probe);
-  const computed = getComputedStyle(probe).color;
-  probe.remove();
-  const m = computed.match(/^rgba?\(([^)]+)\)$/);
-  if (!m) return null;
-  const parts = m[1].split(/[,\s/]+/).filter(Boolean).slice(0, 3).map(Number);
-  if (parts.length < 3 || parts.some((n) => !Number.isFinite(n))) return null;
-  return `#${parts.map((n) => Math.round(n).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+  if (!probe.style.color) return null;
+
+  probeCanvas ??= document.createElement('canvas');
+  probeCanvas.width = 1;
+  probeCanvas.height = 1;
+  const ctx = probeCanvas.getContext('2d', { willReadFrequently: true });
+
+  // A canvas keeps its previous fill when it rejects one, so a value it will
+  // not take would paint as whatever came before — silently, and usually black.
+  // Offering it two different starting points catches that: if the assignment
+  // took, both end up the same colour.
+  const settle = (start) => { ctx.fillStyle = start; ctx.fillStyle = raw; return ctx.fillStyle; };
+  if (settle('white') !== settle('black')) return null;
+
+  ctx.clearRect(0, 0, 1, 1);
+  ctx.fillRect(0, 0, 1, 1);
+  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+  if (!a) return null;                      // fully transparent is not a swatch
+  return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
 }
 
 /** The token palette, resolved. Tokens that will not resolve are named, not dropped silently. */
