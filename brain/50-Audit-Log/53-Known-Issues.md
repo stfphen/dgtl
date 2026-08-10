@@ -222,3 +222,5 @@ its own PR, not one adding a creator.
 - **Roster launches with 6 creators** (Casper still `draft`); brief wants 10–15 before launch — 4–9 more packs are content work via the dgtl-creator-features skill, not code.
 - **OG image for join.dgtlinfluence.com not produced** (`assets/img/og-join.jpg` referenced in plan, page currently ships without an og:image).
 - **Journal index canonicals still point at `pitch.dgtlmedia.io`** while pack.json canonicalUrls now say `dgtlinfluence.com` — the blanket canonical rewrite remains its own PR per the 2026-08-01 decision.
+
+- **dgtlinfluence.com ACME challenge failing repeatedly** (seen 2026-08-10 in `coolify-proxy` logs, every ~10 min: "Cannot retrieve the ACME challenge for dgtlinfluence.com"). The journal host may be serving on Traefik's fallback/self-signed cert or an expiring one. Unrelated to the dgtl.report stack. Check the journal router's cert and whether dgtlinfluence.com DNS actually points at this VPS.
