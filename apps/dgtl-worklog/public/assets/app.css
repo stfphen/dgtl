@@ -258,8 +258,9 @@ body{
 }
 .quick-entry .qe-what{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .quick-entry .qe-min{font-weight:700;font-variant-numeric:tabular-nums}
-.quick-entry .btn-icon{width:30px;height:30px;opacity:0;transition:opacity .15s}
-.quick-entry:hover .btn-icon,.quick-entry:focus-within .btn-icon{opacity:1}
+/* Same rule as the table rows: shown at rest, brightened on hover/focus. */
+.quick-entry .btn-icon{width:30px;height:30px;transition:color .15s,background .15s}
+.quick-entry:focus-within .btn-icon{color:var(--text)}
 
 /* ==================== ring ==================== */
 .ring-wrap{display:flex;align-items:center;gap:20px}
@@ -275,8 +276,16 @@ body{
 .table th.num{text-align:right}
 .table td{vertical-align:middle}
 .table tbody tr.clickable{cursor:pointer}
-.table .actions{width:1%;white-space:nowrap;text-align:right;opacity:0;transition:opacity .15s}
-.table tbody tr:hover .actions,.table tbody tr:focus-within .actions{opacity:1}
+/* Row actions are always visible. Revealing them on hover put the only control
+   a row has behind an input this app cannot count on — a touch device has no
+   hover, and the table is explicitly built to be used at 390px (below). It was
+   worse than invisible: an `opacity:0` button is still focusable and still in
+   the accessibility tree, so a screen reader announced controls no sighted user
+   could find. They rest at --text-dim (5.74:1 on --surface-1) and lift to
+   --text on hover or focus, which buys back the calm without hiding anything. */
+.table .actions{width:1%;white-space:nowrap;text-align:right}
+.table .actions .btn-icon{transition:color .15s,background .15s}
+.table tbody tr:focus-within .actions .btn-icon{color:var(--text)}
 .table td.shrink{width:1%;white-space:nowrap}
 
 .dot-tag{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text)}
@@ -315,8 +324,10 @@ body{
 .task-title{font-size:14px;color:var(--text);font-weight:500;word-break:break-word}
 .task.is-done .task-title{color:var(--text-dim);text-decoration:line-through}
 .task-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:var(--text-dim)}
-.task-side{display:flex;align-items:center;gap:6px;flex:none;opacity:0;transition:opacity .15s}
-.task:hover .task-side,.task:focus-within .task-side{opacity:1}
+/* Start-timer and edit are the whole point of a task row — same rule again. */
+.task-side{display:flex;align-items:center;gap:6px;flex:none}
+.task-side .btn-icon{transition:color .15s,background .15s}
+.task:focus-within .task-side .btn-icon{color:var(--text)}
 .prio-high{color:var(--error)}
 .prio-low{color:var(--text-dim)}
 .due-over{color:var(--error);font-weight:600}
@@ -490,4 +501,35 @@ body{
   .btn-hero{width:100%;justify-content:center}
   .quick-actions{flex-direction:column-reverse}   /* the gold action stays under the thumb */
   .quick-actions .btn-ghost{width:100%;justify-content:center}
+  /* A phone shows about two of this table's six columns, so the action column
+     sits hundreds of pixels off screen — visible, but only once you have
+     scrolled away from the row it acts on. Pin it to the right edge. It covers
+     a column that was already out of view at this width, and the header cell
+     travels with it so the body column never slides under a scrolling header.
+     Not done at tablet widths: there the table overhangs by a little, and a pin
+     would hide the Logged column that fits there today. */
+  .table .actions,.table thead th:last-child{position:sticky;right:0;border-left:1px solid var(--border)}
+  .table .actions{background:var(--surface-1)}
+}
+
+/* ==================== input capability ====================
+   Keyed to the pointer, not the viewport: a laptop with a touchscreen is a
+   1440px window you can still jab with a thumb. */
+
+/* Hover emphasis for the row affordances above. The controls themselves are
+   always visible; this is only the quiet-to-bright lift the old opacity reveal
+   used to do, so it is safe to make it conditional. Touch browsers synthesise
+   :hover on tap and would strand the last-tapped row in the lifted state, so
+   they are excluded here rather than relied on for reachability. */
+@media (hover:hover) and (pointer:fine){
+  .table tbody tr:hover .actions .btn-icon,.task:hover .task-side .btn-icon,
+  .quick-entry:hover .btn-icon{color:var(--text)}
+}
+
+/* 36px is below the 44px touch floor, and these are a row's primary controls.
+   `any-pointer` rather than `pointer` so a hybrid device sizes for the coarser
+   of its inputs — the mouse copes with a big target, the thumb does not cope
+   with a small one. */
+@media (any-pointer:coarse){
+  .btn-icon,.quick-entry .btn-icon{width:44px;height:44px}
 }
