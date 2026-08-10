@@ -6,6 +6,7 @@
  */
 
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -43,16 +44,54 @@ function sqliteFiles(dir, root = dir) {
   return hits;
 }
 
-// Every database this suite touches belongs in TMP. One written into the app
-// instead is invisible to `git status` — data/ is gitignored — so the only way
-// to see it is to compare the tree before and after.
-const sqliteBefore = new Set(sqliteFiles(APP_DIR));
+/**
+ * What config.mjs would resolve DB_PATH to, right now, in this process: the
+ * same .env read, the same "a real env var beats .env", the same default.
+ * Mirrored rather than imported — importing config.mjs drags in db.mjs, which
+ * opens whatever it resolves, which is the thing this exists to catch.
+ */
+function resolveEffectiveDbPath() {
+  const vars = { ...process.env };
+  const envFile = path.join(APP_DIR, '.env');
+  if (fs.existsSync(envFile)) {
+    for (const line of fs.readFileSync(envFile, 'utf8').split('\n')) {
+      const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
+      if (m && !(m[1] in vars)) vars[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    }
+  }
+  return path.resolve(APP_DIR, vars.DB_PATH || 'data/worklog.sqlite');
+}
+
+/** Enough of a file's identity to notice any write to it — or its absence. */
+const fingerprint = (p) => {
+  try { const s = fs.statSync(p); return `${s.size} bytes @ ${s.mtimeMs}`; } catch { return 'absent'; }
+};
 
 // The children are handed DB_PATH through `env`; this process needs it too.
 // Nothing here imports a server module today, but config.mjs falls back to
 // data/worklog.sqlite — and on a host whose .env sets DB_PATH, to the live
 // database — so any future import must land on the throwaway one instead.
 process.env.DB_PATH = DB_PATH;
+
+// Three layers, because no one of them sees everything:
+//
+//   1. the isolation assertion, on the resolved path — the only one that catches
+//      an *open*, whether or not a byte changes. A pure open of an already-
+//      migrated database writes nothing at all, and leaves nothing to find.
+//   2. these fingerprints — any *write* to the database the app would resolve,
+//      or to the default it falls back to, sidecars included. Catches a write
+//      through a path layer 1 does not name.
+//   3. the tree scan below — any *new* database anywhere under the app.
+//
+// Layer 3 alone is inert, which is how this was got wrong the first time:
+// deploy/DEPLOY.md and README.md both put DB_PATH *outside* the app, where a
+// scan of APP_DIR never looks, and on any machine that has run `npm start` the
+// default already exists, so touching it adds no new path to notice.
+const guarded = [...new Set([resolveEffectiveDbPath(), path.join(APP_DIR, 'data/worklog.sqlite')])]
+  .flatMap((p) => [p, `${p}-wal`, `${p}-shm`])
+  .filter((p) => !p.startsWith(TMP + path.sep));
+const guardedBefore = guarded.map(fingerprint);
+const sqliteBefore = new Set(sqliteFiles(APP_DIR));
 
 let passed = 0;
 const failures = [];
@@ -61,13 +100,27 @@ const ok = (name, cond, detail = '') => {
   else { failures.push(`${name}${detail ? ` — ${detail}` : ''}`); console.log(`  ✗ ${name}${detail ? ` — ${detail}` : ''}`); }
 };
 
+// Every child leads its own process group, so cleanup can take down anything it
+// spawned in turn. It also means a terminal Ctrl-C no longer reaches them —
+// which is why the signal handlers below are not optional.
+const children = [];
 const sh = (cmd, args) => new Promise((resolve, reject) => {
-  const p = spawn(cmd, args, { cwd: APP_DIR, env, stdio: 'pipe' });
+  const p = spawn(cmd, args, { cwd: APP_DIR, env, stdio: 'pipe', detached: true });
+  children.push(p);
   let out = '';
   p.stdout.on('data', (d) => { out += d; });
   p.stderr.on('data', (d) => { out += d; });
   p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(out))));
 });
+
+/** Kill a child and everything it spawned, then wait for it to really be gone. */
+async function stop(proc) {
+  if (proc.exitCode !== null || proc.signalCode !== null) return;
+  try { process.kill(-proc.pid, 'SIGTERM'); } catch { return; }   // group already gone
+  const hard = setTimeout(() => { try { process.kill(-proc.pid, 'SIGKILL'); } catch { /* gone */ } }, 500);
+  await once(proc, 'exit');
+  clearTimeout(hard);
+}
 
 /** Like call(), but against another server and without touching the cookie jar. */
 async function callOn(base, method, url, body) {
@@ -99,16 +152,15 @@ async function call(method, url, body) {
   return { status: res.status, body: type.includes('json') ? await res.json() : await res.text() };
 }
 
-const servers = [];
 /** Boot the real server against the throwaway database; returns a log reader. */
 function bootServer(extra = {}) {
   const proc = spawn('node', ['--no-warnings=ExperimentalWarning', 'server/server.mjs'], {
-    cwd: APP_DIR, env: { ...env, ...extra }, stdio: 'pipe',
+    cwd: APP_DIR, env: { ...env, ...extra }, stdio: 'pipe', detached: true,
   });
   let out = '';
   proc.stdout.on('data', (d) => { out += d; });
   proc.stderr.on('data', (d) => { out += d; });
-  servers.push(proc);
+  children.push(proc);
   return { proc, log: () => out };
 }
 
@@ -121,23 +173,59 @@ const waitForLog = async (log, re) => {
   return false;
 };
 
+// The banner prints from inside the listen callback, and names the database it
+// opened. Waiting for that exact line is a readiness check that also proves
+// identity: a server that lost the bind never prints it, and one answering from
+// an earlier run — an orphan on the same port, holding a stale database —
+// cannot print ours. Polling the port only proves that *something* replied.
+const banner = new RegExp(`Database\\s+${DB_PATH.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s`);
+async function ready(boot, label) {
+  const up = await waitForLog(boot.log, banner);
+  ok(`${label} is the server this run booted`, up, boot.log().trim() || '(no output at all)');
+  if (!up) throw new Error(`${label} never reported ${DB_PATH} — port taken, or a stale server answered`);
+}
+
 const server = bootServer();
 
-const strays = [];                        // databases that appeared outside TMP
-const cleanup = () => {
-  for (const proc of servers) proc.kill('SIGTERM');
-  fs.rmSync(TMP, { recursive: true, force: true });
-  // Runs on the failure path too, so the tree is audited however the run ended.
-  for (const rel of sqliteFiles(APP_DIR)) if (!sqliteBefore.has(rel)) strays.push(rel);
-};
+const strays = [];                        // new databases under the app
+let touched = [];                         // guarded databases this run wrote to
+let cleaning = null;                      // the one cleanup, however we got here
+function cleanup() {
+  cleaning ||= (async () => {
+    for (const proc of children) await stop(proc);
+    // Audited while the children are confirmed dead but before TMP goes: a late
+    // write would otherwise recreate the temp dir after the scan and leak it.
+    touched = guarded.filter((p, i) => fingerprint(p) !== guardedBefore[i]);
+    for (const rel of sqliteFiles(APP_DIR)) if (!sqliteBefore.has(rel)) strays.push(rel);
+    fs.rmSync(TMP, { recursive: true, force: true });
+  })();
+  return cleaning;
+}
+
+// Ctrl-C must not leave a listening server and a temp database behind: the next
+// run draws its port from the same range and would quietly talk to the orphan.
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  process.on(signal, () => { cleanup().finally(() => process.exit(130)); });
+}
+
+// Last ditch, and synchronous because nothing else can run here. An uncaught
+// throw — or `npm test | head` closing our stdout — unwinds past the finally
+// block entirely, and a detached child outlives the process that spawned it.
+process.on('exit', () => {
+  for (const proc of children) { try { process.kill(-proc.pid, 'SIGKILL'); } catch { /* gone */ } }
+  try { fs.rmSync(TMP, { recursive: true, force: true }); } catch { /* gone */ }
+});
 
 try {
   await sh('node', ['--no-warnings=ExperimentalWarning', 'scripts/seed.mjs']);
 
-  // Wait for the port rather than sleeping a fixed amount.
-  for (let i = 0; i < 60; i++) {
-    try { await fetch(`${BASE}/api/timer`); break; } catch { await new Promise((r) => setTimeout(r, 100)); }
-  }
+  console.log('\nisolation');
+  // Assert where the app would put its database, not what appeared on disk.
+  // Everything after this point is only meaningful if this holds.
+  const resolved = resolveEffectiveDbPath();
+  ok('the app resolves its database inside the temp dir',
+    resolved.startsWith(TMP + path.sep), resolved);
+  await ready(server, 'the API');
 
   console.log('\nauth');
   ok('unauthenticated bootstrap is refused', (await call('GET', '/api/bootstrap')).status === 401);
@@ -318,42 +406,43 @@ try {
   // instead would resolve config.mjs's own DB_PATH and create a database in the
   // app directory — on a host whose .env sets DB_PATH, the live one.
   const intruder = { email: 'intruder@example.com', password: 'a-long-enough-password' };
+  const relogin = await call('POST', '/api/auth/login', { email: 'smoke@dgtlgroup.io', password: PASSWORD });
+  ok('the admin signs back in to audit the roster', relogin.status === 200, `status ${relogin.status}`);
+  const before2 = (await call('GET', '/api/users')).body.users.map((u) => u.email).sort();
+
   const second = bootServer({
     PORT: String(PORT_2),
     BOOTSTRAP_ADMIN_EMAIL: intruder.email,
     BOOTSTRAP_ADMIN_PASSWORD: intruder.password,
   });
-  ok('a second boot with BOOTSTRAP_ADMIN_* set comes up',
-    await waitForLog(second.log, /Users\s+\d+/), second.log());
-  ok('it announces no first admin', !/Created the first admin/.test(second.log()), second.log().trim());
+  await ready(second, 'the second boot');
   ok('the stale credentials cannot sign in on it',
     (await callOn(BASE_2, 'POST', '/api/auth/login', intruder)).status === 401);
   ok('nor on the first server, which shares the database',
     (await call('POST', '/api/auth/login', intruder)).status === 401);
 
-  const relogin = await call('POST', '/api/auth/login', { email: 'smoke@dgtlgroup.io', password: PASSWORD });
-  ok('the admin signs back in to audit the roster', relogin.status === 200, `status ${relogin.status}`);
-  const roster = (await call('GET', '/api/users')).body.users.map((u) => u.email);
-  ok('the workspace holds no such account', !roster.includes(intruder.email), roster.join());
-  // If that boot had opened a database of its own, it would have found it empty
-  // and reported a different count — which is the whole hazard, in one number.
-  ok('the second boot opened the same database',
-    Number(second.log().match(/Users\s+(\d+)/)?.[1]) === roster.length,
-    `${second.log().match(/Users\s+(\d+)/)?.[1]} vs ${roster.length}`);
-  second.proc.kill('SIGTERM');
+  // The roster itself, before and after — state, not a line of log prose that
+  // could be reworded (or go missing on a crash) while the account is created.
+  const after2 = (await call('GET', '/api/users')).body.users.map((u) => u.email).sort();
+  ok('that boot left the roster exactly as it found it',
+    after2.join() === before2.join(), `${before2.join()} → ${after2.join()}`);
+  ok('and the workspace holds no such account', !after2.includes(intruder.email), after2.join());
+  await stop(second.proc);
 } catch (err) {
   failures.push(`harness error: ${err.message}`);
   console.error(err);
   if (server.log()) console.error('--- server log ---\n' + server.log());
 } finally {
-  cleanup();
+  await cleanup();
 }
 
 // --- leftovers ---------------------------------------------------------
 // Runs after cleanup, on the pass and the fail path alike: the suite is only
-// finished if the working tree is exactly as it found it.
+// finished if every database outside its temp dir is as it found it.
 console.log('\nleftovers');
-ok('no database was written outside the temp dir', strays.length === 0, strays.join(', '));
+ok('no database outside the temp dir was created or written', touched.length === 0,
+  touched.map((p) => `${p}: ${guardedBefore[guarded.indexOf(p)]} → ${fingerprint(p)}`).join('; '));
+ok('no new database appeared under the app', strays.length === 0, strays.join(', '));
 ok('the throwaway database is gone', !fs.existsSync(TMP));
 
 console.log(`\n${passed} passed, ${failures.length} failed`);
