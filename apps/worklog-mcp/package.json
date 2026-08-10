@@ -1,0 +1,15 @@
+{
+  "name": "dgtl-worklog-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MCP server exposing the DGTL Worklog API (office.dgtl.at) as tools. Zero runtime dependencies.",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "selftest": "node server.js --selftest"
+  }
+}

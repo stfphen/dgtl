@@ -1,0 +1,31 @@
+services:
+  dgtl-report-deploy:
+    build: .
+    image: dgtl-report-deploy
+    container_name: dgtl-report-deploy
+    restart: unless-stopped
+    environment:
+      DEPLOY_TOKEN: ${DEPLOY_TOKEN:?set DEPLOY_TOKEN in .env}
+      REPORT_DIR: /data/reports
+      AUDIT_DIR: /data/audits
+      REPORT_BASE: https://dgtl.report
+      AUDIT_BASE: https://audit.dgtl.report
+    volumes:
+      - /opt/dgtl-report/site/reports:/data/reports
+      - /opt/dgtl-report/site/audits:/data/audits
+    networks:
+      - coolify
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "coolify"
+      traefik.http.routers.dgtl-report-deploy.rule: "Host(`deploy.dgtl.report`)"
+      traefik.http.routers.dgtl-report-deploy.entrypoints: "https"
+      traefik.http.routers.dgtl-report-deploy.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtl-report-deploy-http.rule: "Host(`deploy.dgtl.report`)"
+      traefik.http.routers.dgtl-report-deploy-http.entrypoints: "http"
+      traefik.http.routers.dgtl-report-deploy-http.middlewares: "report-deploy-redirect"
+      traefik.http.middlewares.report-deploy-redirect.redirectscheme.scheme: "https"
+      traefik.http.services.dgtl-report-deploy.loadbalancer.server.port: "80"
+networks:
+  coolify:
+    external: true

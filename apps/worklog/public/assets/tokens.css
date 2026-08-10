@@ -1,0 +1,107 @@
+/* ==========================================================================
+   DGTL Group — brand tokens + base components (dgtlgroup.io, July 2026)
+   Inline this into any DGTL-branded build as the starting point.
+   Font: add  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+   ========================================================================== */
+:root{
+  /* surfaces */
+  --bg:#000000; --surface-1:#0a0a0a; --surface-2:#111111;
+  --surface-card:rgba(0,0,0,0.45);
+  /* text */
+  --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
+  --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  /* accent */
+  --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
+  --gold-ring:rgba(240,207,80,0.15);
+  /* borders */
+  --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.4);
+  /* functional */
+  --success:#7BC47F; --success-tint:rgba(123,196,127,0.10);
+  --warning:#E8A33D; --warning-tint:rgba(232,163,61,0.10);
+  --error:#E5484D;   --error-tint:rgba(229,72,77,0.10);
+  --info:#6E9FDB;    --info-tint:rgba(110,159,219,0.10);
+  /* charts (series order) */
+  --chart-1:#F0CF50; --chart-2:#b3a06a; --chart-3:#F0F0F0;
+  --chart-4:#6E9FDB; --chart-5:#7BC47F; --chart-6:#8a8a8a;
+  --chart-grid:#1c1c1c;
+  /* geometry */
+  --r-control:7px; --r-card:16px; --r-pill:9999px;
+  /* effects */
+  --shadow-card:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15);
+  --glass-bg:rgba(0,0,0,0.45);
+  --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
+     background:var(--bg);-webkit-font-smoothing:antialiased}
+::placeholder{color:var(--placeholder)}
+:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+::selection{background:var(--gold);color:#000}
+
+/* --- buttons --- */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);
+     font-weight:700;font-size:16px;border-radius:var(--r-control);
+     padding:15px 24px;border:1px solid transparent;cursor:pointer;
+     text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
+.btn-ghost{background:transparent;color:var(--text-muted);font-weight:500}
+.btn-ghost:hover{color:#fff}
+.btn-danger{background:transparent;border-color:rgba(229,72,77,.4);color:var(--error)}
+.btn-sm{padding:10px 18px;font-size:14px}
+.btn-icon{width:36px;height:36px;padding:0;justify-content:center;color:var(--text-dim)}
+.btn-icon:hover{background:var(--surface-2);color:#fff}
+
+/* --- cards --- */
+.card{background:var(--surface-card);border:1px solid var(--border);
+      border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:24px}
+.card-solid{background:var(--surface-1)}
+.card-hover:hover{border-color:#3a3a3a;transform:translateY(-2px);transition:.2s}
+.card-callout{border-left:3px solid var(--gold)}
+
+/* --- pills & badges --- */
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-pill);
+      font-size:11px;padding:2px 8px;background:var(--gold-tint);color:var(--gold)}
+.badge-success{background:var(--success-tint);color:var(--success)}
+.badge-warning{background:var(--warning-tint);color:var(--warning)}
+.badge-error{background:var(--error-tint);color:var(--error)}
+.badge-info{background:var(--info-tint);color:var(--info)}
+
+/* --- forms --- */
+.label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px}
+.input,.select,.textarea{width:100%;background:var(--surface-1);color:var(--text);
+      border:1px solid var(--border);border-radius:var(--r-control);
+      padding:12px 16px;font-family:var(--font);font-size:14px}
+input[type=checkbox],input[type=radio]{accent-color:var(--gold)}
+
+/* --- type helpers --- */
+.h-display{font-size:clamp(40px,6vw,70px);font-weight:700;letter-spacing:-1.4px;
+           line-height:1.1;color:#fff}
+.h-section{font-size:40px;font-weight:700;color:#fff}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan)}
+.gold{color:var(--gold)}
+.metric{font-weight:800;font-variant-numeric:tabular-nums}
+.muted{color:var(--text-muted)} .dim{color:var(--text-dim)}
+
+/* --- glassy bar (nav / app header) --- */
+.glass-bar{background:var(--glass-bg);backdrop-filter:blur(8px) saturate(1.8);
+           -webkit-backdrop-filter:blur(8px) saturate(1.8);
+           border-bottom:1px solid var(--border-subtle)}
+
+/* --- table --- */
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th{background:var(--surface-2);color:var(--text-dim);font-size:11px;
+          text-transform:uppercase;letter-spacing:.1em;font-weight:600;
+          text-align:left;padding:12px 16px}
+.table td{padding:14px 16px;border-top:1px solid #1c1c1c;color:var(--text)}
+.table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.table tbody tr:hover{background:#0f0f0f}
+.table-wrap{border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+}

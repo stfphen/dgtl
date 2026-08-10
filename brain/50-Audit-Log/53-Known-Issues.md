@@ -3,7 +3,7 @@ title: 53 · Known Issues, Risks & Tech Debt
 type: log
 tags: [audit, security]
 status: living
-updated: 2026-07-25
+updated: 2026-08-04
 source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, status docs
 ---
 
@@ -47,6 +47,25 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 - **OPEN — Stripe webhook idempotency (LOW/MED):** no persisted `event.id` dedup (only a read-then-write on `order.status`); the `leadMissing` path ACKs 200 (loses the event); no idempotency key on session create. Benign today, dangerous once fulfillment gains side effects. Fix: `processed_stripe_events(event_id PK)` insert-or-ignore before fulfilling; return 500 on lead-lookup error. `app/api/webhooks/stripe/route.js`.
 - **OPEN — batch import non-idempotent / no double-submit guard (MED):** re-running an import re-increments counts and can double-create non-dedupable rows; a mid-loop throw leaves the batch non-completed. Fix: guard on `batch.status`, per-row try/catch, recompute (not add) counts. `app/api/admin/prospecting/batches/import/route.js`.
 - **OPEN — no delete path for leads/batches/accounts (INFO):** only `deleteCall` exists (cascades correctly). Stale `batchId`/`campaignId`/`metadata.accountId` refs are never cleaned; bad records can only be removed by hand-editing the store.
+
+## 🐛 Creator intake (`apps/creator-intake/`) — opened 08-04
+- **OPEN — the live deployment is `dgtl.press`, but the code and docs still say `join.dgtlinfluence.com` (HIGH).**
+  `deploy.sh`'s default domain, the README provisioning steps, and the `canonical`/`og:url` tags in
+  `site/index.html`, `apply.html`, `thanks.html`, `terms.html` all name the old subdomain. Cosmetic in the
+  tags; **not cosmetic in `.env`** — `require_json_post()` 403s any browser call whose Origin host differs
+  from `APP_URL`'s host (`bad_origin`), so a stale `APP_URL` silently blocks every draft save and every
+  submit before a row is written. `/admin/status.php` now checks exactly this. Decide the canonical domain,
+  then fix `.env`, the four HTML files, `deploy.sh` and the README in one pass.
+- **UNVERIFIED — nobody has confirmed which database production is writing to, or that mail leaves the box.**
+  Reported symptoms (submissions possibly not landing, no admin emails) are consistent with any of:
+  `APP_ENV` ≠ `production` (falls back to the SQLite dev file *and* to `dev-mail/*.eml`), the `APP_URL`
+  mismatch above, empty `SMTP_PASS` (send skipped, request still succeeds), or unset `ADMIN_NOTIFY_EMAIL`
+  (applicant receipts go out, admin notification never fires). `/admin/status.php` distinguishes them —
+  run it before changing anything.
+- **INFO — silent-by-design failure paths.** A failed receipt must never fail a submission, so mail errors
+  are non-fatal; and `presign.php`/R2 misconfiguration surfaces to the applicant as a stuck upload step,
+  not as an alert. The status page's drafts-stalled-by-step counter is the tell (a pile-up on step 3 means
+  R2, not shy applicants). There is still **no alerting** — nothing pages anyone when submissions stop.
 
 ## ⚡ Performance (NEW — 07-02 audit, DB layer)
 - **Missing indexes (MED):** `outreach_*` and `prospecting_batches` have PK-only indexes but are queried by `tenant_id` join + `created_at/updated_at` order; `leads`/`calls` tenant-only filters can't use the team-leading composite indexes; audit-log team filter is an unindexable `metadata->>'teamId'` expression. Concrete `CREATE INDEX` list in the audit report — propose as migration `007_performance_indexes.sql`.
