@@ -1,0 +1,37 @@
+[Unit]
+Description=DGTL Worklog — internal work, hours and to-do tracker
+Documentation=file:/srv/dgtl-worklog/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/dgtl-worklog
+ExecStart=/usr/bin/node --no-warnings=ExperimentalWarning server/server.mjs
+Restart=always
+RestartSec=3
+
+# Config comes from .env in WorkingDirectory; keep it readable only by the service user.
+Environment=NODE_ENV=production
+
+# Hardening — the app needs nothing beyond its own directory and a network socket.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/dgtl-worklog/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dgtl-worklog
+
+[Install]
+WantedBy=multi-user.target

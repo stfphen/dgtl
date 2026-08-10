@@ -1,0 +1,8 @@
+PassengerAppRoot /home/u111775448/domains/office.dgtl.at/hbuilds/current/nodejs
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs22/root/bin/node
+PassengerStartupFile server/server.mjs
+PassengerBaseURI /
+PassengerRestartDir /home/u111775448/domains/office.dgtl.at/hbuilds/current/nodejs/tmp
+SetEnv NODE_OPTIONS "--require /home/u111775448/domains/office.dgtl.at/hbuilds/config/preload-timestamp.js"
+SetEnv LSNODE_CONSOLE_LOG console.log
