@@ -1,0 +1,29 @@
+# DGTL Worklog — TLS termination and reverse proxy.
+# Replace the hostname, then: sudo cp deploy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
+#
+# Caddy obtains and renews the certificate automatically, so nothing else is needed
+# to get HTTPS. Remember to set SECURE_COOKIES=1 in .env once this is live — without
+# it the session cookie has no Secure flag and browsers will refuse to keep it.
+
+worklog.dgtlgroup.io {
+	encode zstd gzip
+
+	# The app binds 127.0.0.1, so this proxy is the only route in.
+	reverse_proxy 127.0.0.1:8123 {
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		# Internal tool — keep it out of search results.
+		X-Robots-Tag "noindex, nofollow"
+	}
+
+	log {
+		output file /var/log/caddy/worklog.log
+	}
+}

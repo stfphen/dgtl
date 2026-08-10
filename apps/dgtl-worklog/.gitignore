@@ -1,0 +1,9 @@
+# Local database and any backups of it — team data never belongs in git
+data/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Verification output
+screenshots/
