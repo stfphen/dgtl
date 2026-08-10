@@ -175,7 +175,8 @@ body{
 }
 .switch input:checked + .track{background:var(--gold)}
 .switch input:checked + .track::after{transform:translateX(16px)}
-.switch input:focus-visible + .track{box-shadow:0 0 0 3px var(--gold-ring)}
+/* The input itself is invisible, so the track has to carry the indicator. */
+.switch input:focus-visible + .track{outline:2px solid var(--gold);outline-offset:2px}
 
 /* ==================== the timer ==================== */
 .timer-card{
@@ -276,13 +277,9 @@ body{
 .table th.num{text-align:right}
 .table td{vertical-align:middle}
 .table tbody tr.clickable{cursor:pointer}
-/* Row actions are always visible. Revealing them on hover put the only control
-   a row has behind an input this app cannot count on — a touch device has no
-   hover, and the table is explicitly built to be used at 390px (below). It was
-   worse than invisible: an `opacity:0` button is still focusable and still in
-   the accessibility tree, so a screen reader announced controls no sighted user
-   could find. They rest at --text-dim (5.74:1 on --surface-1) and lift to
-   --text on hover or focus, which buys back the calm without hiding anything. */
+/* A touch device has no hover and this table is built to be used at 390px, so
+   revealing the row's only controls on hover put them behind an input that may
+   not exist. They rest dim and lift on hover or focus instead. */
 .table .actions{width:1%;white-space:nowrap;text-align:right}
 .table .actions .btn-icon{transition:color .15s,background .15s}
 .table tbody tr:focus-within .actions .btn-icon{color:var(--text)}
@@ -302,19 +299,20 @@ body{
   border-bottom:1px solid #1c1c1c;transition:background .15s;
 }
 .task:last-child{border-bottom:none}
-.task:hover{background:#0f0f0f}
+.task:hover{background:var(--surface-hover)}
 .task.dragging{opacity:.4}
 .task.drop-before{box-shadow:inset 0 2px 0 var(--gold)}
 .task.drop-after{box-shadow:inset 0 -2px 0 var(--gold)}
+/* Was 1.85:1 against the row — a control you had to know was already there. */
 .task .grip{
-  cursor:grab;color:#3a3a3a;padding-top:2px;flex:none;background:none;border:none;
+  cursor:grab;color:var(--text-ghost);padding-top:2px;flex:none;background:none;border:none;
 }
 .task .grip:hover{color:var(--text-dim)}
 .task .grip svg{width:14px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
 .task-check{
   width:20px;height:20px;flex:none;margin-top:1px;border-radius:6px;cursor:pointer;
   border:1.5px solid var(--border);background:var(--surface-1);display:grid;place-items:center;
-  transition:.15s;padding:0;
+  transition:background .15s,border-color .15s;padding:0;   /* not `all` — it faded the focus ring in */
 }
 .task-check:hover{border-color:var(--gold)}
 .task-check svg{width:12px;height:12px;stroke:#000;fill:none;stroke-width:3;opacity:0}
@@ -325,7 +323,7 @@ body{
 .task.is-done .task-title{color:var(--text-dim);text-decoration:line-through}
 .task-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:var(--text-dim)}
 /* Start-timer and edit are the whole point of a task row — same rule again. */
-.task-side{display:flex;align-items:center;gap:6px;flex:none}
+.task-side{display:flex;align-items:center;gap:8px;flex:none}
 .task-side .btn-icon{transition:color .15s,background .15s}
 .task:focus-within .task-side .btn-icon{color:var(--text)}
 .prio-high{color:var(--error)}
@@ -343,7 +341,7 @@ body{
 .weekgrid th.today{color:var(--gold)}
 .weekgrid td{border-top:1px solid #1c1c1c;padding:0;text-align:center}
 .weekgrid td:first-child{text-align:left;padding:10px 16px}
-.weekgrid tbody tr:hover{background:#0f0f0f}
+.weekgrid tbody tr:hover{background:var(--surface-hover)}
 .weekgrid .cell{
   width:100%;height:46px;background:transparent;border:none;cursor:pointer;
   font-family:var(--font);font-size:13px;color:var(--text);font-variant-numeric:tabular-nums;
@@ -486,9 +484,18 @@ body{
   .cols-3,.cols-2{grid-template-columns:1fr}
   .timer-card{grid-template-columns:1fr}
   .timer-side{text-align:left}
-  .timer-fields .field,.timer-fields .field.note{min-width:100%;flex:none}
+  /* width, not min-width: flex:none then sized the field to the widest option
+     in the task select, which ran 109px past the card and got clipped. */
+  .timer-fields .field,.timer-fields .field.note{width:100%;min-width:0;flex:none}
+  /* Two-column dashboards go single-column here. !important because Today and
+     Reports set the columns inline, which no media query can otherwise reach —
+     and minmax(0,1fr), because plain 1fr keeps the 600px table's min-content. */
+  .grid.top{grid-template-columns:minmax(0,1fr)!important}
+  .card-head{flex-wrap:wrap}
   .table-wrap{overflow-x:auto}
   .table{min-width:600px}
+  /* 16px gutters overhang a tablet by more than the row actions are wide. */
+  .table td,.table th{padding-left:12px;padding-right:12px}
   .weekgrid{min-width:620px}
   .timer-chip .what{display:none}
   .ring-wrap{flex-direction:column;align-items:flex-start}
@@ -501,35 +508,52 @@ body{
   .btn-hero{width:100%;justify-content:center}
   .quick-actions{flex-direction:column-reverse}   /* the gold action stays under the thumb */
   .quick-actions .btn-ghost{width:100%;justify-content:center}
-  /* A phone shows about two of this table's six columns, so the action column
-     sits hundreds of pixels off screen — visible, but only once you have
-     scrolled away from the row it acts on. Pin it to the right edge. It covers
-     a column that was already out of view at this width, and the header cell
-     travels with it so the body column never slides under a scrolling header.
-     Not done at tablet widths: there the table overhangs by a little, and a pin
-     would hide the Logged column that fits there today. */
-  .table .actions,.table thead th:last-child{position:sticky;right:0;border-left:1px solid var(--border)}
+  /* A phone shows two of this table's six columns, so the actions sit far off
+     screen. Pin them, and pay for it: the pin covers ~88px of whatever column
+     is under it until you scroll, which is why it stops at phone widths.
+     Edges are box-shadow, not border — border-collapse drops a sticky cell's
+     border, and the second shadow is the cue that content passes underneath.
+     th:last-child is positional: it assumes the actions column comes last. */
+  .table .actions,.table:has(.actions) thead th:last-child{
+    position:sticky;right:0;
+    box-shadow:-1px 0 0 0 var(--border),-10px 0 12px -8px var(--shadow-edge);
+  }
   .table .actions{background:var(--surface-1)}
+  .table tbody tr:hover .actions{background:var(--surface-hover)}
 }
 
-/* ==================== input capability ====================
-   Keyed to the pointer, not the viewport: a laptop with a touchscreen is a
-   1440px window you can still jab with a thumb. */
-
-/* Hover emphasis for the row affordances above. The controls themselves are
-   always visible; this is only the quiet-to-bright lift the old opacity reveal
-   used to do, so it is safe to make it conditional. Touch browsers synthesise
-   :hover on tap and would strand the last-tapped row in the lifted state, so
-   they are excluded here rather than relied on for reachability. */
+/* ==================== input capability ==================== */
+/* Keyed to the pointer, not the viewport: a touchscreen laptop is a 1440px
+   window you can still jab with a thumb. The base hover states this pairs with
+   are switched off for coarse pointers in tokens.css. */
 @media (hover:hover) and (pointer:fine){
   .table tbody tr:hover .actions .btn-icon,.task:hover .task-side .btn-icon,
   .quick-entry:hover .btn-icon{color:var(--text)}
 }
+/* The app-side half of the same switch-off — a tap must not leave a row, or a
+   gold week cell, stuck in a state the finger cannot leave. */
+@media (hover:none),(pointer:coarse){
+  .task:hover,.weekgrid tbody tr:hover{background:transparent}
+  .weekgrid .cell:hover{background:transparent;color:var(--text)}
+}
 
-/* 36px is below the 44px touch floor, and these are a row's primary controls.
-   `any-pointer` rather than `pointer` so a hybrid device sizes for the coarser
-   of its inputs — the mouse copes with a big target, the thumb does not cope
-   with a small one. */
+/* Hit areas, not boxes. Growing the buttons themselves took 16px off the task
+   title and a third of a phone-width row off the pinned column. */
 @media (any-pointer:coarse){
-  .btn-icon,.quick-entry .btn-icon{width:44px;height:44px}
+  .btn-icon{position:relative}
+  .btn-icon::after{
+    content:"";position:absolute;top:50%;left:50%;width:44px;height:44px;
+    transform:translate(-50%,-50%);
+  }
+  /* Space the pair so the two 44px areas abut instead of overlapping. */
+  .table .actions{padding-left:4px;padding-right:4px}
+  .table .actions .btn-icon + .btn-icon{margin-left:8px}
+  /* inset:-10px lands on 42 — the pseudo resolves against the padding box, so
+     the 1.5px border is inside it. State the 44 instead of deriving it. */
+  .task-check{width:24px;height:24px;position:relative}
+  .task-check::after{
+    content:"";position:absolute;top:50%;left:50%;width:44px;height:44px;
+    transform:translate(-50%,-50%);
+  }
+  .chip,.seg button{min-height:44px;padding-top:11px;padding-bottom:11px}
 }
