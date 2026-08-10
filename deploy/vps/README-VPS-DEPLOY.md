@@ -21,6 +21,9 @@ Point A records at the VPS IP:
 | `funding.dgtlmag.com` | funded-growth tenant (built-in host routing) |
 | `pitch.dgtlmag.com` | decks (pitch sites) |
 | `deploy.dgtlmag.com` | deploy portal |
+| `dgtl.report`, `www.dgtl.report` | client status reports (report-host) — apex is a placeholder, reports at `/<slug>/` |
+| `audit.dgtl.report` | client audit pages (same report-host container) |
+| `deploy.dgtl.report` | report deploy portal (report-portal) |
 | `terminal.dgtlmag.com` | DGTL OS |
 
 `sites/polishstone` is **not** seeded to the pitch host: it uses root-absolute links and its own
@@ -94,6 +97,19 @@ docker compose up -d --build
 curl -X POST https://deploy.dgtlmag.com/api/reindex -H "x-deploy-token: $DEPLOY_TOKEN"  # builds hub index
 ```
 
+## 5b · Report host + portal (dgtl.report client reporting)
+
+Same pattern as §5, second domain. No seeding and **no reindex step** — the apex placeholder is
+baked into the nginx image and client slugs are never listed (private-by-URL).
+
+```bash
+mkdir -p /opt/dgtl-report/site/{reports,audits}            # served dirs both stacks mount
+cd /opt/dgtl/deploy/report-host   && docker compose up -d --build
+cd ../report-portal && cp ../vps/env-templates/report-portal.env.example .env  # NEW token — never reuse the dgtlmag one
+docker compose up -d --build
+curl -sS https://deploy.dgtl.report/health                 # {"ok":true}
+```
+
 ## 6 · DGTL OS (+ pgvector)
 
 ```bash
@@ -112,6 +128,8 @@ docker compose exec dgtl-os node knowledge/ingest.mjs
 - `https://app.dgtlmedia.io` renders; `/admin` login works (`node scripts/create-owner.js` if needed); one tenant funnel `/t/<slug>` renders; leads table non-empty (restored).
 - `https://pitch.dgtlmedia.io/` hub lists seeded sites; spot-open `escott/`, `the-climb/`, `gold/`.
 - Portal: zip-deploy a `hello` test slug, then delete it via the portal UI.
+- Report host: `https://dgtl.report/` and `https://audit.dgtl.report/` show the placeholder (no
+  slug listing); deploy a `hello` slug to each target from `deploy.dgtl.report`, open both, delete both.
 - `https://terminal.dgtlmedia.io` behind basic-auth; `/api/status` shows engine + `rag:true`; one RAG query answers with brain content.
 - Outreach: keep `OUTREACH_DRY_RUN=true` until Resend DNS (SPF/DKIM on dgtlmag.com) re-verified; then one real test send to yourself.
 - Stripe/Twilio webhooks: re-point endpoint URLs in their dashboards to the new host; test one webhook each.

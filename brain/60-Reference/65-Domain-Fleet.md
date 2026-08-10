@@ -1,6 +1,6 @@
 ---
 tags: [reference, domains, hosting]
-updated: 2026-08-04
+updated: 2026-08-10
 ---
 
 # 65 · Domain Fleet & Hosting Map
@@ -45,7 +45,7 @@ Expiry/renewal as read 2026-08-02 — **verify after fixing auto-renewals.**
 | dgtl.gallery | 3 · Publishing | — | on | New, locked | Placeholder → `sites/dgtl-gallery/` |
 | dgtl.pics | 3 · Publishing | — | on | New, locked | Placeholder → `sites/dgtl-pics/` |
 | dgtl.mov | 3 · Publishing | — | on | New, locked | Placeholder → `sites/dgtl-mov/` |
-| dgtl.report | 3 · Publishing | — | on | New, locked | Placeholder → `sites/dgtl-report/` |
+| dgtl.report | 3 · Publishing | — | on | **Client reporting host** (`deploy/report-host` + `deploy/report-portal`): status reports at `dgtl.report/<slug>/`, audits at `audit.dgtl.report/<slug>/`, portal at `deploy.dgtl.report` | VPS/Coolify — A records apex+www+audit+deploy → VPS. Supersedes the placeholder plan. |
 | dgtl.rent | 4 · Commercial | — | on | New, locked | Placeholder → `sites/dgtl-rent/` |
 | dgtl.college | 4 · Commercial | — | on | New, locked | Placeholder → `sites/dgtl-college/` |
 | dgtl.at | 4 · Commercial | — | on | New, locked | Placeholder → `sites/dgtl-at/` |

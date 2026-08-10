@@ -1,0 +1,32 @@
+services:
+  dgtl-report-host:
+    build: .
+    image: dgtl-report-host
+    container_name: dgtl-report-host
+    restart: unless-stopped
+    volumes:
+      # Same dirs the report-portal writes into — read-only here.
+      - /opt/dgtl-report/site/reports:/data/reports:ro
+      - /opt/dgtl-report/site/audits:/data/audits:ro
+    networks:
+      - coolify
+    # Local-only publish so you can curl the container directly on the VPS while
+    # debugging. Traefik reaches it over the coolify network, not this port.
+    ports:
+      - "127.0.0.1:8091:80"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "coolify"
+      traefik.http.routers.dgtl-report-host.rule: "Host(`dgtl.report`) || Host(`www.dgtl.report`) || Host(`audit.dgtl.report`)"
+      traefik.http.routers.dgtl-report-host.entrypoints: "https"
+      traefik.http.routers.dgtl-report-host.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtl-report-host-http.rule: "Host(`dgtl.report`) || Host(`www.dgtl.report`) || Host(`audit.dgtl.report`)"
+      traefik.http.routers.dgtl-report-host-http.entrypoints: "http"
+      traefik.http.routers.dgtl-report-host-http.middlewares: "report-host-redirect"
+      traefik.http.middlewares.report-host-redirect.redirectscheme.scheme: "https"
+      traefik.http.services.dgtl-report-host.loadbalancer.server.port: "80"
+
+networks:
+  # Coolify's proxy network (external). The coolify-proxy Traefik routes to us via labels.
+  coolify:
+    external: true
