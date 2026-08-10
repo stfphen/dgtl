@@ -517,7 +517,11 @@ route('GET', '/api/entries', ({ req, query }) => {
   const to = dateOr(query.get('to'), localDate());
   const from = dateOr(query.get('from'), addDays(to, -30));
   const scope = query.get('scope') === 'team' ? 'team' : 'me';
-  const userId = scope === 'team' ? null : (query.get('userId') ? Number(query.get('userId')) : user.id);
+  // Validated, not coerced. A bare Number() turns "abc" into NaN, NaN is falsy,
+  // and the falsy branch below is the unscoped team query — so a malformed id
+  // silently widened the scope instead of being rejected.
+  const asked = query.get('userId');
+  const userId = scope === 'team' ? null : (asked ? int(asked, { name: 'User', min: 1 }) : user.id);
 
   const rows = userId
     ? all(`${ENTRY_SELECT} WHERE e.user_id = ? AND e.date BETWEEN ? AND ? ORDER BY e.date DESC, e.id DESC`, userId, from, to)

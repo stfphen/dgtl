@@ -7,6 +7,7 @@
 
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -220,12 +221,16 @@ try {
   await sh('node', ['--no-warnings=ExperimentalWarning', 'scripts/seed.mjs']);
 
   console.log('\nisolation');
-  // Assert where the app would put its database, not what appeared on disk.
-  // Everything after this point is only meaningful if this holds.
-  const resolved = resolveEffectiveDbPath();
-  ok('the app resolves its database inside the temp dir',
-    resolved.startsWith(TMP + path.sep), resolved);
+  // The path the SERVER opened, read out of its own banner. Mirroring
+  // config.mjs here instead asserts a fact this process set two lines earlier,
+  // which is a check that cannot fail — it printed a tick for the exact break
+  // it was named for. ready() still throws on a miss, and that abort is
+  // deliberate: if the app resolved some other database, every assertion after
+  // this point would be writing test data into it.
   await ready(server, 'the API');
+  const opened = server.log().match(/Database\s+(\S+)/)?.[1];
+  ok('the database it opened is the throwaway one',
+    !!opened && opened.startsWith(TMP + path.sep), opened || '(no banner)');
 
   console.log('\nauth');
   ok('unauthenticated bootstrap is refused', (await call('GET', '/api/bootstrap')).status === 401);
@@ -357,6 +362,16 @@ try {
   const edited = await call('PATCH', `/api/entries/${entry.body.entry.id}`, { minutes: 45 });
   ok('entry can be edited', edited.body.entry.minutes === 45);
 
+  // A malformed user id used to coerce to NaN, and NaN took the unscoped
+  // branch — so a typo widened the query to the whole team instead of failing.
+  ok('a non-numeric user id is rejected, not silently widened',
+    (await call('GET', '/api/entries?userId=abc')).status === 400);
+  ok('a zero user id is rejected', (await call('GET', '/api/entries?userId=0')).status === 400);
+  ok('a fractional user id is rejected', (await call('GET', '/api/entries?userId=1.5')).status === 400);
+  ok('a real user id still scopes to that person',
+    (await call('GET', `/api/entries?userId=${boot.body.user.id}`)).body.entries
+      .every((e) => e.userId === boot.body.user.id));
+
   console.log('\ntimer');
   const started = await call('POST', '/api/timer/start', { projectId, taskId, note: 'Timing' });
   ok('timer starts', started.status === 200 && !!started.body.timer.startedAt);
@@ -375,6 +390,27 @@ try {
   ok('a sub-minute timer is discarded, not logged as 0', stopped.body.entry === null && stopped.body.discarded);
   ok('timer is cleared after stop', (await call('GET', '/api/timer')).body.timer === null);
   ok('relabelling with no timer running 404s', (await call('PATCH', '/api/timer', { note: 'x' })).status === 404);
+
+  // Switching must BANK the segment it interrupts, not drop it. This is the
+  // verb the whole quick-log flow rests on, and two ways of breaking it — not
+  // banking at all, and banking with discard — both left this suite green.
+  // stopTimer drops anything under a minute, so the running timer is backdated
+  // in the throwaway database rather than by sleeping for one.
+  await call('POST', '/api/timer/start', { projectId, note: 'Interrupted work' });
+  const tdb = new DatabaseSync(DB_PATH);
+  tdb.prepare('UPDATE timers SET started_at = ?').run(new Date(Date.now() - 42 * 60000).toISOString());
+  tdb.close();
+  const switched = await call('POST', '/api/timer/start', { projectId, note: 'After the switch' });
+  ok('switching banks the segment it interrupted',
+    !!switched.body.banked && switched.body.banked.minutes === 42, JSON.stringify(switched.body.banked));
+  ok('the banked segment reaches the timesheet as timer work',
+    (await call('GET', '/api/entries')).body.entries
+      .some((e) => e.source === 'timer' && e.minutes === 42 && e.note === 'Interrupted work'));
+
+  const discarded = await call('POST', '/api/timer/discard');
+  ok('discarding a timer stops it', discarded.status === 200 && discarded.body.timer === null);
+  ok('and logs nothing for it',
+    !(await call('GET', '/api/entries')).body.entries.some((e) => e.note === 'After the switch'));
 
   console.log('\nsuggestions');
   await call('POST', '/api/entries', { projectId, minutes: 60, note: 'Recurring label' });
