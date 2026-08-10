@@ -72,9 +72,14 @@ const projectRow = (p) => ({
   id: p.id, name: p.name, client: p.client, code: p.code, color: p.color,
   billable: !!p.billable, budgetMinutes: p.budget_minutes, status: p.status,
   position: p.position, loggedMinutes: p.logged_minutes ?? 0, openTasks: p.open_tasks ?? 0,
+  // Every task ever filed under the project, including done and archived ones.
+  // `openTasks` drives the table; this drives the delete warning, because a
+  // delete detaches all of them, not only the ones still open.
+  taskCount: p.all_tasks ?? 0,
   // Billable is a property of each entry, not of the project — a billable
-  // project can hold non-billable hours. Projects and Reports both read this,
-  // so the two screens cannot disagree about what was billable.
+  // project can hold non-billable hours. This counts only entries carrying
+  // this project's id: time logged against no project is in no project row at
+  // all, which is why the bootstrap payload reports it separately.
   billableMinutes: p.billable_minutes ?? 0,
 });
 
@@ -103,7 +108,8 @@ const listProjects = () => all(`
          (SELECT COALESCE(SUM(minutes), 0) FROM time_entries te WHERE te.project_id = p.id) AS logged_minutes,
          (SELECT COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.minutes ELSE 0 END), 0)
             FROM time_entries te WHERE te.project_id = p.id) AS billable_minutes,
-         (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id AND t.status <> 'done' AND t.archived = 0) AS open_tasks
+         (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id AND t.status <> 'done' AND t.archived = 0) AS open_tasks,
+         (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id) AS all_tasks
     FROM projects p
    ORDER BY p.status ASC, p.position ASC, p.id ASC
 `).map(projectRow);
@@ -394,8 +400,7 @@ route('DELETE', '/api/projects/:id', ({ req, params }) => {
   // Archive is the safe path, and the UI offers it instead.
   const logged = one('SELECT COUNT(*) AS n FROM time_entries WHERE project_id = ?', p.id).n;
   if (logged > 0) {
-    throw bad(`"${p.name}" has ${logged} time ${logged === 1 ? 'entry' : 'entries'}. Archive it instead of deleting.`,
-      { timeEntries: logged });
+    throw bad(`"${p.name}" has ${logged} time ${logged === 1 ? 'entry' : 'entries'}. Archive it instead of deleting.`);
   }
 
   // Tasks outlive the project — schema.sql sets project_id to NULL rather than

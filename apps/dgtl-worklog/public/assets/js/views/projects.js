@@ -7,23 +7,48 @@ import {
 } from '../ui.js';
 import { quickLog } from '../editors.js';
 import { isAdmin, removeProject, saveProject, state } from '../store.js';
-import { api } from '../api.js';
 
 export const title = 'Projects';
 export const subtitle = () => 'Where the hours go';
 
-/* The project colour is stored as a #rrggbb string (the API validates that
-   shape), so the palette is named as tokens and resolved to computed values at
-   pick time. The brand values stay in tokens.css and are never restated here. */
+/* The colour palette is named as tokens, never as values — the brand lives in
+   tokens.css. A project stores its colour as a #rrggbb string, so each token is
+   put through the browser's own colour parser at pick time. Anything CSS
+   accepts (a keyword, rgb(), hsl(), color-mix(), 3- or 8-digit hex) normalises
+   to #rrggbb, so a slot cannot silently disappear because a token was written
+   in another notation, and a stored lower-case value still matches its swatch. */
 const SWATCH_TOKENS = ['--gold', '--gold-tan', '--chart-4', '--chart-5', '--warning', '--error', '--chart-3', '--chart-6'];
-const HEX = /^#[0-9a-fA-F]{6}$/;
 
-const swatchColors = () => {
+/** Any CSS colour → "#RRGGBB". Null when the browser cannot parse it. */
+function toHex(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+  const probe = h('span', { style: { display: 'none' } });
+  probe.style.color = raw;
+  if (!probe.style.color) return null;      // the CSS parser rejected it outright
+  // getComputedStyle only resolves for an element that is in the document.
+  document.body.append(probe);
+  const computed = getComputedStyle(probe).color;
+  probe.remove();
+  const m = computed.match(/^rgba?\(([^)]+)\)$/);
+  if (!m) return null;
+  const parts = m[1].split(/[,\s/]+/).filter(Boolean).slice(0, 3).map(Number);
+  if (parts.length < 3 || parts.some((n) => !Number.isFinite(n))) return null;
+  return `#${parts.map((n) => Math.round(n).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+}
+
+/** The token palette, resolved. Tokens that will not resolve are named, not dropped silently. */
+function palette() {
   const root = getComputedStyle(document.documentElement);
-  return SWATCH_TOKENS
-    .map((t) => root.getPropertyValue(t).trim().toUpperCase())
-    .filter((c) => HEX.test(c));
-};
+  const colors = [];
+  const unresolved = [];
+  for (const token of SWATCH_TOKENS) {
+    const hex = toHex(root.getPropertyValue(token));
+    if (hex) colors.push(hex);
+    else unresolved.push(token);
+  }
+  return { colors, unresolved };
+}
 
 export function render_(host, { actions }) {
   const ui = { showArchived: false };
@@ -50,9 +75,20 @@ export function render_(host, { actions }) {
     const scope = ui.showArchived ? 'across every project' : 'across active projects';
     const totalLogged = rows.reduce((s, p) => s + p.loggedMinutes, 0);
     // Billability belongs to the time entry, not the project: a billable
-    // project can hold non-billable hours. Summing the server's per-entry
-    // billable totals is what makes this agree with the Reports screen.
+    // project can hold non-billable hours, so this sums the server's per-entry
+    // totals. It still will not equal the Reports figure — this strip is
+    // per-project and all-time, Reports is scoped to a range, a person and
+    // (here) the archived toggle, and it also counts time logged against no
+    // project at all. Time with no project belongs to no project row, so the
+    // feet below name what has been left out rather than swallowing it.
     const billableLogged = rows.reduce((s, p) => s + (p.billableMinutes ?? 0), 0);
+
+    // Work that is in the workspace but in no project, and so in no card above.
+    const offProject = state.unassigned?.minutes || 0;
+    const offProjectTasks = state.tasks.filter(
+      (t) => !t.archived && t.status !== 'done' && t.projectId === null,
+    ).length;
+    const note = (text) => (text ? ` · excludes ${text}` : '');
 
     if (!rows.length) {
       render(body, h('div', { class: 'card' }, empty({
@@ -69,7 +105,7 @@ export function render_(host, { actions }) {
       h('div', { class: 'grid cols-4' },
         kpi({
           label: 'Logged all time', value: hm(totalLogged, { zero: '0h' }),
-          foot: scope, hero: true,
+          foot: scope + note(offProject ? `${hm(offProject)} on no project` : ''), hero: true,
         }),
         kpi({
           label: 'Active projects',
@@ -79,12 +115,15 @@ export function render_(host, { actions }) {
         kpi({
           label: 'Open tasks',
           value: String(rows.reduce((s, p) => s + p.openTasks, 0)),
-          foot: scope,
+          foot: scope + note(offProjectTasks ? `${offProjectTasks} on no project` : ''),
         }),
         kpi({
           label: 'Billable share',
           value: totalLogged ? `${Math.round((billableLogged / totalLogged) * 100)}%` : '—',
-          foot: totalLogged ? `${hm(billableLogged, { zero: '0h' })} of ${hm(totalLogged)} logged` : null,
+          foot: totalLogged
+            ? `${hm(billableLogged, { zero: '0h' })} of ${hm(totalLogged)}, ${scope}`
+              + note(offProject ? `${hm(offProject)} on no project` : '')
+            : null,
         }),
       ),
 
@@ -142,21 +181,6 @@ export function render_(host, { actions }) {
 
   /* ------------------------------------------------------------ editor -- */
 
-  /**
-   * How many open tasks a delete would detach, re-read from the server at the
-   * moment the button is pressed. The confirm dialog quotes this number, so it
-   * has to be the server's count and not a snapshot that may be minutes old;
-   * if the read fails, the loaded row is a good enough fallback for a warning.
-   */
-  async function openTaskCount(project) {
-    try {
-      const { projects } = await api.projects();
-      return projects.find((p) => p.id === project.id)?.openTasks ?? 0;
-    } catch {
-      return project.openTasks;
-    }
-  }
-
   function editor(project) {
     const editing = !!project;
     const nameInput = h('input', { class: 'input', maxlength: '120', placeholder: 'Project name', value: project?.name || '' });
@@ -172,9 +196,12 @@ export function render_(host, { actions }) {
       { value: project?.status || 'active' },
     );
 
-    const palette = swatchColors();
-    let color = project?.color || palette[0];
-    const dots = palette.map((c) => h('button', {
+    const { colors, unresolved } = palette();
+    // The stored value goes through the same normaliser as the tokens, so a
+    // colour seeded in lower case still matches — and is saved back in the one
+    // form the API stores. Null keeps whatever the project already has.
+    let color = toHex(project?.color) || colors[0] || null;
+    const dots = colors.map((c) => h('button', {
       type: 'button', title: c, 'aria-label': `Colour ${c}`,
       style: {
         width: '26px', height: '26px', borderRadius: '50%', background: c,
@@ -192,7 +219,18 @@ export function render_(host, { actions }) {
       }
     }
     paintSwatches();
-    const swatches = h('div', { class: 'row tight' }, dots);
+
+    // A palette that came up short says so. Silently showing fewer swatches
+    // than the design system defines is how a broken token goes unnoticed.
+    const swatches = h('div', null,
+      colors.length ? h('div', { class: 'row tight' }, dots) : null,
+      unresolved.length
+        ? h('span', { class: 'hint' }, colors.length
+          ? `${unresolved.join(', ')} did not resolve to a colour — ${pluralize(unresolved.length, 'swatch', 'swatches')} missing from the palette.`
+          : 'The brand colour tokens did not load, so there is no palette to pick from. '
+            + 'Saving keeps the colour this project already has.')
+        : null,
+    );
 
     const errLine = h('div', { class: 'err', hidden: true });
 
@@ -210,19 +248,28 @@ export function render_(host, { actions }) {
         editing && !project.loggedMinutes ? h('button', {
           class: 'btn btn-danger left',
           onclick: async () => {
-            const open = await openTaskCount(project);
+            // Every task ever filed under the project is detached, not just the
+            // open ones — so the warning counts all of them and mentions how
+            // many are still open, rather than quoting the smaller number and
+            // being contradicted by the toast a second later.
+            const attached = project.taskCount ?? project.openTasks;
+            const open = project.openTasks;
             if (!await confirmDialog({
               title: `Delete "${project.name}"?`,
-              message: open
-                ? `It has no time logged against it, so no hours are lost. Its ${pluralize(open, 'open task')} `
-                  + 'will survive and keep their history, but they lose the project.'
-                : 'It has no time logged against it and no open tasks, so nothing is lost.',
+              message: attached
+                ? `It has no time logged against it, so no hours are lost. Its ${pluralize(attached, 'task')}`
+                  + `${open ? ` (${open} still open)` : ''} survive and keep their history, `
+                  + 'but they lose the project and cannot be put back.'
+                : 'It has no time logged against it and no tasks attached, so nothing is lost.',
               confirmLabel: 'Delete project', danger: true,
             })) return;
             try {
               const res = await removeProject(project.id);
               const kept = res?.detachedTasks ?? 0;
-              toast(kept ? `Project deleted · ${pluralize(kept, 'task')} kept` : 'Project deleted');
+              const stillOpen = res?.detachedOpenTasks ?? 0;
+              toast(kept
+                ? `Project deleted · ${pluralize(kept, 'task')} kept${stillOpen ? `, ${stillOpen} still open` : ''}`
+                : 'Project deleted');
               close();
               draw();
             } catch (e) { fail(e); }
