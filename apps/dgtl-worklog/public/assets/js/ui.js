@@ -171,13 +171,17 @@ export function ring(pct, { caption = 'of target', size = 132, stroke = 10 } = {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const wrap = h('div', { class: 'ring', style: { width: `${size}px`, height: `${size}px` } });
+  // Both strokes come from `style`, not the `stroke` attribute: a presentation
+  // attribute cannot hold var(), and the declaration re-resolves on its own if
+  // the palette ever changes under a ring that is already on screen.
   wrap.innerHTML = `
     <svg width="${size}" height="${size}" aria-hidden="true">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#1c1c1c" stroke-width="${stroke}"/>
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#F0CF50" stroke-width="${stroke}"
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke-width="${stroke}"
+              style="stroke:var(--chart-grid)"/>
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke-width="${stroke}"
               stroke-linecap="round" stroke-dasharray="${c}"
               stroke-dashoffset="${c - (c * clamped) / 100}"
-              style="transition:stroke-dashoffset .5s ease"/>
+              style="stroke:var(--gold);transition:stroke-dashoffset .5s ease"/>
     </svg>`;
   wrap.append(h('div', { class: 'mid' },
     h('div', null,

@@ -66,7 +66,7 @@ export function render_(host) {
       return h('div', { class: 'card timer-card running' },
         h('div', null,
           h('div', { class: 'eyebrow', style: { marginBottom: '10px' } }, 'Timer running'),
-          h('div', { style: { fontSize: '19px', fontWeight: '700', color: '#fff' } }, what),
+          h('div', { style: { fontSize: '19px', fontWeight: '700', color: 'var(--text-strong)' } }, what),
           h('div', { class: 'row tight', style: { marginTop: '10px' } },
             running.projectName
               ? h('span', { class: 'dot-tag' },
@@ -169,7 +169,7 @@ export function render_(host) {
       h('div', { class: 'ring-wrap' },
         ring(pct, { caption: 'of target' }),
         h('div', null,
-          h('div', { style: { fontSize: '22px', fontWeight: '800', color: '#fff' } }, hm(logged, { zero: '0h' })),
+          h('div', { style: { fontSize: '22px', fontWeight: '800', color: 'var(--text-strong)' } }, hm(logged, { zero: '0h' })),
           h('div', { class: 'dim', style: { fontSize: '13px', marginTop: '4px' } },
             target ? `of ${hm(target)}` : 'no target set'),
           target ? h('div', {
@@ -260,7 +260,7 @@ export function render_(host) {
             h('tbody', null, entries.map((e) => h('tr', null,
               h('td', null,
                 h('div', { class: 'dot-tag' },
-                  h('span', { class: 'dot', style: { background: e.projectColor || '#3a3a3a' } }),
+                  h('span', { class: 'dot', style: { background: e.projectColor || 'var(--nil)' } }),
                   e.projectName || 'No project'),
                 e.taskTitle || e.note
                   ? h('div', { class: 'dim', style: { fontSize: '12px', marginTop: '4px' } }, e.taskTitle || e.note)

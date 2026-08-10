@@ -17,6 +17,14 @@ import {
   requireAdmin, requireUser, throttleLogin, verifyPassword,
 } from './auth.mjs';
 
+// ------------------------------------------------------------------ palette
+// The two shades the API has to name for itself. Nothing here can read
+// tokens.css, so these are the only brand values restated outside it — change
+// a token and change its twin here, or a new project comes out the wrong gold.
+
+const DEFAULT_PROJECT_COLOR = '#F0CF50';   // tokens.css --gold
+const UNASSIGNED_COLOR = '#8a8a8a';        // tokens.css --chart-6, the neutral series
+
 // ---------------------------------------------------------------- validation
 
 const str = (v, { name, max = 200, required = false, dflt = '' } = {}) => {
@@ -56,7 +64,7 @@ const dateOr = (v, dflt) => {
   return String(v);
 };
 
-const colorOr = (v, dflt = '#F0CF50') => {
+const colorOr = (v, dflt = DEFAULT_PROJECT_COLOR) => {
   if (v === undefined || v === null || v === '') return dflt;
   const s = String(v).trim();
   if (!/^#[0-9a-fA-F]{6}$/.test(s)) throw bad('Colour must be a #rrggbb hex value');
@@ -245,12 +253,12 @@ function buildReport({ from, to, userId }) {
   const byProject = q(`
     SELECT e.project_id AS projectId,
            COALESCE(p.name, 'Unassigned') AS name,
-           COALESCE(p.color, '#8a8a8a')   AS color,
+           COALESCE(p.color, ?)           AS color,
            SUM(e.minutes) AS minutes,
            SUM(CASE WHEN e.billable = 1 THEN e.minutes ELSE 0 END) AS billableMinutes
       FROM time_entries e LEFT JOIN projects p ON p.id = e.project_id
      WHERE e.date BETWEEN ? AND ? ${scoped}
-     GROUP BY e.project_id ORDER BY minutes DESC`, from, to);
+     GROUP BY e.project_id ORDER BY minutes DESC`, UNASSIGNED_COLOR, from, to);
 
   const byUser = q(`
     SELECT e.user_id AS userId, COALESCE(u.name, 'Removed user') AS name, SUM(e.minutes) AS minutes

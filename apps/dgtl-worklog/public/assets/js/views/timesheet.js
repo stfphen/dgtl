@@ -24,7 +24,7 @@ export function render_(host, { actions }) {
   let loading = true;
 
   const body = h('div', { class: 'stack' });
-  const label = h('div', { style: { fontSize: '14px', fontWeight: '700', color: '#fff', minWidth: '150px', textAlign: 'center' } });
+  const label = h('div', { style: { fontSize: '14px', fontWeight: '700', color: 'var(--text-strong)', minWidth: '150px', textAlign: 'center' } });
   host.append(body);
 
   /* ------------------------------------------------------------ chrome -- */
@@ -122,7 +122,7 @@ export function render_(host, { actions }) {
     // grid is a thing you can fill in rather than only a thing you read.
     const used = new Set(entries.map((e) => e.projectId));
     const rows = state.projects.filter((p) => p.status === 'active' || used.has(p.id));
-    if (entries.some((e) => e.projectId === null)) rows.push({ id: null, name: 'No project', color: '#3a3a3a' });
+    if (entries.some((e) => e.projectId === null)) rows.push({ id: null, name: 'No project', color: 'var(--nil)' });
 
     if (!rows.length) {
       return h('div', { class: 'card' }, empty({
@@ -155,7 +155,7 @@ export function render_(host, { actions }) {
               }, m ? dec(m) : '·'));
             }),
             h('td', { style: { textAlign: 'right', paddingRight: '16px', fontWeight: '700' } },
-              total ? dec(total) : h('span', { style: { color: '#3a3a3a' } }, '·')),
+              total ? dec(total) : h('span', { style: { color: 'var(--nil)' } }, '·')),
           );
         })),
         h('tfoot', null, h('tr', null,
@@ -250,11 +250,11 @@ export function render_(host, { actions }) {
       subtitle: `${hm(total)} across ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`,
       body: (close) => rows.map((e) => h('div', {
         class: 'row',
-        style: { justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #1c1c1c' },
+        style: { justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-row)' },
       },
         h('div', { style: { minWidth: '0' } },
           h('div', { class: 'dot-tag' },
-            h('span', { class: 'dot', style: { background: e.projectColor || '#3a3a3a' } }),
+            h('span', { class: 'dot', style: { background: e.projectColor || 'var(--nil)' } }),
             e.projectName || 'No project'),
           h('div', { class: 'dim', style: { fontSize: '12px', marginTop: '4px' } },
             [e.taskTitle, e.note, !ui.userId ? e.userName : null].filter(Boolean).join(' · ') || '—'),

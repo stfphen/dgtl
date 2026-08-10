@@ -249,7 +249,7 @@ export function render_(host) {
       ),
       entries.length
         ? h('div', null, entries.slice(0, 6).map((e) => h('div', { class: 'quick-entry' },
-          h('span', { class: 'dot', style: { background: e.projectColor || '#3a3a3a' } }),
+          h('span', { class: 'dot', style: { background: e.projectColor || 'var(--nil)' } }),
           h('span', { class: 'qe-what' }, e.note || e.taskTitle || e.projectName || 'Untitled'),
           e.source === 'timer' ? h('span', { class: 'pill' }, 'Timer') : null,
           h('span', { class: 'qe-min' }, hm(e.minutes)),

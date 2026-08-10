@@ -10,12 +10,16 @@
   /* text */
   --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
   --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  /* one step above --text: headings and figures that must lead their block */
+  --text-strong:#ffffff;
   /* accent */
   --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
   --gold-ring:rgba(240,207,80,0.15);
   /* borders */
   --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
   --border-strong:rgba(255,255,255,0.4);
+  /* the hairline between rows in a list or table — a card edge would shout */
+  --border-row:#1c1c1c;
   /* row hover — one shade, shared by every hoverable row */
   --surface-hover:#0f0f0f;
   /* functional */
@@ -27,6 +31,9 @@
   --chart-1:#F0CF50; --chart-2:#b3a06a; --chart-3:#F0F0F0;
   --chart-4:#6E9FDB; --chart-5:#7BC47F; --chart-6:#8a8a8a;
   --chart-grid:#1c1c1c;
+  /* absent data — the swatch for a thing with no colour and the nil "·" alike;
+     dimmer than --text-ghost because it is a placeholder, not a control */
+  --nil:#3a3a3a;
   /* geometry */
   --r-control:7px; --r-card:16px; --r-pill:9999px;
   /* effects */
