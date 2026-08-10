@@ -487,9 +487,8 @@ body{
   /* width, not min-width: flex:none then sized the field to the widest option
      in the task select, which ran 109px past the card and got clipped. */
   .timer-fields .field,.timer-fields .field.note{width:100%;min-width:0;flex:none}
-  /* Two-column dashboards go single-column here. !important because Today and
-     Reports set the columns inline, which no media query can otherwise reach —
-     and minmax(0,1fr), because plain 1fr keeps the 600px table's min-content. */
+  /* !important because Today and Reports set these columns inline; minmax(0,…)
+     because plain 1fr keeps the 600px table's min-content and overflows. */
   .grid.top{grid-template-columns:minmax(0,1fr)!important}
   .card-head{flex-wrap:wrap}
   .table-wrap{overflow-x:auto}
@@ -508,29 +507,30 @@ body{
   .btn-hero{width:100%;justify-content:center}
   .quick-actions{flex-direction:column-reverse}   /* the gold action stays under the thumb */
   .quick-actions .btn-ghost{width:100%;justify-content:center}
-  /* A phone shows two of this table's six columns, so the actions sit far off
-     screen. Pin them, and pay for it: the pin covers ~88px of whatever column
-     is under it until you scroll, which is why it stops at phone widths.
-     Edges are box-shadow, not border — border-collapse drops a sticky cell's
-     border, and the second shadow is the cue that content passes underneath.
+  /* A phone shows two of six columns, so the actions are pinned right — at the
+     cost of 88px of whatever sits under them, which is why it stops here.
+     Chromium paints a collapsed-border cell's border and outer shadow at the
+     unstuck position, so the edge is inset and the cue is a pseudo-element.
      th:last-child is positional: it assumes the actions column comes last. */
   .table .actions,.table:has(.actions) thead th:last-child{
-    position:sticky;right:0;
-    box-shadow:-1px 0 0 0 var(--border),-10px 0 12px -8px var(--shadow-edge);
+    position:sticky;right:0;box-shadow:inset 1px 0 0 0 var(--border);
   }
   .table .actions{background:var(--surface-1)}
+  .table .actions::before{
+    content:"";position:absolute;top:0;bottom:0;left:-12px;width:12px;pointer-events:none;
+    background:linear-gradient(to right,transparent,var(--shadow-edge));
+  }
   .table tbody tr:hover .actions{background:var(--surface-hover)}
 }
 
 /* ==================== input capability ==================== */
 /* Keyed to the pointer, not the viewport: a touchscreen laptop is a 1440px
-   window you can still jab with a thumb. The base hover states this pairs with
-   are switched off for coarse pointers in tokens.css. */
+   window you can still jab with a thumb. */
 @media (hover:hover) and (pointer:fine){
   .table tbody tr:hover .actions .btn-icon,.task:hover .task-side .btn-icon,
   .quick-entry:hover .btn-icon{color:var(--text)}
 }
-/* The app-side half of the same switch-off — a tap must not leave a row, or a
+/* App-side half of the tokens.css switch-off: a tap must not leave a row, or a
    gold week cell, stuck in a state the finger cannot leave. */
 @media (hover:none),(pointer:coarse){
   .task:hover,.weekgrid tbody tr:hover{background:transparent}
@@ -548,8 +548,7 @@ body{
   /* Space the pair so the two 44px areas abut instead of overlapping. */
   .table .actions{padding-left:4px;padding-right:4px}
   .table .actions .btn-icon + .btn-icon{margin-left:8px}
-  /* inset:-10px lands on 42 — the pseudo resolves against the padding box, so
-     the 1.5px border is inside it. State the 44 instead of deriving it. */
+  /* Stated, not derived: an inset off the padding box lands on 42, not 44. */
   .task-check{width:24px;height:24px;position:relative}
   .task-check::after{
     content:"";position:absolute;top:50%;left:50%;width:44px;height:44px;
