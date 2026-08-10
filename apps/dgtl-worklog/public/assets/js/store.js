@@ -136,8 +136,9 @@ export async function saveProject(id, patch) {
 }
 
 export async function removeProject(id) {
-  await api.deleteProject(id);
+  const res = await api.deleteProject(id);
   await load();
+  return res;
 }
 
 export async function saveMe(patch) {

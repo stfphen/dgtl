@@ -164,6 +164,42 @@ try {
   ok('empty project can be deleted',
     (await call('DELETE', `/api/projects/${created.body.project.id}`)).status === 200);
 
+  // Tasks outlive their project (schema.sql sets project_id to NULL). Deleting
+  // one therefore detaches work silently unless the count comes back, which is
+  // what the confirm dialog quotes instead of guessing.
+  const doomed = (await call('POST', '/api/projects', { name: 'Doomed Project', code: 'DOOM' })).body.project;
+  const keep = await call('POST', '/api/tasks', { title: 'Survivor task', projectId: doomed.id });
+  await call('POST', '/api/tasks', { title: 'Finished task', projectId: doomed.id, status: 'done' });
+
+  const del = await call('DELETE', `/api/projects/${doomed.id}`);
+  ok('deleting a project reports how many tasks it detached',
+    del.status === 200 && del.body.detachedTasks === 2, JSON.stringify(del.body));
+  ok('and how many of those were still open', del.body.detachedOpenTasks === 1, JSON.stringify(del.body));
+
+  const after = (await call('GET', '/api/tasks')).body.tasks;
+  const survivor = after.find((t) => t.id === keep.body.task.id);
+  ok('detached tasks survive with no project', !!survivor && survivor.projectId === null);
+
+  const spare = (await call('POST', '/api/projects', { name: 'Taskless', code: 'NIL' })).body.project;
+  const del2 = await call('DELETE', `/api/projects/${spare.id}`);
+  ok('a project with no tasks reports zero detached',
+    del2.status === 200 && del2.body.detachedTasks === 0 && del2.body.detachedOpenTasks === 0);
+
+  // Billable is a property of the entry, not the project, so a billable project
+  // holding non-billable hours must not read as fully billable. Projects and
+  // Reports render from different sources; this is what stops them disagreeing.
+  const mix = (await call('POST', '/api/projects', { name: 'Billable Mix', billable: true })).body.project.id;
+  await call('POST', '/api/entries', { projectId: mix, minutes: 60, billable: true });
+  await call('POST', '/api/entries', { projectId: mix, minutes: 180, billable: false });
+  const mixBoot = await call('GET', '/api/bootstrap');
+  const mixRow = mixBoot.body.projects.find((p) => p.id === mix);
+  ok('a project row carries per-entry billable minutes', mixRow.billableMinutes === 60, String(mixRow.billableMinutes));
+  ok('the project-level billable flag does not inflate it', mixRow.loggedMinutes === 240, String(mixRow.loggedMinutes));
+  const mixRep = await call('GET', `/api/report?scope=team&from=${mixBoot.body.today}&to=${mixBoot.body.today}`);
+  const mixProj = mixRep.body.byProject.find((p) => p.projectId === mix);
+  ok('Projects and Reports agree on billable minutes',
+    mixProj.billableMinutes === mixRow.billableMinutes, `${mixProj?.billableMinutes} vs ${mixRow.billableMinutes}`);
+
   console.log('\ntasks');
   const task = await call('POST', '/api/tasks', { title: 'Smoke task', projectId, estimateMinutes: 60 });
   ok('task is created', task.status === 200 && task.body.task.status === 'todo');
@@ -187,6 +223,12 @@ try {
   const entry = await call('POST', '/api/entries', { projectId, taskId, minutes: 90, note: 'Smoke work' });
   ok('manual entry is logged', entry.status === 200 && entry.body.entry.minutes === 90);
   ok('entry joins in the project name', entry.body.entry.projectName === boot.body.projects[0].name);
+
+  // Hours people are paid for must never be orphaned by tidying a project list.
+  const blocked = await call('DELETE', `/api/projects/${projectId}`);
+  ok('a project with logged time still cannot be deleted', blocked.status === 400);
+  ok('and the refusal carries the entry count',
+    blocked.body.details?.timeEntries > 0, JSON.stringify(blocked.body));
   ok('zero minutes is rejected', (await call('POST', '/api/entries', { projectId, minutes: 0 })).status === 400);
   ok('26 hours is rejected', (await call('POST', '/api/entries', { projectId, minutes: 1560 })).status === 400);
   ok('bad date is rejected',

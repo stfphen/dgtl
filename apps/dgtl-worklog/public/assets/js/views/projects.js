@@ -67,24 +67,25 @@ export function render_(host, { actions }) {
 
     render(body,
       h('div', { class: 'grid cols-4' },
-        h('div', { class: 'card pad-sm kpi hero' },
-          h('div', { class: 'label' }, 'Logged all time'),
-          h('div', { class: 'value' }, hm(totalLogged, { zero: '0h' })),
-        ),
-        h('div', { class: 'card pad-sm kpi' },
-          h('div', { class: 'label' }, 'Active projects'),
-          h('div', { class: 'value' }, String(state.projects.filter((p) => p.status === 'active').length)),
-        ),
-        h('div', { class: 'card pad-sm kpi' },
-          h('div', { class: 'label' }, 'Open tasks'),
-          h('div', { class: 'value' }, String(rows.reduce((s, p) => s + p.openTasks, 0))),
-        ),
-        h('div', { class: 'card pad-sm kpi' },
-          h('div', { class: 'label' }, 'Billable share'),
-          h('div', { class: 'value' }, totalLogged
-            ? `${Math.round((rows.filter((p) => p.billable).reduce((s, p) => s + p.loggedMinutes, 0) / totalLogged) * 100)}%`
-            : '—'),
-        ),
+        kpi({
+          label: 'Logged all time', value: hm(totalLogged, { zero: '0h' }),
+          foot: scope, hero: true,
+        }),
+        kpi({
+          label: 'Active projects',
+          value: String(rows.filter((p) => p.status === 'active').length),
+          foot: `of ${pluralize(rows.length, 'project')} shown`,
+        }),
+        kpi({
+          label: 'Open tasks',
+          value: String(rows.reduce((s, p) => s + p.openTasks, 0)),
+          foot: scope,
+        }),
+        kpi({
+          label: 'Billable share',
+          value: totalLogged ? `${Math.round((billableLogged / totalLogged) * 100)}%` : '—',
+          foot: totalLogged ? `${hm(billableLogged, { zero: '0h' })} of ${hm(totalLogged)} logged` : null,
+        }),
       ),
 
       h('div', { class: 'table-wrap' },
@@ -141,6 +142,21 @@ export function render_(host, { actions }) {
 
   /* ------------------------------------------------------------ editor -- */
 
+  /**
+   * How many open tasks a delete would detach, re-read from the server at the
+   * moment the button is pressed. The confirm dialog quotes this number, so it
+   * has to be the server's count and not a snapshot that may be minutes old;
+   * if the read fails, the loaded row is a good enough fallback for a warning.
+   */
+  async function openTaskCount(project) {
+    try {
+      const { projects } = await api.projects();
+      return projects.find((p) => p.id === project.id)?.openTasks ?? 0;
+    } catch {
+      return project.openTasks;
+    }
+  }
+
   function editor(project) {
     const editing = !!project;
     const nameInput = h('input', { class: 'input', maxlength: '120', placeholder: 'Project name', value: project?.name || '' });
@@ -156,21 +172,27 @@ export function render_(host, { actions }) {
       { value: project?.status || 'active' },
     );
 
-    let color = project?.color || SWATCHES[0];
-    const swatches = h('div', { class: 'row tight' }, SWATCHES.map((c) => {
-      const dot = h('button', {
-        type: 'button', title: c,
-        style: {
-          width: '26px', height: '26px', borderRadius: '50%', background: c, cursor: 'pointer',
-          border: c === color ? '2px solid #fff' : '1px solid var(--border)', padding: '0',
-        },
-        onclick: () => {
-          color = c;
-          for (const s of swatches.children) s.style.border = s.title === c ? '2px solid #fff' : '1px solid var(--border)';
-        },
-      });
-      return dot;
+    const palette = swatchColors();
+    let color = project?.color || palette[0];
+    const dots = palette.map((c) => h('button', {
+      type: 'button', title: c, 'aria-label': `Colour ${c}`,
+      style: {
+        width: '26px', height: '26px', borderRadius: '50%', background: c,
+        cursor: 'pointer', padding: '0',
+      },
+      onclick: () => { color = c; paintSwatches(); },
     }));
+    // Selection is carried by aria-pressed as well as the ring, so it is not
+    // colour-alone — and the ring itself is a token, not a literal.
+    function paintSwatches() {
+      for (const dot of dots) {
+        const on = dot.title === color;
+        dot.style.border = on ? '2px solid var(--text)' : '1px solid var(--border)';
+        dot.setAttribute('aria-pressed', String(on));
+      }
+    }
+    paintSwatches();
+    const swatches = h('div', { class: 'row tight' }, dots);
 
     const errLine = h('div', { class: 'err', hidden: true });
 
@@ -188,12 +210,22 @@ export function render_(host, { actions }) {
         editing && !project.loggedMinutes ? h('button', {
           class: 'btn btn-danger left',
           onclick: async () => {
+            const open = await openTaskCount(project);
             if (!await confirmDialog({
               title: `Delete "${project.name}"?`,
-              message: 'It has no time logged against it, so nothing is lost. Tasks keep their history but lose the project.',
+              message: open
+                ? `It has no time logged against it, so no hours are lost. Its ${pluralize(open, 'open task')} `
+                  + 'will survive and keep their history, but they lose the project.'
+                : 'It has no time logged against it and no open tasks, so nothing is lost.',
               confirmLabel: 'Delete project', danger: true,
             })) return;
-            try { await removeProject(project.id); toast('Project deleted'); close(); draw(); } catch (e) { fail(e); }
+            try {
+              const res = await removeProject(project.id);
+              const kept = res?.detachedTasks ?? 0;
+              toast(kept ? `Project deleted · ${pluralize(kept, 'task')} kept` : 'Project deleted');
+              close();
+              draw();
+            } catch (e) { fail(e); }
           },
         }, 'Delete') : null,
         h('button', { class: 'btn btn-ghost', onclick: close }, 'Cancel'),

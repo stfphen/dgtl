@@ -72,6 +72,10 @@ const projectRow = (p) => ({
   id: p.id, name: p.name, client: p.client, code: p.code, color: p.color,
   billable: !!p.billable, budgetMinutes: p.budget_minutes, status: p.status,
   position: p.position, loggedMinutes: p.logged_minutes ?? 0, openTasks: p.open_tasks ?? 0,
+  // Billable is a property of each entry, not of the project — a billable
+  // project can hold non-billable hours. Projects and Reports both read this,
+  // so the two screens cannot disagree about what was billable.
+  billableMinutes: p.billable_minutes ?? 0,
 });
 
 const taskRow = (t) => ({
@@ -97,6 +101,8 @@ const userRow = (u) => ({
 const listProjects = () => all(`
   SELECT p.*,
          (SELECT COALESCE(SUM(minutes), 0) FROM time_entries te WHERE te.project_id = p.id) AS logged_minutes,
+         (SELECT COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.minutes ELSE 0 END), 0)
+            FROM time_entries te WHERE te.project_id = p.id) AS billable_minutes,
          (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id AND t.status <> 'done' AND t.archived = 0) AS open_tasks
     FROM projects p
    ORDER BY p.status ASC, p.position ASC, p.id ASC
@@ -388,10 +394,20 @@ route('DELETE', '/api/projects/:id', ({ req, params }) => {
   // Archive is the safe path, and the UI offers it instead.
   const logged = one('SELECT COUNT(*) AS n FROM time_entries WHERE project_id = ?', p.id).n;
   if (logged > 0) {
-    throw bad(`"${p.name}" has ${logged} time ${logged === 1 ? 'entry' : 'entries'}. Archive it instead of deleting.`);
+    throw bad(`"${p.name}" has ${logged} time ${logged === 1 ? 'entry' : 'entries'}. Archive it instead of deleting.`,
+      { timeEntries: logged });
   }
+
+  // Tasks outlive the project — schema.sql sets project_id to NULL rather than
+  // deleting them — so count them before the row goes and report exactly how
+  // many were detached. The UI states that number instead of guessing at it.
+  const t = one(`
+    SELECT COUNT(*) AS n,
+           COALESCE(SUM(CASE WHEN status <> 'done' AND archived = 0 THEN 1 ELSE 0 END), 0) AS open
+      FROM tasks WHERE project_id = ?`, p.id);
+
   run('DELETE FROM projects WHERE id = ?', p.id);
-  return { ok: true };
+  return { ok: true, detachedTasks: t.n, detachedOpenTasks: t.open };
 });
 
 // --- tasks (anyone) ---
