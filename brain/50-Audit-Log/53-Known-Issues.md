@@ -271,3 +271,83 @@ resolving `DB_PATH`, so any script run from the app directory on a host — `scr
 **`scripts/seed.mjs` writes colours that bypass validation.** It `INSERT`s `#b3a06a` and
 `#8a8a8a` lowercase directly, skipping `colorOr()`, which uppercases. Any UI comparing a stored
 colour against a canonical uppercase value fails for those two projects.
+
+## DGTL Worklog — Round 1 seam audit, deferred defects (2026-08-10)
+
+A seam critic drove every view, ran eleven mutations against the suite and checked the Projects
+arithmetic against the database. Nineteen defects. Three blocked the next round and are fixed in
+`1690ed2` (switch-verb coverage, the circular isolation guard, the `userId` coercion). **The
+sixteen below are deliberately deferred** — most predate this work, and the round was scoped to
+the Projects page, the test harness and the touch/contrast pass. Each is reproducible as written.
+
+### Correctness
+
+- **Reports counts future tasks as overdue.** `buildReport`'s task query measures overdue against
+  `to`, the end of the requested range, not against today. Measured: `from=2026-08-10&to=2026-08-16`
+  returned `{done:1, open:8, overdue:4}` where all four were due 11–15 Aug, i.e. in the future.
+  Fix: pass `localDate()` as that third parameter.
+- **`open` in the report payload is not range-bound.** It returns the same count for every range,
+  including one entirely in the past, so a historical report shows today's open tasks. Either drop
+  it or label it "open now" in the UI.
+- **`done_at` is stamped and bucketed in UTC while entries file in `APP_TIMEZONE`.** A task
+  completed after 20:00 Toronto counts toward the next day. Drift up to five hours in
+  "completed this week".
+- **`GET /api/export` interpolates the user id into SQL** (`WHERE user_id = ${user.id}`) — the only
+  interpolation in `server/`, and it contradicts `buildReport`'s own "bound not interpolated"
+  comment. It also selects without the `ENTRY_SELECT` joins while mapping through `entryRow()`, so
+  every exported row carries `projectName`, `projectColor`, `taskTitle` and `userName` as null —
+  verified across all 175 rows. Endpoint has zero assertions.
+
+### Numbers the UI states wrongly
+
+- **The Projects KPI feet name one exclusion and hide a larger one.** With "Show archived" off —
+  the default — "Logged all time … excludes 2h 45m on no project" omitted **43h 30m** of
+  archived-project time, an exclusion 16× larger than the one named. Reconciliation holds only
+  with archived shown: `15838 + 45 = 15883` matches the report total exactly; with archived hidden
+  `13228 + 45 = 13273` against `15883`.
+- **Billable share quotes the wrong exclusion.** It states total off-project minutes as the
+  exclusion for a *billable* ratio. `unassigned.billableMinutes` is returned by the API, carried in
+  `store.js` and asserted in the suite — and read by no view.
+
+### Spine violations
+
+- **`settings.js` mutates users without `load()`** (lines ~206 and ~214, `api.updateUser` /
+  `api.createUser` called straight from the view). Proven: after creating a user, `state.users` is
+  unchanged, so the new person is missing from every assignee, timesheet and report select until a
+  full page reload. Fix: a `saveUser()` in `store.js` following the existing pattern.
+- **`PATCH /api/timer` has a second side effect the store exception does not cover.** It sets a
+  task to `doing`, but `updateTimer` patches in place without reloading, so client state says
+  `todo` while the server says `doing`.
+- **`/api/report` and `/api/suggestions` return raw rows with camelCase SQL aliases** instead of an
+  `xRow()` mapper — so `byProject` carries `billableMinutes` via `AS billableMinutes` while
+  `unassignedTotals()` maps `billable_minutes` in JS. Two idioms for one job in adjacent functions.
+- **The migration idiom has no implementation.** The spine names a `hasColumn()` + `PRAGMA
+  table_info` guard; no such helper exists anywhere. Nothing violated it because Round 1 added no
+  columns, but the shift clock will. Add it before that lands.
+
+### Documentation that will mislead the next person
+
+- **`README.md:139` and `:238` state `tokens.css` is the brand kit "verbatim / unmodified".** It is
+  not: this round added `--text-strong`, `--border-row`, `--surface-hover`, `--nil` and
+  `--shadow-edge`, and rewrote `:focus-visible`. Anyone re-pasting the brand kit on the strength of
+  that sentence deletes five tokens and reverts the focus-ring contrast fix.
+- **`README.md:135` says the suite is "45 checks".** It is 86.
+- **`api.mjs:22-23` claims its two constants are the only brand values outside `tokens.css`.**
+  `scripts/seed.mjs:56-60` restates five more and `schema.sql:27` restates the gold as a column
+  default. The comment was written in the same commit that made it untrue.
+
+### Dead and inconsistent
+
+- **`--chart-1` and `--chart-2` are defined and never used.** `SWATCH_TOKENS` names the same two
+  colours as `--gold` / `--gold-tan`, so re-theming the chart series would move six swatches and
+  leave two behind.
+- **`app.css` declares `.chip.on` twice** (line ~156, fully overridden by ~248). Dead CSS also for
+  `.chart-target`, `.btn-lg`, `.delta`, `.section-title`, `.tabular`, `.cols-2`, `.cols-3`,
+  `tr.clickable` — none match rendered markup.
+- **Both editors destroy themselves to show a delete confirmation** — `modal()` calls
+  `closeModal()` first — so cancelling the confirm leaves no modal on screen and the edit is lost.
+- **The whole-team timesheet is gated behind `isAdmin()` in the UI** while the API serves
+  `scope=team` to any member and the suite asserts that as correct. The gate is cosmetic; the two
+  layers disagree about whether it is a permission.
+- **`streaks()` has no behavioural coverage** — zeroing it entirely leaves the suite green. The only
+  assertion checks the field is a number.
