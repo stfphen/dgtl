@@ -16,6 +16,9 @@ const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'worklog-test-'));
 const DB_PATH = path.join(TMP, 'test.sqlite');
 const PORT = 8199 + Math.floor(Math.random() * 300);
 const BASE = `http://127.0.0.1:${PORT}`;
+// Clear of the range PORT is drawn from, so the second boot never collides.
+const PORT_2 = PORT + 400;
+const BASE_2 = `http://127.0.0.1:${PORT_2}`;
 const PASSWORD = 'smoke-test-password';
 
 const env = {
@@ -23,7 +26,33 @@ const env = {
   DB_PATH, PORT: String(PORT), HOST: '127.0.0.1',
   APP_TIMEZONE: 'America/Toronto', SECURE_COOKIES: '0',
   SEED_ADMIN_EMAIL: 'smoke@dgtlgroup.io', SEED_ADMIN_PASSWORD: PASSWORD,
+  // Blanked so an ambient pair — or one left in .env on a real host — cannot
+  // mint an account during a boot. The first-boot section sets them on purpose.
+  BOOTSTRAP_ADMIN_EMAIL: '', BOOTSTRAP_ADMIN_PASSWORD: '',
 };
+
+/** Every *.sqlite* file under a directory, as paths relative to it. */
+function sqliteFiles(dir, root = dir) {
+  const hits = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.name === '.git' || e.name === 'node_modules') continue;
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) hits.push(...sqliteFiles(full, root));
+    else if (e.name.includes('.sqlite')) hits.push(path.relative(root, full));
+  }
+  return hits;
+}
+
+// Every database this suite touches belongs in TMP. One written into the app
+// instead is invisible to `git status` — data/ is gitignored — so the only way
+// to see it is to compare the tree before and after.
+const sqliteBefore = new Set(sqliteFiles(APP_DIR));
+
+// The children are handed DB_PATH through `env`; this process needs it too.
+// Nothing here imports a server module today, but config.mjs falls back to
+// data/worklog.sqlite — and on a host whose .env sets DB_PATH, to the live
+// database — so any future import must land on the throwaway one instead.
+process.env.DB_PATH = DB_PATH;
 
 let passed = 0;
 const failures = [];
@@ -39,6 +68,18 @@ const sh = (cmd, args) => new Promise((resolve, reject) => {
   p.stderr.on('data', (d) => { out += d; });
   p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(out))));
 });
+
+/** Like call(), but against another server and without touching the cookie jar. */
+async function callOn(base, method, url, body) {
+  const res = await fetch(base + url, {
+    method,
+    headers: { ...(body ? { 'content-type': 'application/json' } : {}), origin: base },
+    body: body ? JSON.stringify(body) : undefined,
+    redirect: 'manual',
+  });
+  const type = res.headers.get('content-type') || '';
+  return { status: res.status, body: type.includes('json') ? await res.json() : await res.text() };
+}
 
 let cookie = '';
 async function call(method, url, body) {
@@ -58,16 +99,36 @@ async function call(method, url, body) {
   return { status: res.status, body: type.includes('json') ? await res.json() : await res.text() };
 }
 
-const server = spawn('node', ['--no-warnings=ExperimentalWarning', 'server/server.mjs'], {
-  cwd: APP_DIR, env, stdio: 'pipe',
-});
-let serverLog = '';
-server.stdout.on('data', (d) => { serverLog += d; });
-server.stderr.on('data', (d) => { serverLog += d; });
+const servers = [];
+/** Boot the real server against the throwaway database; returns a log reader. */
+function bootServer(extra = {}) {
+  const proc = spawn('node', ['--no-warnings=ExperimentalWarning', 'server/server.mjs'], {
+    cwd: APP_DIR, env: { ...env, ...extra }, stdio: 'pipe',
+  });
+  let out = '';
+  proc.stdout.on('data', (d) => { out += d; });
+  proc.stderr.on('data', (d) => { out += d; });
+  servers.push(proc);
+  return { proc, log: () => out };
+}
 
+/** Poll a boot log until it matches, so we never read a half-flushed pipe. */
+const waitForLog = async (log, re) => {
+  for (let i = 0; i < 100; i++) {
+    if (re.test(log())) return true;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return false;
+};
+
+const server = bootServer();
+
+const strays = [];                        // databases that appeared outside TMP
 const cleanup = () => {
-  server.kill('SIGTERM');
+  for (const proc of servers) proc.kill('SIGTERM');
   fs.rmSync(TMP, { recursive: true, force: true });
+  // Runs on the failure path too, so the tree is audited however the run ended.
+  for (const rel of sqliteFiles(APP_DIR)) if (!sqliteBefore.has(rel)) strays.push(rel);
 };
 
 try {
@@ -207,21 +268,51 @@ try {
   ok('logout clears the session', (await call('POST', '/api/auth/logout')).status === 200);
   ok('bootstrap is refused after logout', (await call('GET', '/api/bootstrap')).status === 401);
 
+  console.log('\nfirst-boot admin');
   // The first-boot admin must never touch a workspace that already has users —
   // otherwise a stale env var on a host could mint an account at any restart.
-  const { bootstrapAdmin } = await import('../server/auth.mjs');
-  process.env.BOOTSTRAP_ADMIN_EMAIL = 'intruder@example.com';
-  process.env.BOOTSTRAP_ADMIN_PASSWORD = 'a-long-enough-password';
-  ok('first-boot admin is a no-op once users exist', bootstrapAdmin() === null);
-  ok('no account was created by it',
-    (await call('POST', '/api/auth/login', { email: 'intruder@example.com', password: 'a-long-enough-password' })).status === 401);
+  // Boot a second server against the same database with the pair set, so what
+  // gets exercised is the real boot path. Importing auth.mjs into this process
+  // instead would resolve config.mjs's own DB_PATH and create a database in the
+  // app directory — on a host whose .env sets DB_PATH, the live one.
+  const intruder = { email: 'intruder@example.com', password: 'a-long-enough-password' };
+  const second = bootServer({
+    PORT: String(PORT_2),
+    BOOTSTRAP_ADMIN_EMAIL: intruder.email,
+    BOOTSTRAP_ADMIN_PASSWORD: intruder.password,
+  });
+  ok('a second boot with BOOTSTRAP_ADMIN_* set comes up',
+    await waitForLog(second.log, /Users\s+\d+/), second.log());
+  ok('it announces no first admin', !/Created the first admin/.test(second.log()), second.log().trim());
+  ok('the stale credentials cannot sign in on it',
+    (await callOn(BASE_2, 'POST', '/api/auth/login', intruder)).status === 401);
+  ok('nor on the first server, which shares the database',
+    (await call('POST', '/api/auth/login', intruder)).status === 401);
+
+  const relogin = await call('POST', '/api/auth/login', { email: 'smoke@dgtlgroup.io', password: PASSWORD });
+  ok('the admin signs back in to audit the roster', relogin.status === 200, `status ${relogin.status}`);
+  const roster = (await call('GET', '/api/users')).body.users.map((u) => u.email);
+  ok('the workspace holds no such account', !roster.includes(intruder.email), roster.join());
+  // If that boot had opened a database of its own, it would have found it empty
+  // and reported a different count — which is the whole hazard, in one number.
+  ok('the second boot opened the same database',
+    Number(second.log().match(/Users\s+(\d+)/)?.[1]) === roster.length,
+    `${second.log().match(/Users\s+(\d+)/)?.[1]} vs ${roster.length}`);
+  second.proc.kill('SIGTERM');
 } catch (err) {
   failures.push(`harness error: ${err.message}`);
   console.error(err);
-  if (serverLog) console.error('--- server log ---\n' + serverLog);
+  if (server.log()) console.error('--- server log ---\n' + server.log());
 } finally {
   cleanup();
 }
+
+// --- leftovers ---------------------------------------------------------
+// Runs after cleanup, on the pass and the fail path alike: the suite is only
+// finished if the working tree is exactly as it found it.
+console.log('\nleftovers');
+ok('no database was written outside the temp dir', strays.length === 0, strays.join(', '));
+ok('the throwaway database is gone', !fs.existsSync(TMP));
 
 console.log(`\n${passed} passed, ${failures.length} failed`);
 if (failures.length) {
