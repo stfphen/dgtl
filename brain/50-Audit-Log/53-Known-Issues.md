@@ -203,3 +203,71 @@ its own PR, not one adding a creator.
 - **Roster launches with 6 creators** (Casper still `draft`); brief wants 10–15 before launch — 4–9 more packs are content work via the dgtl-creator-features skill, not code.
 - **OG image for join.dgtlinfluence.com not produced** (`assets/img/og-join.jpg` referenced in plan, page currently ships without an og:image).
 - **Journal index canonicals still point at `pitch.dgtlmedia.io`** while pack.json canonicalUrls now say `dgtlinfluence.com` — the blanket canonical rewrite remains its own PR per the 2026-08-01 decision.
+
+## DGTL Worklog — import and Round 1 audit (2026-08-10)
+
+**`be8267b` is mislabelled. It is not a pristine import.** The commit says it imports the app
+"at its current deployed state", and its tree is *almost* that — but it also captured a
+half-written `public/assets/js/views/projects.js` from a builder that was running concurrently:
+`SWATCH_TOKENS` and `swatchColors()` declared at lines 18-21, while `editor()` at 159-160 still
+referenced the deleted `SWATCHES`. The project editor therefore throws
+`ReferenceError: SWATCHES is not defined` at that commit and the modal never opens. Confirmed
+three ways — by grep, by a critic running a baseline server in Chromium, and by the seam critic.
+
+Cause: pristineness was verified with `diff -rq` and the tree was staged with `git add` several
+tool calls later. The diff was true when run and stale when used. **Rule going forward: stage
+first, then verify what is staged, never the working tree.**
+
+Consequences to know when reading the branch:
+- The **live deploy was never affected**. `hbuilds/current/nodejs/.../projects.js` still carries
+  `const SWATCHES` at line 14. Production is fine; only the repo commit is wrong.
+- `8491ee5`'s message claims it removed "eight swatch hex literals ... copies of tokens that
+  already existed in tokens.css". Those literals were not present in `be8267b`'s tree, because
+  the token block was already there. What that commit actually did, in addition to its five
+  stated fixes, was **repair a ReferenceError that made the project editor unopenable** — and no
+  commit message says so.
+- History was **not** rewritten. Force-pushing a shared branch needs explicit sign-off
+  (see the git workflow rules in CLAUDE.md), so this note is the correction of record.
+
+**Token contract does not hold repo-wide** (`CLAUDE.md`: never hardcode a brand value, reference
+the token). As of Round 1, `grep -rnE '#[0-9a-fA-F]{6}' apps/dgtl-worklog/public/assets/js
+apps/dgtl-worklog/server` returns 10 hits, plus three 3-digit literals:
+
+| File | Literal |
+|---|---|
+| `public/assets/js/ui.js:176,177` | `#1c1c1c`, `#F0CF50` — the brand gold restated inside the ring every screen renders |
+| `server/api.mjs:59` | `#F0CF50` — `colorOr()` default |
+| `server/api.mjs:229` | `#8a8a8a` — `buildReport` unassigned-bucket colour |
+| `views/timesheet.js:125,158,253,257` | `#3a3a3a`, `#1c1c1c` |
+| `views/today.js:263`, `views/quick.js:252` | `#3a3a3a` |
+| `views/today.js:69,172`, `views/timesheet.js:27` | `#fff` |
+
+The server cannot read CSS, so `api.mjs`'s two need named constants with a comment tying them to
+`--gold` and `--chart-6`. `#3a3a3a` and `#1c1c1c` map to no existing token and recur enough to
+deserve one.
+
+**Pre-existing UI defects found while auditing, not caused by this work:**
+- **Today overflows horizontally at 390px** (`scrollWidth` 421 vs 390). `views/today.js:50` sets
+  `gridTemplateColumns` *inline*, so no media query can override it and the phone keeps a
+  two-column grid; the daily-target ring is clipped off-screen and "Your focus" wraps to roughly
+  one character per line. Verified identical at `8491ee5`, so it predates the Round 1 CSS work.
+- **`:focus-visible` is 1.34:1.** `tokens.css` sets `outline:none` plus
+  `box-shadow:0 0 0 3px rgba(240,207,80,.15)`, which blends to `rgb(45,40,21)` on `--surface-1`.
+  WCAG 1.4.11/2.4.11 require 3:1. `.btn-icon` is saved by a gold `border-color` fallback;
+  `.task-check` and `.chip` are not, because `app.css` redeclares their `border` shorthand after
+  `tokens.css`.
+- **The drag grip is unreachable and invisible.** `.task .grip` is a `<span>` with `tabIndex -1`
+  at `#3a3a3a` (1.85:1), and task rows use HTML5 `draggable` with no touch handlers — so
+  reordering works with neither touch nor keyboard.
+- **Sticky cells cannot show a border under `border-collapse:collapse`.** Chromium paints
+  collapsed borders at the cell's static position. Proven by overriding the border to `#ff0000`
+  and getting a byte-identical screenshot crop. Any pinned table column needs `box-shadow`.
+
+**Scripts silently attach to the live database.** `server/config.mjs:16-23` loads `.env` before
+resolving `DB_PATH`, so any script run from the app directory on a host — `scripts/seed.mjs`,
+`scripts/user.mjs`, and `scripts/demo.mjs`, which *inserts data* — opens the production database.
+`npm test` was the loud instance of this and is fixed (`b888295`); the scripts are not.
+
+**`scripts/seed.mjs` writes colours that bypass validation.** It `INSERT`s `#b3a06a` and
+`#8a8a8a` lowercase directly, skipping `colorOr()`, which uppercases. Any UI comparing a stored
+colour against a canonical uppercase value fails for those two projects.
