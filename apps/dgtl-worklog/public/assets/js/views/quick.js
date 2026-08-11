@@ -1,15 +1,22 @@
 /* Quick log — the screen the app opens on.
  *
  * One rule shaped this: starting the clock must never wait on a decision.
- * Hit Start the moment work begins, then tag and label it while it runs (the
- * timer is patched live, so elapsed time is never at risk). The chips are
+ * Hit Start the moment work begins, then label it while it runs. The chips are
  * ordered by what this person actually worked on recently, not alphabetically,
  * so the button you want is usually the first one.
+ *
+ * Two verbs, and the difference between them is money. Tapping a chip SWITCHES:
+ * the running stretch is banked against the project it was actually worked on
+ * and a fresh one opens. Typing in the label field RELABELS: same stretch, same
+ * start, different words. They used to be the same call, which meant tapping a
+ * client chip at 10:30 re-filed everything since 09:00 to that client — silent,
+ * and invoiced.
  */
 
 import { clock, h, hm, today as todayDate } from '../util.js';
 import { empty, fail, icon, render, toast } from '../ui.js';
 import { entryEditor } from '../editors.js';
+import { shiftStrip } from '../shift.js';
 import {
   activeProjects, discardTimer, openTasksFor, projectById, saveEntry,
   startTimer, state, stopTimer, timerSeconds, todayMinutes, updateTimer,
@@ -30,6 +37,7 @@ export function render_(host) {
   let draft = { projectId: null, taskId: null, note: '' };   // used before a timer exists
   let tick = null;
   let saveTimer = null;
+  let pendingNote = null;   // typed but not yet saved; a switch has to carry it
 
   /* ------------------------------------------------------- current state -- */
   // While a timer runs it IS the source of truth, so the same chips and label
@@ -40,28 +48,55 @@ export function render_(host) {
     projectId: live().projectId, taskId: live().taskId, note: live().note,
   } : draft);
 
-  async function setFields(patch, { redraw = true } = {}) {
-    if (live()) {
-      try {
-        await updateTimer(patch);
-      } catch (e) { fail(e); }
-    } else {
-      Object.assign(draft, patch);
-    }
-    if (redraw) draw();
+  /**
+   * RELABEL — what the running stretch is called, and nothing else. Never
+   * moves started_at, never moves the project: elapsed time is a fact and the
+   * project it was worked on is the thing that gets invoiced.
+   */
+  async function relabel(note) {
+    pendingNote = null;
+    if (!live()) { draft.note = note; return; }
+    try { await updateTimer({ note }); } catch (e) { fail(e); }
   }
 
   /** Debounced so typing a label doesn't fire a request per keystroke. */
   function saveNoteSoon(note) {
     clearTimeout(saveTimer);
-    if (!live()) { draft.note = note; return; }
-    saveTimer = setTimeout(() => setFields({ note }, { redraw: false }), 500);
+    pendingNote = note;
+    if (!live()) { draft.note = note; pendingNote = null; return; }
+    saveTimer = setTimeout(() => relabel(note), 500);
+  }
+
+  /**
+   * SWITCH — a chip changes what the time is FOR, which is a different stretch
+   * of work, not a different name for the one running. Starting the next timer
+   * banks the current one against the project it was actually worked on; the
+   * new stretch is timed from now. Re-labelling instead would move every
+   * minute since the start onto whatever was tapped last, and that lands on
+   * somebody's invoice with nothing on screen to show it happened.
+   */
+  async function switchTo(patch) {
+    if (!live()) { Object.assign(draft, patch); return draw(); }
+    clearTimeout(saveTimer);
+    const cur = current();
+    const carried = pendingNote ?? cur.note;
+    pendingNote = null;
+    try {
+      const res = await startTimer({
+        projectId: cur.projectId, taskId: cur.taskId, note: carried, ...patch,
+      });
+      toast(res.banked
+        ? `Banked ${hm(res.banked.minutes)} on ${res.banked.projectName || 'no project'} — timing the new one from now`
+        : 'Switched — the last stretch was under a minute, so nothing was logged');
+      await loadSuggestions();
+      draw();
+    } catch (e) { fail(e); }
   }
 
   /* -------------------------------------------------------------- draw --- */
 
   function draw() {
-    render(body, clockCard(), suggestCard(), presetCard(), todayCard());
+    render(body, shiftStrip(draw), clockCard(), suggestCard(), presetCard(), todayCard());
     startTick();
   }
 
@@ -80,7 +115,7 @@ export function render_(host) {
       onkeydown: (e) => {
         if (e.key !== 'Enter') return;
         e.preventDefault();
-        if (running) { clearTimeout(saveTimer); setFields({ note: e.target.value }); }
+        if (running) { clearTimeout(saveTimer); relabel(e.target.value).then(draw); }
         else begin(e.target.value);
       },
     });
@@ -114,13 +149,18 @@ export function render_(host) {
       projectChips(cur.projectId),
       h('p', { class: 'quick-hint' },
         running
-          ? 'Tag and label it while it runs — the clock keeps going.'
+          ? 'Re-labelling keeps the clock running. Tapping a project banks what is running and starts a fresh stretch.'
           : 'Start now, sort out the label afterwards. Space starts and stops the clock.'),
     );
   }
 
-  /** Active projects, most recently worked first. Tap to tag; tap again to clear. */
+  /**
+   * Active projects, most recently worked first. Tapping one while the clock
+   * runs banks the current stretch and opens the next — it does not re-file
+   * what has already elapsed.
+   */
   function projectChips(selectedId) {
+    const running = !!live();
     const recency = new Map(suggestions.projects.map((p, i) => [p.projectId, i]));
     const projects = [...activeProjects()].sort((a, b) =>
       (recency.has(a.id) ? recency.get(a.id) : 999) - (recency.has(b.id) ? recency.get(b.id) : 999));
@@ -131,8 +171,10 @@ export function render_(host) {
       const on = p.id === selectedId;
       return h('button', {
         class: `chip proj${on ? ' on' : ''}`,
-        title: on ? 'Tap to untag' : `Tag this time as ${p.name}`,
-        onclick: () => setFields({ projectId: on ? null : p.id, taskId: null }),
+        title: running
+          ? (on ? `Bank this stretch and carry on untagged` : `Bank this stretch and start timing ${p.name}`)
+          : (on ? 'Tap to untag' : `Tag this time as ${p.name}`),
+        onclick: () => switchTo({ projectId: on ? null : p.id, taskId: null }),
       },
         h('span', { class: 'dot', style: { background: p.color } }),
         p.name,
@@ -170,7 +212,7 @@ export function render_(host) {
           return h('button', {
             class: 'chip',
             title: p ? `${l.note} · ${p.name}` : l.note,
-            onclick: () => setFields({ note: l.note, projectId: l.projectId, taskId: l.taskId ?? null }),
+            onclick: () => switchTo({ note: l.note, projectId: l.projectId, taskId: l.taskId ?? null }),
           },
             p ? h('span', { class: 'dot', style: { background: p.color } }) : null,
             l.note,
@@ -184,8 +226,8 @@ export function render_(host) {
           const p = projectById(t.projectId);
           return h('button', {
             class: 'chip',
-            title: 'Tag this time to the task',
-            onclick: () => setFields({ taskId: t.id, projectId: t.projectId, note: '' }),
+            title: live() ? 'Bank this stretch and start timing the task' : 'Tag this time to the task',
+            onclick: () => switchTo({ taskId: t.id, projectId: t.projectId, note: '' }),
           },
             p ? h('span', { class: 'dot', style: { background: p.color } }) : null,
             t.title,
@@ -266,6 +308,7 @@ export function render_(host) {
 
   async function begin(note = '') {
     clearTimeout(saveTimer);
+    pendingNote = null;
     try {
       const res = await startTimer({ ...draft, note: note || draft.note || '' });
       if (res.banked) toast(`Banked ${hm(res.banked.minutes)} on the previous timer`);
@@ -276,6 +319,7 @@ export function render_(host) {
 
   async function stop() {
     clearTimeout(saveTimer);
+    pendingNote = null;
     try {
       const res = await stopTimer();
       toast(res.entry ? `Logged ${hm(res.entry.minutes)}` : 'Under a minute — nothing logged',

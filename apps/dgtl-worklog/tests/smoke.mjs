@@ -21,7 +21,10 @@ const BASE = `http://127.0.0.1:${PORT}`;
 // Clear of the range PORT is drawn from, so the second boot never collides.
 const PORT_2 = PORT + 400;
 const BASE_2 = `http://127.0.0.1:${PORT_2}`;
+const PORT_3 = PORT + 700;
+const BASE_3 = `http://127.0.0.1:${PORT_3}`;
 const PASSWORD = 'smoke-test-password';
+const TZ = 'America/Toronto';
 
 const env = {
   ...process.env,
@@ -61,6 +64,44 @@ function resolveEffectiveDbPath() {
     }
   }
   return path.resolve(APP_DIR, vars.DB_PATH || 'data/worklog.sqlite');
+}
+
+// --- wall-clock fixtures ------------------------------------------------
+// Attendance has to be asserted on both sides of a midnight and of a DST step,
+// and no amount of waiting gets a test there. Intl is the only correct source
+// for the offset in force at a given instant, so both helpers go through it.
+
+const tzParts = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TZ, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', second: '2-digit',
+});
+const tzDay = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+});
+
+/** How far the app timezone's wall clock leads UTC at an instant, in ms. */
+function zoneLead(ms) {
+  const p = Object.fromEntries(tzParts.formatToParts(ms).map((x) => [x.type, x.value]));
+  return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - ms;
+}
+
+/** The instant at which a wall-clock time in the app timezone happens. */
+function atLocal(y, m, d, hh = 0, mm = 0) {
+  const naive = Date.UTC(y, m - 1, d, hh, mm);
+  // Two passes: the first offset is read at the wrong instant when the wall
+  // time sits on the far side of a transition, the second lands on it.
+  return naive - zoneLead(naive - zoneLead(naive));
+}
+
+const localDay = (ms) => tzDay.format(ms);
+
+/**
+ * One-shot write straight into the throwaway database — the only way to place
+ * a fixture at an instant the suite cannot wait for. `w` runs one statement.
+ */
+function sql(fn) {
+  const dbx = new DatabaseSync(DB_PATH);
+  try { return fn((q, ...p) => dbx.prepare(q).run(...p)); } finally { dbx.close(); }
 }
 
 /** Enough of a file's identity to notice any write to it — or its absence. */
@@ -123,14 +164,25 @@ async function stop(proc) {
   clearTimeout(hard);
 }
 
-/** Like call(), but against another server and without touching the cookie jar. */
-async function callOn(base, method, url, body) {
+/**
+ * Like call(), but against another server and without touching this suite's
+ * cookie jar. Pass `jar` — any object — to give that server a jar of its own,
+ * which is what a session on a second process needs.
+ */
+async function callOn(base, method, url, body, jar) {
   const res = await fetch(base + url, {
     method,
-    headers: { ...(body ? { 'content-type': 'application/json' } : {}), origin: base },
+    headers: {
+      ...(body ? { 'content-type': 'application/json' } : {}),
+      ...(jar?.cookie ? { cookie: jar.cookie } : {}),
+      origin: base,
+    },
     body: body ? JSON.stringify(body) : undefined,
     redirect: 'manual',
   });
+  if (jar) {
+    for (const c of res.headers.getSetCookie?.() ?? []) if (c.startsWith('dgtl_worklog=')) jar.cookie = c.split(';')[0];
+  }
   const type = res.headers.get('content-type') || '';
   return { status: res.status, body: type.includes('json') ? await res.json() : await res.text() };
 }
@@ -411,6 +463,297 @@ try {
   ok('discarding a timer stops it', discarded.status === 200 && discarded.body.timer === null);
   ok('and logs nothing for it',
     !(await call('GET', '/api/entries')).body.entries.some((e) => e.note === 'After the switch'));
+
+  console.log('\nattendance');
+
+  // The rule a shift across midnight leans on, exercised on the real path: an
+  // entry belongs to the local day its timer BEGAN on, not the one it ended
+  // on, and not "whatever day it is when the row gets written".
+  const dayBoot = (await call('GET', '/api/bootstrap')).body;
+  const [ty, tm, td] = dayBoot.today.split('-').map(Number);
+  const beforeMidnight = atLocal(ty, tm, td, 0, 0) - 10 * 60000;
+  await call('POST', '/api/timer/start', { note: '' });
+  sql((w) => w('UPDATE timers SET started_at = ? WHERE user_id = ?',
+    new Date(beforeMidnight).toISOString(), dayBoot.user.id));
+  const filed = await call('POST', '/api/timer/stop');
+  ok('a timer that began before local midnight files to the day it began on',
+    filed.body.entry?.date === localDay(beforeMidnight) && filed.body.entry.date !== dayBoot.today,
+    `${filed.body.entry?.date} · today is ${dayBoot.today}`);
+
+  // A person of their own for the attribution work. The timer section backdated
+  // a running clock twice to fake long stretches, which leaves that admin
+  // holding windows that overlap by construction — and overlap is one of the
+  // things asserted below.
+  const shiftUser = await call('POST', '/api/users', {
+    email: 'shift@dgtlgroup.io', name: 'Shift Tester', role: 'member', password: 'shift-password-1',
+  });
+  ok('a second person holds the attendance fixtures', shiftUser.status === 200, JSON.stringify(shiftUser.body));
+  const shiftUid = shiftUser.body.user.id;
+  const adminSeat = cookie;
+  cookie = '';
+  await call('POST', '/api/auth/login', { email: 'shift@dgtlgroup.io', password: 'shift-password-1' });
+
+  ok('clocking out when nothing is open 404s', (await call('POST', '/api/shift/out')).status === 404);
+  const cin = await call('POST', '/api/shift/in');
+  ok('clocking in opens a shift',
+    cin.status === 200 && cin.body.shift.open === true && cin.body.shift.presentMinutes === 0,
+    JSON.stringify(cin.body.shift));
+  ok('a shift carries no project and no task',
+    !('projectId' in cin.body.shift) && !('taskId' in cin.body.shift), Object.keys(cin.body.shift).join(','));
+  ok('clocking in twice is refused', (await call('POST', '/api/shift/in')).status === 400);
+
+  const sBoot = (await call('GET', '/api/bootstrap')).body;
+  ok('bootstrap carries the open shift on a cold start',
+    sBoot.shift?.id === cin.body.shift.id && sBoot.shift.open === true, JSON.stringify(sBoot.shift));
+  ok('an open shift starts with nothing attributed and the whole of it in the gap',
+    sBoot.shift.attributedMinutes === 0 && sBoot.shift.unattributedMinutes === sBoot.shift.presentMinutes);
+
+  // The check in the route is manners. The partial unique index is the rule,
+  // and two requests never race each other inside a test, so it is asserted
+  // where it actually lives.
+  let raced = 'the insert succeeded';
+  try {
+    sql((w) => w('INSERT INTO shifts (user_id, date, started_at) VALUES (?, ?, ?)',
+      shiftUid, sBoot.today, new Date().toISOString()));
+  } catch (err) { raced = err.message; }
+  ok('the database itself refuses a second open shift', /UNIQUE/i.test(raced), raced);
+
+  console.log('\nthe chip switch');
+  // Start on one client, tap another client's chip, and the minutes worked
+  // before the tap must stay where they were earned. Re-labelling instead —
+  // which is what the chips used to do — moved all of them onto the tapped
+  // project, silently, and then onto that client's invoice.
+  const P1 = sBoot.projects[0].id;
+  const P2 = sBoot.projects[1].id;
+
+  await call('POST', '/api/timer/start', { projectId: P1, note: 'Work for the first client' });
+
+  // A clock that is still running has written no entry yet. If the
+  // reconciliation ignored it the gap would grow a minute a minute against work
+  // plainly being done, and the strip would be crying wolf all afternoon.
+  const halfway = Date.now();
+  sql((w) => {
+    w('UPDATE shifts SET started_at = ? WHERE user_id = ? AND ended_at IS NULL',
+      new Date(halfway - 60 * 60000).toISOString(), shiftUid);
+    w('UPDATE timers SET started_at = ? WHERE user_id = ?',
+      new Date(halfway - 30 * 60000).toISOString(), shiftUid);
+  });
+  const midRun = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('a clock still running counts against the presence it is inside',
+    midRun.presentMinutes === 60 && midRun.attributedMinutes === 30 && midRun.unattributedMinutes === 30,
+    JSON.stringify(midRun));
+
+  // Two hours of it without waiting two hours. The clock and the shift move
+  // back to the same instant, so the fixture stays internally consistent.
+  const base = Date.now();
+  const shiftStart = new Date(base - 120 * 60000).toISOString();
+  sql((w) => {
+    w('UPDATE timers SET started_at = ? WHERE user_id = ?', shiftStart, shiftUid);
+    w('UPDATE shifts SET started_at = ? WHERE user_id = ? AND ended_at IS NULL', shiftStart, shiftUid);
+  });
+
+  const priorEntries = (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length;
+  const chip = await call('POST', '/api/timer/start', { projectId: P2, note: 'Work for the second client' });
+  ok('tapping a project chip banks the stretch that was running',
+    chip.body.banked?.minutes === 120 && chip.body.banked?.projectId === P1,
+    JSON.stringify(chip.body.banked));
+  ok('and times the new project from now, not from the old start',
+    chip.body.timer.projectId === P2 && Date.parse(chip.body.timer.startedAt) >= base,
+    chip.body.timer.startedAt);
+
+  const afterSwitch = (await call('GET', '/api/entries?from=1970-01-01')).body.entries;
+  ok('the switch wrote exactly one entry, on the project actually worked',
+    afterSwitch.length === priorEntries + 1
+    && afterSwitch.filter((e) => e.projectId === P1 && e.minutes === 120).length === 1,
+    `${afterSwitch.length - priorEntries} new`);
+  ok('and not one of those 120 minutes reached the project that was tapped',
+    afterSwitch.every((e) => e.projectId !== P2), JSON.stringify(afterSwitch.filter((e) => e.projectId === P2)));
+
+  // The other verb is untouched: the label field still edits the running
+  // stretch in place, which is the whole reason Quick log works at all.
+  const preLabel = chip.body.timer.startedAt;
+  const relabelled = await call('PATCH', '/api/timer', { note: 'Second client · edit pass' });
+  ok('the label field still re-labels in place and leaves the start alone',
+    relabelled.body.timer.startedAt === preLabel && relabelled.body.timer.note === 'Second client · edit pass');
+  ok('and re-labelling writes no entry',
+    (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length === afterSwitch.length);
+
+  // Slide the whole session an hour further back so the second stretch has real
+  // length. Every interval keeps its duration and its order; only the anchor
+  // moves, so nothing the assertions below rest on has been invented.
+  const banked1 = afterSwitch.find((e) => e.projectId === P1 && e.minutes === 120);
+  const hour = 60 * 60000;
+  const aStart = new Date(Date.parse(banked1.startedAt) - hour).toISOString();
+  const aEnd = new Date(Date.parse(banked1.endedAt) - hour).toISOString();
+  sql((w) => {
+    w('UPDATE time_entries SET started_at = ?, ended_at = ? WHERE id = ?', aStart, aEnd, banked1.id);
+    w('UPDATE timers SET started_at = ? WHERE user_id = ?', aEnd, shiftUid);
+    w('UPDATE shifts SET started_at = ? WHERE user_id = ? AND ended_at IS NULL', aStart, shiftUid);
+  });
+
+  const out = await call('POST', '/api/shift/out');
+  ok('clocking out banks a timer that was still running',
+    out.body.banked?.projectId === P2 && out.body.banked?.minutes === 60, JSON.stringify(out.body.banked));
+  const tiled = out.body.shift;
+  ok('the two stretches tile the shift exactly',
+    tiled.presentMinutes === 180 && tiled.attributedMinutes === 180 && tiled.unattributedMinutes === 0,
+    JSON.stringify(tiled));
+  ok('the gap is presence minus attributed, exactly',
+    tiled.unattributedMinutes === tiled.presentMinutes - tiled.attributedMinutes);
+
+  const timed = (await call('GET', '/api/entries?from=1970-01-01')).body.entries
+    .filter((e) => e.startedAt && e.endedAt)
+    .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+  ok('no two timed stretches this person logged overlap',
+    timed.every((e, i) => i === 0 || timed[i - 1].endedAt <= e.startedAt),
+    timed.map((e) => `${e.startedAt}→${e.endedAt}`).join(' '));
+  ok('their minutes never sum past the presence that contained them',
+    timed.reduce((s, e) => s + e.minutes, 0) <= tiled.presentMinutes,
+    `${timed.reduce((s, e) => s + e.minutes, 0)} of ${tiled.presentMinutes}`);
+
+  // A mis-tap costs the seconds since the last switch and no more: stopTimer
+  // drops anything under a minute, so nothing zero-length reaches the sheet.
+  await call('POST', '/api/timer/start', { projectId: P1, note: 'Instant switch' });
+  const beforeInstant = (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length;
+  const instant = await call('POST', '/api/timer/start', { projectId: P2, note: 'Instant switch again' });
+  ok('switching in the same instant banks nothing', instant.body.banked === null, JSON.stringify(instant.body.banked));
+  ok('and writes no zero-minute entry',
+    (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length === beforeInstant);
+  await call('POST', '/api/timer/discard');
+
+  /** Place a finished shift and the stretches inside it straight into the database. */
+  const placeShift = (from, to, entries) => sql((w) => {
+    w('INSERT INTO shifts (user_id, date, started_at, ended_at, note) VALUES (?, ?, ?, ?, ?)',
+      shiftUid, localDay(from), new Date(from).toISOString(), new Date(to).toISOString(), '');
+    for (const [eFrom, eTo, projectId] of entries) {
+      const iso = new Date(eFrom).toISOString();
+      w(`INSERT INTO time_entries
+           (user_id, project_id, date, minutes, note, billable, started_at, ended_at, source, created_at, updated_at)
+         VALUES (?, ?, ?, ?, '', 1, ?, ?, 'timer', ?, ?)`,
+        shiftUid, projectId, localDay(eFrom), Math.round((eTo - eFrom) / 60000),
+        iso, new Date(eTo).toISOString(), iso, iso);
+    }
+  });
+
+  console.log('\na shift across midnight');
+  const mnIn = atLocal(2026, 6, 10, 22, 30);
+  const mnOut = atLocal(2026, 6, 11, 1, 30);
+  placeShift(mnIn, mnOut, [
+    [atLocal(2026, 6, 10, 22, 40), atLocal(2026, 6, 10, 23, 40), P1],
+    [atLocal(2026, 6, 11, 0, 10), atLocal(2026, 6, 11, 1, 10), P2],
+  ]);
+  const mn = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('a shift crossing midnight is filed on the day it began',
+    mn.date === '2026-06-10' && mn.endedDate === '2026-06-11', `${mn.date} → ${mn.endedDate}`);
+  ok('its presence is the real elapsed time', mn.presentMinutes === 180, String(mn.presentMinutes));
+  ok('both sides of midnight are attributed', mn.attributedMinutes === 120, String(mn.attributedMinutes));
+  ok('and the gap still reconciles across the day boundary',
+    mn.unattributedMinutes === 60 && mn.unattributedMinutes === mn.presentMinutes - mn.attributedMinutes,
+    JSON.stringify(mn));
+
+  // The two stretches file to different calendar days, which is exactly what a
+  // date-scoped sum gets wrong — it sees 60 of the 120 and reports twice the
+  // gap. Attribution is by window, so the day boundary never enters into it.
+  const mnDay = (await call('GET', `/api/entries?from=${mn.date}&to=${mn.date}`)).body.entries
+    .reduce((s, e) => s + e.minutes, 0);
+  ok('a date-scoped sum would have missed the far side of midnight',
+    mnDay === 60 && mn.attributedMinutes === 120, `${mnDay} on ${mn.date} vs ${mn.attributedMinutes} attributed`);
+  ok('presence is never less than what is attributed to it', mn.presentMinutes >= mn.attributedMinutes);
+
+  console.log('\na shift across a DST boundary');
+  const springIn = atLocal(2026, 3, 8, 1, 0);     // 01:00 EST
+  const springOut = atLocal(2026, 3, 8, 4, 0);    // 04:00 EDT — three hours on the wall, two in fact
+  ok('the spring fixture really straddles the step',
+    zoneLead(springIn) !== zoneLead(springOut),
+    `${zoneLead(springIn) / hour}h → ${zoneLead(springOut) / hour}h`);
+  placeShift(springIn, springOut, [
+    [atLocal(2026, 3, 8, 1, 15), atLocal(2026, 3, 8, 1, 45), P1],
+    [atLocal(2026, 3, 8, 3, 0), atLocal(2026, 3, 8, 3, 30), P2],
+  ]);
+  const spring = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('the hour that does not exist is not counted as presence',
+    spring.presentMinutes === 120, `${spring.presentMinutes} — the wall clock says 180`);
+  ok('attribution across the spring-forward step reconciles',
+    spring.attributedMinutes === 60 && spring.unattributedMinutes === 60
+    && spring.unattributedMinutes === spring.presentMinutes - spring.attributedMinutes,
+    JSON.stringify(spring));
+
+  const fallIn = atLocal(2026, 11, 1, 0, 30);     // 00:30 EDT
+  const fallOut = atLocal(2026, 11, 1, 2, 30);    // 02:30 EST — two hours on the wall, three in fact
+  ok('the autumn fixture really straddles the step',
+    zoneLead(fallIn) !== zoneLead(fallOut), `${zoneLead(fallIn) / hour}h → ${zoneLead(fallOut) / hour}h`);
+  placeShift(fallIn, fallOut, [[atLocal(2026, 11, 1, 0, 45), atLocal(2026, 11, 1, 1, 45), P1]]);
+  const fall = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('the hour that happens twice is counted twice',
+    fall.presentMinutes === 180, `${fall.presentMinutes} — the wall clock says 120`);
+  ok('attribution across the fall-back step reconciles',
+    fall.attributedMinutes === 60 && fall.unattributedMinutes === 120
+    && fall.unattributedMinutes === fall.presentMinutes - fall.attributedMinutes,
+    JSON.stringify(fall));
+
+  console.log('\nwhat moves the gap');
+  const fallEntry = (await call('GET', '/api/entries?from=2026-11-01&to=2026-11-01')).body.entries[0];
+  await call('PATCH', `/api/entries/${fallEntry.id}`, { minutes: 10 });
+  const trimmed = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('correcting an entry after clock-out moves the gap on the next read',
+    trimmed.attributedMinutes === 10 && trimmed.unattributedMinutes === 170, JSON.stringify(trimmed));
+
+  await call('PATCH', `/api/entries/${fallEntry.id}`, { minutes: 600 });
+  const inflated = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('an entry cannot account for more presence than the span it covers',
+    inflated.attributedMinutes === 60 && inflated.unattributedMinutes === 120, JSON.stringify(inflated));
+
+  await call('DELETE', `/api/entries/${fallEntry.id}`);
+  const emptied = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('deleting it hands the whole shift back as unattributed',
+    emptied.presentMinutes === 180 && emptied.attributedMinutes === 0 && emptied.unattributedMinutes === 180,
+    JSON.stringify(emptied));
+
+  await call('POST', '/api/entries', { projectId: P1, minutes: 45, date: '2026-11-01', note: 'By hand' });
+  const byHand = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('a block logged by hand is reported apart, never counted as attributed',
+    byHand.unplacedMinutes === 45 && byHand.attributedMinutes === 0, JSON.stringify(byHand));
+  ok('and it does not close a gap it cannot be placed inside', byHand.unattributedMinutes === 180);
+
+  // Nothing the API can do produces two overlapping stretches. A hand-edited
+  // database can, and the reconciliation has to report no gap rather than a
+  // negative one, which would read as hours owed back.
+  sql((w) => {
+    for (const n of [1, 2]) {
+      w(`INSERT INTO time_entries
+           (user_id, project_id, date, minutes, note, billable, started_at, ended_at, source, created_at, updated_at)
+         VALUES (?, ?, '2026-11-01', 180, ?, 1, ?, ?, 'timer', ?, ?)`,
+        shiftUid, P1, `overlap ${n}`, new Date(fallIn).toISOString(), new Date(fallOut).toISOString(),
+        new Date(fallIn).toISOString(), new Date(fallIn).toISOString());
+    }
+  });
+  const overlapped = (await call('GET', '/api/bootstrap')).body.shift;
+  ok('overlapping stretches clamp to the presence instead of going negative',
+    overlapped.attributedMinutes === 180 && overlapped.unattributedMinutes === 0, JSON.stringify(overlapped));
+  ok('presence is never less than what is attributed to it, even then',
+    overlapped.presentMinutes >= overlapped.attributedMinutes);
+
+  console.log('\na fresh process mid-shift');
+  await call('POST', '/api/shift/in');
+  const midTimer = await call('POST', '/api/timer/start', { projectId: P1, note: 'Still going' });
+  const midShift = (await call('GET', '/api/bootstrap')).body.shift;
+
+  // A restart is a process reading back state it did not create. This one opens
+  // the same database with nothing of ours in its memory.
+  const third = bootServer({ PORT: String(PORT_3) });
+  await ready(third, 'the mid-shift boot');
+  const jar = {};
+  await callOn(BASE_3, 'POST', '/api/auth/login',
+    { email: 'shift@dgtlgroup.io', password: 'shift-password-1' }, jar);
+  const reread = (await callOn(BASE_3, 'GET', '/api/bootstrap', null, jar)).body;
+  ok('a process that did not open the shift still finds it open',
+    reread.shift?.open === true && reread.shift.startedAt === midShift.startedAt, JSON.stringify(reread.shift));
+  ok('and the timer that was running is still running',
+    reread.timer?.startedAt === midTimer.body.timer.startedAt, JSON.stringify(reread.timer));
+  await stop(third.proc);
+  await call('POST', '/api/shift/out');
+
+  cookie = adminSeat;
 
   console.log('\nsuggestions');
   await call('POST', '/api/entries', { projectId, minutes: 60, note: 'Recurring label' });

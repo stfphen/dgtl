@@ -4,6 +4,7 @@
 import { addDays, clock, dayLong, h, hm, relativeDay, startOfWeek, today as todayDate } from '../util.js';
 import { empty, fail, icon, kpi, projectOptions, render, ring, select, taskOptions, toast } from '../ui.js';
 import { entryEditor, taskEditor } from '../editors.js';
+import { shiftStrip } from '../shift.js';
 import {
   discardTimer, openTasksFor, projectById, saveTask, startTimer,
   state, stopTimer, timerSeconds, todayMinutes,
@@ -29,6 +30,8 @@ export function render_(host) {
     const dueToday = mine.filter((t) => t.dueDate && t.dueDate <= todayDate());
 
     render(body,
+      // Attendance first: you are here before you are on anything in particular.
+      shiftStrip(async () => { await refreshStats(); draw(); }),
       timerCard(),
 
       h('div', { class: 'grid cols-4' },

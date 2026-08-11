@@ -13,6 +13,9 @@ export const state = {
   projects: [],
   tasks: [],
   timer: null,
+  // Attendance, separate from the timer on purpose: one says you are here, the
+  // other says what you are doing. Null until someone has ever clocked in.
+  shift: null,
   todayEntries: [],
   // Time on no project at all. Project rows cannot carry it, so the Projects
   // screen states it rather than quietly leaving it out of its totals.
@@ -20,6 +23,9 @@ export const state = {
   today: new Date().toISOString().slice(0, 10),
   weekStartDate: null,
   timezone: '',
+  // When this snapshot was taken. The shift figures are true as of then, and
+  // the strip needs to know how far it has drifted since.
+  loadedAt: 0,
 };
 
 export function subscribe(fn) {
@@ -41,10 +47,12 @@ export async function load() {
     unassigned: data.unassigned ?? { minutes: 0, billableMinutes: 0 },
     tasks: data.tasks,
     timer: data.timer,
+    shift: data.shift ?? null,
     todayEntries: data.todayEntries,
     today: data.today,
     weekStartDate: data.weekStartDate,
     timezone: data.timezone,
+    loadedAt: Date.now(),
   });
   // util.today() reads this, so every view agrees on the workspace's "today"
   // rather than the browser's, which may sit in another timezone.
@@ -71,6 +79,31 @@ export const todayMinutes = () => state.todayEntries.reduce((sum, e) => sum + e.
 export function timerSeconds() {
   if (!state.timer) return 0;
   return Math.max(0, Math.round((Date.now() - new Date(state.timer.startedAt).getTime()) / 1000));
+}
+
+/** Seconds of presence on the shift — live while it is open, fixed once closed. */
+export function shiftSeconds() {
+  const s = state.shift;
+  if (!s) return 0;
+  if (!s.open) return s.presentMinutes * 60;
+  return Math.max(0, Math.round((Date.now() - new Date(s.startedAt).getTime()) / 1000));
+}
+
+/**
+ * Presence accounted for by clocked work, as of this instant.
+ *
+ * The server's figure is true as of the last load. Between loads the only
+ * thing that can add to it is the clock that was already running — every other
+ * way of logging time reloads the workspace — so attributed presence tracks
+ * the running timer second for second. That is what holds the gap still while
+ * a clock runs and lets it grow only when nothing is running, which is the one
+ * honest way to read it.
+ */
+export function shiftAttributedSeconds() {
+  const s = state.shift;
+  if (!s) return 0;
+  const since = s.open && state.timer ? Math.max(0, Date.now() - state.loadedAt) / 1000 : 0;
+  return Math.min(s.attributedMinutes * 60 + since, shiftSeconds());
 }
 
 /* -------------------------------------------------------------- actions -- */
@@ -104,6 +137,18 @@ export async function stopTimer() {
 export async function discardTimer() {
   await api.discardTimer();
   await load();
+}
+
+export async function clockIn(note) {
+  const res = await api.clockIn(note ? { note } : undefined);
+  await load();
+  return res.shift;
+}
+
+export async function clockOut() {
+  const res = await api.clockOut();
+  await load();
+  return res;
 }
 
 export async function saveTask(id, patch) {
@@ -143,6 +188,18 @@ export async function removeProject(id) {
   const res = await api.deleteProject(id);
   await load();
   return res;
+}
+
+/**
+ * Add or edit a member of the team. Goes through the store rather than
+ * straight to the API so `state.users` reloads with them in it — otherwise a
+ * new person is missing from every assignee, timesheet and report picker until
+ * someone thinks to reload the page.
+ */
+export async function saveUser(id, patch) {
+  const res = id ? await api.updateUser(id, patch) : await api.createUser(patch);
+  await load();
+  return res.user;
 }
 
 export async function saveMe(patch) {

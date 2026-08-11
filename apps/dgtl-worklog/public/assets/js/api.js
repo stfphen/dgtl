@@ -67,6 +67,9 @@ export const api = {
   stopTimer: () => call('POST', '/api/timer/stop'),
   discardTimer: () => call('POST', '/api/timer/discard'),
 
+  clockIn: (data) => call('POST', '/api/shift/in', data),
+  clockOut: () => call('POST', '/api/shift/out'),
+
   suggestions: () => call('GET', '/api/suggestions'),
 
   report: (params) => call('GET', `/api/report${qs(params)}`),

@@ -86,6 +86,30 @@ CREATE TABLE IF NOT EXISTS timers (
   started_at TEXT    NOT NULL
 );
 
+-- Attendance, which is deliberately not work. A shift records only that someone
+-- was here between two instants: it carries no project and no task, and nothing
+-- in the app sums minutes out of it, so shift time cannot reach a project
+-- total, a report or an invoice. Double counting is impossible because there is
+-- no column here that any of those queries could add up.
+--
+-- Unattributed presence — the part of a shift no time entry covers — is
+-- computed against time_entries on every read and never stored, the same rule
+-- that keeps streaks and budgets honest after an edit.
+--
+-- The partial unique index IS the one-open-shift-per-person rule: a second open
+-- row is refused by the database rather than by whoever remembered to look
+-- first, so two taps racing each other cannot leave a person clocked in twice.
+CREATE TABLE IF NOT EXISTS shifts (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  date       TEXT    NOT NULL,   -- YYYY-MM-DD in APP_TIMEZONE, of started_at
+  started_at TEXT    NOT NULL,
+  ended_at   TEXT,               -- NULL while the shift is open
+  note       TEXT    NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_shifts_open ON shifts(user_id) WHERE ended_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_shifts_user_date ON shifts(user_id, date);
+
 CREATE TABLE IF NOT EXISTS sessions (
   token_hash TEXT    PRIMARY KEY,
   user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

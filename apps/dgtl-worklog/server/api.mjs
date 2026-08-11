@@ -195,6 +195,78 @@ function stopTimer(userId, { discard = false } = {}) {
   });
 }
 
+// ------------------------------------------------------------------- shifts
+
+/** The shift the client should be looking at: the open one, else the last. */
+const currentShift = (userId) =>
+  one('SELECT * FROM shifts WHERE user_id = ? AND ended_at IS NULL', userId)
+  || one('SELECT * FROM shifts WHERE user_id = ? ORDER BY id DESC LIMIT 1', userId);
+
+/**
+ * Reconcile a shift against the work filed inside it. Computed on every read
+ * and never stored, so an entry corrected three weeks later moves these
+ * numbers exactly the way it moves a streak or a budget bar.
+ *
+ * A time entry accounts for presence up to the span it actually covers inside
+ * the shift, and no further than the minutes it claims — min(claimed,
+ * covered). That clamp is what makes present >= attributed true by
+ * construction rather than by care: covered spans cannot overlap each other
+ * (one timer per person, and opening one banks the last), so they cannot sum
+ * past the window that contains them, whichever way an entry is edited after.
+ */
+function shiftView(s) {
+  if (!s) return null;
+  const start = Date.parse(s.started_at);
+  const end = s.ended_at ? Date.parse(s.ended_at) : Date.now();
+  const endISO = s.ended_at || new Date(end).toISOString();
+
+  // Timer segments only. A manual block carries no window, so nothing places it
+  // inside the presence — it is reported apart, below, rather than silently
+  // swelling the gap until the number is so wrong nobody looks at it.
+  let attributedMs = 0;
+  for (const e of all(`
+    SELECT minutes, started_at, ended_at FROM time_entries
+     WHERE user_id = ? AND started_at IS NOT NULL AND ended_at IS NOT NULL
+       AND started_at < ? AND ended_at > ?`, s.user_id, endISO, s.started_at)) {
+    const covered = Math.min(Date.parse(e.ended_at), end) - Math.max(Date.parse(e.started_at), start);
+    if (covered > 0) attributedMs += Math.min(e.minutes * 60000, covered);
+  }
+
+  // The running timer has not written its entry yet. Counting the part of it
+  // that falls inside the shift is what holds the gap still while a clock is
+  // running, instead of growing it a minute a minute against work plainly
+  // being done — and it is zero at clock-out, which banks first.
+  const t = one('SELECT started_at FROM timers WHERE user_id = ?', s.user_id);
+  if (t) {
+    const covered = Math.min(Date.now(), end) - Math.max(Date.parse(t.started_at), start);
+    if (covered > 0) attributedMs += covered;
+  }
+
+  const presentMinutes = Math.max(0, Math.round((end - start) / 60000));
+  // The min is unreachable through any route, because no route can produce two
+  // overlapping segments. It is here so a hand-edited database reports a gap of
+  // zero rather than a negative one that would read as time owed back.
+  const attributedMinutes = Math.min(presentMinutes, Math.round(attributedMs / 60000));
+
+  const endedDate = s.ended_at ? localDate(new Date(end)) : null;
+  const unplaced = one(`
+    SELECT COALESCE(SUM(minutes), 0) AS minutes FROM time_entries
+     WHERE user_id = ? AND (started_at IS NULL OR ended_at IS NULL) AND date BETWEEN ? AND ?`,
+    s.user_id, s.date, endedDate || localDate(new Date(end))).minutes;
+
+  return {
+    id: s.id, date: s.date, endedDate, startedAt: s.started_at, endedAt: s.ended_at,
+    note: s.note, open: !s.ended_at,
+    presentMinutes,
+    attributedMinutes,
+    unattributedMinutes: presentMinutes - attributedMinutes,
+    // Hours logged by hand on these dates. They carry no start and end, so
+    // nothing can place them inside the presence; they explain a gap without
+    // being counted as closing it.
+    unplacedMinutes: unplaced,
+  };
+}
+
 // ------------------------------------------------------------------ reports
 
 /**
@@ -337,6 +409,9 @@ route('GET', '/api/bootstrap', ({ req }) => {
     unassigned: unassignedTotals(),
     tasks: listTasks(),
     timer: runningTimer(user.id),
+    // Attendance runs alongside the timer, never instead of it — the client has
+    // to know on a cold start whether this person is on the clock at all.
+    shift: shiftView(currentShift(user.id)),
     todayEntries: all(`${ENTRY_SELECT} WHERE e.user_id = ? AND e.date = ? ORDER BY e.id DESC`,
       user.id, today).map(entryRow),
   };
@@ -648,6 +723,42 @@ route('POST', '/api/timer/discard', ({ req }) => {
   const user = requireUser(req);
   stopTimer(user.id, { discard: true });
   return { timer: null };
+});
+
+// --- shifts: attendance, which is not a timer ---
+route('POST', '/api/shift/in', ({ req, body }) => {
+  const user = requireUser(req);
+  if (one('SELECT id FROM shifts WHERE user_id = ? AND ended_at IS NULL', user.id)) {
+    throw bad('You are already clocked in — clock out first');
+  }
+
+  const startedAt = nowISO();
+  try {
+    run('INSERT INTO shifts (user_id, date, started_at, note) VALUES (?, ?, ?, ?)',
+      user.id, localDate(new Date(startedAt)), startedAt, str(body.note, { name: 'Note', max: 500 }));
+  } catch (err) {
+    // The same refusal arriving from the partial unique index instead, when two
+    // taps race the check above. The index is the rule; this is its manners.
+    if (/UNIQUE/i.test(String(err.message))) throw bad('You are already clocked in — clock out first');
+    throw err;
+  }
+  return { shift: shiftView(currentShift(user.id)) };
+});
+
+route('POST', '/api/shift/out', ({ req }) => {
+  const user = requireUser(req);
+  const s = one('SELECT * FROM shifts WHERE user_id = ? AND ended_at IS NULL', user.id);
+  if (!s) throw new HttpError(404, 'You are not clocked in');
+
+  // Banked before the shift closes, so the segment ends no later than the
+  // presence containing it. A timer left running past clock-out would go on
+  // counting time nobody was here for, and none of it could be attributed.
+  const banked = stopTimer(user.id);
+  run('UPDATE shifts SET ended_at = ? WHERE id = ?', nowISO(), s.id);
+  return {
+    shift: shiftView(one('SELECT * FROM shifts WHERE id = ?', s.id)),
+    banked: banked ? entryRow(banked) : null,
+  };
 });
 
 // --- reports ---
