@@ -315,13 +315,23 @@ function runningTimer(userId) {
 /**
  * Stop the running timer and write it to time_entries.
  * Under a minute is discarded — a mis-click should not litter the timesheet.
+ *
+ * Floored, not rounded, and the entry ends where the billed minutes end rather
+ * than where the clock was stopped. Rounding billed a whole minute for any
+ * stretch over thirty seconds, which nobody noticed while a chip re-labelled
+ * instead of banking: one entry a session absorbed it. Now every chip tap
+ * banks, so eight taps half a minute apart billed eight minutes inside four —
+ * and the reconciliation could not report it, because it measures the window
+ * and the window was honest. Flooring makes the claim and the window the same
+ * fact, which is what lets an overrun be seen at all.
  */
 function stopTimer(userId, { discard = false } = {}) {
   const t = one('SELECT * FROM timers WHERE user_id = ?', userId);
   if (!t) return null;
 
-  const endedAt = new Date();
-  const minutes = Math.round((endedAt.getTime() - new Date(t.started_at).getTime()) / 60000);
+  const startedMs = new Date(t.started_at).getTime();
+  const minutes = Math.floor((Date.now() - startedMs) / 60000);
+  const endedAt = new Date(startedMs + minutes * 60000);
 
   return tx(() => {
     run('DELETE FROM timers WHERE user_id = ?', userId);
@@ -341,10 +351,19 @@ function stopTimer(userId, { discard = false } = {}) {
 
 // ------------------------------------------------------------------- shifts
 
-/** The shift the client should be looking at: the open one, else the last. */
-const currentShift = (userId) =>
-  one('SELECT * FROM shifts WHERE user_id = ? AND ended_at IS NULL', userId)
-  || one('SELECT * FROM shifts WHERE user_id = ? ORDER BY id DESC LIMIT 1', userId);
+/**
+ * Every shift belonging to a person's day, oldest first — clocking out for
+ * lunch and back in is two of them, and reporting only the newest hid the
+ * morning and its gap behind the afternoon. An open shift is always included
+ * whatever day it began on, and a shift that began yesterday and ended this
+ * morning belongs to both, which is why the range is widened by a day and then
+ * filtered on the local dates shiftView derives.
+ */
+const shiftsForDay = (userId, today) => all(
+  `SELECT * FROM shifts
+    WHERE user_id = ? AND (ended_at IS NULL OR date BETWEEN ? AND ?)
+    ORDER BY started_at ASC, id ASC`, userId, addDays(today, -1), today,
+).map(shiftView).filter((s) => s.open || s.date === today || s.endedDate === today);
 
 /**
  * Reconcile a shift against the work filed inside it. Computed on every read
@@ -357,6 +376,11 @@ const currentShift = (userId) =>
  * construction rather than by care: covered spans cannot overlap each other
  * (one timer per person, and opening one banks the last), so they cannot sum
  * past the window that contains them, whichever way an entry is edited after.
+ *
+ * That clamp is also why attributed alone is not a gap report. It can only
+ * ever point one way — it is structurally incapable of saying the timesheet
+ * bills MORE than the presence, which is the direction that reaches a client.
+ * So the claim is counted a second time, unclamped, and the overrun stated.
  */
 function shiftView(s) {
   if (!s) return null;
@@ -365,15 +389,31 @@ function shiftView(s) {
   const endISO = s.ended_at || new Date(end).toISOString();
 
   // Timer segments only. A manual block carries no window, so nothing places it
-  // inside the presence — it is reported apart, below, rather than silently
-  // swelling the gap until the number is so wrong nobody looks at it.
+  // inside the presence — it is reported apart, at the level of the day, rather
+  // than silently swelling one shift's gap.
   let attributedMs = 0;
+  let claimedMs = 0;
   for (const e of all(`
     SELECT minutes, started_at, ended_at FROM time_entries
      WHERE user_id = ? AND started_at IS NOT NULL AND ended_at IS NOT NULL
        AND started_at < ? AND ended_at > ?`, s.user_id, endISO, s.started_at)) {
     const covered = Math.min(Date.parse(e.ended_at), end) - Math.max(Date.parse(e.started_at), start);
-    if (covered > 0) attributedMs += Math.min(e.minutes * 60000, covered);
+    if (covered <= 0) continue;
+    attributedMs += Math.min(e.minutes * 60000, covered);
+    // What the timesheet bills for this stretch, counted against this presence:
+    // the part with a clock behind it, clamped to the overlap, PLUS any part
+    // claiming more minutes than its own window ever ran for. A stretch that
+    // merely straddles clock-in is not an overclaim — its far half is real work
+    // in another part of the day — so only the unbacked excess crosses over.
+    //
+    // And the excess is counted by exactly one shift: the one holding the
+    // instant the stretch began, the same rule that decides which day it files
+    // under. Minutes claimed with no clock behind them have no position in
+    // time, so a stretch worked through lunch would otherwise hand the whole
+    // of its excess to the morning AND the afternoon and report it twice.
+    const unbacked = Math.max(0, e.minutes * 60000 - (Date.parse(e.ended_at) - Date.parse(e.started_at)));
+    const beganHere = Date.parse(e.started_at) >= start && Date.parse(e.started_at) < end;
+    claimedMs += Math.min(e.minutes * 60000, covered) + (beganHere ? unbacked : 0);
   }
 
   // The running timer has not written its entry yet. Counting the part of it
@@ -383,7 +423,7 @@ function shiftView(s) {
   const t = one('SELECT started_at FROM timers WHERE user_id = ?', s.user_id);
   if (t) {
     const covered = Math.min(Date.now(), end) - Math.max(Date.parse(t.started_at), start);
-    if (covered > 0) attributedMs += covered;
+    if (covered > 0) { attributedMs += covered; claimedMs += covered; }
   }
 
   const presentMinutes = Math.max(0, Math.round((end - start) / 60000));
@@ -391,23 +431,20 @@ function shiftView(s) {
   // overlapping segments. It is here so a hand-edited database reports a gap of
   // zero rather than a negative one that would read as time owed back.
   const attributedMinutes = Math.min(presentMinutes, Math.round(attributedMs / 60000));
-
-  const endedDate = s.ended_at ? localDate(new Date(end)) : null;
-  const unplaced = one(`
-    SELECT COALESCE(SUM(minutes), 0) AS minutes FROM time_entries
-     WHERE user_id = ? AND (started_at IS NULL OR ended_at IS NULL) AND date BETWEEN ? AND ?`,
-    s.user_id, s.date, endedDate || localDate(new Date(end))).minutes;
+  const claimedMinutes = Math.round(claimedMs / 60000);
 
   return {
-    id: s.id, date: s.date, endedDate, startedAt: s.started_at, endedAt: s.ended_at,
+    id: s.id, date: s.date, endedDate: s.ended_at ? localDate(new Date(end)) : null,
+    startedAt: s.started_at, endedAt: s.ended_at,
     note: s.note, open: !s.ended_at,
     presentMinutes,
     attributedMinutes,
     unattributedMinutes: presentMinutes - attributedMinutes,
-    // Hours logged by hand on these dates. They carry no start and end, so
-    // nothing can place them inside the presence; they explain a gap without
-    // being counted as closing it.
-    unplacedMinutes: unplaced,
+    // What this presence bills, and by how much it bills more than there was
+    // presence to bill. Zero on every well-formed shift; above zero it is the
+    // only number here that a client would ever argue with.
+    claimedMinutes,
+    overclaimedMinutes: Math.max(0, claimedMinutes - presentMinutes),
   };
 }
 
@@ -554,8 +591,17 @@ route('GET', '/api/bootstrap', ({ req }) => {
     tasks: listTasks(),
     timer: runningTimer(user.id),
     // Attendance runs alongside the timer, never instead of it — the client has
-    // to know on a cold start whether this person is on the clock at all.
-    shift: shiftView(currentShift(user.id)),
+    // to know on a cold start whether this person is on the clock at all. All
+    // of the day's shifts, because clocking out for lunch makes two.
+    shifts: shiftsForDay(user.id, today),
+    // Blocks logged by hand today. They carry no start and end, so nothing can
+    // place them inside any one shift — reporting them per shift let two
+    // shifts on a date each claim the same block as their own, and measured
+    // them against a presence they were never inside. They belong to the day.
+    unplacedMinutes: one(`
+      SELECT COALESCE(SUM(minutes), 0) AS minutes FROM time_entries
+       WHERE user_id = ? AND date = ? AND (started_at IS NULL OR ended_at IS NULL)`,
+      user.id, today).minutes,
     todayEntries: all(`${ENTRY_SELECT} WHERE e.user_id = ? AND e.date = ? ORDER BY e.id DESC`,
       user.id, today).map(entryRow),
   };
@@ -815,8 +861,18 @@ route('GET', '/api/timer', ({ req }) => ({ timer: runningTimer(requireUser(req).
 
 route('POST', '/api/timer/start', ({ req, body }) => {
   const user = requireUser(req);
+  const prev = one('SELECT started_at FROM timers WHERE user_id = ?', user.id);
   // Starting a second timer banks the first rather than losing it.
   const banked = stopTimer(user.id);
+
+  // The new stretch picks up exactly where the last one's BILLED minutes ended,
+  // not at this instant. The seconds the floor above left behind are still work
+  // — they carry into what was tapped next instead of being thrown away, and
+  // the entries end up tiling the session end to end with nothing lost between
+  // them. When the interrupted stretch was too short to bank at all, that is
+  // the whole of it: those seconds move to the new project rather than billing
+  // a full minute to one nobody worked a minute on.
+  const resume = banked ? banked.ended_at : (prev ? prev.started_at : nowISO());
 
   run(`INSERT INTO timers (user_id, project_id, task_id, note, billable, started_at)
        VALUES (?, ?, ?, ?, ?, ?)
@@ -828,7 +884,7 @@ route('POST', '/api/timer/start', ({ req, body }) => {
     int(body.taskId, { name: 'Task', nullable: true }),
     str(body.note, { name: 'Note', max: 500 }),
     bool01(body.billable, 1),
-    nowISO(),
+    resume,
   );
 
   // Picking up a to-do implies it is in progress.
@@ -899,7 +955,7 @@ route('POST', '/api/shift/in', ({ req, body }) => {
     if (/UNIQUE/i.test(String(err.message))) throw bad('You are already clocked in — clock out first');
     throw err;
   }
-  return { shift: shiftView(currentShift(user.id)) };
+  return { shift: shiftView(one('SELECT * FROM shifts WHERE user_id = ? AND ended_at IS NULL', user.id)) };
 });
 
 route('POST', '/api/shift/out', ({ req }) => {
@@ -916,6 +972,92 @@ route('POST', '/api/shift/out', ({ req }) => {
     shift: shiftView(one('SELECT * FROM shifts WHERE id = ?', s.id)),
     banked: banked ? entryRow(banked) : null,
   };
+});
+
+/**
+ * Attendance over a range. PATCH and DELETE take an id, and the bootstrap
+ * payload only ever carries today's — so without this, a clock-out forgotten
+ * last Tuesday has an id nothing can tell you, and stays wrong forever.
+ * Same scoping rules as /api/entries, down to validating the user id rather
+ * than coercing it.
+ */
+route('GET', '/api/shifts', ({ req, query }) => {
+  const user = requireUser(req);
+  const to = dateOr(query.get('to'), localDate());
+  const from = dateOr(query.get('from'), addDays(to, -30));
+  const scope = query.get('scope') === 'team' ? 'team' : 'me';
+  const asked = query.get('userId');
+  const userId = scope === 'team' ? null : (asked ? int(asked, { name: 'User', min: 1 }) : user.id);
+
+  const rows = userId
+    ? all('SELECT * FROM shifts WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY started_at DESC, id DESC',
+      userId, from, to)
+    : all('SELECT * FROM shifts WHERE date BETWEEN ? AND ? ORDER BY started_at DESC, id DESC', from, to);
+  return { shifts: rows.map(shiftView), range: { from, to } };
+});
+
+/** ISO instant, validated. Shifts are the one place the client sends one. */
+const instant = (v, { name }) => {
+  const ms = Date.parse(String(v));
+  if (Number.isNaN(ms)) throw bad(`${name} is not a valid date and time`);
+  return new Date(ms).toISOString();
+};
+
+const MAX_SHIFT_MS = 24 * 60 * 60000;
+
+/**
+ * Correct a shift after the fact. Time entries have always been editable and
+ * the whole read-time reconciliation leans on that; the presence they are
+ * measured against was write-once, so a clock-out forgotten overnight reported
+ * nineteen hours with no cap, no warning and no way back short of raw SQL.
+ */
+route('PATCH', '/api/shift/:id', ({ req, body, params }) => {
+  const user = requireUser(req);
+  const s = one('SELECT * FROM shifts WHERE id = ?', params.id);
+  if (!s) throw new HttpError(404, 'Shift not found');
+  if (!canEditFor(user, s.user_id)) throw new HttpError(403, 'You can only edit your own attendance');
+
+  const startedAt = body.startedAt === undefined ? s.started_at : instant(body.startedAt, { name: 'Start' });
+  // null reopens a shift; undefined leaves it as it was.
+  const endedAt = body.endedAt === undefined ? s.ended_at
+    : (body.endedAt === null ? null : instant(body.endedAt, { name: 'End' }));
+
+  if (endedAt) {
+    if (Date.parse(endedAt) <= Date.parse(startedAt)) throw bad('A shift has to end after it starts');
+    if (Date.parse(endedAt) - Date.parse(startedAt) > MAX_SHIFT_MS) throw bad('A shift cannot run longer than 24 hours');
+  }
+  // Reopening one while another is open leaves this person clocked in twice,
+  // which the partial unique index refuses anyway — said plainly here instead.
+  if (!endedAt && one('SELECT id FROM shifts WHERE user_id = ? AND ended_at IS NULL AND id <> ?', s.user_id, s.id)) {
+    throw bad('Another shift is still open — close that one first');
+  }
+  // Presence cannot happen twice at once. Overlapping shifts would let the same
+  // minute be reconciled against both and counted as covered in each.
+  const clash = one(`
+    SELECT id FROM shifts
+     WHERE user_id = ? AND id <> ?
+       AND started_at < ? AND COALESCE(ended_at, ?) > ?`,
+    s.user_id, s.id,
+    endedAt || new Date(Date.parse(startedAt) + MAX_SHIFT_MS).toISOString(),
+    new Date(Date.now() + MAX_SHIFT_MS).toISOString(), startedAt);
+  if (clash) throw bad('That overlaps another shift already on this day');
+
+  run('UPDATE shifts SET started_at = ?, ended_at = ?, date = ?, note = ? WHERE id = ?',
+    startedAt, endedAt, localDate(new Date(startedAt)),
+    body.note === undefined ? s.note : str(body.note, { name: 'Note', max: 500 }),
+    s.id);
+  return { shift: shiftView(one('SELECT * FROM shifts WHERE id = ?', s.id)) };
+});
+
+route('DELETE', '/api/shift/:id', ({ req, params }) => {
+  const user = requireUser(req);
+  const s = one('SELECT * FROM shifts WHERE id = ?', params.id);
+  if (!s) throw new HttpError(404, 'Shift not found');
+  if (!canEditFor(user, s.user_id)) throw new HttpError(403, 'You can only delete your own attendance');
+  // No entry references a shift, so removing one drops a record of presence and
+  // not a minute of anybody's logged work.
+  run('DELETE FROM shifts WHERE id = ?', s.id);
+  return { ok: true };
 });
 
 // --- reports ---

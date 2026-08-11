@@ -14,8 +14,13 @@ export const state = {
   tasks: [],
   timer: null,
   // Attendance, separate from the timer on purpose: one says you are here, the
-  // other says what you are doing. Null until someone has ever clocked in.
-  shift: null,
+  // other says what you are doing. All of the day's, oldest first — clocking
+  // out for lunch and back in is two, and only ever showing the newest hid the
+  // morning and its gap behind the afternoon.
+  shifts: [],
+  // Blocks logged by hand today, which carry no start and end. A property of
+  // the day, not of any one shift: nothing can place them inside a presence.
+  unplacedMinutes: 0,
   todayEntries: [],
   // Time on no project at all. Project rows cannot carry it, so the Projects
   // screen states it rather than quietly leaving it out of its totals.
@@ -47,7 +52,8 @@ export async function load() {
     unassigned: data.unassigned ?? { minutes: 0, billableMinutes: 0 },
     tasks: data.tasks,
     timer: data.timer,
-    shift: data.shift ?? null,
+    shifts: data.shifts ?? [],
+    unplacedMinutes: data.unplacedMinutes ?? 0,
     todayEntries: data.todayEntries,
     today: data.today,
     weekStartDate: data.weekStartDate,
@@ -81,9 +87,11 @@ export function timerSeconds() {
   return Math.max(0, Math.round((Date.now() - new Date(state.timer.startedAt).getTime()) / 1000));
 }
 
-/** Seconds of presence on the shift — live while it is open, fixed once closed. */
-export function shiftSeconds() {
-  const s = state.shift;
+/** The shift still running, if any. At most one, enforced by the database. */
+export const openShift = () => state.shifts.find((s) => s.open) || null;
+
+/** Seconds of presence on a shift — live while it is open, fixed once closed. */
+export function shiftSeconds(s) {
   if (!s) return 0;
   if (!s.open) return s.presentMinutes * 60;
   return Math.max(0, Math.round((Date.now() - new Date(s.startedAt).getTime()) / 1000));
@@ -99,12 +107,15 @@ export function shiftSeconds() {
  * a clock runs and lets it grow only when nothing is running, which is the one
  * honest way to read it.
  */
-export function shiftAttributedSeconds() {
-  const s = state.shift;
+export function shiftAttributedSeconds(s) {
   if (!s) return 0;
   const since = s.open && state.timer ? Math.max(0, Date.now() - state.loadedAt) / 1000 : 0;
-  return Math.min(s.attributedMinutes * 60 + since, shiftSeconds());
+  return Math.min(s.attributedMinutes * 60 + since, shiftSeconds(s));
 }
+
+/** Presence across the whole day, closed shifts and the open one together. */
+export const dayPresenceSeconds = () => state.shifts.reduce((n, s) => n + shiftSeconds(s), 0);
+export const dayAttributedSeconds = () => state.shifts.reduce((n, s) => n + shiftAttributedSeconds(s), 0);
 
 /* -------------------------------------------------------------- actions -- */
 /* Each action calls the API, then reloads the parts that changed. Reloading
@@ -143,6 +154,17 @@ export async function clockIn(note) {
   const res = await api.clockIn(note ? { note } : undefined);
   await load();
   return res.shift;
+}
+
+export async function saveShift(id, patch) {
+  const res = await api.updateShift(id, patch);
+  await load();
+  return res.shift;
+}
+
+export async function removeShift(id) {
+  await api.deleteShift(id);
+  await load();
 }
 
 export async function clockOut() {

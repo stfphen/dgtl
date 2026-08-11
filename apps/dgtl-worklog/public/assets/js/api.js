@@ -69,6 +69,8 @@ export const api = {
 
   clockIn: (data) => call('POST', '/api/shift/in', data),
   clockOut: () => call('POST', '/api/shift/out'),
+  updateShift: (id, patch) => call('PATCH', `/api/shift/${id}`, patch),
+  deleteShift: (id) => call('DELETE', `/api/shift/${id}`),
 
   suggestions: () => call('GET', '/api/suggestions'),
 

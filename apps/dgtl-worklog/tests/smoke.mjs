@@ -681,10 +681,15 @@ try {
   ok('clocking in twice is refused', (await call('POST', '/api/shift/in')).status === 400);
 
   const sBoot = (await call('GET', '/api/bootstrap')).body;
-  ok('bootstrap carries the open shift on a cold start',
-    sBoot.shift?.id === cin.body.shift.id && sBoot.shift.open === true, JSON.stringify(sBoot.shift));
+  ok('bootstrap carries the day\'s shifts on a cold start',
+    Array.isArray(sBoot.shifts) && sBoot.shifts.length === 1
+    && sBoot.shifts[0].id === cin.body.shift.id && sBoot.shifts[0].open === true,
+    JSON.stringify(sBoot.shifts));
   ok('an open shift starts with nothing attributed and the whole of it in the gap',
-    sBoot.shift.attributedMinutes === 0 && sBoot.shift.unattributedMinutes === sBoot.shift.presentMinutes);
+    sBoot.shifts[0].attributedMinutes === 0
+    && sBoot.shifts[0].unattributedMinutes === sBoot.shifts[0].presentMinutes);
+  ok('and nothing overclaimed',
+    sBoot.shifts[0].claimedMinutes === 0 && sBoot.shifts[0].overclaimedMinutes === 0);
 
   // The check in the route is manners. The partial unique index is the rule,
   // and two requests never race each other inside a test, so it is asserted
@@ -716,7 +721,7 @@ try {
     w('UPDATE timers SET started_at = ? WHERE user_id = ?',
       new Date(halfway - 30 * 60000).toISOString(), shiftUid);
   });
-  const midRun = (await call('GET', '/api/bootstrap')).body.shift;
+  const midRun = (await call('GET', '/api/bootstrap')).body.shifts[0];
   ok('a clock still running counts against the presence it is inside',
     midRun.presentMinutes === 60 && midRun.attributedMinutes === 30 && midRun.unattributedMinutes === 30,
     JSON.stringify(midRun));
@@ -799,6 +804,171 @@ try {
     (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length === beforeInstant);
   await call('POST', '/api/timer/discard');
 
+  console.log('\nthe verb a chip has to use');
+  // The defect this whole feature exists to fix lives in client code the suite
+  // never loads, so reverting the chip handler to PATCH left every assertion
+  // green. Both verbs are pinned here instead: what SWITCH must do, what
+  // RELABEL must not, and — below — that the client still calls the right one.
+  await call('POST', '/api/timer/start', { projectId: P1, note: 'ninety seconds of A' });
+  sql((w) => w('UPDATE timers SET started_at = ? WHERE user_id = ?',
+    new Date(Date.now() - 90 * 1000).toISOString(), shiftUid));
+  const verb = await call('POST', '/api/timer/start', { projectId: P2, note: 'now on B' });
+  ok('SWITCH banks the interrupted stretch against the project it was worked on',
+    verb.body.banked?.projectId === P1 && verb.body.banked?.minutes >= 1,
+    JSON.stringify(verb.body.banked));
+  ok('and the new clock does not carry the banked stretch\'s start',
+    verb.body.timer.startedAt !== verb.body.banked.startedAt,
+    `${verb.body.timer.startedAt} vs ${verb.body.banked.startedAt}`);
+  ok('it resumes exactly where the banked minutes ended, so no second is lost or doubled',
+    verb.body.timer.startedAt === verb.body.banked.endedAt,
+    `${verb.body.timer.startedAt} vs ${verb.body.banked.endedAt}`);
+
+  // The negative control, and the reason a chip must never use this route: a
+  // PATCH moves the project and banks nothing, so every minute already elapsed
+  // silently re-files to whoever was tapped last, and then gets invoiced.
+  const pStart = verb.body.timer.startedAt;
+  const pCount = (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length;
+  const patched = await call('PATCH', '/api/timer', { projectId: P1 });
+  ok('RELABEL moves the project without banking anything — which is the bug, pinned',
+    patched.body.timer.projectId === P1 && patched.body.timer.startedAt === pStart
+    && (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length === pCount,
+    'PATCH banked something, or moved the start');
+  await call('POST', '/api/timer/discard');
+
+  // Which leaves one thing the API cannot see: whether the chips still call the
+  // right one. Read the source and check. A rename will trip this, and that is
+  // the point — the next person gets a failing test naming the invariant
+  // instead of a client silently re-filing somebody's morning again.
+  const quickSrc = fs.readFileSync(path.join(APP_DIR, 'public/assets/js/views/quick.js'), 'utf8');
+
+  // Anything that changes what the running time is FOR — a project or a task —
+  // has to go through the switch. Duration presets are not in this set: they
+  // set neither, they log a block.
+  const retag = [...quickSrc.matchAll(/onclick:\s*\(\)\s*=>\s*(\w+)\(\{[^}]*(?:projectId|taskId)/g)]
+    .map((m) => m[1]);
+  ok('every handler that re-tags the running time switches rather than re-labels',
+    retag.length >= 3 && retag.every((fn) => fn === 'switchTo'),
+    retag.join(', ') || 'no re-tagging handlers found — has the shape changed?');
+
+  // And the switch must not be a re-label wearing its name. Exactly one call to
+  // updateTimer in the file, inside relabel — this is the assertion that fails
+  // if switchTo's body is quietly turned back into a PATCH.
+  const relabelBody = quickSrc.slice(quickSrc.indexOf('async function relabel('))
+    .split(/\n {2}(?:\/\*\*|async function |function )/)[0];
+  ok('and Quick log re-labels in exactly one place, the label field',
+    (quickSrc.match(/updateTimer\(/g) || []).length === 1 && relabelBody.includes('updateTimer('),
+    `${(quickSrc.match(/updateTimer\(/g) || []).length} calls to updateTimer, `
+    + `${relabelBody.includes('updateTimer(') ? 'in' : 'NOT in'} relabel`);
+  ok('and the switch opens a new stretch rather than patching the running one',
+    /async function switchTo\([\s\S]*?startTimer\(/.test(quickSrc),
+    'switchTo no longer calls startTimer');
+
+  console.log('\nwhat a stretch is allowed to bill');
+  // Rounding billed a whole minute for anything over thirty seconds. That was
+  // harmless while a chip re-labelled and one entry a session absorbed it; now
+  // every tap banks, so it became a systematic overbill nothing on screen could
+  // report. Flooring is what makes the claim and the window the same fact.
+  const bill = async (seconds, projectId, note) => {
+    await call('POST', '/api/timer/start', { projectId, note });
+    sql((w) => w('UPDATE timers SET started_at = ? WHERE user_id = ?',
+      new Date(Date.now() - seconds * 1000).toISOString(), shiftUid));
+    return (await call('POST', '/api/timer/stop')).body;
+  };
+  const half = await bill(31, P1, 'thirty-one seconds');
+  ok('a thirty-one second stretch bills nothing, not a whole minute',
+    half.entry === null && half.discarded === true, JSON.stringify(half.entry));
+  const justOver = await bill(91, P1, 'ninety-one seconds');
+  ok('a ninety-one second stretch bills one minute, not two',
+    justOver.entry?.minutes === 1, String(justOver.entry?.minutes));
+  ok('and the entry ends where its billed minutes end, not where the clock stopped',
+    Date.parse(justOver.entry.endedAt) - Date.parse(justOver.entry.startedAt) === 60000,
+    `${(Date.parse(justOver.entry.endedAt) - Date.parse(justOver.entry.startedAt)) / 1000}s of window for 1m billed`);
+
+  // The seconds the floor leaves behind are still work. They carry into
+  // whatever was tapped next instead of being thrown away — which is also why
+  // a switch inside the first minute moves them to the new project rather than
+  // billing a full minute to one nobody worked a minute on.
+  const carryStart = await call('POST', '/api/timer/start', { projectId: P1, note: 'carried from here' });
+  sql((w) => w('UPDATE timers SET started_at = ? WHERE user_id = ?',
+    new Date(Date.now() - 40 * 1000).toISOString(), shiftUid));
+  const carryTap = await call('POST', '/api/timer/start', { projectId: P2, note: 'carried to here' });
+  ok('a switch inside the first minute banks nothing', carryTap.body.banked === null);
+  ok('and the new stretch resumes from where the old one started, not from now',
+    Date.parse(carryTap.body.timer.startedAt) <= Date.now() - 39 * 1000,
+    `${Math.round((Date.now() - Date.parse(carryTap.body.timer.startedAt)) / 1000)}s of carried time`);
+  sql((w) => w('UPDATE timers SET started_at = ? WHERE user_id = ?',
+    new Date(Date.parse(carryTap.body.timer.startedAt) - 80 * 1000).toISOString(), shiftUid));
+  const settled = await call('POST', '/api/timer/stop');
+  ok('forty seconds then eighty bills two minutes, all of it to the second project',
+    settled.body.entry?.minutes === 2 && settled.body.entry?.projectId === P2,
+    JSON.stringify({ minutes: settled.body.entry?.minutes, project: settled.body.entry?.projectName }));
+  ok('and nothing at all is billed to the project that ran under a minute',
+    !(await call('GET', '/api/entries?from=1970-01-01')).body.entries
+      .some((e) => e.note === 'carried from here'), 'an entry exists for the abandoned stretch');
+  ok('the carried stretch starts where the resumed clock was put, losing nothing',
+    Date.parse(settled.body.entry.startedAt) === Date.parse(carryTap.body.timer.startedAt) - 80 * 1000,
+    `${settled.body.entry.startedAt} vs ${carryTap.body.timer.startedAt} less 80s`);
+
+  // Every stretch above was backdated into the same few minutes so it could be
+  // billed and asserted on its own, and the chip-switch scenario left a banked
+  // hour ending at this instant. All of it lies across the window the run below
+  // needs. Clear this person's clocked work first, or what gets measured is the
+  // fixture rather than the rule — the invariants over it were asserted above.
+  sql((w) => w('DELETE FROM time_entries WHERE user_id = ? AND started_at IS NOT NULL', shiftUid));
+
+  /**
+   * Let `secs` of wall time pass, without waiting for it. Everything this
+   * session has written moves back together — the running clock, the entries
+   * already banked and the open shift — so every span keeps its length and
+   * every boundary keeps its order. Moving only the running clock, which is
+   * the obvious version, rewinds it INTO the entry just banked and fabricates
+   * an overlap that the run is supposed to be proving cannot happen.
+   */
+  const advance = (secs) => sql((w) => {
+    const back = `'-${secs} seconds'`;
+    w(`UPDATE timers SET started_at = strftime('%Y-%m-%dT%H:%M:%fZ', started_at, ${back}) WHERE user_id = ?`, shiftUid);
+    w(`UPDATE time_entries SET started_at = strftime('%Y-%m-%dT%H:%M:%fZ', started_at, ${back}),
+                               ended_at   = strftime('%Y-%m-%dT%H:%M:%fZ', ended_at, ${back})
+        WHERE user_id = ? AND started_at IS NOT NULL`, shiftUid);
+    w(`UPDATE shifts SET started_at = strftime('%Y-%m-%dT%H:%M:%fZ', started_at, ${back})
+        WHERE user_id = ? AND ended_at IS NULL`, shiftUid);
+  });
+
+  // Eight chip taps half a minute apart. Under rounding this billed eight
+  // minutes inside four — 194% — and no figure anywhere could say so.
+  await call('POST', '/api/shift/in');
+  await call('POST', '/api/timer/start', { projectId: P1, note: 'tap 0' });
+  for (let i = 1; i <= 8; i++) {
+    advance(31);
+    await call('POST', '/api/timer/start', { projectId: i % 2 ? P2 : P1, note: `tap ${i}` });
+  }
+  advance(31);
+  await call('POST', '/api/timer/stop');
+  const tapped = (await call('POST', '/api/shift/out')).body.shift;
+  const tappedRows = (await call('GET', '/api/entries?from=1970-01-01')).body.entries
+    .filter((e) => /^tap \d+$/.test(e.note));
+  const tappedBilled = tappedRows.reduce((s, e) => s + e.minutes, 0);
+  ok('nine stretches of thirty-one seconds never bill more than the presence',
+    tappedBilled <= tapped.presentMinutes,
+    `${tappedBilled}m billed inside ${tapped.presentMinutes}m — ${Math.round(tappedBilled / tapped.presentMinutes * 100)}%`);
+  ok('and the shift reports no overclaim',
+    tapped.overclaimedMinutes === 0 && tapped.claimedMinutes <= tapped.presentMinutes,
+    JSON.stringify(tapped));
+  const tappedSorted = [...tappedRows].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+  ok('the banked stretches tile the run end to end, none overlapping the next',
+    tappedSorted.every((e, i) => i === 0 || tappedSorted[i - 1].endedAt <= e.startedAt),
+    tappedSorted.map((e) => `${e.note}:${e.startedAt}→${e.endedAt}`).join(' '));
+  ok('and every one of them bills exactly the window it holds',
+    tappedRows.every((e) => Date.parse(e.endedAt) - Date.parse(e.startedAt) === e.minutes * 60000),
+    tappedRows.map((e) => `${e.minutes}m/${(Date.parse(e.endedAt) - Date.parse(e.startedAt)) / 1000}s`).join(' '));
+
+  // Fixtures below sit on dates that are not today, so the bootstrap payload —
+  // which carries only the day's shifts — correctly leaves them out. The range
+  // endpoint is how anything older is reachable at all, which is the whole
+  // reason it exists: PATCH and DELETE need an id from somewhere.
+  const readShift = async (date) =>
+    (await call('GET', `/api/shifts?from=${date}&to=${date}`)).body.shifts[0];
+
   /** Place a finished shift and the stretches inside it straight into the database. */
   const placeShift = (from, to, entries) => sql((w) => {
     w('INSERT INTO shifts (user_id, date, started_at, ended_at, note) VALUES (?, ?, ?, ?, ?)',
@@ -820,7 +990,7 @@ try {
     [atLocal(2026, 6, 10, 22, 40), atLocal(2026, 6, 10, 23, 40), P1],
     [atLocal(2026, 6, 11, 0, 10), atLocal(2026, 6, 11, 1, 10), P2],
   ]);
-  const mn = (await call('GET', '/api/bootstrap')).body.shift;
+  const mn = await readShift('2026-06-10');
   ok('a shift crossing midnight is filed on the day it began',
     mn.date === '2026-06-10' && mn.endedDate === '2026-06-11', `${mn.date} → ${mn.endedDate}`);
   ok('its presence is the real elapsed time', mn.presentMinutes === 180, String(mn.presentMinutes));
@@ -848,7 +1018,7 @@ try {
     [atLocal(2026, 3, 8, 1, 15), atLocal(2026, 3, 8, 1, 45), P1],
     [atLocal(2026, 3, 8, 3, 0), atLocal(2026, 3, 8, 3, 30), P2],
   ]);
-  const spring = (await call('GET', '/api/bootstrap')).body.shift;
+  const spring = await readShift('2026-03-08');
   ok('the hour that does not exist is not counted as presence',
     spring.presentMinutes === 120, `${spring.presentMinutes} — the wall clock says 180`);
   ok('attribution across the spring-forward step reconciles',
@@ -861,7 +1031,7 @@ try {
   ok('the autumn fixture really straddles the step',
     zoneLead(fallIn) !== zoneLead(fallOut), `${zoneLead(fallIn) / hour}h → ${zoneLead(fallOut) / hour}h`);
   placeShift(fallIn, fallOut, [[atLocal(2026, 11, 1, 0, 45), atLocal(2026, 11, 1, 1, 45), P1]]);
-  const fall = (await call('GET', '/api/bootstrap')).body.shift;
+  const fall = await readShift('2026-11-01');
   ok('the hour that happens twice is counted twice',
     fall.presentMinutes === 180, `${fall.presentMinutes} — the wall clock says 120`);
   ok('attribution across the fall-back step reconciles',
@@ -872,26 +1042,101 @@ try {
   console.log('\nwhat moves the gap');
   const fallEntry = (await call('GET', '/api/entries?from=2026-11-01&to=2026-11-01')).body.entries[0];
   await call('PATCH', `/api/entries/${fallEntry.id}`, { minutes: 10 });
-  const trimmed = (await call('GET', '/api/bootstrap')).body.shift;
+  const trimmed = await readShift('2026-11-01');
   ok('correcting an entry after clock-out moves the gap on the next read',
     trimmed.attributedMinutes === 10 && trimmed.unattributedMinutes === 170, JSON.stringify(trimmed));
 
   await call('PATCH', `/api/entries/${fallEntry.id}`, { minutes: 600 });
-  const inflated = (await call('GET', '/api/bootstrap')).body.shift;
+  const inflated = await readShift('2026-11-01');
   ok('an entry cannot account for more presence than the span it covers',
     inflated.attributedMinutes === 60 && inflated.unattributedMinutes === 120, JSON.stringify(inflated));
+  // PATCH /api/entries never touches started_at, so the window still says 60
+  // and the gap still says 120 — the report is unmoved while the invoice is
+  // ten hours. That is the second route to an overbill and the reason the
+  // claim is counted unclamped as well.
+  ok('but the ten hours it now bills against three is stated outright',
+    inflated.claimedMinutes === 600 && inflated.overclaimedMinutes === 420,
+    JSON.stringify({ claimed: inflated.claimedMinutes, over: inflated.overclaimedMinutes }));
+
+  // A stretch that merely straddles clock-in is not an overclaim: the part
+  // outside is real work in another part of the day, not minutes billed
+  // against this presence. Only a claim with no clock behind it crosses over.
+  //
+  // Three hours of work of which one falls inside a three-hour shift. Summing
+  // the whole of every overlapping entry — the obvious way to count a claim —
+  // reads 180 + 60 = 240 against 180 and cries overclaim on an ordinary
+  // morning that started before the clock-in. That figure would be wrong on so
+  // many days that it would join the list of things people scroll past, which
+  // is the failure mode this number exists to avoid.
+  await call('PATCH', `/api/entries/${fallEntry.id}`, { minutes: 60 });
+  sql((w) => w(`INSERT INTO time_entries
+      (user_id, project_id, date, minutes, note, billable, started_at, ended_at, source, created_at, updated_at)
+    VALUES (?, ?, '2026-11-01', 180, 'started before the clock-in', 1, ?, ?, 'timer', ?, ?)`,
+  shiftUid, P1, new Date(fallIn - 120 * 60000).toISOString(), new Date(fallIn + 60 * 60000).toISOString(),
+  new Date(fallIn).toISOString(), new Date(fallIn).toISOString()));
+  const straddle = await readShift('2026-11-01');
+  ok('a stretch straddling clock-in counts only the part inside',
+    straddle.attributedMinutes === 120 && straddle.claimedMinutes === 120,
+    JSON.stringify(straddle));
+  ok('and is no overclaim, however much of it lies outside',
+    straddle.overclaimedMinutes === 0,
+    `claimed ${straddle.claimedMinutes} against ${straddle.presentMinutes} present`);
+  sql((w) => w("DELETE FROM time_entries WHERE note = 'started before the clock-in'"));
+
+  // Minutes claimed with no clock behind them have no position in time, so
+  // exactly one shift may count them: the one holding the instant the stretch
+  // began, which is the same rule that decides the day it files under. A
+  // stretch worked through lunch overlaps the morning and the afternoon, and
+  // handing the excess to both reports one overbill as two.
+  const lunchIn = atLocal(2026, 7, 14, 9, 0);
+  const lunchOut = atLocal(2026, 7, 14, 12, 0);
+  const backIn = atLocal(2026, 7, 14, 13, 0);
+  const backOut = atLocal(2026, 7, 14, 17, 0);
+  placeShift(lunchIn, lunchOut, []);
+  placeShift(backIn, backOut, []);
+  sql((w) => w(`INSERT INTO time_entries
+      (user_id, project_id, date, minutes, note, billable, started_at, ended_at, source, created_at, updated_at)
+    VALUES (?, ?, '2026-07-14', 600, 'worked through lunch', 1, ?, ?, 'timer', ?, ?)`,
+  shiftUid, P1, new Date(atLocal(2026, 7, 14, 11, 0)).toISOString(),
+  new Date(atLocal(2026, 7, 14, 14, 0)).toISOString(),
+  new Date(lunchIn).toISOString(), new Date(lunchIn).toISOString()));
+  const spells = (await call('GET', '/api/shifts?from=2026-07-14&to=2026-07-14')).body.shifts
+    .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+  // Morning holds one of its three hours and the whole 420-minute excess:
+  // 60 + 420 billed against 180 present, so 300 over. The afternoon holds
+  // another hour of it and no excess at all, so nothing over.
+  ok('a stretch worked through lunch is billed against the spell it began in',
+    spells[0].overclaimedMinutes === 300 && spells[1].overclaimedMinutes === 0,
+    spells.map((x) => `${x.startedAt}: claimed ${x.claimedMinutes} over ${x.overclaimedMinutes}`).join(' · '));
+  ok('and each spell still counts the part of it that it actually contained',
+    spells[0].attributedMinutes === 60 && spells[1].attributedMinutes === 60,
+    spells.map((x) => x.attributedMinutes).join(','));
+  sql((w) => {
+    w("DELETE FROM time_entries WHERE note = 'worked through lunch'");
+    w("DELETE FROM shifts WHERE user_id = ? AND date = '2026-07-14'", shiftUid);
+  });
 
   await call('DELETE', `/api/entries/${fallEntry.id}`);
-  const emptied = (await call('GET', '/api/bootstrap')).body.shift;
+  const emptied = await readShift('2026-11-01');
   ok('deleting it hands the whole shift back as unattributed',
     emptied.presentMinutes === 180 && emptied.attributedMinutes === 0 && emptied.unattributedMinutes === 180,
     JSON.stringify(emptied));
 
+  // A block logged by hand carries no start and end, so nothing can place it
+  // inside a particular shift. Reporting it per shift meant a zero-minute shift
+  // claimed every manual minute filed on its date, and two shifts on one date
+  // each claimed the same block as their own. It belongs to the day.
   await call('POST', '/api/entries', { projectId: P1, minutes: 45, date: '2026-11-01', note: 'By hand' });
-  const byHand = (await call('GET', '/api/bootstrap')).body.shift;
-  ok('a block logged by hand is reported apart, never counted as attributed',
-    byHand.unplacedMinutes === 45 && byHand.attributedMinutes === 0, JSON.stringify(byHand));
-  ok('and it does not close a gap it cannot be placed inside', byHand.unattributedMinutes === 180);
+  const byHandShift = await readShift('2026-11-01');
+  ok('a shift does not claim the manual blocks that share its date',
+    !('unplacedMinutes' in byHandShift), Object.keys(byHandShift).join(','));
+  ok('and it does not close a gap nothing could be placed inside',
+    byHandShift.attributedMinutes === 0 && byHandShift.unattributedMinutes === 180);
+
+  await call('POST', '/api/entries', { projectId: P1, minutes: 45, note: 'By hand, today' });
+  const dayBoot2 = (await call('GET', '/api/bootstrap')).body;
+  ok('the day reports what was logged by hand on it',
+    dayBoot2.unplacedMinutes === 45, String(dayBoot2.unplacedMinutes));
 
   // Nothing the API can do produces two overlapping stretches. A hand-edited
   // database can, and the reconciliation has to report no gap rather than a
@@ -905,16 +1150,117 @@ try {
         new Date(fallIn).toISOString(), new Date(fallIn).toISOString());
     }
   });
-  const overlapped = (await call('GET', '/api/bootstrap')).body.shift;
+  const overlapped = await readShift('2026-11-01');
   ok('overlapping stretches clamp to the presence instead of going negative',
     overlapped.attributedMinutes === 180 && overlapped.unattributedMinutes === 0, JSON.stringify(overlapped));
   ok('presence is never less than what is attributed to it, even then',
     overlapped.presentMinutes >= overlapped.attributedMinutes);
+  // The clamp is exactly why attributed alone cannot be the gap report: it says
+  // "nothing unaccounted" for a timesheet billing twice the presence. The
+  // unclamped claim is what makes the overrun sayable at all.
+  ok('and the overrun the clamp hides is stated instead of vanishing',
+    overlapped.claimedMinutes === 360 && overlapped.overclaimedMinutes === 180,
+    JSON.stringify({ claimed: overlapped.claimedMinutes, over: overlapped.overclaimedMinutes }));
+
+  console.log('\ncorrecting attendance after the fact');
+  // Time entries have always been editable and the whole read-time
+  // reconciliation leans on that. The presence they are measured against was
+  // write-once: a clock-out forgotten overnight reported nineteen hours with no
+  // cap, no warning and no way back that did not involve opening the database.
+  const forgot = (await call('POST', '/api/shift/in')).body.shift;
+  sql((w) => w('UPDATE shifts SET started_at = ? WHERE id = ?',
+    new Date(Date.now() - 19 * hour).toISOString(), forgot.id));
+  const overnight = (await call('GET', '/api/bootstrap')).body.shifts.find((x) => x.open);
+  ok('a clock-out nobody remembered reports the whole nineteen hours',
+    overnight.presentMinutes >= 19 * 60, String(overnight.presentMinutes));
+
+  const fixed = await call('PATCH', `/api/shift/${forgot.id}`, {
+    endedAt: new Date(Date.parse(overnight.startedAt) + 8 * hour).toISOString(),
+  });
+  ok('and it can be corrected to the eight hours actually worked',
+    fixed.status === 200 && fixed.body.shift.presentMinutes === 480 && fixed.body.shift.open === false,
+    JSON.stringify(fixed.body.shift));
+  ok('the correction recomputes the gap rather than storing one',
+    fixed.body.shift.unattributedMinutes === 480 - fixed.body.shift.attributedMinutes);
+
+  ok('a shift cannot end before it starts',
+    (await call('PATCH', `/api/shift/${forgot.id}`,
+      { endedAt: new Date(Date.parse(overnight.startedAt) - hour).toISOString() })).status === 400);
+  ok('nor take a start that is not a date at all',
+    (await call('PATCH', `/api/shift/${forgot.id}`, { startedAt: 'yesterday-ish' })).status === 400);
+
+  // The cap, on a quiet stretch of calendar where nothing else can refuse it
+  // first. Asserted against today's shifts it passed for the wrong reason: the
+  // overlap check caught the 25 hours before the cap ever saw them.
+  const quiet = atLocal(2026, 5, 5, 10, 0);
+  sql((w) => w('INSERT INTO shifts (user_id, date, started_at, ended_at, note) VALUES (?, ?, ?, ?, ?)',
+    shiftUid, '2026-05-05', new Date(quiet).toISOString(), new Date(quiet + 2 * hour).toISOString(), ''));
+  const quietId = (await readShift('2026-05-05')).id;
+  ok('a shift may run right up to twenty-three hours',
+    (await call('PATCH', `/api/shift/${quietId}`,
+      { endedAt: new Date(quiet + 23 * hour).toISOString() })).status === 200);
+  ok('but not longer than a day',
+    (await call('PATCH', `/api/shift/${quietId}`,
+      { endedAt: new Date(quiet + 25 * hour).toISOString() })).status === 400);
+  ok('and the refusal leaves it as it was',
+    (await readShift('2026-05-05')).presentMinutes === 23 * 60,
+    String((await readShift('2026-05-05')).presentMinutes));
+  await call('DELETE', `/api/shift/${quietId}`);
+
+  // Several spells in a day is the ordinary case — lunch — and the morning's
+  // gap does not stop existing at one o'clock. This person has picked up a few
+  // over the sections above, so the assertions are about the shape of the list
+  // rather than a count that would drift every time a fixture is added.
+  const beforeLunch = (await call('GET', '/api/bootstrap')).body.shifts;
+  const lunchBack = await call('POST', '/api/shift/in');
+  ok('a second spell can be opened once the first is closed', lunchBack.status === 200);
+  const both = (await call('GET', '/api/bootstrap')).body.shifts;
+  ok('bootstrap reports every spell of the day, oldest first',
+    both.length === beforeLunch.length + 1
+    && both.every((x, i) => i === 0 || both[i - 1].startedAt <= x.startedAt)
+    && both.some((x) => x.id === forgot.id) && both.some((x) => x.id === lunchBack.body.shift.id),
+    both.map((x) => `${x.id}:${x.startedAt}`).join(' '));
+  ok('the earlier spell is still readable, with its own reconciliation',
+    both.find((x) => x.id === forgot.id)?.presentMinutes === 480
+    && both.find((x) => x.id === forgot.id)?.open === false
+    && both.find((x) => x.id === lunchBack.body.shift.id)?.open === true);
+  ok('and exactly one of them is running',
+    both.filter((x) => x.open).length === 1, String(both.filter((x) => x.open).length));
+
+  // Presence cannot happen twice at once, or the same minute is reconciled
+  // against two shifts and counted as covered in both.
+  ok('a spell cannot be moved on top of another',
+    (await call('PATCH', `/api/shift/${lunchBack.body.shift.id}`, {
+      startedAt: new Date(Date.parse(both[0].startedAt) + hour).toISOString(),
+      endedAt: new Date(Date.parse(both[0].startedAt) + 2 * hour).toISOString(),
+    })).status === 400);
+  ok('and one already closed cannot be reopened while another is running',
+    (await call('PATCH', `/api/shift/${forgot.id}`, { endedAt: null })).status === 400);
+
+  ok('someone else\'s attendance is not yours to edit',
+    (await call('PATCH', `/api/shift/${forgot.id}`, { note: 'x' })).status === 200
+    && (await callOn(BASE, 'PATCH', `/api/shift/${forgot.id}`, { note: 'x' })).status === 401,
+    'an unauthenticated PATCH was accepted');
+
+  const entriesBeforeDelete = (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length;
+  const gone = await call('DELETE', `/api/shift/${forgot.id}`);
+  ok('a spell recorded by mistake can be removed', gone.status === 200);
+  const afterDelete = (await call('GET', '/api/bootstrap')).body.shifts;
+  ok('and only that one goes',
+    afterDelete.length === both.length - 1 && !afterDelete.some((x) => x.id === forgot.id),
+    afterDelete.map((x) => x.id).join(','));
+  ok('taking no logged work with it — nothing references a shift',
+    (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length === entriesBeforeDelete,
+    `${entriesBeforeDelete} entries before, `
+    + `${(await call('GET', '/api/entries?from=1970-01-01')).body.entries.length} after`);
+  ok('deleting one that is already gone 404s',
+    (await call('DELETE', `/api/shift/${forgot.id}`)).status === 404);
+  await call('POST', '/api/shift/out');
 
   console.log('\na fresh process mid-shift');
   await call('POST', '/api/shift/in');
   const midTimer = await call('POST', '/api/timer/start', { projectId: P1, note: 'Still going' });
-  const midShift = (await call('GET', '/api/bootstrap')).body.shift;
+  const midShift = (await call('GET', '/api/bootstrap')).body.shifts.find((x) => x.open);
 
   // A restart is a process reading back state it did not create. This one opens
   // the same database with nothing of ours in its memory.
@@ -925,7 +1271,7 @@ try {
     { email: 'shift@dgtlgroup.io', password: 'shift-password-1' }, jar);
   const reread = (await callOn(BASE_3, 'GET', '/api/bootstrap', null, jar)).body;
   ok('a process that did not open the shift still finds it open',
-    reread.shift?.open === true && reread.shift.startedAt === midShift.startedAt, JSON.stringify(reread.shift));
+    reread.shifts?.some((x) => x.open && x.startedAt === midShift.startedAt), JSON.stringify(reread.shifts));
   ok('and the timer that was running is still running',
     reread.timer?.startedAt === midTimer.body.timer.startedAt, JSON.stringify(reread.timer));
   await stop(third.proc);
