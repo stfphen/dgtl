@@ -224,6 +224,27 @@ async function call(method, url, body) {
   return { status: res.status, body: type.includes('json') ? await res.json() : await res.text() };
 }
 
+/**
+ * Run one of the scripts and hand back how it exited.
+ *
+ * `sh()` above rejects on a non-zero exit, and what these scripts do when they
+ * REFUSE is the thing under test. Every call passes a DB_PATH of its own inside
+ * the temp dir; the leftovers audit at the end is what proves none of them
+ * wandered off it, which is the whole defect.
+ */
+function runScript(file, args, extra = {}) {
+  return new Promise((resolve) => {
+    const p = spawn('node', ['--no-warnings=ExperimentalWarning', `scripts/${file}`, ...args], {
+      cwd: APP_DIR, env: { ...env, ...extra }, stdio: 'pipe', detached: true,
+    });
+    children.push(p);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.stderr.on('data', (d) => { out += d; });
+    p.on('close', (code) => resolve({ code, out }));
+  });
+}
+
 /** Boot the real server against the throwaway database; returns a log reader. */
 function bootServer(extra = {}) {
   const proc = spawn('node', ['--no-warnings=ExperimentalWarning', 'server/server.mjs'], {
@@ -1799,6 +1820,57 @@ try {
   ok('inverted date range is rejected',
     (await call('GET', '/api/report?from=2026-05-01&to=2026-01-01')).status === 400);
 
+  // --- overdue is measured against TODAY, never against the end of the range.
+  //
+  // Not one date below is a literal, and none of them is derived from this
+  // machine's clock either: every one is the day the SERVER reports, stepped.
+  // The bug it replaces measured `due_date < to`, so a report asked for over
+  // this week called everything due inside the week late — which is a wrong
+  // answer at every hour of the day, and that is exactly why it can be
+  // asserted at any of them.
+  const repToday = (await call('GET', '/api/bootstrap')).body.today;
+  const step = (date, n) => {
+    const d = new Date(`${date}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+  const taskKpi = async (from, to) =>
+    (await call('GET', `/api/report?scope=team&from=${from}&to=${to}`)).body.tasks;
+
+  const AHEAD = step(repToday, 7);
+  const kpi0 = await taskKpi(repToday, AHEAD);
+  const laterThisWeek = (await call('POST', '/api/tasks', {
+    title: 'Due on Friday, asked about on Monday', dueDate: step(repToday, 3),
+  })).body.task;
+  const withFuture = await taskKpi(repToday, AHEAD);
+  ok('a task due inside the range but not yet due is open, and is NOT overdue',
+    withFuture.overdue === kpi0.overdue && withFuture.open === kpi0.open + 1,
+    `overdue ${kpi0.overdue}→${withFuture.overdue}, open ${kpi0.open}→${withFuture.open}`);
+
+  const wasDue = (await call('POST', '/api/tasks', {
+    title: 'Was due yesterday', dueDate: step(repToday, -1),
+  })).body.task;
+  const withPast = await taskKpi(repToday, AHEAD);
+  ok('one whose date has actually passed is',
+    withPast.overdue === kpi0.overdue + 1, `${kpi0.overdue} → ${withPast.overdue}`);
+
+  // A range that ended before either task was created, let alone due. Under
+  // `due_date < to` the overdue count moved with the range; it must not.
+  const oldReport = await taskKpi(step(repToday, -30), step(repToday, -20));
+  ok('a range wholly in the past reports the same overdue count — the range is not the clock',
+    oldReport.overdue === withPast.overdue, `${withPast.overdue} vs ${oldReport.overdue} over an old range`);
+  ok('and the same open count, because open is a fact about today and the screen says so',
+    oldReport.open === withPast.open, `${withPast.open} vs ${oldReport.open}`);
+  ok('while what the range IS for — the completions in it — is nothing like the same',
+    oldReport.done !== withPast.done || (oldReport.done === 0 && withPast.done >= 0),
+    `${withPast.done} vs ${oldReport.done}`);
+
+  for (const t of [laterThisWeek, wasDue]) await call('DELETE', `/api/tasks/${t.id}`);
+  const cleaned = await taskKpi(repToday, AHEAD);
+  ok('and the two fixtures are gone again, so nothing after this reads them',
+    cleaned.open === kpi0.open && cleaned.overdue === kpi0.overdue,
+    `open ${cleaned.open}/${kpi0.open}, overdue ${cleaned.overdue}/${kpi0.overdue}`);
+
   console.log('\nrepeating work');
   // NOTHING in this section is a date built from this machine's clock.
   //
@@ -2144,6 +2216,52 @@ try {
     (await call('POST', '/api/entries', { projectId, minutes: 30 })).status === 200);
   ok('member can read team reports', (await call('GET', '/api/report?scope=team')).status === 200);
 
+  console.log('\nexport');
+  // Three faults in one route. The scope was pasted into the SQL rather than
+  // bound — the only interpolation left in server/ — the rows came out of a
+  // bare SELECT with none of ENTRY_SELECT's joins, so every exported entry
+  // named nothing, and nothing asserted any of it.
+  const memberId = member.body.user.id;
+  const mineExport = await call('GET', '/api/export');
+  ok('a member\'s export carries their own rows and only theirs',
+    mineExport.status === 200 && mineExport.body.scope === 'own'
+    && mineExport.body.entries.length > 0
+    && mineExport.body.entries.every((e) => e.userId === memberId),
+    `${mineExport.body.entries.length} rows from ${[...new Set(mineExport.body.entries.map((e) => e.userId))].join()}`);
+  ok('and it does not hand them the roster',
+    mineExport.body.users === undefined, JSON.stringify(mineExport.body.users));
+
+  cookie = adminCookie;
+  const allExport = (await call('GET', '/api/export')).body;
+  const owners = new Set(allExport.entries.map((e) => e.userId));
+  ok('an admin\'s carries the whole workspace, people included',
+    allExport.scope === 'all' && Array.isArray(allExport.users) && allExport.users.length >= 2
+    && owners.size > 1 && allExport.entries.length > mineExport.body.entries.length,
+    `${allExport.entries.length} rows from ${owners.size} people, ${allExport.users?.length} users`);
+  ok('and the member\'s export is exactly their slice of it — the scope is the only difference',
+    allExport.entries.filter((e) => e.userId === memberId).map((e) => e.id).join()
+    === mineExport.body.entries.map((e) => e.id).join());
+
+  // The four nulls. Verified across every row rather than the first one: the
+  // joins were missing for all of them, so a spot check would have passed on a
+  // route that happened to have one project.
+  const onProjects = allExport.entries.filter((e) => e.projectId !== null);
+  ok('an exported entry names the project it was worked on, not just its id',
+    onProjects.length > 0 && onProjects.every((e) => e.projectName !== null && e.projectColor !== null),
+    `${onProjects.filter((e) => e.projectName === null).length} of ${onProjects.length} rows name nothing`);
+  ok('and the person who logged it',
+    allExport.entries.length > 0 && allExport.entries.every((e) => e.userName !== null),
+    `${allExport.entries.filter((e) => e.userName === null).length} rows with no name on them`);
+  const onTasks = allExport.entries.filter((e) => e.taskId !== null);
+  ok('and, where there is one, the task title',
+    onTasks.length > 0 && onTasks.every((e) => e.taskTitle !== null),
+    `${onTasks.length} rows carry a task id`);
+  // What the interpolation was: an id pasted into SQL. Bound, a member id that
+  // is not a plain number cannot reach the query at all — the session carries
+  // it, so this asserts the shape the route now depends on.
+  ok('every exported row carries a real numeric owner, which is what the bound scope matches on',
+    allExport.entries.every((e) => Number.isInteger(e.userId)));
+
   console.log('\nhardening');
   cookie = adminCookie;
   const crossOrigin = await fetch(`${BASE}/api/projects`, {
@@ -2158,6 +2276,81 @@ try {
   ok('wrong verb reports 405', (await call('GET', '/api/auth/login')).status === 405);
   ok('logout clears the session', (await call('POST', '/api/auth/logout')).status === 200);
   ok('bootstrap is refused after logout', (await call('GET', '/api/bootstrap')).status === 401);
+
+  console.log('\nwhich database a script opens');
+  // config.mjs resolves DB_PATH out of .env before a script prints a word, so
+  // `npm run seed` run in the app directory on the host opened production and
+  // said nothing about it. The path is printed now, and the two scripts that
+  // INSERT stop when the workspace they found is one somebody is using. Every
+  // run below points at a database of its own inside TMP — which is also why
+  // the leftovers audit is part of this assertion and not separate from it.
+  const SCRIPT_DB = path.join(TMP, 'scripts.sqlite');
+  // Blanked, not set: seed falls back to its own admin@dgtlgroup.io and its own
+  // generated password, which is what a fresh checkout actually does.
+  const scriptEnv = { DB_PATH: SCRIPT_DB, SEED_ADMIN_EMAIL: '', SEED_ADMIN_PASSWORD: '' };
+
+  const fresh = await runScript('seed.mjs', [], scriptEnv);
+  ok('a fresh checkout still seeds with no arguments and no ceremony',
+    fresh.code === 0 && /created admin admin@dgtlgroup\.io/.test(fresh.out)
+    && /generated password/.test(fresh.out), `exit ${fresh.code}: ${fresh.out.slice(-240)}`);
+  ok('and it names the database it opened, first line, before it writes',
+    fresh.out.split('\n').find((l) => l.startsWith('Database')) === `Database  ${SCRIPT_DB}`,
+    fresh.out.split('\n')[0]);
+
+  const again = await runScript('seed.mjs', [], scriptEnv);
+  ok('seeding a workspace that already holds people and hours is refused',
+    again.code === 1 && /Refusing to run seed/.test(again.out), `exit ${again.code}: ${again.out.slice(-240)}`);
+  ok('and the refusal states what it found there, not merely that it refused',
+    /1 account/.test(again.out) && /logged time entries/.test(again.out), again.out.slice(-240));
+  ok('the path is named on the refusal too — that is the fact that was missing',
+    again.out.includes(`Database  ${SCRIPT_DB}`));
+
+  const forced = await runScript('seed.mjs', ['--force'], scriptEnv);
+  ok('--force is the deliberate way past it, and says it was used',
+    forced.code === 0 && /--force was given/.test(forced.out), `exit ${forced.code}: ${forced.out.slice(-240)}`);
+  ok('WORKLOG_FORCE=1 does the same where there is no argv to reach',
+    (await runScript('seed.mjs', [], { ...scriptEnv, WORKLOG_FORCE: '1' })).code === 0);
+
+  const demoOk = await runScript('demo.mjs', [], scriptEnv);
+  ok('demo still runs straight after a seed, so the documented workflow is untouched',
+    demoOk.code === 0 && /Demo team ready/.test(demoOk.out), `exit ${demoOk.code}: ${demoOk.out.slice(-300)}`);
+
+  // What demo must never meet: somebody else's workspace. Two independent
+  // marks of one — a person off the roster, and a stretch the timer wrote.
+  // The second is the one that matters, because a real workspace seeded with
+  // the default admin email has nobody off the roster to find.
+  const sdb = new DatabaseSync(SCRIPT_DB);
+  sdb.prepare(`INSERT INTO users (email, name, role, password_hash, daily_target_minutes, week_start, active, created_at, updated_at)
+               VALUES ('michael@ashcombe.example', 'Michael', 'member', 'x', 480, 1, 1, ?, ?)`)
+    .run('2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
+  sdb.close();
+  const demoNo = await runScript('demo.mjs', [], scriptEnv);
+  ok('demo refuses a workspace with somebody else in it',
+    demoNo.code === 1 && /not on the demo roster/.test(demoNo.out), `exit ${demoNo.code}: ${demoNo.out.slice(-300)}`);
+  ok('and names who, so an operator can tell their own team from a fixture',
+    /michael@ashcombe\.example/.test(demoNo.out), demoNo.out.slice(-300));
+  ok('--force gets past that one too', (await runScript('demo.mjs', ['--force'], scriptEnv)).code === 0);
+
+  // The hole the roster test alone leaves: one account, and it is the default
+  // admin email. Nothing about the ROSTER can see that, so the timer can.
+  const solo = path.join(TMP, 'solo.sqlite');
+  const soloEnv = { DB_PATH: solo, SEED_ADMIN_EMAIL: '', SEED_ADMIN_PASSWORD: '' };
+  ok('a second fresh database seeds cleanly too', (await runScript('seed.mjs', [], soloEnv)).code === 0);
+  const soloDb = new DatabaseSync(solo);
+  soloDb.prepare(`INSERT INTO time_entries (user_id, project_id, task_id, date, minutes, note, billable, started_at, ended_at, source, created_at, updated_at)
+                  VALUES (1, 1, NULL, '2026-05-04', 60, 'real work', 1, ?, ?, 'timer', ?, ?)`)
+    .run('2026-05-04T13:00:00Z', '2026-05-04T14:00:00Z', '2026-05-04T14:00:00Z', '2026-05-04T14:00:00Z');
+  soloDb.close();
+  const soloDemo = await runScript('demo.mjs', [], soloEnv);
+  ok('a workspace whose only account IS the demo admin is still refused once the clock has been run in it',
+    soloDemo.code === 1 && /timer/.test(soloDemo.out), `exit ${soloDemo.code}: ${soloDemo.out.slice(-300)}`);
+
+  // The user tool is the one script that must still work on a live workspace —
+  // it is how a real team gets back in. So it announces and does not refuse.
+  const list = await runScript('user.mjs', ['list'], scriptEnv);
+  ok('the user tool names its database and then does its job, gate or no gate',
+    list.code === 0 && list.out.includes(`Database  ${SCRIPT_DB}`)
+    && /admin@dgtlgroup\.io/.test(list.out), `exit ${list.code}: ${list.out.slice(0, 240)}`);
 
   console.log('\nfirst-boot admin');
   // The first-boot admin must never touch a workspace that already has users —

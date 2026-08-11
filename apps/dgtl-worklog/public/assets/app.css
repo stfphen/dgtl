@@ -460,10 +460,15 @@ body{
 .task.drop-after{box-shadow:inset 0 -2px 0 var(--gold)}
 /* Was 1.85:1 against the row — a control you had to know was already there. */
 .task .grip{
-  cursor:grab;color:var(--text-ghost);padding-top:2px;flex:none;background:none;border:none;
+  cursor:grab;color:var(--text-ghost);padding:2px 0 0;flex:none;background:none;border:none;
+  display:block;position:relative;line-height:0;
 }
 @media (hover:hover) and (pointer:fine){.task .grip:hover{color:var(--text-dim)}}
 .task .grip svg{width:14px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+/* Lifted by keyboard or by touch: the row is waiting to be told where to land,
+   and the handle is the only thing on screen that knows it. */
+.task .grip.lifted{color:var(--gold);cursor:grabbing}
+.task:has(.grip.lifted){background:var(--gold-tint);box-shadow:inset 2px 0 0 var(--gold)}
 .task-check{
   width:20px;height:20px;flex:none;margin-top:1px;border-radius:6px;cursor:pointer;
   border:1.5px solid var(--border);background:var(--surface-1);display:grid;place-items:center;
@@ -805,4 +810,22 @@ body{
     transform:translate(-50%,-50%);
   }
   .chip,.seg button{min-height:44px;padding-top:11px;padding-bottom:11px}
+  /* .btn and .select measured 36–40px. These grow DOWNWARD only — every one of
+     them sits in a header strip, a card head or a form column, never beside a
+     task title — so nothing narrows and no view gains a horizontal scrollbar.
+     .btn-icon is deliberately not here: it is 36px square inside task rows and
+     table cells, and is served by the pseudo-element above instead. */
+  .btn,.select,.input{min-height:44px}
+  .select,.input{padding-top:11px;padding-bottom:11px}
+  /* Anchored on its RIGHT edge rather than centred, and this is the reason:
+     the completion box's own 44px area begins 18px to the right of the grip,
+     and a square centred on a 14px handle loses everything past that line —
+     measured 38px wide. Grown leftward instead it takes its 44 out of the row
+     padding, where nothing else is, and costs the task title not one pixel.
+     The arrow keys and press-to-lift are what make the handle REACHABLE; this
+     only makes it comfortable. */
+  .task .grip::after{
+    content:"";position:absolute;top:50%;right:-4px;width:44px;height:44px;
+    transform:translateY(-50%);
+  }
 }

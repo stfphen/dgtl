@@ -49,6 +49,29 @@ npm run demo       # three-person demo team with shared credentials (below)
 npm run user -- list          # user admin from the CLI (see below)
 ```
 
+### Which database a script opens
+
+Every script prints the database it resolved — `Database  /path/to/worklog.sqlite`
+— before it writes a byte, because `.env` is read before any of them says a word and
+"which workspace am I about to touch" was previously unanswerable from the terminal.
+
+The two that INSERT also stop when the workspace they opened is one somebody is using:
+
+| | Runs when | Stops when |
+|---|---|---|
+| `seed` | there are no accounts and no logged hours | there are either — it is the first-run script |
+| `demo` | the workspace is still the one `seed` made | an account is off the demo roster, hours belong to one, the timer has been run, or attendance is recorded |
+| `user` | always | never — it is the way back into a **live** workspace, so a gate would fire on every legitimate use |
+
+A fresh checkout has none of those, so `npm run seed && npm run demo` still works with
+no arguments. Where the refusal is wrong — re-seeding a workspace on purpose — pass
+`--force`, or set `WORKLOG_FORCE=1` where there is no argv to reach:
+
+```bash
+npm run seed -- --force
+npm run demo -- --force
+```
+
 ### Demo credentials
 
 `npm run demo` (after `npm run seed`) sets up a three-person team so the Team-scoped
@@ -65,7 +88,9 @@ password so it is easy to type in front of an audience:
 
 Each gets three weeks of weekday hours and their own tasks, generated from a fixed seed so
 a rebuilt database demos identically. Re-running is safe: it resets those three accounts
-and leaves anyone else — and any existing history — alone.
+and leaves anyone else — and any existing history — alone. It will not run at all against a
+workspace that holds anyone else, or that anyone has actually worked in — see
+[Which database a script opens](#which-database-a-script-opens).
 
 > ⚠️ These credentials are in the repo, so the script refuses to run with
 > `NODE_ENV=production`. Before this workspace holds anything real, clear them:
@@ -123,8 +148,13 @@ tasks are done, the inner is how much of the estimate (or the budget, where a pr
 one) has been spent. The divergence between them is the point: 80% of the tasks done against
 130% of the estimate is a workstream losing money, and a single ring reads that as "nearly
 there". Filter by state, project and person; **sort by any column** from the strip above the
-board; drag to reorder while the sort is on Order; one click to complete or to start timing
-(which also flips the task to *in progress*).
+board; one click to complete or to start timing (which also flips the task to *in progress*).
+
+**Reordering** is on while the sort is Order, and there are three routes to it because
+HTML5 drag is the mouse's alone — it fires on no touchscreen and no key starts it. Drag the
+handle; or focus it and move the row with **↑/↓**; or **press** it to lift the row and press
+another row to land on. All three refuse to cross a section: moving a task under another
+project is a re-filing, not a reorder, and that is the editor's job.
 
 **Repeating tasks** — a task can carry a rule, **weekly** or **monthly**, and completing it
 writes the next instance. See [Repeating work](#repeating-work) below.
@@ -150,6 +180,10 @@ scoped to you or the team. There is no streak on it any more: it counted days in
 ANY time logged, which is showing up rather than selling — a figure this workspace could hold
 at 100 while billing 13% of it — and the heatmap on the same screen reads consistency better
 than one integer.
+Two of its figures are **about today, not about the range**, and the card says so rather than
+folding them in: open and overdue task counts read the tasks table, which records what a task
+*is* and keeps no history of what it was. Overdue is therefore measured against today —
+against the end of the range instead, a report asked for on Monday called Friday late.
 *Client digest* is the outward one — see [The client digest](#the-client-digest).
 
 **Settings** — your name, daily target and week start; change password; JSON export.
@@ -256,7 +290,7 @@ apps/dgtl-worklog/
 │   ├── http.mjs            bodies, cookies, static serving
 │   └── config.mjs          .env loading and the timezone-aware date helpers
 ├── scripts/{seed,demo,user}.mjs
-├── tests/smoke.mjs         347 assertions over the real HTTP surface
+├── tests/smoke.mjs         375 assertions over the real HTTP surface
 ├── public/                 the app — served as static files, no build
 │   ├── index.html · login.html
 │   └── assets/
@@ -310,7 +344,7 @@ GET    /api/suggestions          this person's recent labels + projects, recency
 GET    /api/report?from&to&userId|scope=team
 GET    /api/digest?clientId&from&to                one client, one week, with its provenance
 GET    /api/users                POST · PATCH /:id                    (admin)
-GET    /api/export
+GET    /api/export               own entries, or the whole workspace for an admin
 ```
 
 Payload notes worth knowing: `/api/bootstrap` carries `billableTargetPct` (the share of the
@@ -441,7 +475,7 @@ Do **not** re-paste the brand kit over this file. Five tokens and two rules woul
 ## Verifying a change
 
 ```bash
-npm test                       # 347 assertions over the real HTTP surface; exit 1 on any failure
+npm test                       # 375 assertions over the real HTTP surface; exit 1 on any failure
 ```
 
 The suite boots the real server against a throwaway database on a spare port and drives it

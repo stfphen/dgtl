@@ -6,12 +6,21 @@
  *   npm run user -- reset --email sam@dgtlgroup.io [--password '…']
  *   npm run user -- role  --email sam@dgtlgroup.io --role admin
  *   npm run user -- off   --email sam@dgtlgroup.io      (deactivate + kill sessions)
+ *
+ * It names the database it opened and stops there. No populated-workspace gate,
+ * unlike seed and demo: a populated workspace is the ONLY one this script is
+ * for. It is the way back into a live team when nobody can sign in, and the
+ * README's own answer to demo credentials on a real host. A gate here would
+ * fire on every legitimate use, and what was missing was never a refusal — it
+ * was being able to see which workspace you were about to reset a password on.
  */
 
 import crypto from 'node:crypto';
 import { all, one, run } from '../server/db.mjs';
-import { nowISO } from '../server/config.mjs';
+import { nowISO, sayDatabase } from '../server/config.mjs';
 import { hashPassword } from '../server/auth.mjs';
+
+sayDatabase();
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];

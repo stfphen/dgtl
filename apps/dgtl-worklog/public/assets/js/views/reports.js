@@ -174,9 +174,14 @@ export function render_(host, { actions }) {
           label: 'Billable', value: hm(totals.billableMinutes, { zero: '0h' }),
           foot: totals.minutes ? `${Math.round((totals.billableMinutes / totals.minutes) * 100)}% of logged time` : '—',
         }),
+        // The value is range-scoped; the foot is not, and says so. Open and
+        // overdue are facts about today — the tasks table records what a task
+        // IS, not what it was during the range — so folding them silently into
+        // a card footed with dates read as "8 open during that week" for a week
+        // three months gone. Named as of today, one card can carry both.
         kpi({
           label: 'Tasks completed', value: String(tasks.done),
-          foot: tasks.overdue ? `${tasks.overdue} open and overdue` : `${tasks.open} still open`,
+          foot: `${tasks.open} open now${tasks.overdue ? `, ${tasks.overdue} overdue` : ''} — today, not this range`,
         }),
         // Where the streak used to sit, on both scopes. It counted days in a
         // row with ANY time logged — showing up, not selling — and the heatmap

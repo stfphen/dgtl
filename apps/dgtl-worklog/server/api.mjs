@@ -871,13 +871,20 @@ function buildReport({ from, to, userId }) {
      WHERE e.date BETWEEN ? AND ? ${scoped}
      GROUP BY e.user_id ORDER BY minutes DESC`, from, to);
 
+  // `open` and `overdue` are figures about NOW, not about the range — there is
+  // no such thing as a task that was open last March, because the column says
+  // what it is today and nothing records what it was. Overdue is therefore
+  // measured against today and never against `to`: with `to` at the end of the
+  // requested week, everything due inside that week counted as late, so a
+  // report asked for on Monday called Friday overdue. The screen has to say
+  // which of the two kinds of figure each card is; see the Reports view.
   const taskScope = userId ? 'AND t.assignee_id = ?' : '';
   const tasks = all(`
     SELECT
       SUM(CASE WHEN t.status <> 'done' THEN 1 ELSE 0 END) AS open,
       SUM(CASE WHEN t.status <> 'done' AND t.due_date IS NOT NULL AND t.due_date < ? THEN 1 ELSE 0 END) AS overdue
     FROM tasks t WHERE t.archived = 0 ${taskScope}`,
-    ...[to, ...(userId ? [userId] : [])])[0];
+    ...[localDate(), ...(userId ? [userId] : [])])[0];
   // Counted through the shared helper rather than in the query above, because
   // done_at is an instant and this range is calendar dates — see the comment on
   // completedBetween. Inline, this KPI read a UTC date and disagreed with the
@@ -2000,18 +2007,31 @@ route('PATCH', '/api/users/:id', ({ req, body, params }) => {
 });
 
 // --- export ---
+/**
+ * The whole workspace as JSON, or one person's own rows.
+ *
+ * Two things it does the same way as every other read, and used not to. The
+ * scope is BOUND, like the one in buildReport — it was the only interpolation
+ * left in server/, and an id is a value however certain you are of it. And the
+ * rows come through ENTRY_SELECT: a bare `SELECT *` has none of the joins
+ * entryRow reads, so every exported entry shipped projectName, projectColor,
+ * taskTitle and userName as null — an export of 175 rows naming nothing.
+ */
 route('GET', '/api/export', ({ req }) => {
   const user = requireUser(req);
-  const mine = user.role === 'admin' ? '' : `WHERE user_id = ${user.id}`;
+  const admin = user.role === 'admin';
   return {
     exportedAt: nowISO(),
     exportedBy: user.email,
-    scope: user.role === 'admin' ? 'all' : 'own',
+    scope: admin ? 'all' : 'own',
     timezone: APP_TIMEZONE,
     projects: listProjects(),
     tasks: listTasks({ includeArchived: true }),
-    entries: all(`SELECT * FROM time_entries ${mine} ORDER BY date, id`).map(entryRow),
-    users: user.role === 'admin' ? all('SELECT * FROM users ORDER BY id').map(userRow) : undefined,
+    entries: (admin
+      ? all(`${ENTRY_SELECT} ORDER BY e.date, e.id`)
+      : all(`${ENTRY_SELECT} WHERE e.user_id = ? ORDER BY e.date, e.id`, user.id)
+    ).map(entryRow),
+    users: admin ? all('SELECT * FROM users ORDER BY id').map(userRow) : undefined,
   };
 });
 

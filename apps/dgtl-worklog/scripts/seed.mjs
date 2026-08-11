@@ -4,14 +4,21 @@
  *   npm run seed                                   first admin + sample data
  *   npm run seed -- --email you@dgtlgroup.io --password '…'
  *   npm run seed -- --no-demo                      admin only, empty workspace
+ *   npm run seed -- --force                        into a workspace already in use
  *
- * Safe to re-run: an existing admin is left alone, and demo data is only
- * inserted into a workspace that has no projects yet.
+ * This is the FIRST-RUN script, and it now says so out loud: it prints the
+ * database it resolved and stops if that database already holds people or
+ * logged hours. On a fresh checkout there are neither, so `npm run seed` still
+ * runs with no arguments. On the host there are both, which is the run that
+ * used to happen in silence.
+ *
+ * The body below is still safe to re-run behind --force: an existing admin is
+ * left alone, and sample data only goes into a workspace with no projects.
  */
 
 import crypto from 'node:crypto';
 import { all, one, run, tx } from '../server/db.mjs';
-import { addDays, localDate, nowISO } from '../server/config.mjs';
+import { addDays, guardWorkspace, localDate, nowISO } from '../server/config.mjs';
 import { hashPassword } from '../server/auth.mjs';
 
 const argv = process.argv.slice(2);
@@ -32,6 +39,15 @@ if (!password) {
   password = crypto.randomBytes(12).toString('base64url');
   generated = true;
 }
+
+// Counted before a single insert, and stated in rows rather than in a verdict —
+// "3 people" is something an operator can recognise as their team.
+const people = one('SELECT COUNT(*) AS n FROM users').n;
+const hours = one('SELECT COUNT(*) AS n FROM time_entries').n;
+guardWorkspace('seed', [
+  people ? `it already holds ${people} ${people === 1 ? 'account' : 'accounts'}` : null,
+  hours ? `it already holds ${hours} logged time ${hours === 1 ? 'entry' : 'entries'}` : null,
+].filter(Boolean), { force: has('force') || process.env.WORKLOG_FORCE === '1' });
 
 const now = nowISO();
 let adminId;

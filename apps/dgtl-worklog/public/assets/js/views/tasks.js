@@ -298,8 +298,23 @@ export function render_(host, { actions }) {
       draggable: drag,
       dataset: { id: String(t.id) },
     },
+      // A real button, not a decorated span: dragging is the only way this row
+      // moves, and HTML5 drag answers to a mouse alone. Focus it and the arrow
+      // keys move the row; press it and the row is lifted, and the next row
+      // pressed is where it lands — which is the whole feature's only route in
+      // from a touchscreen.
       drag
-        ? h('span', { class: 'grip', title: 'Drag to reorder', html: icon('grip').innerHTML })
+        ? h('button', {
+          class: `grip${lifted === t.id ? ' lifted' : ''}`, type: 'button',
+          'aria-label': `Reorder ${t.title}`,
+          'aria-pressed': String(lifted === t.id),
+          title: lifted === t.id
+            ? 'Lifted — pick the row to drop it on, or press Escape'
+            : 'Drag to reorder · arrow keys move it · press to lift',
+          html: icon('grip').innerHTML,
+          onclick: (e) => { e.stopPropagation(); toggleLift(t, sectionId); },
+          onkeydown: (e) => gripKeys(e, t, siblings, sectionId),
+        })
         : h('span', { class: 'grip-off' }),
 
       h('button', {
@@ -370,20 +385,89 @@ export function render_(host, { actions }) {
     return el;
   }
 
-  /* ------------------------------------------------------------- drag --- */
-  /* Native HTML5 drag. The dragged row is remembered on the closure so a drop
-     knows what moved; order is written back with one reorder call.
+  /* ------------------------------------------------ reordering a row --- */
+  /* Three routes to the same one reorder call, because native HTML5 drag is
+     only the mouse's. It fires on no touchscreen and there is no key that
+     starts it, so until the grip became a button this whole feature had no
+     access route from either — the rows could be dragged or they could not be
+     moved at all. The keyboard route is the arrow keys on the focused grip;
+     the touch route is press-to-lift, then press the row to land on.
 
-     A drop is refused across sections: dragging a task under another project
+     All three refuse to cross a section: moving a task under another project
      would be a re-filing, not a reorder, and re-filing hours-bearing work by
      dropping it somewhere is not a thing to do by accident. The editor moves
      a task between projects. */
 
   let dragId = null;
   let dragSection;
+  let lifted = null;                 // the keyboard/touch equivalent of dragId
+  let liftedSection;
+
+  /**
+   * Write a section's new order back.
+   *
+   * Reordering a filtered view must not shuffle the tasks it hides, so the new
+   * order is spliced back into the slots the full list already holds.
+   */
+  async function commitOrder(order) {
+    const all = state.tasks.map((x) => x.id);
+    const slots = all.map((id, i) => (order.includes(id) ? i : -1)).filter((i) => i >= 0);
+    const merged = [...all];
+    slots.forEach((slot, i) => { merged[slot] = order[i]; });
+    await reorderTasks(merged);
+  }
+
+  /** Put `id` at `index` among its siblings, redraw, and keep the focus on it. */
+  async function moveTo(id, siblings, index) {
+    const order = siblings.map((s) => s.id).filter((x) => x !== id);
+    order.splice(Math.max(0, Math.min(order.length, index)), 0, id);
+    try {
+      await commitOrder(order);
+      draw();
+      // draw() replaced the row, so the button that was focused no longer
+      // exists — without this, one press moves the task and loses the handle.
+      board.querySelector(`.task[data-id="${id}"] .grip`)?.focus();
+    } catch (e) { fail(e); }
+  }
+
+  /** Lift a row, or set it down again. The touch route: press, then press a row. */
+  function toggleLift(t, sectionId) {
+    lifted = lifted === t.id ? null : t.id;
+    liftedSection = lifted === null ? undefined : sectionId;
+    draw();
+    board.querySelector(`.task[data-id="${t.id}"] .grip`)?.focus();
+  }
+
+  /** Arrow keys move the focused row one place; Escape sets a lifted one down. */
+  function gripKeys(e, t, siblings, sectionId) {
+    if (e.key === 'Escape' && lifted !== null) {
+      e.preventDefault();
+      toggleLift(t, sectionId);
+      return;
+    }
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    const at = siblings.findIndex((s) => s.id === t.id);
+    const to = at + (e.key === 'ArrowUp' ? -1 : 1);
+    if (at < 0 || to < 0 || to >= siblings.length) return;
+    e.preventDefault();                       // or the page scrolls under it
+    lifted = null;
+    moveTo(t.id, siblings, to);
+  }
 
   function wireDrag(el, t, siblings, sectionId) {
     const foreign = () => dragId === null || dragId === t.id || dragSection !== sectionId;
+
+    // Where a lifted row lands. Refused across sections for the same reason a
+    // drop is: moving a task under another project is a re-filing, not a
+    // reorder. A press on one of the row's own controls is that control's.
+    el.addEventListener('click', (e) => {
+      if (lifted === null || lifted === t.id || liftedSection !== sectionId) return;
+      if (e.target.closest('button, a, input, select, textarea')) return;
+      const at = siblings.findIndex((s) => s.id === t.id);
+      const moving = lifted;
+      lifted = null;
+      moveTo(moving, siblings, at);
+    });
 
     el.addEventListener('dragstart', (e) => {
       dragId = t.id;
@@ -416,14 +500,7 @@ export function render_(host, { actions }) {
       const at = order.indexOf(t.id) + (after ? 1 : 0);
       order.splice(at, 0, dragId);
 
-      // Reordering a filtered view must not shuffle the tasks it hides, so the
-      // new order is spliced back into the full list before saving.
-      const all = state.tasks.map((x) => x.id);
-      const slots = all.map((id, i) => (order.includes(id) ? i : -1)).filter((i) => i >= 0);
-      const merged = [...all];
-      slots.forEach((slot, i) => { merged[slot] = order[i]; });
-
-      try { await reorderTasks(merged); draw(); } catch (err) { fail(err); }
+      try { await commitOrder(order); draw(); } catch (err) { fail(err); }
     });
   }
 

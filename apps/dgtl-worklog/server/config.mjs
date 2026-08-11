@@ -4,6 +4,10 @@
  * Reads .env if present (no dependency), then exposes the handful of settings
  * the rest of the server needs. Everything has a working default so a fresh
  * clone runs with `npm start` and no .env at all.
+ *
+ * Also home to `sayDatabase` / `guardWorkspace`, the two lines every script
+ * runs before it writes — because this file resolving DB_PATH silently is what
+ * let a script open production without saying so.
  */
 
 import fs from 'node:fs';
@@ -33,6 +37,43 @@ export const TRUST_XFF = bool(process.env.TRUST_XFF, false);
 
 export const DB_PATH = path.resolve(APP_DIR, process.env.DB_PATH || 'data/worklog.sqlite');
 export const PUBLIC_DIR = path.join(APP_DIR, 'public');
+
+// --- what a script is about to touch ------------------------------------
+// The .env read above happens before any script prints a word, which is the
+// whole defect: `npm run seed` in the app directory on the host resolved the
+// live DB_PATH and opened production in silence. Loading .env first is right —
+// a script must see the same database the server does — so the fix is that the
+// answer stops being invisible, and that a script which INSERTS says no to a
+// workspace somebody is already using.
+
+/** Name the database this process resolved, before it writes anything to it. */
+export const sayDatabase = () => console.log(`Database  ${DB_PATH}`);
+
+/**
+ * Print the path, then stop unless the workspace is this script's to write into.
+ *
+ * `findings` is what the caller found that says the workspace is in use —
+ * counted at the call site, because config.mjs cannot import db.mjs (db.mjs
+ * imports this file) and because what counts as "in use" is the script's own
+ * question, not a shared one. An empty list runs straight through, which is why
+ * a fresh checkout still seeds with no arguments and no ceremony.
+ *
+ * Deliberately defeatable: re-seeding a real workspace is a legitimate thing to
+ * want. `--force`, or WORKLOG_FORCE=1, and the path is printed either way.
+ */
+export function guardWorkspace(script, findings, { force = false } = {}) {
+  sayDatabase();
+  if (!findings.length) return;
+  if (force) {
+    console.log(`⚠  ${findings.join('; ')} — running anyway, --force was given.`);
+    return;
+  }
+  console.error(`✗ Refusing to run ${script} against a workspace that is already in use:`);
+  for (const f of findings) console.error(`    · ${f}`);
+  console.error('  That is the database named above. Point DB_PATH somewhere else, or —');
+  console.error('  if it really is the one you meant — re-run with --force (or WORKLOG_FORCE=1).');
+  process.exit(1);
+}
 
 // --- dates -------------------------------------------------------------
 // Every entry is filed under a calendar date in APP_TIMEZONE so the whole team
