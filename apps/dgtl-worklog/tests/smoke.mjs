@@ -20,6 +20,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { groupByClient, mergeRollups, ringGeometry, rollup, sorter } from '../public/assets/js/ui.js';
+import { billableStanding } from '../public/assets/js/store.js';
+import { budgetBar } from '../public/assets/js/views/projects.js';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'worklog-test-'));
@@ -341,6 +343,58 @@ try {
   ok('an unset sort leaves the rows exactly as they came',
     sorter([{ key: 'd', label: 'Due', get: (r) => r.d }]).apply(due).map((r) => r.n).join('') === 'bacd');
 
+  // The budget bar's geometry. A clamped fill drew 453% and 101% identically,
+  // so the two are compared here as the numbers the row actually paints.
+  const wild = budgetBar(1358, 300);      // FlockaMG: 22h38m against a 5h budget
+  const just = budgetBar(303, 300);       // a hair over
+  ok('a budget bar under its budget is the ordinary fill, and the track is the budget',
+    budgetBar(150, 300).over === false && budgetBar(150, 300).insidePct === 50,
+    JSON.stringify(budgetBar(150, 300)));
+  ok('past it the track becomes what was SPENT, so the overrun has room to draw',
+    wild.over === true && Math.round(wild.insidePct) === 22 && Math.round(wild.overPct) === 78,
+    JSON.stringify(wild));
+  ok('and 453% no longer paints the same as 101%',
+    Math.abs(wild.overPct - just.overPct) > 20,
+    `${wild.overPct.toFixed(1)}% red vs ${just.overPct.toFixed(1)}%`);
+  ok('a hair over budget is a sliver, not a full red bar',
+    just.over === true && just.overPct < 2 && just.insidePct > 98, JSON.stringify(just));
+  ok('a project with no budget has no bar at all', budgetBar(500, null) === null);
+
+  // What the Today ring measures now. The denominator is the day that actually
+  // happened, which is the whole argument: 8h logged is a figure an agency can
+  // hit every day while selling nothing.
+  const clocked = billableStanding({
+    billableMinutes: 104, loggedMinutes: 104, presenceMinutes: 810,
+    dailyTargetMinutes: 480, targetPct: 60,
+  });
+  ok('presence beats the nominal day as the denominator, and the card can say which',
+    clocked.basis === 810 && clocked.source === 'present', JSON.stringify(clocked));
+  ok('1h 44m billable in a 13h 30m day is 13%, not 22% of a day nobody worked',
+    Math.round(clocked.sharePct) === 13, String(clocked.sharePct));
+  ok('and the ring measures that against the billable target, not against the hours',
+    clocked.targetMinutes === 486 && Math.round(clocked.progressPct) === 21,
+    JSON.stringify({ target: clocked.targetMinutes, progress: clocked.progressPct }));
+  ok('the shortfall is stated in minutes, which is the thing anyone can act on',
+    clocked.shortfallMinutes === 382);
+
+  const unclocked = billableStanding({
+    billableMinutes: 60, loggedMinutes: 300, presenceMinutes: 0,
+    dailyTargetMinutes: 480, targetPct: 60,
+  });
+  ok('with nobody clocked in the day is the work filed into it',
+    unclocked.basis === 300 && unclocked.source === 'logged', JSON.stringify(unclocked));
+  ok('and with neither, the daily target is all that is left to mean anything',
+    billableStanding({ dailyTargetMinutes: 480, targetPct: 60 }).source === 'target');
+  // A block logged by hand outside every shift is still work that happened, so
+  // the basis widens to hold it. Dividing by presence alone reads 150%, which
+  // is not a share of anything.
+  ok('a share can never read over 100 — the day is at least as long as the work in it',
+    billableStanding({
+      billableMinutes: 180, loggedMinutes: 180, presenceMinutes: 120, targetPct: 60,
+    }).sharePct === 100);
+  ok('no target means no arc, which is a different claim from none of it met',
+    billableStanding({ billableMinutes: 60, loggedMinutes: 60, targetPct: 0 }).progressPct === null);
+
   const grouped = groupByClient([
     { id: 1, clientId: null }, { id: 2, clientId: 7, clientName: 'Zed' },
     { id: 3, clientId: 4, clientName: 'Ash' }, { id: 4, clientId: 7, clientName: 'Zed' },
@@ -378,6 +432,12 @@ try {
     boot.status === 200 && boot.body.projects.length === 5 && boot.body.tasks.length === 9,
     `${boot.body.projects?.length} projects / ${boot.body.tasks?.length} tasks`);
   ok('bootstrap carries today + timezone', /^\d{4}-\d{2}-\d{2}$/.test(boot.body.today) && !!boot.body.timezone);
+  // The Today ring reads this rather than assuming one, so the migration that
+  // makes it per-person moves the server and nothing on the screen.
+  ok('bootstrap carries the share of the day that is meant to be billable',
+    Number.isInteger(boot.body.billableTargetPct)
+    && boot.body.billableTargetPct > 0 && boot.body.billableTargetPct <= 100,
+    String(boot.body.billableTargetPct));
   const projectId = boot.body.projects[0].id;
 
   console.log('\nprojects');
@@ -1162,6 +1222,27 @@ try {
     overlapped.claimedMinutes === 360 && overlapped.overclaimedMinutes === 180,
     JSON.stringify({ claimed: overlapped.claimedMinutes, over: overlapped.overclaimedMinutes }));
 
+  // The sheet walks the same stretches in start order with a cursor that only
+  // moves forward. A SHORT stretch nested inside a longer one is the case that
+  // separates that from a naive walk: the naive one drags the cursor back to
+  // the short stretch's end and opens a phantom gap over presence the long one
+  // already covers — then offers those minutes for disposal, on top of work
+  // that is already there. Two stretches of equal length would not show it,
+  // which is why this one is nested rather than duplicated.
+  sql((w) => w(`INSERT INTO time_entries
+       (user_id, project_id, date, minutes, note, billable, started_at, ended_at, source, created_at, updated_at)
+     VALUES (?, ?, '2026-11-01', 30, 'nested inside the overlap', 1, ?, ?, 'timer', ?, ?)`,
+  shiftUid, P2, new Date(fallIn + 30 * 60000).toISOString(), new Date(fallIn + 60 * 60000).toISOString(),
+  new Date(fallIn).toISOString(), new Date(fallIn).toISOString()));
+  const overlapSheet = (await call('GET', `/api/shift/${overlapped.id}`)).body;
+  ok('a stretch nested inside another is shown as the row it is',
+    overlapSheet.segments.filter((s) => s.kind === 'work').length === 3,
+    JSON.stringify(overlapSheet.segments.map((s) => `${s.kind} ${s.minutes}`)));
+  ok('and opens no gap over presence the longer stretch already covers',
+    overlapSheet.openMinutes === 0 && overlapSheet.segments.every((s) => s.kind !== 'gap'),
+    JSON.stringify({ open: overlapSheet.openMinutes }));
+  sql((w) => w("DELETE FROM time_entries WHERE note = 'nested inside the overlap'"));
+
   console.log('\ncorrecting attendance after the fact');
   // Time entries have always been editable and the whole read-time
   // reconciliation leans on that. The presence they are measured against was
@@ -1211,6 +1292,16 @@ try {
   // gap does not stop existing at one o'clock. This person has picked up a few
   // over the sections above, so the assertions are about the shape of the list
   // rather than a count that would drift every time a fixture is added.
+  //
+  // `forgot` began nineteen hours ago and was corrected to end eight hours
+  // after that, so it lies wholly on YESTERDAY's local date for every run
+  // starting before 19:00 in the app timezone — which is most of them. Reading
+  // it back out of the bootstrap therefore only worked in the evening: these
+  // three assertions were red at every other hour of the day, and were.
+  // Today's spells come from the bootstrap; an older one comes from the range
+  // endpoint, which is the exact reason that endpoint exists.
+  const everyShift = async () =>
+    (await call('GET', '/api/shifts?from=1970-01-01&to=2999-12-31')).body.shifts;
   const beforeLunch = (await call('GET', '/api/bootstrap')).body.shifts;
   const lunchBack = await call('POST', '/api/shift/in');
   ok('a second spell can be opened once the first is closed', lunchBack.status === 200);
@@ -1218,14 +1309,16 @@ try {
   ok('bootstrap reports every spell of the day, oldest first',
     both.length === beforeLunch.length + 1
     && both.every((x, i) => i === 0 || both[i - 1].startedAt <= x.startedAt)
-    && both.some((x) => x.id === forgot.id) && both.some((x) => x.id === lunchBack.body.shift.id),
+    && both.some((x) => x.id === lunchBack.body.shift.id),
     both.map((x) => `${x.id}:${x.startedAt}`).join(' '));
-  ok('the earlier spell is still readable, with its own reconciliation',
-    both.find((x) => x.id === forgot.id)?.presentMinutes === 480
-    && both.find((x) => x.id === forgot.id)?.open === false
-    && both.find((x) => x.id === lunchBack.body.shift.id)?.open === true);
-  ok('and exactly one of them is running',
-    both.filter((x) => x.open).length === 1, String(both.filter((x) => x.open).length));
+  const corrected = (await everyShift()).find((x) => x.id === forgot.id);
+  ok('the corrected spell is still readable, with its own reconciliation',
+    corrected?.presentMinutes === 480 && corrected.open === false
+    && both.find((x) => x.id === lunchBack.body.shift.id)?.open === true,
+    JSON.stringify(corrected));
+  ok('and exactly one spell anywhere is running',
+    (await everyShift()).filter((x) => x.open).length === 1,
+    String((await everyShift()).filter((x) => x.open).length));
 
   // Presence cannot happen twice at once, or the same minute is reconciled
   // against two shifts and counted as covered in both.
@@ -1243,11 +1336,12 @@ try {
     'an unauthenticated PATCH was accepted');
 
   const entriesBeforeDelete = (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length;
+  const shiftsBeforeDelete = await everyShift();
   const gone = await call('DELETE', `/api/shift/${forgot.id}`);
   ok('a spell recorded by mistake can be removed', gone.status === 200);
-  const afterDelete = (await call('GET', '/api/bootstrap')).body.shifts;
+  const afterDelete = await everyShift();
   ok('and only that one goes',
-    afterDelete.length === both.length - 1 && !afterDelete.some((x) => x.id === forgot.id),
+    afterDelete.length === shiftsBeforeDelete.length - 1 && !afterDelete.some((x) => x.id === forgot.id),
     afterDelete.map((x) => x.id).join(','));
   ok('taking no logged work with it — nothing references a shift',
     (await call('GET', '/api/entries?from=1970-01-01')).body.entries.length === entriesBeforeDelete,
@@ -1256,6 +1350,233 @@ try {
   ok('deleting one that is already gone 404s',
     (await call('DELETE', `/api/shift/${forgot.id}`)).status === 404);
   await call('POST', '/api/shift/out');
+
+  console.log('\nthe clock-out sheet');
+  // A day with a shape to it: eight hours here, three of them clocked, and the
+  // rest open. Placed on a quiet stretch of calendar so nothing this person has
+  // picked up over the sections above can reach into it.
+  const sheetIn = atLocal(2026, 9, 15, 9, 0);
+  const sheetOut = atLocal(2026, 9, 15, 17, 0);
+  placeShift(sheetIn, sheetOut, [
+    [atLocal(2026, 9, 15, 9, 30), atLocal(2026, 9, 15, 11, 0), P1],
+    [atLocal(2026, 9, 15, 13, 0), atLocal(2026, 9, 15, 14, 30), P2],
+  ]);
+  const sheetId = (await readShift('2026-09-15')).id;
+  const sheet = (await call('GET', `/api/shift/${sheetId}`)).body;
+
+  ok('the sheet lays the day out end to end, with nothing between the rows',
+    sheet.segments[0].from === new Date(sheetIn).toISOString()
+    && sheet.segments[sheet.segments.length - 1].to === new Date(sheetOut).toISOString()
+    && sheet.segments.every((s, i) => i === 0 || sheet.segments[i - 1].to === s.from),
+    sheet.segments.map((s) => `${s.kind} ${s.minutes}m`).join(' · '));
+  ok('and names what each stretch of it was for',
+    sheet.segments.filter((s) => s.kind === 'work').length === 2
+    && sheet.segments.filter((s) => s.kind === 'work').every((s) => s.projectId && s.projectName),
+    JSON.stringify(sheet.segments.filter((s) => s.kind === 'work').map((s) => s.projectName)));
+  ok('open time is reported as open, and adds to exactly what could be filed into it',
+    sheet.segments.filter((s) => s.kind === 'gap').map((s) => s.minutes).join() === '30,120,150'
+    && sheet.openMinutes === 300,
+    `${sheet.openMinutes} open`);
+
+  // The reviewer's trap from an earlier round: a figure on one screen that
+  // quietly disagrees with the screen beside it. Both are shiftView, and this
+  // is what says so.
+  const stripView = await readShift('2026-09-15');
+  ok('the sheet and the strip report the same day, figure for figure',
+    ['presentMinutes', 'attributedMinutes', 'unattributedMinutes', 'claimedMinutes', 'overclaimedMinutes']
+      .every((k) => sheet.shift[k] === stripView[k]),
+    JSON.stringify({ sheet: sheet.shift, strip: stripView }));
+  ok('and presence is open time plus what was attributed, with no minute in two places',
+    sheet.openMinutes + sheet.shift.attributedMinutes + sheet.shortfallMinutes
+      === sheet.shift.presentMinutes,
+    `${sheet.openMinutes} + ${sheet.shift.attributedMinutes} + ${sheet.shortfallMinutes} `
+    + `vs ${sheet.shift.presentMinutes}`);
+
+  // A day rarely ends on a whole minute. The gap is FLOORED, because it is a
+  // promise about what a disposition would write — but the shortfall must be
+  // measured against the gap's real length, or thirty leftover seconds are
+  // announced as a stretch billing less than it ran and the sheet accuses
+  // somebody of an overbill it invented by rounding.
+  const oddIn = atLocal(2026, 9, 19, 9, 0);
+  placeShift(oddIn, atLocal(2026, 9, 19, 12, 0) + 30000, []);
+  const odd = (await call('GET', `/api/shift/${(await readShift('2026-09-19')).id}`)).body;
+  ok('a gap that is not a whole number of minutes offers only the whole ones',
+    odd.openMinutes === 180 && odd.shift.presentMinutes === 181, JSON.stringify(odd.shift));
+  ok('and the leftover seconds are not reported as an entry billing less than it ran',
+    odd.shortfallMinutes === 0, String(odd.shortfallMinutes));
+
+  // Blocks logged by hand carry no window, so nothing can place them inside
+  // this presence — the sheet says so rather than leaving a reader to wonder.
+  await call('POST', '/api/entries', { projectId: P1, minutes: 45, date: '2026-09-15', note: 'By hand' });
+  ok('the sheet reports the day\'s unplaced manual time as its own fact',
+    (await call('GET', `/api/shift/${sheetId}`)).body.unplacedMinutes === 45);
+  ok('a sheet for a shift that does not exist 404s',
+    (await call('GET', '/api/shift/999999')).status === 404);
+  ok('and an unauthenticated read is refused',
+    (await callOn(BASE, 'GET', `/api/shift/${sheetId}`)).status === 401);
+
+  console.log('\ndisposing of the gap');
+  // An overhead bucket is an ORDINARY project flagged non-billable, not a magic
+  // value: it is created through the same endpoint as any other, and everything
+  // downstream — reports, budgets, the billable share — already knows what a
+  // non-billable project means.
+  const memberSeat = cookie;
+  cookie = adminSeat;
+  const overhead = (await call('POST', '/api/projects', {
+    name: 'Admin & Overhead', code: 'OVH', billable: false,
+  })).body.project;
+  const retired = (await call('POST', '/api/projects', { name: 'Retired Bucket', billable: false })).body.project;
+  await call('PATCH', `/api/projects/${retired.id}`, { status: 'archived' });
+  cookie = memberSeat;
+  ok('an overhead bucket is a project like any other, flagged non-billable',
+    overhead.billable === false && overhead.status === 'active', JSON.stringify(overhead));
+
+  // Explicitly to the far end of the calendar: /api/entries defaults `to` to
+  // today, and these fixtures sit on a quiet date that is still in the future.
+  const everyEntry = async () =>
+    (await call('GET', '/api/entries?from=1970-01-01&to=2999-12-31')).body.entries;
+  const priorRows = (await everyEntry()).length;
+  const put = await call('POST', `/api/shift/${sheetId}/dispose`, { projectId: overhead.id, note: 'Unaccounted presence' });
+  ok('disposing of the gap writes one ordinary entry per stretch of open time',
+    put.status === 200 && put.body.entries.length === 3 && put.body.minutes === 300,
+    JSON.stringify({ n: put.body.entries?.length, minutes: put.body.minutes, err: put.body.error }));
+  ok('and every one of them bills exactly the window it holds',
+    put.body.entries.every((e) => Date.parse(e.endedAt) - Date.parse(e.startedAt) === e.minutes * 60000),
+    put.body.entries.map((e) => `${e.minutes}m/${(Date.parse(e.endedAt) - Date.parse(e.startedAt)) / 60000}m`).join(' '));
+  ok('the gap closes', put.body.shift.unattributedMinutes === 0
+    && put.body.shift.attributedMinutes === 480, JSON.stringify(put.body.shift));
+  ok('and not one minute of it is overclaimed',
+    put.body.shift.overclaimedMinutes === 0 && put.body.shift.claimedMinutes <= put.body.shift.presentMinutes,
+    JSON.stringify(put.body.shift));
+  ok('billable follows the bucket, which is the whole reason to have one',
+    put.body.entries.every((e) => e.billable === false));
+  ok('the entries are in the timesheet like any others, on the day they were worked',
+    (await call('GET', '/api/entries?from=2026-09-15&to=2026-09-15')).body.entries
+      .filter((e) => e.projectId === overhead.id).reduce((s, e) => s + e.minutes, 0) === 300);
+  ok('and the rows really were written, not counted twice from one insert',
+    (await everyEntry()).length === priorRows + 3,
+    `${priorRows} rows before, ${(await everyEntry()).length} after`);
+  ok('a second tap finds nothing left rather than filing the afternoon twice',
+    (await call('POST', `/api/shift/${sheetId}/dispose`, { projectId: overhead.id })).status === 400);
+
+  // Nothing derived is stored: correcting one of those entries has to move the
+  // reconciliation, and it has to move it the RIGHT way. The window is
+  // untouched, so the presence is still covered — unattributed, but not open.
+  const disposed = put.body.entries.find((e) => e.minutes === 150);
+  await call('PATCH', `/api/entries/${disposed.id}`, { minutes: 5 });
+  const trimmedSheet = (await call('GET', `/api/shift/${sheetId}`)).body;
+  ok('trimming a disposed entry re-opens the gap in the figures, computed fresh',
+    trimmedSheet.shift.unattributedMinutes === 145, JSON.stringify(trimmedSheet.shift));
+  ok('but the minutes are unattributed and NOT open — a stretch already sits there',
+    trimmedSheet.openMinutes === 0 && trimmedSheet.shortfallMinutes === 145,
+    JSON.stringify({ open: trimmedSheet.openMinutes, short: trimmedSheet.shortfallMinutes }));
+  await call('PATCH', `/api/entries/${disposed.id}`, { minutes: 150 });
+
+  // One row of the sheet rather than the whole of it.
+  const scopeIn = atLocal(2026, 9, 16, 10, 0);
+  const scopeOut = atLocal(2026, 9, 16, 14, 0);
+  placeShift(scopeIn, scopeOut, []);
+  const scopeId = (await readShift('2026-09-16')).id;
+  const scoped = await call('POST', `/api/shift/${scopeId}/dispose`, {
+    projectId: overhead.id,
+    from: new Date(atLocal(2026, 9, 16, 11, 0)).toISOString(),
+    to: new Date(atLocal(2026, 9, 16, 12, 0)).toISOString(),
+  });
+  ok('one stretch of the day can be assigned on its own',
+    scoped.status === 200 && scoped.body.entries.length === 1 && scoped.body.minutes === 60,
+    JSON.stringify({ n: scoped.body.entries?.length, m: scoped.body.minutes, err: scoped.body.error }));
+  const scopeSheet = (await call('GET', `/api/shift/${scopeId}`)).body;
+  ok('and the rest of it is left exactly as it was',
+    scopeSheet.openMinutes === 180
+    && scopeSheet.segments.filter((s) => s.kind === 'gap').map((s) => s.minutes).join() === '60,120',
+    JSON.stringify(scopeSheet.segments.map((s) => `${s.kind} ${s.minutes}`)));
+  ok('a stretch with one end and not the other is refused',
+    (await call('POST', `/api/shift/${scopeId}/dispose`,
+      { projectId: overhead.id, from: new Date(scopeIn).toISOString() })).status === 400);
+  ok('and one that ends before it starts',
+    (await call('POST', `/api/shift/${scopeId}/dispose`, {
+      projectId: overhead.id,
+      from: new Date(scopeOut).toISOString(), to: new Date(scopeIn).toISOString(),
+    })).status === 400);
+
+  ok('an archived project is not a bucket you can still file into',
+    (await call('POST', `/api/shift/${scopeId}/dispose`, { projectId: retired.id })).status === 400);
+  ok('nor a project that does not exist',
+    (await call('POST', `/api/shift/${scopeId}/dispose`, { projectId: 999999 })).status === 404);
+  ok('nor no project at all — a gap is disposed of somewhere or not at all',
+    (await call('POST', `/api/shift/${scopeId}/dispose`, {})).status === 400);
+
+  // The open shift's gap is still growing, so there is nothing settled to fill.
+  // Backdated first, and deliberately: a shift opened this instant has no gap
+  // worth a minute, so it is refused whether or not the rule exists — and an
+  // assertion that passes either way proves nothing about the rule it names.
+  const stillIn = (await call('POST', '/api/shift/in')).body.shift;
+  sql((w) => w('UPDATE shifts SET started_at = ? WHERE id = ?',
+    new Date(Date.now() - 2 * hour).toISOString(), stillIn.id));
+  const openGap = (await call('GET', `/api/shift/${stillIn.id}`)).body;
+  ok('the open shift really does have a gap to be refused',
+    openGap.openMinutes >= 100 && openGap.shift.open === true, JSON.stringify(openGap.shift));
+  const openTry = await call('POST', `/api/shift/${stillIn.id}/dispose`, { projectId: overhead.id });
+  ok('an open shift has no settled gap to dispose of', openTry.status === 400, `status ${openTry.status}`);
+  ok('and the refusal says so, rather than reporting an empty gap',
+    /clock out first/i.test(openTry.body.error || ''), openTry.body.error);
+  await call('POST', '/api/shift/out');
+
+  // Attendance is one person's, and so is accounting for it.
+  sql((w) => w('INSERT INTO shifts (user_id, date, started_at, ended_at, note) VALUES (?, ?, ?, ?, ?)',
+    1, '2026-09-18', new Date(atLocal(2026, 9, 18, 9, 0)).toISOString(),
+    new Date(atLocal(2026, 9, 18, 12, 0)).toISOString(), ''));
+  const othersId = (await call('GET', '/api/shifts?scope=team&from=2026-09-18&to=2026-09-18')).body.shifts[0].id;
+  ok('someone else\'s attendance is not yours to account for',
+    (await call('POST', `/api/shift/${othersId}/dispose`, { projectId: overhead.id })).status === 403);
+
+  console.log('\nwhat a disposition is not allowed to do');
+  // The one rule that matters. Every stretch written by a disposition bills
+  // exactly the window it holds and lands where nothing else does, so it cannot
+  // overclaim on its own — but a day already carrying an entry that bills more
+  // minutes than its clock ran has no room left to give, and filling the gap
+  // would be the straw that puts the invoice past the day.
+  //
+  // Three hours present, half an hour of it clocked, and that half hour edited
+  // to bill ninety minutes: 90 claimed against 180, so no overclaim YET, and
+  // 150 minutes still open. Filling them would bill 240 against 180.
+  const tightIn = atLocal(2026, 9, 17, 9, 0);
+  placeShift(tightIn, atLocal(2026, 9, 17, 12, 0), [
+    [atLocal(2026, 9, 17, 9, 30), atLocal(2026, 9, 17, 10, 0), P1],
+  ]);
+  const tightId = (await readShift('2026-09-17')).id;
+  const tightEntry = (await call('GET', '/api/entries?from=2026-09-17&to=2026-09-17')).body.entries[0];
+  await call('PATCH', `/api/entries/${tightEntry.id}`, { minutes: 90 });
+
+  const tightBefore = (await call('GET', `/api/shift/${tightId}`)).body;
+  ok('a stretch billing more than it ran is flagged on the row that causes it',
+    tightBefore.segments.some((s) => s.kind === 'work' && s.claimsMinutes === 90 && s.spanMinutes === 30),
+    JSON.stringify(tightBefore.segments.filter((s) => s.kind === 'work')));
+  ok('the day does not overclaim yet, and its gap is real',
+    tightBefore.shift.overclaimedMinutes === 0 && tightBefore.shift.claimedMinutes === 90
+    && tightBefore.openMinutes === 150, JSON.stringify(tightBefore.shift));
+
+  const rowsBefore = (await everyEntry()).length;
+  const refused = await call('POST', `/api/shift/${tightId}/dispose`, { projectId: overhead.id });
+  ok('filling that gap is refused, because it would bill more than the day held',
+    refused.status === 400, `status ${refused.status}`);
+  ok('and the refusal states the arithmetic rather than saying no',
+    /4h against 3h of presence/.test(refused.body.error || ''), refused.body.error);
+  ok('nothing was written on the way to that refusal',
+    (await everyEntry()).length === rowsBefore,
+    `${rowsBefore} rows before, ${(await everyEntry()).length} after`);
+  const tightAfter = (await call('GET', `/api/shift/${tightId}`)).body;
+  ok('and the gap it would not fill is still exactly where it was',
+    tightAfter.openMinutes === 150 && tightAfter.shift.attributedMinutes === 30,
+    JSON.stringify(tightAfter.shift));
+
+  // Correct the entry that was in the way, and the same call goes through —
+  // the refusal was about the day, not about disposing.
+  await call('PATCH', `/api/entries/${tightEntry.id}`, { minutes: 30 });
+  const allowed = await call('POST', `/api/shift/${tightId}/dispose`, { projectId: overhead.id });
+  ok('correct that entry and the same disposition goes through',
+    allowed.status === 200 && allowed.body.shift.unattributedMinutes === 0
+    && allowed.body.shift.overclaimedMinutes === 0, JSON.stringify(allowed.body.shift || allowed.body));
 
   console.log('\na fresh process mid-shift');
   await call('POST', '/api/shift/in');

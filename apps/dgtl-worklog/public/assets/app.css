@@ -265,6 +265,57 @@ body{
 .quick-entry .btn-icon{width:30px;height:30px;transition:color .15s,background .15s}
 .quick-entry:focus-within .btn-icon{color:var(--text)}
 
+/* ==================== the reconciliation sheet ====================
+   The day laid out end to end. Rows, not a table: at 360px the modal has 272px
+   of content to give and a table would either scroll sideways inside a dialog
+   or squeeze the times to two lines. Each row wraps instead — the clock times
+   and what the stretch was hold one line, the duration drops under them. */
+.sheet-figures{gap:22px;row-gap:14px}
+.sheet{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+.sheet-row{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  padding:11px 14px;font-size:13px;border-top:1px solid var(--border-row);
+}
+.sheet-row:first-child{border-top:none}
+.sheet-when{
+  flex:none;width:124px;color:var(--text-muted);font-size:12px;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.sheet-what{flex:1 1 130px;min-width:0}
+/* Inline, not flex — the same reason .sec-name is inline on the task board. As
+   flex items the colour dot and the "non-billable" pill are boxes of their own,
+   and a label too long for a phone pushes them onto lines of their own: a lone
+   8px dot sitting on its own line reads as a rendering fault. Inline, they wrap
+   with the words they belong to. */
+.sheet-what .dot-tag{display:inline}
+.sheet-what .dot-tag .dot{display:inline-block;vertical-align:middle;margin-right:8px}
+.sheet-what .dot-tag .pill{vertical-align:middle;margin-left:6px}
+.sheet-min{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Held open with or without a button in it, so the durations line up down the
+   column rather than stepping sideways by the width of the word "Assign". */
+.sheet-act{flex:none;display:flex;justify-content:flex-end;width:86px}
+.sheet-note{font-size:12px;color:var(--text-dim);margin-top:3px;word-break:break-word}
+.sheet-note.warn{color:var(--warning)}
+/* An open stretch is absent data, so it is drawn as absence: a ring with
+   nothing in it, in the palette's own swatch for a thing with no colour. */
+.sheet-row.is-gap{background:var(--surface-1)}
+.sheet-row.is-gap .sheet-what{color:var(--text-muted)}
+.dot-open{
+  width:8px;height:8px;border-radius:50%;flex:none;
+  background:transparent;box-shadow:inset 0 0 0 2px var(--nil);
+}
+.sheet-row.is-over{box-shadow:inset 3px 0 0 var(--warning)}
+.sheet-dispose{
+  border-top:1px solid var(--border);padding-top:16px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.sheet-dispose .eyebrow{color:var(--text-muted)}
+.sheet-dispose .hint{margin-top:0}
+.hint.warn{color:var(--warning)}
+.hint.over{color:var(--error)}
+/* The strip's per-shift controls stay together when the card's row wraps. */
+.shift-actions{flex-wrap:nowrap}
+
 /* ==================== ring ==================== */
 .ring-wrap{display:flex;align-items:center;gap:20px}
 .ring{position:relative;width:132px;height:132px;flex:none}
@@ -511,6 +562,17 @@ body{
 .bar-fill{height:100%;border-radius:var(--r-pill);transition:width .4s ease}
 .bar-track.thin{height:6px}
 .bar-over .bar-fill{background:var(--error)!important}
+/* Past 100% the track stops meaning "the budget" and starts meaning "what was
+   spent" — see budgetBar() in views/projects.js. `.in` shrinks and `.out` does
+   not, so a 1% overrun still paints a few pixels of red instead of being
+   rounded out of existence by the overflow clip. The inset shadow carves the
+   track's own shade back in between the two: a project colour and --error can
+   sit as close as 2.6:1, and no single divider colour reaches 3:1 against both,
+   while each segment clears the track by 4.8:1 or better. */
+.bar-track.over{display:flex}
+.bar-track.over .in{height:100%;flex:1 1 auto;min-width:0}
+.bar-track.over .out{height:100%;flex:none;min-width:7px;background:var(--error);
+                     box-shadow:inset 2px 0 0 var(--surface-2)}
 
 .chart-days{display:flex;align-items:flex-end;gap:6px;height:170px}
 .chart-days .d{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;height:100%}

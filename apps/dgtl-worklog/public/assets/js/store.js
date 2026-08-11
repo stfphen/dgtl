@@ -26,6 +26,10 @@ export const state = {
   // screen states it rather than quietly leaving it out of its totals.
   unassigned: { minutes: 0, billableMinutes: 0 },
   today: new Date().toISOString().slice(0, 10),
+  // The share of the day meant to reach an invoice. 0 until the workspace
+  // loads: the figure belongs to the server, and a plausible-looking default
+  // baked in here would be a second opinion about the same number.
+  billableTargetPct: 0,
   weekStartDate: null,
   timezone: '',
   // When this snapshot was taken. The shift figures are true as of then, and
@@ -56,6 +60,7 @@ export async function load() {
     unplacedMinutes: data.unplacedMinutes ?? 0,
     todayEntries: data.todayEntries,
     today: data.today,
+    billableTargetPct: data.billableTargetPct ?? 0,
     weekStartDate: data.weekStartDate,
     timezone: data.timezone,
     loadedAt: Date.now(),
@@ -117,6 +122,60 @@ export function shiftAttributedSeconds(s) {
 export const dayPresenceSeconds = () => state.shifts.reduce((n, s) => n + shiftSeconds(s), 0);
 export const dayAttributedSeconds = () => state.shifts.reduce((n, s) => n + shiftAttributedSeconds(s), 0);
 
+/** Of the minutes filed today, the ones that can be invoiced. */
+export const todayBillableMinutes = () =>
+  state.todayEntries.reduce((sum, e) => sum + (e.billable ? e.minutes : 0), 0);
+
+/**
+ * Where the day stands against the share of it that is meant to be billable.
+ *
+ * The denominator is the day that ACTUALLY HAPPENED, not a nominal eight
+ * hours: presence when somebody clocked in, and never less than the work filed
+ * into the day, because a block logged outside any shift was still worked and
+ * a basis smaller than the work would report a share above 100% — which is not
+ * a share of anything. With no attendance and nothing logged there is only the
+ * intention left, and that is what `daily_target_minutes` has always been; it
+ * keeps that meaning here and gains the target percentage as a sibling rather
+ * than being quietly redefined under the people already using it.
+ *
+ * Two percentages come out because they answer two questions. `sharePct` is
+ * the ratio — how much of the day reached an invoice, the figure this
+ * workspace reads 13% on. `progressPct` is how far along the target that is,
+ * and it is the one the ring draws, because a ring is a progress bar bent
+ * round: filling it has to mean arriving somewhere.
+ *
+ * Pure, and given every figure it uses, so the numbers on the Today screen are
+ * the ones a test can read with no DOM in the room.
+ */
+export function billableStanding({
+  billableMinutes = 0, loggedMinutes = 0, presenceMinutes = 0,
+  dailyTargetMinutes = 0, targetPct = 0,
+} = {}) {
+  const measured = Math.max(presenceMinutes, loggedMinutes);
+  const basis = measured || dailyTargetMinutes || 0;
+  const source = measured
+    ? (presenceMinutes >= loggedMinutes ? 'present' : 'logged')
+    : (basis ? 'target' : 'none');
+  const targetMinutes = Math.round((basis * targetPct) / 100);
+  return {
+    billableMinutes, loggedMinutes, presenceMinutes, basis, source, targetPct, targetMinutes,
+    sharePct: basis ? (billableMinutes / basis) * 100 : null,
+    // null, not 0 — "nobody set a target" and "none of the target is met" are
+    // different claims, and an arc drawn for the first one states the second.
+    progressPct: targetMinutes ? (billableMinutes / targetMinutes) * 100 : null,
+    shortfallMinutes: Math.max(0, targetMinutes - billableMinutes),
+  };
+}
+
+/** The same, for today, read off the live workspace. */
+export const billableToday = () => billableStanding({
+  billableMinutes: todayBillableMinutes(),
+  loggedMinutes: todayMinutes(),
+  presenceMinutes: Math.round(dayPresenceSeconds() / 60),
+  dailyTargetMinutes: state.user?.dailyTargetMinutes || 0,
+  targetPct: state.billableTargetPct,
+});
+
 /* -------------------------------------------------------------- actions -- */
 /* Each action calls the API, then reloads the parts that changed. Reloading
    beats patching state by hand: totals, budgets and streaks stay correct. */
@@ -165,6 +224,17 @@ export async function saveShift(id, patch) {
 export async function removeShift(id) {
   await api.deleteShift(id);
   await load();
+}
+
+/**
+ * Put a shift's unaccounted presence against a project. Reloads rather than
+ * patching, because the entries it writes move the day's total, the project's
+ * budget bar and the billable share all at once.
+ */
+export async function disposeGap(id, patch) {
+  const res = await api.disposeGap(id, patch);
+  await load();
+  return res;
 }
 
 export async function clockOut() {

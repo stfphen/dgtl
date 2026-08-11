@@ -25,6 +25,25 @@ import {
 const DEFAULT_PROJECT_COLOR = '#F0CF50';   // tokens.css --gold
 const UNASSIGNED_COLOR = '#8a8a8a';        // tokens.css --chart-6, the neutral series
 
+// ------------------------------------------------------------ what a day owes
+/**
+ * The share of the day that is meant to be billable.
+ *
+ * `users.daily_target_minutes` says how LONG a day is meant to be, and it kept
+ * that meaning — it is still the fallback denominator on a day nobody clocked
+ * in for. What it never said is how much of that day is meant to reach an
+ * invoice, and "8h logged" is the number an agency can hit while selling
+ * nothing. This is the sibling: a percentage, because the honest denominator
+ * on a day with attendance is the presence actually recorded, not a nominal
+ * eight hours, and a target expressed in minutes would be measured against a
+ * day that did not happen.
+ *
+ * It lives on `users.billable_target_pct`, defaulting to 60 — a starting
+ * position rather than a measurement, being the utilisation figure agencies
+ * plan against. This workspace's own share is 13%, which is exactly why the
+ * ring had to stop measuring hours present.
+ */
+
 // ---------------------------------------------------------------- validation
 
 const str = (v, { name, max = 200, required = false, dflt = '' } = {}) => {
@@ -74,6 +93,19 @@ const colorOr = (v, dflt = DEFAULT_PROJECT_COLOR) => {
 /** Does `actor` own row `ownerId`, or outrank it? */
 const canEditFor = (actor, ownerId) => actor.role === 'admin' || actor.id === ownerId;
 
+/**
+ * Minutes as people read them, for the inside of a refusal. The client has its
+ * own `hm()`; a message that says "cannot bill 254 against 180" makes the
+ * reader do the arithmetic that caused the refusal in the first place.
+ */
+const dur = (m) => {
+  const n = Math.max(0, Math.round(m));
+  const h = Math.floor(n / 60);
+  const rest = n % 60;
+  if (!h) return `${rest}m`;
+  return rest ? `${h}h ${rest}m` : `${h}h`;
+};
+
 // ------------------------------------------------------------------ shaping
 
 const projectRow = (p) => ({
@@ -114,6 +146,10 @@ const entryRow = (e) => ({
 const userRow = (u) => ({
   id: u.id, email: u.email, name: u.name, role: u.role, active: !!u.active,
   dailyTargetMinutes: u.daily_target_minutes, weekStart: u.week_start,
+  // How long a day is, and how much of it is meant to reach an invoice. Two
+  // settings because they answer two questions: a short day can still be a
+  // fully billable one.
+  billableTargetPct: u.billable_target_pct ?? 60,
 });
 
 const listProjects = () => all(`
@@ -448,6 +484,140 @@ function shiftView(s) {
   };
 }
 
+/**
+ * The same presence, laid out end to end instead of summed: every stretch of a
+ * shift in order, each of them either work with a clock behind it or open time
+ * nothing accounts for. This is what the reconciliation sheet draws, and it is
+ * computed from the same windows shiftView reconciles, on every read — a sheet
+ * opened again after an entry is corrected shows a different and equally
+ * correct day.
+ *
+ * Two rounding rules, and they are not the same rule twice:
+ *   • a work stretch is ROUNDED, because the figure is describing something
+ *     that already happened.
+ *   • a gap is FLOORED, because the figure is a promise: `openMinutes` is
+ *     exactly what a disposition would write into it, and a gap rounded up
+ *     would offer a minute the day did not contain.
+ *
+ * Overlapping stretches — only reachable by editing the database by hand —
+ * appear as the two rows they are, and the gaps are computed off their MERGED
+ * coverage so the same minute is never offered for disposal twice.
+ */
+function shiftSegments(s) {
+  const start = Date.parse(s.started_at);
+  const end = s.ended_at ? Date.parse(s.ended_at) : Date.now();
+  const endISO = s.ended_at || new Date(end).toISOString();
+
+  const covered = [];
+  for (const e of all(`
+    SELECT e.*, p.name AS project_name, p.color AS project_color, t.title AS task_title
+      FROM time_entries e
+      LEFT JOIN projects p ON p.id = e.project_id
+      LEFT JOIN tasks    t ON t.id = e.task_id
+     WHERE e.user_id = ? AND e.started_at IS NOT NULL AND e.ended_at IS NOT NULL
+       AND e.started_at < ? AND e.ended_at > ?
+     ORDER BY e.started_at ASC, e.id ASC`, s.user_id, endISO, s.started_at)) {
+    const from = Math.max(Date.parse(e.started_at), start);
+    const to = Math.min(Date.parse(e.ended_at), end);
+    if (to <= from) continue;
+    covered.push({
+      kind: 'work', from, to,
+      minutes: Math.round((to - from) / 60000),
+      entryId: e.id, projectId: e.project_id, projectName: e.project_name,
+      projectColor: e.project_color, taskTitle: e.task_title, note: e.note,
+      billable: !!e.billable, source: e.source,
+      // What the whole entry bills, and how long its whole window ran for. They
+      // differ only where an entry has been edited away from its own clock, and
+      // that difference IS the overclaim — stated on the row that causes it
+      // instead of only in the total at the top, where nobody can act on it.
+      claimsMinutes: e.minutes,
+      spanMinutes: Math.round((Date.parse(e.ended_at) - Date.parse(e.started_at)) / 60000),
+    });
+  }
+
+  // The clock still running has written no entry yet, so it is not in the query
+  // above — but it is plainly the current stretch, and leaving it out would
+  // show the last few minutes of an open shift as a gap.
+  const t = one(`
+    SELECT tm.*, p.name AS project_name, p.color AS project_color, tk.title AS task_title
+      FROM timers tm
+      LEFT JOIN projects p  ON p.id = tm.project_id
+      LEFT JOIN tasks    tk ON tk.id = tm.task_id
+     WHERE tm.user_id = ?`, s.user_id);
+  if (t) {
+    const from = Math.max(Date.parse(t.started_at), start);
+    const to = Math.min(Date.now(), end);
+    if (to > from) {
+      covered.push({
+        kind: 'running', from, to, minutes: Math.round((to - from) / 60000),
+        entryId: null, projectId: t.project_id, projectName: t.project_name,
+        projectColor: t.project_color, taskTitle: t.task_title, note: t.note,
+        billable: !!t.billable, source: 'timer',
+        claimsMinutes: Math.round((to - from) / 60000),
+        spanMinutes: Math.round((to - from) / 60000),
+      });
+    }
+  }
+
+  // One walk in start order, and the cursor only ever moves forward: a stretch
+  // that overlaps the one before it — reachable by editing the database, and
+  // nothing else — leaves the cursor where the later end already put it, so the
+  // same minute is never offered for disposal twice and no gap comes out
+  // negative. A separate merge pass ahead of this did exactly the same thing
+  // twice, which is why removing it changed no number anywhere.
+  const gaps = [];
+  let cursor = start;
+  for (const c of [...covered].sort((a, b) => a.from - b.from)) {
+    if (c.from > cursor) gaps.push({ kind: 'gap', from: cursor, to: c.from });
+    cursor = Math.max(cursor, c.to);
+  }
+  if (cursor < end) gaps.push({ kind: 'gap', from: cursor, to: end });
+  for (const g of gaps) g.minutes = Math.floor((g.to - g.from) / 60000);
+
+  const segments = [...covered, ...gaps].sort((a, b) => a.from - b.from || a.to - b.to);
+  return {
+    segments: segments.map(({ from, to, ...rest }) => ({
+      ...rest, from: new Date(from).toISOString(), to: new Date(to).toISOString(),
+    })),
+    gaps,
+    openMinutes: gaps.reduce((n, g) => n + g.minutes, 0),
+  };
+}
+
+/**
+ * The clock-out sheet: what the day was, and what of it is still open.
+ *
+ * `openMinutes` is not always the same number as `unattributedMinutes`, and the
+ * difference is the point. Unattributed presence is what the timesheet fails to
+ * BILL for; open time is presence no clock ever COVERED. An entry trimmed from
+ * an hour to ten minutes leaves fifty minutes that are unattributed and yet not
+ * open — nothing can be filed into them, because a stretch already sits there.
+ * `shortfallMinutes` names that remainder rather than letting the sheet's rows
+ * quietly disagree with the figure at the top of it.
+ */
+function shiftSheet(s) {
+  const shift = shiftView(s);
+  const { segments, gaps, openMinutes } = shiftSegments(s);
+  // Measured against the gaps' real length, not against `openMinutes`. Those
+  // are floored, so a day ending fifty-three seconds into a gap would leave one
+  // minute over and this figure would announce a stretch billing less than it
+  // ran — inventing an accusation out of rounding.
+  const openExact = Math.round(gaps.reduce((n, g) => n + (g.to - g.from), 0) / 60000);
+  return {
+    shift,
+    segments,
+    openMinutes,
+    shortfallMinutes: Math.max(0, shift.presentMinutes - shift.attributedMinutes - openExact),
+    // Blocks logged by hand on the day this shift began. They carry no start
+    // and end, so nothing can place them inside this presence — the sheet says
+    // so rather than leaving someone to wonder where their afternoon went.
+    unplacedMinutes: one(`
+      SELECT COALESCE(SUM(minutes), 0) AS minutes FROM time_entries
+       WHERE user_id = ? AND date = ? AND (started_at IS NULL OR ended_at IS NULL)`,
+      s.user_id, s.date).minutes,
+  };
+}
+
 // ------------------------------------------------------------------ reports
 
 /**
@@ -584,6 +754,10 @@ route('GET', '/api/bootstrap', ({ req }) => {
     user: { ...user, dailyTargetMinutes: user.dailyTargetMinutes, weekStart: user.weekStart },
     today,
     timezone: APP_TIMEZONE,
+    // How much of the day is meant to reach an invoice. Sent rather than
+    // assumed by the client, so the migration that makes it per-person moves
+    // one expression on the server and nothing on the screen.
+    billableTargetPct: user.billableTargetPct,
     weekStartDate: startOfWeek(today, user.weekStart),
     users: all('SELECT * FROM users WHERE active = 1 ORDER BY name').map(userRow),
     projects: listProjects(),
@@ -618,6 +792,8 @@ route('PATCH', '/api/me', ({ req, body }) => {
     : int(body.dailyTargetMinutes, { name: 'Daily target', min: 0, max: 24 * 60 });
   const weekStart = body.weekStart === undefined ? row.week_start
     : int(body.weekStart, { name: 'Week start', min: 0, max: 6 });
+  const billablePct = body.billableTargetPct === undefined ? row.billable_target_pct
+    : int(body.billableTargetPct, { name: 'Billable target', min: 0, max: 100 });
 
   let passwordHash = row.password_hash;
   if (body.newPassword) {
@@ -628,8 +804,9 @@ route('PATCH', '/api/me', ({ req, body }) => {
     passwordHash = hashPassword(String(body.newPassword));
   }
 
-  run(`UPDATE users SET name = ?, daily_target_minutes = ?, week_start = ?, password_hash = ?, updated_at = ?
-        WHERE id = ?`, name, target, weekStart, passwordHash, nowISO(), user.id);
+  run(`UPDATE users SET name = ?, daily_target_minutes = ?, billable_target_pct = ?, week_start = ?,
+         password_hash = ?, updated_at = ? WHERE id = ?`,
+    name, target, billablePct, weekStart, passwordHash, nowISO(), user.id);
   return { user: userRow(one('SELECT * FROM users WHERE id = ?', user.id)) };
 });
 
@@ -996,6 +1173,18 @@ route('GET', '/api/shifts', ({ req, query }) => {
   return { shifts: rows.map(shiftView), range: { from, to } };
 });
 
+/**
+ * One shift, laid out — the artefact the owner reads to answer "what did I do
+ * today". Readable by anyone signed in, the same as every other person's
+ * entries and reports already are; filling the gap is not, below.
+ */
+route('GET', '/api/shift/:id', ({ req, params }) => {
+  requireUser(req);
+  const s = one('SELECT * FROM shifts WHERE id = ?', params.id);
+  if (!s) throw new HttpError(404, 'Shift not found');
+  return shiftSheet(s);
+});
+
 /** ISO instant, validated. Shifts are the one place the client sends one. */
 const instant = (v, { name }) => {
   const ms = Date.parse(String(v));
@@ -1058,6 +1247,100 @@ route('DELETE', '/api/shift/:id', ({ req, params }) => {
   // not a minute of anybody's logged work.
   run('DELETE FROM shifts WHERE id = ?', s.id);
   return { ok: true };
+});
+
+/**
+ * Account for the open time in a shift, in one call.
+ *
+ * The gap is disposed of by writing ORDINARY time entries — one per stretch of
+ * presence nothing covers, each with a real start and end. There is no second
+ * kind of row here and no flag saying "this was a gap": whatever the reports,
+ * the budgets and the timesheet already do with an hour, they do with this one.
+ * An overhead bucket is likewise an ordinary project that happens to be flagged
+ * non-billable, which is why the entry takes its billable flag FROM the project
+ * rather than from the caller — the whole value of putting an afternoon against
+ * "Admin" is that the billable-share figure already knows what that means.
+ *
+ * Three refusals, and each of them is a fact the sheet is already showing:
+ *   • an open shift has a gap that is still growing, so there is nothing
+ *     settled to fill.
+ *   • a gap already filled has nothing left in it — the second click of a
+ *     double click writes nothing rather than a second hour.
+ *   • and the one that matters: filling the gap must not be able to make the
+ *     day bill more than it contained. Every stretch written here bills exactly
+ *     the window it holds and lands where nothing else does, so it cannot
+ *     overclaim on its own — but a day already carrying an entry that bills
+ *     more minutes than its clock ran has no room left to give, and the check
+ *     is a recomputation inside the transaction rather than arithmetic that
+ *     could drift from the one shiftView does.
+ */
+route('POST', '/api/shift/:id/dispose', ({ req, body, params }) => {
+  const user = requireUser(req);
+  const s = one('SELECT * FROM shifts WHERE id = ?', params.id);
+  if (!s) throw new HttpError(404, 'Shift not found');
+  if (!canEditFor(user, s.user_id)) throw new HttpError(403, 'You can only account for your own attendance');
+  if (!s.ended_at) throw bad('Clock out first — an open shift\'s gap is still growing');
+
+  const project = one('SELECT * FROM projects WHERE id = ?',
+    int(body.projectId, { name: 'Project', min: 1 }));
+  if (!project) throw new HttpError(404, 'Project not found');
+  if (project.status !== 'active') {
+    throw bad(`"${project.name}" is archived — pick a project that is still running`);
+  }
+
+  // An optional window narrows this to one stretch of the day, which is what
+  // the sheet sends when a single row is assigned rather than the whole gap.
+  const from = body.from === undefined || body.from === null
+    ? null : Date.parse(instant(body.from, { name: 'From' }));
+  const to = body.to === undefined || body.to === null
+    ? null : Date.parse(instant(body.to, { name: 'To' }));
+  if ((from === null) !== (to === null)) throw bad('Give both ends of the stretch, or neither');
+  if (from !== null && to <= from) throw bad('That stretch ends before it starts');
+
+  const note = str(body.note, { name: 'Note', max: 500 });
+  const before = shiftView(s);
+
+  const parts = shiftSegments(s).gaps
+    .map((g) => ({ from: Math.max(g.from, from ?? g.from), to: Math.min(g.to, to ?? g.to) }))
+    .map((g) => ({ from: g.from, minutes: Math.floor((g.to - g.from) / 60000) }))
+    .filter((g) => g.minutes >= 1);
+  if (!parts.length) {
+    throw bad(from === null
+      ? 'There is no unaccounted time left on this shift'
+      : 'Nothing is unaccounted for in that stretch');
+  }
+
+  return tx(() => {
+    const now = nowISO();
+    const ids = [];
+    for (const p of parts) {
+      const res = run(`
+        INSERT INTO time_entries
+          (user_id, project_id, task_id, date, minutes, note, billable, started_at, ended_at, source, created_at, updated_at)
+        VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, 'manual', ?, ?)`,
+        s.user_id, project.id, localDate(new Date(p.from)), p.minutes, note, project.billable,
+        new Date(p.from).toISOString(), new Date(p.from + p.minutes * 60000).toISOString(), now, now);
+      ids.push(Number(res.lastInsertRowid));
+    }
+
+    const after = shiftView(one('SELECT * FROM shifts WHERE id = ?', s.id));
+    if (after.overclaimedMinutes > before.overclaimedMinutes) {
+      // Rolled back by the throw. Reached when something already on this day
+      // bills more minutes than its own clock ran for but has not yet passed
+      // the presence on its own: the gap is real, and filling it is still the
+      // last straw. Naming the arithmetic is the only way the reader can tell
+      // this from a refusal to do something reasonable.
+      throw bad(`Filling this gap would bill ${dur(after.claimedMinutes)} against `
+        + `${dur(after.presentMinutes)} of presence. Something on this day already claims more `
+        + 'minutes than its own clock ran — correct that entry first.');
+    }
+
+    return {
+      shift: after,
+      minutes: parts.reduce((n, p) => n + p.minutes, 0),
+      entries: ids.map((id) => entryRow(one(`${ENTRY_SELECT} WHERE e.id = ?`, id))),
+    };
+  });
 });
 
 // --- reports ---

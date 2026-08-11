@@ -6,7 +6,7 @@ import { empty, fail, icon, kpi, projectOptions, render, ring, select, taskOptio
 import { entryEditor, taskEditor } from '../editors.js';
 import { shiftStrip } from '../shift.js';
 import {
-  discardTimer, openTasksFor, projectById, saveTask, startTimer,
+  billableToday, discardTimer, openTasksFor, projectById, saveTask, startTimer,
   state, stopTimer, timerSeconds, todayMinutes,
 } from '../store.js';
 import { api } from '../api.js';
@@ -14,18 +14,28 @@ import { api } from '../api.js';
 export const title = 'Today';
 export const subtitle = () => dayLong(todayDate());
 
+/**
+ * What the day is being measured against, said out loud. The denominator is
+ * never assumed here — a card that shows a share without naming what it is a
+ * share OF is how "8h of target" came to mean nothing at all.
+ */
+const basisLabel = (v) => ({
+  present: `${hm(v.presenceMinutes)} present today`,
+  logged: `${hm(v.loggedMinutes)} logged today`,
+  target: `your ${hm(v.basis)} target day`,
+  none: 'nothing recorded yet today',
+}[v.source]);
+
 export function render_(host) {
   const body = h('div', { class: 'stack' });
   host.append(body);
 
   let weekMinutes = 0;
-  let streak = { current: 0, longest: 0 };
   let tick = null;
 
   const draw = () => {
-    const target = state.user.dailyTargetMinutes;
     const logged = todayMinutes();
-    const pct = target ? (logged / target) * 100 : 0;
+    const bill = billableToday();
     const mine = openTasksFor(state.user.id);
     const dueToday = mine.filter((t) => t.dueDate && t.dueDate <= todayDate());
 
@@ -37,12 +47,27 @@ export function render_(host) {
       h('div', { class: 'grid cols-4' },
         kpi({
           label: 'Logged today', value: hm(logged, { zero: '0h' }), hero: true,
-          foot: target ? `of ${hm(target)} target` : 'no daily target set',
+          // Presence, where there is any — "5h 16m logged, of 5h 16m logged"
+          // is a tautology, and how long you were here is the fact this figure
+          // actually wants beside it. Above 100% is not an error: a block
+          // logged by hand outside every shift is work that happened, and the
+          // strip two cards up says exactly how much of it there is.
+          foot: bill.presenceMinutes
+            ? `of ${hm(bill.presenceMinutes)} present today`
+            : (state.user.dailyTargetMinutes
+              ? `of your ${hm(state.user.dailyTargetMinutes)} target day`
+              : 'no daily target set'),
         }),
         kpi({ label: 'This week', value: hm(weekMinutes, { zero: '0h' }), foot: 'since ' + relativeDay(startOfWeek(todayDate(), state.user.weekStart)) }),
+        // The ratio, as its own figure. An agency sells billable hours; a
+        // streak counted days in a row with ANY time logged, which is a figure
+        // you can hold at 100 while selling nothing.
         kpi({
-          label: 'Current streak', value: `${streak.current}`,
-          foot: streak.longest ? `best run ${streak.longest} days` : 'days in a row with time logged',
+          label: 'Billable share',
+          value: bill.sharePct === null ? '—' : `${Math.round(bill.sharePct)}%`,
+          foot: bill.sharePct === null
+            ? 'nothing to measure yet'
+            : `${hm(bill.billableMinutes, { zero: '0h' })} of ${basisLabel(bill)}`,
         }),
         kpi({
           label: 'Open tasks', value: `${mine.length}`,
@@ -52,7 +77,7 @@ export function render_(host) {
 
       h('div', { class: 'grid top', style: { gridTemplateColumns: 'minmax(0,1.55fr) minmax(0,1fr)' } },
         entriesCard(),
-        h('div', { class: 'stack' }, progressCard(pct, logged, target), focusCard(mine)),
+        h('div', { class: 'stack' }, billableCard(bill), focusCard(mine)),
       ),
     );
     startTick();
@@ -163,23 +188,44 @@ export function render_(host) {
     }, 1000);
   }
 
-  /* ---------------------------------------------------------- progress -- */
+  /* ---------------------------------------------------------- billable -- */
 
-  function progressCard(pct, logged, target) {
-    const remaining = Math.max(0, target - logged);
+  /**
+   * The ring, re-pointed. It used to fill on hours present — which is the one
+   * thing an agency cannot sell, and a figure this workspace could hit every
+   * day while billing 13% of it. It now fills on the billable minutes the day
+   * owes: the target share of the day that ACTUALLY HAPPENED.
+   *
+   * Every number in this card is a fraction of the same denominator, so the
+   * ring and the figure beside it cannot say different things. The share
+   * itself — billable against the whole day — is the KPI above, where it is
+   * labelled as the different question it is.
+   */
+  function billableCard(v) {
+    const set = v.progressPct !== null;
     return h('div', { class: 'card' },
-      h('div', { class: 'card-head' }, h('h3', null, 'Daily target')),
+      h('div', { class: 'card-head' }, h('h3', null, 'Billable target')),
       h('div', { class: 'ring-wrap' },
-        ring(pct, { caption: 'of target' }),
+        ring(v.progressPct ?? 0, {
+          caption: set ? 'of target' : 'no target',
+          title: set
+            ? `${hm(v.billableMinutes, { zero: '0h' })} billable of ${hm(v.targetMinutes)} targeted`
+            : 'No billable target to measure against yet',
+        }),
         h('div', null,
-          h('div', { style: { fontSize: '22px', fontWeight: '800', color: 'var(--text-strong)' } }, hm(logged, { zero: '0h' })),
+          h('div', { style: { fontSize: '22px', fontWeight: '800', color: 'var(--text-strong)' } },
+            hm(v.billableMinutes, { zero: '0h' })),
           h('div', { class: 'dim', style: { fontSize: '13px', marginTop: '4px' } },
-            target ? `of ${hm(target)}` : 'no target set'),
-          target ? h('div', {
+            set ? `billable of ${hm(v.targetMinutes)} targeted` : 'nothing to target yet'),
+          set ? h('div', {
             class: 'pill', style: { marginTop: '12px' },
-          }, remaining ? `${hm(remaining)} to go` : 'Target met ✓') : null,
+          }, v.shortfallMinutes ? `${hm(v.shortfallMinutes)} to go` : 'Target met ✓') : null,
         ),
       ),
+      h('p', { class: 'hint' }, set
+        ? `${v.targetPct}% of ${basisLabel(v)}`
+          + (v.source === 'present' ? ' — the time you were here, not a fixed day' : '')
+        : 'Set a daily target, or clock in, and this measures against it.'),
     );
   }
 
@@ -300,9 +346,8 @@ export function render_(host) {
       const weekFrom = startOfWeek(todayDate(), state.user.weekStart);
       const report = await api.report({ from: weekFrom, to: addDays(weekFrom, 6), scope: 'me' });
       weekMinutes = report.totals.minutes;
-      streak = report.streak || streak;
     } catch {
-      // The page is still useful without the week/streak numbers.
+      // The page is still useful without the week total.
     }
   }
 

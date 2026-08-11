@@ -70,6 +70,33 @@ function palette() {
   return { colors, unresolved };
 }
 
+/**
+ * How the budget bar divides — pure, so the geometry the row draws is the same
+ * arithmetic a test can read without a DOM.
+ *
+ * Under budget the track IS the budget and the fill is what has gone into it.
+ * Past it the track has nothing left to give, and a fill clamped to 100% drew a
+ * project at 453% pixel-identical to one at 101%: the single most alarming fact
+ * in this workspace — 22h 38m of non-billable time against a 5h budget —
+ * rendered as "a full red bar", flatly contradicting the "453% of 5h · 17h 38m
+ * over" printed beside it.
+ *
+ * So past 100% the track stops meaning the budget and starts meaning what was
+ * SPENT: the budget's share of that is drawn in the project's colour and the
+ * overrun in red, and the two are read as a proportion. At 101% the red is a
+ * sliver; at 453% it is three quarters of the row, and the eye reaches it
+ * before the text does. The bar is on its own scale from that point, which is
+ * why the figure beside it always names the budget the percentage is of.
+ */
+export function budgetBar(loggedMinutes, budgetMinutes) {
+  if (!budgetMinutes) return null;
+  const pct = (loggedMinutes / budgetMinutes) * 100;
+  if (pct <= 100) return { pct, over: false, insidePct: pct, overPct: 0 };
+  // The budget as a share of what was spent: 5h of 22h38m is 22% of the row.
+  const insidePct = 10000 / pct;
+  return { pct, over: true, insidePct, overPct: 100 - insidePct };
+}
+
 export function render_(host, { actions }) {
   const ui = { showArchived: false };
   const body = h('div', { class: 'stack' });
@@ -163,8 +190,7 @@ export function render_(host, { actions }) {
   }
 
   function row(p) {
-    const pct = p.budgetMinutes ? (p.loggedMinutes / p.budgetMinutes) * 100 : null;
-    const over = pct !== null && pct > 100;
+    const bar = budgetBar(p.loggedMinutes, p.budgetMinutes);
 
     return h('tr', null,
       h('td', null,
@@ -184,15 +210,25 @@ export function render_(host, { actions }) {
       ),
       h('td', { class: 'dim' }, p.client || '—'),
       h('td', null, p.openTasks ? pluralize(p.openTasks, 'task') : h('span', { class: 'dim' }, '—')),
-      h('td', null, p.budgetMinutes
+      h('td', null, bar
         ? h('div', null,
-          h('div', { class: `bar-track thin${over ? ' bar-over' : ''}` },
-            h('div', {
-              class: 'bar-fill',
-              style: { width: `${Math.min(100, pct)}%`, background: over ? 'var(--error)' : p.color },
-            })),
-          h('div', { class: 'hint', style: { marginTop: '6px' } },
-            `${Math.round(pct)}% of ${hm(p.budgetMinutes)}${over ? ` · ${hm(p.loggedMinutes - p.budgetMinutes)} over` : ''}`),
+          bar.over
+            // Two segments and a carved separator, not one clamped fill: the
+            // project's colour and --error are only 2.6:1 against each other,
+            // and no single divider colour can reach 3:1 against both, so the
+            // track's own shade is cut back in between them — each segment then
+            // borders something it clears by a wide margin.
+            ? h('div', {
+              class: 'bar-track thin over',
+              title: `${hm(p.loggedMinutes)} spent against a ${hm(p.budgetMinutes)} budget`,
+            },
+              h('div', { class: 'in', style: { width: `${bar.insidePct}%`, background: p.color } }),
+              h('div', { class: 'out', style: { width: `${bar.overPct}%` } }))
+            : h('div', { class: 'bar-track thin' },
+              h('div', { class: 'bar-fill', style: { width: `${bar.pct}%`, background: p.color } })),
+          h('div', { class: `hint${bar.over ? ' over' : ''}`, style: { marginTop: '6px' } },
+            `${Math.round(bar.pct)}% of ${hm(p.budgetMinutes)}`
+            + (bar.over ? ` · ${hm(p.loggedMinutes - p.budgetMinutes)} over` : '')),
         )
         : h('span', { class: 'dim' }, 'No budget')),
       h('td', { class: 'num', style: { fontWeight: '700' } }, hm(p.loggedMinutes, { zero: '—' })),

@@ -57,7 +57,13 @@ export function addColumn(table, col, definition) {
 // wants, and it is exactly the one this app must not have — which shift a
 // stretch of work falls inside is derived from its timestamps at read time, so
 // storing it would freeze an answer that has to move when an entry is edited.
-const COLUMN_MIGRATIONS = [];
+const COLUMN_MIGRATIONS = [
+  // Added when the Today ring stopped measuring hours present and started
+  // measuring the share of them that reaches an invoice. daily_target_minutes
+  // keeps its own meaning — how long a day is — rather than being quietly
+  // redefined under the people already using it.
+  ['users', 'billable_target_pct', 'INTEGER NOT NULL DEFAULT 60'],
+];
 for (const [table, col, definition] of COLUMN_MIGRATIONS) addColumn(table, col, definition);
 
 /** Wrap a function in a transaction — rolls back if it throws. */

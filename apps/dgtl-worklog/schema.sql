@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   name                 TEXT    NOT NULL,
   role                 TEXT    NOT NULL DEFAULT 'member',  -- 'admin' | 'member'
   password_hash        TEXT    NOT NULL,                   -- scrypt$N$r$p$salt$hash
-  daily_target_minutes INTEGER NOT NULL DEFAULT 480,       -- drives the Today ring
+  daily_target_minutes INTEGER NOT NULL DEFAULT 480,       -- how long a working day is
+  billable_target_pct  INTEGER NOT NULL DEFAULT 60,        -- the share of it meant to be billable
   week_start           INTEGER NOT NULL DEFAULT 1,         -- 0 = Sunday, 1 = Monday
   active               INTEGER NOT NULL DEFAULT 1,
   created_at           TEXT    NOT NULL,
