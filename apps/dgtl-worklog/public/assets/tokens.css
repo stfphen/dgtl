@@ -31,9 +31,11 @@
   --chart-1:#F0CF50; --chart-2:#b3a06a; --chart-3:#F0F0F0;
   --chart-4:#6E9FDB; --chart-5:#7BC47F; --chart-6:#8a8a8a;
   --chart-grid:#1c1c1c;
-  /* absent data — the swatch for a thing with no colour and the nil "·" alike;
-     dimmer than --text-ghost because it is a placeholder, not a control */
-  --nil:#3a3a3a;
+  /* absent data — the swatch for a thing with no colour and the nil "·" alike.
+     One value because the JS spends it on both, and text is the harder bar:
+     4.61:1 on --surface-1 clears body text, which clears a 3:1 identifier too.
+     #3a3a3a read 1.74:1 and turned an empty week grid into a blank sheet. */
+  --nil:#7a7a7a;
   /* geometry */
   --r-control:7px; --r-card:16px; --r-pill:9999px;
   /* effects */
@@ -58,20 +60,25 @@ body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
      padding:15px 24px;border:1px solid transparent;cursor:pointer;
      text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
 .btn-primary{background:var(--gold);color:#000}
-.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+/* A touch browser fires :hover on tap and holds it until you tap elsewhere, so
+   a hover state on a phone strands itself on the last thing touched. Every
+   :hover in this file and in app.css is therefore written inside this query —
+   gated at the source, so there is no state left to strand and no second list
+   of overrides to keep in step. Wrapped in place to hold the cascade order. */
+@media (hover:hover) and (pointer:fine){.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}}
 .btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
 .btn-ghost{background:transparent;color:var(--text-muted);font-weight:500}
-.btn-ghost:hover{color:#fff}
+@media (hover:hover) and (pointer:fine){.btn-ghost:hover{color:#fff}}
 .btn-danger{background:transparent;border-color:rgba(229,72,77,.4);color:var(--error)}
 .btn-sm{padding:10px 18px;font-size:14px}
 .btn-icon{width:36px;height:36px;padding:0;justify-content:center;color:var(--text-dim)}
-.btn-icon:hover{background:var(--surface-2);color:#fff}
+@media (hover:hover) and (pointer:fine){.btn-icon:hover{background:var(--surface-2);color:#fff}}
 
 /* --- cards --- */
 .card{background:var(--surface-card);border:1px solid var(--border);
       border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:24px}
 .card-solid{background:var(--surface-1)}
-.card-hover:hover{border-color:#3a3a3a;transform:translateY(-2px);transition:.2s}
+@media (hover:hover) and (pointer:fine){.card-hover:hover{border-color:#3a3a3a;transform:translateY(-2px);transition:.2s}}
 .card-callout{border-left:3px solid var(--gold)}
 
 /* --- pills & badges --- */
@@ -110,15 +117,8 @@ input[type=checkbox],input[type=radio]{accent-color:var(--gold)}
           text-align:left;padding:12px 16px}
 .table td{padding:14px 16px;border-top:1px solid #1c1c1c;color:var(--text)}
 .table td.num{text-align:right;font-variant-numeric:tabular-nums}
-.table tbody tr:hover{background:var(--surface-hover)}
+@media (hover:hover) and (pointer:fine){.table tbody tr:hover{background:var(--surface-hover)}}
 .table-wrap{border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
-
-/* A touch browser fires :hover on tap and holds it until you tap elsewhere, so
-   every hover state below strands itself on the last thing touched. */
-@media (hover:none),(pointer:coarse){
-  .btn-icon:hover{background:transparent;color:var(--text-dim)}
-  .table tbody tr:hover{background:transparent}
-}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
