@@ -289,11 +289,113 @@ body{
 
 .dot-tag{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text)}
 .dot-tag .dot{width:8px;height:8px;border-radius:50%;flex:none}
+/* Who the work is for, above what the work is. */
+.client-eyebrow{
+  font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold-tan);
+  margin-bottom:4px;
+}
 .mono-code{
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.04em;
   color:var(--text-dim);background:var(--surface-1);border:1px solid var(--border);
   border-radius:4px;padding:2px 6px;
+  /* A code is one token. Without this, "111-D" is a legal break at the hyphen,
+     and the chip's own rounded box splits across two lines — half a border on
+     one and half on the next. Only the codes carrying the client hierarchy are
+     hyphenated, so it appeared the moment they did. */
+  white-space:nowrap;
 }
+
+/* ==================== sortable headings ==================== */
+/* One control, two hosts: a strip above the task board and a <th> in the week
+   grid. The caret span is always present so a label does not shift sideways
+   when the sort moves to another column. */
+.sort-strip{
+  display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  padding:10px 16px;border-bottom:1px solid var(--border-row);
+}
+.sort-lead{
+  font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-dim);
+  margin-right:6px;
+}
+.sort-btn{
+  display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;background:transparent;
+  color:var(--text-muted);font-family:var(--font);font-size:12px;font-weight:600;
+  padding:5px 10px;border-radius:var(--r-pill);cursor:pointer;transition:color .15s,background .15s;
+}
+@media (hover:hover) and (pointer:fine){.sort-btn:hover{color:#fff;background:var(--surface-2)}}
+.sort-btn.on{background:var(--gold-tint);color:var(--gold);border-color:var(--gold)}
+.sort-caret{display:inline-flex;width:14px;height:14px;transition:transform .15s}
+.sort-caret svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.4}
+.sort-caret.down{transform:rotate(180deg)}
+.sort-hint{
+  font-size:12px;color:var(--text-dim);padding:0 16px 10px;
+  border-bottom:1px solid var(--border-row);margin-top:-1px;
+}
+.sort-hint[hidden]{display:none}
+/* In a table head the cell keeps the padding and the button sits flush, or the
+   two paddings stack and the heading row grows a row's worth of height. */
+.weekgrid th.sortable,.table th.sortable{padding:6px 8px}
+.weekgrid th.sortable:first-child,.table th.sortable:first-child{padding-left:10px}
+/* 6 + the button's own 10 = the 16px the body cells are padded to, so the
+   heading's right edge lines up with the figures under it. */
+.weekgrid th.sortable.num,.table th.sortable.num{text-align:right;padding-right:6px}
+.weekgrid th.sortable.num .sort-btn,.table th.sortable.num .sort-btn{margin-left:auto}
+.weekgrid th.sortable .sort-btn,.table th.sortable .sort-btn{
+  text-transform:uppercase;letter-spacing:.1em;font-size:11px;
+}
+
+/* ==================== task board ==================== */
+/* client → project → tasks. The nesting is carried by indent and type weight,
+   not by a second ring size — one ring size means one smallest size to defend. */
+.board-head{padding:18px 20px;margin-bottom:0;border-bottom:1px solid var(--border)}
+/* Stays on the right when the head wraps — a card-head's spacer only pushes
+   what shares its line, and on a phone this button does not. */
+.board-head .btn-ghost{margin-left:auto}
+.board{display:flex;flex-direction:column}
+
+.sec + .sec{border-top:1px solid var(--border-row)}
+.sec.is-client > .sec-head{background:var(--surface-1)}
+.sec.is-project{border-top:1px solid var(--border-row)}
+.sec.is-project:first-child{border-top:none}
+
+.sec-head{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;
+  transition:background .15s;min-width:0;
+}
+@media (hover:hover) and (pointer:fine){.sec-head:hover{background:var(--surface-hover)}}
+.sec-head.is-project{padding-left:26px}
+.sec-toggle{
+  border:none;background:transparent;color:var(--text-dim);padding:0;flex:none;
+  width:22px;height:22px;display:grid;place-items:center;cursor:pointer;border-radius:var(--r-control);
+}
+@media (hover:hover) and (pointer:fine){.sec-toggle:hover{color:#fff}}
+.sec-chev{display:inline-flex;transition:transform .15s}
+.sec-chev svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.sec:not(.folded) > .sec-head .sec-chev{transform:rotate(90deg)}
+
+.sec-what{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+/* Block, not flex: as flex items the colour dot and the code chip are their own
+   boxes, and a name too long for a phone pushed them onto lines of their own —
+   a lone 8px dot on one line reads as a rendering fault. Inline, they wrap with
+   the words they belong to. */
+.sec-name{font-size:14px;font-weight:700;color:var(--text-strong);line-height:1.35}
+.sec-head.is-project .sec-name{font-size:13px;font-weight:600;color:var(--text)}
+.sec-name .dot{
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  margin-right:8px;vertical-align:middle;
+}
+.sec-name .mono-code{margin-left:8px;vertical-align:middle}
+.sec-sub{
+  font-size:11px;font-weight:500;color:var(--text-dim);text-transform:uppercase;
+  letter-spacing:.1em;margin-left:8px;white-space:nowrap;
+}
+.sec-note{font-size:11px;font-weight:500;color:var(--text-dim);margin-left:8px}
+.sec-stats{font-size:12px;color:var(--text-dim);font-variant-numeric:tabular-nums}
+.sec-rows{display:flex;flex-direction:column}
+.sec.is-project .task:last-child{border-bottom:none}
+/* The grip's slot is held open when sorting has turned dragging off, so rows
+   do not shift 28px sideways the moment somebody sorts by due date. */
+.grip-off{width:14px;flex:none}
 
 /* ==================== tasks ==================== */
 .task{

@@ -78,6 +78,11 @@ const canEditFor = (actor, ownerId) => actor.role === 'admin' || actor.id === ow
 
 const projectRow = (p) => ({
   id: p.id, name: p.name, client: p.client, code: p.code, color: p.color,
+  // `client` above is the CONTACT — see schema.sql. These two are who the work
+  // is for, joined from `clients` rather than stored on the project, so a
+  // rename lands everywhere at once.
+  clientId: p.client_id ?? null,
+  clientName: p.client_display_name ?? null,
   billable: !!p.billable, budgetMinutes: p.budget_minutes, status: p.status,
   position: p.position, loggedMinutes: p.logged_minutes ?? 0, openTasks: p.open_tasks ?? 0,
   // Every task ever filed under the project, including done and archived ones.
@@ -113,14 +118,21 @@ const userRow = (u) => ({
 
 const listProjects = () => all(`
   SELECT p.*,
+         pc.client_id AS client_id,
+         c.name       AS client_display_name,
          (SELECT COALESCE(SUM(minutes), 0) FROM time_entries te WHERE te.project_id = p.id) AS logged_minutes,
          (SELECT COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.minutes ELSE 0 END), 0)
             FROM time_entries te WHERE te.project_id = p.id) AS billable_minutes,
          (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id AND t.status <> 'done' AND t.archived = 0) AS open_tasks,
          (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id) AS all_tasks
     FROM projects p
+    LEFT JOIN project_clients pc ON pc.project_id = p.id
+    LEFT JOIN clients c          ON c.id = pc.client_id
    ORDER BY p.status ASC, p.position ASC, p.id ASC
 `).map(projectRow);
+
+/** One project shaped exactly as the list shapes it — client join included. */
+const oneProject = (id) => listProjects().find((p) => p.id === Number(id)) || null;
 
 /**
  * Time that belongs to no project. Every project row counts only entries
@@ -134,6 +146,138 @@ const unassignedTotals = () => {
       FROM time_entries WHERE project_id IS NULL`);
   return { minutes: u.minutes, billableMinutes: u.billable_minutes };
 };
+
+// ------------------------------------------------------------------ clients
+// A client is who the work is for; `projects.client` is the contact you deal
+// with. The two are different columns because they are different facts — see
+// schema.sql.
+
+/**
+ * The account a code belongs to: everything before the first hyphen.
+ * "111-A" → "111", "111" → "111", "" → null. The owner hand-authored this
+ * hierarchy in `code` long before there was anywhere else to put it.
+ */
+const codeGroup = (code) => {
+  const s = String(code || '').trim().toUpperCase();
+  if (!s) return null;
+  const i = s.indexOf('-');
+  return i > 0 ? s.slice(0, i) : s;
+};
+
+// "The Piano Boutique — Account & Comms" → "The Piano Boutique".
+// Only a separator with space either side counts, so a hyphenated name
+// ("Jones-Baker Studio") is not cut in half.
+const NAME_SEPARATOR = /\s+[—–·|:-]\s+/;
+
+/**
+ * Find a client by name, case-insensitively, or create it.
+ *
+ * Both sides are folded by SQLite, not one by SQLite and one by JavaScript:
+ * `lower()` here is ASCII-only while JS `toLowerCase()` is not, so "ÉCOLE"
+ * lowered in JS would miss a row the unique index still refuses to let in, and
+ * the insert would 500 instead of matching. One case-folder, no disagreement.
+ */
+function clientIdFor(name, now = nowISO()) {
+  const found = one('SELECT id FROM clients WHERE lower(name) = lower(?)', name);
+  if (found) return found.id;
+  return Number(run(
+    'INSERT INTO clients (name, created_at, updated_at) VALUES (?, ?, ?)', name, now, now,
+  ).lastInsertRowid);
+}
+
+/**
+ * Drop clients nobody points at. A client exists only as the thing some
+ * projects have in common, so the last project leaving takes it with it —
+ * which is also what makes renaming work: retag the five projects one at a
+ * time and the old name disappears on the fifth, instead of lingering as an
+ * empty section for the rest of the workspace's life.
+ */
+const pruneClients = () =>
+  run('DELETE FROM clients WHERE id NOT IN (SELECT client_id FROM project_clients)').changes;
+
+/**
+ * Point a project at a client by an ALREADY VALIDATED name; '' detaches it.
+ *
+ * Validation is the caller's, and deliberately: this runs after the project
+ * row is written, so a name rejected in here would 400 a request that had
+ * already created the project. `clientNameOr` is what the routes call first.
+ */
+function setProjectClient(projectId, name) {
+  if (!name) run('DELETE FROM project_clients WHERE project_id = ?', projectId);
+  else {
+    run('INSERT OR REPLACE INTO project_clients (project_id, client_id) VALUES (?, ?)',
+      projectId, clientIdFor(name));
+  }
+  pruneClients();
+}
+
+/** undefined (leave the client alone) or a checked name, before any write. */
+const clientNameOr = (v) =>
+  (v === undefined ? undefined : str(v, { name: 'Client', max: 120 }));
+
+/**
+ * Read the client structure out of the codes, once.
+ *
+ * The hierarchy was already authored by hand in `projects.code` — 111, 111-A,
+ * 111-B, 111-C, 111-D — so the workspace does not have to be re-entered for
+ * the board to group correctly on day one. Two rules keep the guess honest:
+ *
+ *   • A prefix earns a client only when two or more projects share it. A lone
+ *     code (PLAT, JRNL, 222) is a tag, not an account, and inventing a client
+ *     per project would replace one bad grouping with another.
+ *   • The name comes off the parent project — the one whose code IS the prefix
+ *     — cut at its first separator. "The Piano Boutique — Account & Comms"
+ *     names the client "The Piano Boutique". With no parent to read, the
+ *     prefix itself is used, which is visibly a placeholder rather than a
+ *     plausible-looking wrong answer.
+ *
+ * It runs only while the clients table is empty, so it is a one-shot: after
+ * this, clients are data the owner owns and nothing re-derives them from a
+ * code they may since have changed. A project with no code — Cold Calls,
+ * Office Time — gets no client, which is the right answer for internal work
+ * and is shown as its own section rather than hidden.
+ */
+function deriveClientsFromCodes() {
+  if (one('SELECT id FROM clients LIMIT 1')) return { created: 0, linked: 0 };
+
+  const groups = new Map();
+  for (const p of all('SELECT id, name, code FROM projects ORDER BY position ASC, id ASC')) {
+    const g = codeGroup(p.code);
+    if (!g) continue;
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(p);
+  }
+
+  const seen = new Set();
+  let linked = 0;
+  tx(() => {
+    const now = nowISO();
+    for (const [g, members] of groups) {
+      if (members.length < 2) continue;
+      const parent = members.find((p) => String(p.code || '').trim().toUpperCase() === g);
+      const head = String((parent || members[0]).name).split(NAME_SEPARATOR)[0].trim();
+      const name = head.length >= 2 ? head : g;
+      // Two prefixes can derive the same head ("TPB"); clientIdFor reuses the
+      // row rather than tripping the unique index and aborting the boot.
+      const clientId = clientIdFor(name, now);
+      seen.add(name.toLowerCase());
+      for (const m of members) {
+        run('INSERT OR REPLACE INTO project_clients (project_id, client_id) VALUES (?, ?)', m.id, clientId);
+        linked++;
+      }
+    }
+  });
+  return { created: seen.size, linked };
+}
+
+// On connect, before the first request is served. Idempotent by the guard
+// above, so a restart is a no-op and a workspace whose clients have all been
+// deleted is treated as one asking to be derived again.
+const derivedClients = deriveClientsFromCodes();
+if (derivedClients.created) {
+  console.log(`Clients   derived ${derivedClients.created} from project codes, `
+    + `${derivedClients.linked} projects linked`);
+}
 
 const listTasks = ({ includeArchived = false } = {}) => all(`
   SELECT t.*,
@@ -452,6 +596,9 @@ route('GET', '/api/projects', ({ req }) => {
 route('POST', '/api/projects', ({ req, body }) => {
   requireAdmin(req);
   const now = nowISO();
+  // Checked before the INSERT: rejecting it afterwards would 400 a request
+  // that had already created the project.
+  const clientName = clientNameOr(body.clientName);
   const next = one('SELECT COALESCE(MAX(position), 0) + 1 AS p FROM projects').p;
   const res = run(`
     INSERT INTO projects (name, client, code, color, billable, budget_minutes, status, position, created_at, updated_at)
@@ -464,13 +611,19 @@ route('POST', '/api/projects', ({ req, body }) => {
     int(body.budgetMinutes, { name: 'Budget', min: 0, max: 10 ** 7, nullable: true }),
     next, now, now,
   );
-  return { project: projectRow(one('SELECT * FROM projects WHERE id = ?', Number(res.lastInsertRowid))) };
+  const id = Number(res.lastInsertRowid);
+  // The client rides on the project rather than getting its own endpoint: a
+  // client with no projects is not a thing this app has any use for, so it is
+  // always created and always retired as a side effect of one.
+  if (clientName !== undefined) setProjectClient(id, clientName);
+  return { project: oneProject(id) };
 });
 
 route('PATCH', '/api/projects/:id', ({ req, body, params }) => {
   requireAdmin(req);
   const p = one('SELECT * FROM projects WHERE id = ?', params.id);
   if (!p) throw new HttpError(404, 'Project not found');
+  const clientName = clientNameOr(body.clientName);   // before the UPDATE, as above
 
   run(`UPDATE projects SET name = ?, client = ?, code = ?, color = ?, billable = ?,
          budget_minutes = ?, status = ?, position = ?, updated_at = ? WHERE id = ?`,
@@ -485,7 +638,8 @@ route('PATCH', '/api/projects/:id', ({ req, body, params }) => {
     body.position === undefined ? p.position : int(body.position, { name: 'Position', min: 0 }),
     nowISO(), p.id,
   );
-  return { project: projectRow(one('SELECT * FROM projects WHERE id = ?', p.id)) };
+  if (clientName !== undefined) setProjectClient(p.id, clientName);
+  return { project: oneProject(p.id) };
 });
 
 route('DELETE', '/api/projects/:id', ({ req, params }) => {
@@ -509,7 +663,10 @@ route('DELETE', '/api/projects/:id', ({ req, params }) => {
       FROM tasks WHERE project_id = ?`, p.id);
 
   run('DELETE FROM projects WHERE id = ?', p.id);
-  return { ok: true, detachedTasks: t.n, detachedOpenTasks: t.open };
+  // The link row went with it (ON DELETE CASCADE); this retires the client if
+  // that was the last project holding it up.
+  const droppedClients = pruneClients();
+  return { ok: true, detachedTasks: t.n, detachedOpenTasks: t.open, droppedClients };
 });
 
 // --- tasks (anyone) ---

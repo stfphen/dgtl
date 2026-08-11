@@ -3,6 +3,13 @@
  *
  * Boots the real server against a throwaway database on a spare port, then
  * drives it over HTTP exactly as the browser does. No dependencies, no mocks.
+ *
+ * One section does not go over HTTP: the client → project → task rollups that
+ * the task board's rings draw are arithmetic in the browser over rows the
+ * bootstrap already shipped, so there is no endpoint to call. They live in
+ * ui.js as pure functions with no DOM in them for exactly this reason, and are
+ * imported and driven directly. What that section cannot see is the rendering
+ * — that is checked in a browser, not here.
  */
 
 import { spawn } from 'node:child_process';
@@ -12,6 +19,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { groupByClient, mergeRollups, ringGeometry, rollup, sorter } from '../public/assets/js/ui.js';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'worklog-test-'));
@@ -23,6 +31,10 @@ const PORT_2 = PORT + 400;
 const BASE_2 = `http://127.0.0.1:${PORT_2}`;
 const PORT_3 = PORT + 700;
 const BASE_3 = `http://127.0.0.1:${PORT_3}`;
+// Used twice in a row, not at once: the client derivation has to be watched
+// across a restart, so the port is freed between the two boots.
+const PORT_4 = PORT + 1000;
+const BASE_4 = `http://127.0.0.1:${PORT_4}`;
 const PASSWORD = 'smoke-test-password';
 const TZ = 'America/Toronto';
 
@@ -270,6 +282,74 @@ process.on('exit', () => {
 });
 
 try {
+  console.log('\nrollups and sorting (pure, no server)');
+  // The three cases the section rings have to survive, as data.
+  const T = (o) => ({ archived: false, status: 'todo', estimateMinutes: null, ...o });
+
+  const workstream = rollup(
+    [T({ status: 'done' }), T({}), T({ estimateMinutes: 60 }), T({ estimateMinutes: 120 })],
+    { loggedMinutes: 0 },
+  );
+  ok('a rollup counts done over every non-archived task',
+    workstream.total === 4 && workstream.done === 1, JSON.stringify(workstream));
+  ok('a workstream with tasks and no hours reads 0% spent, not "no estimate"',
+    workstream.effortPct === 0 && workstream.target === 180, JSON.stringify(workstream));
+  ok('archived tasks are outside the count', rollup([T({ archived: true }), T({})]).total === 1);
+
+  const unplanned = rollup([T({}), T({})], { loggedMinutes: 300 });
+  ok('with nothing to measure against there is no percentage to draw',
+    unplanned.effortPct === null && unplanned.basis === null, JSON.stringify(unplanned));
+  ok('and its hours are carried out as unplanned rather than dropped',
+    unplanned.unplannedMinutes === 300);
+
+  // 22h38m against a 5h budget, with 27h of task estimates on top of it.
+  const overBudget = rollup([T({ estimateMinutes: 1620 })], { loggedMinutes: 1358, budgetMinutes: 300 });
+  ok('a budget beats the task estimates, so this and the Projects bar agree',
+    overBudget.target === 300 && overBudget.basis === 'budget', JSON.stringify(overBudget));
+  ok('453% is reported as 453%, not clamped to full', Math.round(overBudget.effortPct) === 453);
+
+  const account = mergeRollups([overBudget, unplanned]);
+  ok('a client ratio counts only the projects that have a target',
+    account.loggedMinutes === 1358 && account.target === 300, JSON.stringify(account));
+  ok('and states the hours it could not count', account.unplannedMinutes === 300);
+  ok('a client spanning a budget and an estimate calls its basis mixed',
+    mergeRollups([overBudget, workstream]).basis === 'mixed');
+
+  // The section rings are 44/5; Today's daily target is the default 132/10.
+  ok('a section with nothing to measure gets no inner ring at all',
+    ringGeometry(44, 5, null).drawInner === false);
+  ok('a section with an estimate and no hours still gets one, empty',
+    ringGeometry(44, 5, 0).drawInner === true);
+  ok('and so does one at 453%', ringGeometry(44, 5, 453).drawInner === true);
+  ok('an inner arc thinner than its own stroke is dropped, not drawn as a smudge',
+    ringGeometry(28, 5, 50).drawInner === false, JSON.stringify(ringGeometry(28, 5, 50)));
+  ok('the daily-target ring is untouched: one arc, same radius as it always had',
+    ringGeometry(132, 10, null).outerR === 61 && ringGeometry(132, 10, null).drawInner === false);
+
+  const due = [{ n: 'b', d: '2026-01-02' }, { n: 'a', d: null }, { n: 'c', d: '2026-01-01' }, { n: 'd', d: null }];
+  const st = sorter([{ key: 'd', label: 'Due', get: (r) => r.d }], { key: 'd' });
+  ok('sorting puts empty values last, ascending',
+    st.apply(due).map((r) => r.n).join('') === 'cbad', st.apply(due).map((r) => r.n).join(''));
+  st.toggle('d');
+  ok('a second click reverses the column', st.dir === 'desc');
+  ok('and empty values stay last — reversing must not float them to the top',
+    st.apply(due).map((r) => r.n).join('') === 'bcad', st.apply(due).map((r) => r.n).join(''));
+  ok('rows that tie keep the order they arrived in',
+    st.apply(due).slice(2).map((r) => r.n).join('') === 'ad');
+  st.toggle('d');
+  ok('a third click puts it back', st.dir === 'asc');
+  ok('an unset sort leaves the rows exactly as they came',
+    sorter([{ key: 'd', label: 'Due', get: (r) => r.d }]).apply(due).map((r) => r.n).join('') === 'bacd');
+
+  const grouped = groupByClient([
+    { id: 1, clientId: null }, { id: 2, clientId: 7, clientName: 'Zed' },
+    { id: 3, clientId: 4, clientName: 'Ash' }, { id: 4, clientId: 7, clientName: 'Zed' },
+  ]);
+  ok('projects gather under the client that owns them',
+    grouped.length === 3 && grouped[0].name === 'Ash' && grouped[1].projects.length === 2,
+    JSON.stringify(grouped.map((g) => [g.name, g.projects.length])));
+  ok('and the clientless ones sort last, not first', grouped[2].clientId === null);
+
   await sh('node', ['--no-warnings=ExperimentalWarning', 'scripts/seed.mjs']);
 
   console.log('\nisolation');
@@ -377,6 +457,104 @@ try {
   ok('project rows plus off-project time equal the report total',
     rowSum + offBoot.unassigned.minutes === allTime.totals.minutes,
     `${rowSum} + ${offBoot.unassigned.minutes} vs ${allTime.totals.minutes}`);
+
+  console.log('\nclients');
+  // Nothing has created a client yet — the seeded codes share no prefix — so
+  // the derivation's one-shot guard is still armed at this point. Everything
+  // in this section is ordered around that.
+  const bare = (await call('GET', '/api/projects')).body.projects;
+  ok('a project with no client says so, rather than borrowing its contact',
+    bare.every((p) => p.clientId === null && p.clientName === null));
+
+  // The hierarchy an owner authored by hand in `code`, long before there was
+  // anywhere else to put it. 902 is a lone code and must stay a tag.
+  for (const [name, code] of [
+    ['Whitlock Pianos — Account & Comms', '900'],
+    ['WP · A — Site & Listings', '900-A'],
+    ['WP · B — Studio Content', '900-B'],
+    ['Ridgeway Retainer', '902'],
+  ]) await call('POST', '/api/projects', { name, code });
+
+  const derived = bootServer({ PORT: String(PORT_4) });
+  await ready(derived, 'the derivation boot');
+  const djar = {};
+  await callOn(BASE_4, 'POST', '/api/auth/login', { email: 'smoke@dgtlgroup.io', password: PASSWORD }, djar);
+  const afterDerive = (await callOn(BASE_4, 'GET', '/api/projects', null, djar)).body.projects;
+  const wp = afterDerive.filter((p) => p.code.startsWith('900'));
+  ok('a code prefix shared by several projects becomes one client on connect',
+    wp.length === 3 && new Set(wp.map((p) => p.clientId)).size === 1 && wp[0].clientId,
+    JSON.stringify(wp.map((p) => [p.code, p.clientId])));
+  ok('and it is named off the parent project, cut at its separator',
+    wp.every((p) => p.clientName === 'Whitlock Pianos'), JSON.stringify(wp.map((p) => p.clientName)));
+  ok('a lone code stays a tag and earns no client of its own',
+    afterDerive.find((p) => p.code === '902').clientId === null);
+  ok('a project with no code at all is left with no client',
+    afterDerive.find((p) => p.code === 'DLVR').clientId === null);
+  await stop(derived.proc);
+
+  // The guard is one-shot, not convergent: something the owner has since
+  // changed must survive the next restart. Detach one, then boot again.
+  const detachId = wp.find((p) => p.code === '900-B').id;
+  await call('PATCH', `/api/projects/${detachId}`, { clientName: '' });
+  const rederived = bootServer({ PORT: String(PORT_4) });
+  await ready(rederived, 'the second derivation boot');
+  const rjar = {};
+  await callOn(BASE_4, 'POST', '/api/auth/login', { email: 'smoke@dgtlgroup.io', password: PASSWORD }, rjar);
+  const afterRestart = (await callOn(BASE_4, 'GET', '/api/projects', null, rjar)).body.projects;
+  ok('a project moved off its client is not put back by the next boot',
+    afterRestart.find((p) => p.id === detachId).clientId === null,
+    JSON.stringify(afterRestart.find((p) => p.id === detachId)));
+  ok('and the ones nobody touched keep the client they were given',
+    afterRestart.filter((p) => p.code === '900' || p.code === '900-A')
+      .every((p) => p.clientId === wp[0].clientId));
+  await stop(rederived.proc);
+
+  // The write channel: a client rides on the project, because a client with no
+  // projects is not a thing this app has any use for.
+  const withContact = (await call('POST', '/api/projects', {
+    name: 'Bellweather Site', code: 'BELL', client: 'Priya', clientName: 'Bellweather Pianos',
+  })).body.project;
+  ok('a project carries a client and a contact at once, and they are different things',
+    withContact.clientName === 'Bellweather Pianos' && withContact.client === 'Priya',
+    JSON.stringify(withContact));
+  ok('the client is a row, not another string on the project', Number.isInteger(withContact.clientId));
+
+  const sameClient = (await call('POST', '/api/projects', {
+    name: 'Bellweather Listings', code: 'BELL2', clientName: 'bellweather pianos',
+  })).body.project;
+  ok('a client typed in another case is the same client, not a second section',
+    sameClient.clientId === withContact.clientId, `${withContact.clientId} vs ${sameClient.clientId}`);
+  const beforeReject = (await call('GET', '/api/projects')).body.projects.length;
+  ok('an over-long client name is rejected',
+    (await call('POST', '/api/projects', { name: 'Half-written', clientName: 'z'.repeat(121) })).status === 400);
+  // The client is written after the project row, so a name refused too late
+  // would 400 a request that had already created the project.
+  ok('and the refusal leaves no half-written project behind',
+    (await call('GET', '/api/projects')).body.projects.length === beforeReject,
+    `${beforeReject} → ${(await call('GET', '/api/projects')).body.projects.length}`);
+  ok('an over-long client name is refused on edit too, before the update lands',
+    (await call('PATCH', `/api/projects/${sameClient.id}`, { name: 'Renamed', clientName: 'z'.repeat(121) })).status === 400
+    && (await call('GET', '/api/projects')).body.projects.find((p) => p.id === sameClient.id).name === 'Bellweather Listings');
+
+  await call('PATCH', `/api/projects/${withContact.id}`, { clientName: '' });
+  const afterClear = (await call('GET', '/api/projects')).body.projects;
+  ok('clearing one project\'s client detaches only that project',
+    afterClear.find((p) => p.id === withContact.id).clientName === null
+    && afterClear.find((p) => p.id === sameClient.id).clientId === withContact.clientId);
+
+  // AUTOINCREMENT never reuses an id, so a fresh id for the same name is proof
+  // the old row went — which the name on its own could never show.
+  await call('PATCH', `/api/projects/${sameClient.id}`, { clientName: '' });
+  const revived = (await call('POST', '/api/projects', {
+    name: 'Bellweather Again', clientName: 'Bellweather Pianos',
+  })).body.project;
+  ok('a client whose last project left is retired, not kept as an empty section',
+    revived.clientId > withContact.clientId, `${withContact.clientId} → ${revived.clientId}`);
+
+  const dropped = await call('DELETE', `/api/projects/${revived.id}`);
+  ok('deleting the last project on a client retires it too',
+    dropped.body.droppedClients === 1, JSON.stringify(dropped.body));
+  for (const id of [withContact.id, sameClient.id]) await call('DELETE', `/api/projects/${id}`);
 
   console.log('\ntasks');
   const task = await call('POST', '/api/tasks', { title: 'Smoke task', projectId, estimateMinutes: 60 });

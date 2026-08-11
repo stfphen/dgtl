@@ -22,6 +22,11 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS projects (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
   name           TEXT    NOT NULL,
+  -- NOT the client. This column drifted into holding the CONTACT you deal with
+  -- — "Michael", "Max Gregan", "Internal" — and every project dropdown in the
+  -- app renders it as "<name> · <client>". Who the work is FOR lives in
+  -- `clients` below; this stayed exactly as it is because somebody relies on
+  -- those names and a migration that overwrote them would be unrecoverable.
   client         TEXT    NOT NULL DEFAULT '',
   code           TEXT    NOT NULL DEFAULT '',          -- short tag shown in dense views
   color          TEXT    NOT NULL DEFAULT '#F0CF50',   -- chart/legend colour
@@ -33,6 +38,37 @@ CREATE TABLE IF NOT EXISTS projects (
   updated_at     TEXT    NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status, position);
+
+-- Who the work is FOR. One client owns many projects, which is the whole point:
+-- five of eight projects in this workspace were one client faked with a name
+-- prefix ("TPB · A — …"), so the board showed five strangers instead of one
+-- account. A client is its own row rather than another string on `projects`
+-- because a string cannot be picked from a list, and a picked value cannot be
+-- misspelt into a second section for the same people.
+CREATE TABLE IF NOT EXISTS clients (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  name       TEXT    NOT NULL,
+  created_at TEXT    NOT NULL,
+  updated_at TEXT    NOT NULL
+);
+-- Case-insensitive, so "The Piano Boutique" and "the piano boutique" are one
+-- client. Written as lower(name) so `WHERE lower(name) = lower(?)` uses it.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_name ON clients(lower(name));
+
+-- The link is its own table, not a projects.client_id column, for one reason:
+-- `projects` already exists on every installed database, and adding a column to
+-- a live table needs an ALTER guarded by a migration list. A table is
+-- CREATE ... IF NOT EXISTS like everything else in this file, so it installs
+-- itself identically on a fresh database and a two-year-old one, and this file
+-- stays the single description of the schema.
+--
+-- The PRIMARY KEY on project_id IS the "at most one client per project" rule —
+-- refused by the database rather than by whoever remembered to check first.
+CREATE TABLE IF NOT EXISTS project_clients (
+  project_id INTEGER PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+  client_id  INTEGER NOT NULL    REFERENCES clients(id)  ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_project_clients_client ON project_clients(client_id);
 
 CREATE TABLE IF NOT EXISTS tasks (
   id               INTEGER PRIMARY KEY AUTOINCREMENT,

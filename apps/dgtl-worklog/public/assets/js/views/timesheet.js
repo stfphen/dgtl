@@ -6,7 +6,7 @@ import {
   addDays, addMonths, dayNum, dayShort, endOfMonth, h, hm, dec, monthYear,
   range, relativeDay, startOfMonth, startOfWeek, today as todayDate, dateMed, isWeekend,
 } from '../util.js';
-import { empty, fail, icon, modal, render, select, userOptions } from '../ui.js';
+import { empty, fail, icon, modal, render, select, sortButton, sorter, userOptions } from '../ui.js';
 import { entryEditor } from '../editors.js';
 import { isAdmin, projectById, state } from '../store.js';
 import { api } from '../api.js';
@@ -22,6 +22,17 @@ export function render_(host, { actions }) {
   };
   let entries = [];
   let loading = true;
+
+  /* The week grid's two sortable columns. It starts on neither: rows arrive in
+     project order, which is an order somebody chose, and replacing it with
+     alphabetical before anyone asked would be the app having an opinion. The
+     day columns are deliberately not sortable — "projects ranked by Tuesday"
+     is a question nobody has. */
+  const WEEK_COLUMNS = [
+    { key: 'project', label: 'Project', get: (r) => r.name.toLowerCase() },
+    { key: 'total', label: 'Total', num: true, dir: 'desc', get: (r) => r.total },
+  ];
+  const weekSort = sorter(WEEK_COLUMNS);
 
   const body = h('div', { class: 'stack' });
   const label = h('div', { style: { fontSize: '14px', fontWeight: '700', color: 'var(--text-strong)', minWidth: '150px', textAlign: 'center' } });
@@ -114,6 +125,15 @@ export function render_(host, { actions }) {
     render(body, ui.mode === 'week' ? weekView() : monthView(), totalsCard());
   }
 
+  /** A sortable heading. aria-sort is on the cell; the caret is in the button. */
+  const sortableTh = (col) => {
+    const on = weekSort.key === col.key;
+    return h('th', {
+      class: `sortable${col.num ? ' num' : ''}`,
+      'aria-sort': on ? (weekSort.dir === 'asc' ? 'ascending' : 'descending') : 'none',
+    }, sortButton(col, weekSort, draw));
+  };
+
   function weekView() {
     const { from, to } = bounds();
     const days = range(from, to);
@@ -121,8 +141,14 @@ export function render_(host, { actions }) {
     // Rows: every project with time this week, plus the active ones, so the
     // grid is a thing you can fill in rather than only a thing you read.
     const used = new Set(entries.map((e) => e.projectId));
-    const rows = state.projects.filter((p) => p.status === 'active' || used.has(p.id));
-    if (entries.some((e) => e.projectId === null)) rows.push({ id: null, name: 'No project', color: 'var(--nil)' });
+    const base = state.projects.filter((p) => p.status === 'active' || used.has(p.id));
+    if (entries.some((e) => e.projectId === null)) base.push({ id: null, name: 'No project', color: 'var(--nil)' });
+
+    // The row total is what one column sorts on, so it is computed once here
+    // rather than inside the comparator, which would re-add the week per pair.
+    const rows = weekSort.apply(base.map((p) => ({
+      ...p, total: days.reduce((s, d) => s + minutesOn(d, p.id), 0),
+    })));
 
     if (!rows.length) {
       return h('div', { class: 'card' }, empty({
@@ -134,15 +160,15 @@ export function render_(host, { actions }) {
     return h('div', { class: 'table-wrap' },
       h('table', { class: 'weekgrid' },
         h('thead', null, h('tr', null,
-          h('th', null, 'Project'),
+          sortableTh(WEEK_COLUMNS[0]),
           days.map((d) => h('th', { class: d === todayDate() ? 'today' : '' },
             h('div', null, dayShort(d)),
             h('div', { style: { fontWeight: '400', letterSpacing: '0', marginTop: '2px' } }, String(dayNum(d))),
           )),
-          h('th', { style: { textAlign: 'right', paddingRight: '16px' } }, 'Total'),
+          sortableTh(WEEK_COLUMNS[1]),
         )),
         h('tbody', null, rows.map((p) => {
-          const total = days.reduce((s, d) => s + minutesOn(d, p.id), 0);
+          const { total } = p;
           return h('tr', null,
             h('td', null, h('div', { class: 'dot-tag' },
               h('span', { class: 'dot', style: { background: p.color } }), p.name)),

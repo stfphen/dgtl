@@ -151,7 +151,7 @@ export function render_(host, { actions }) {
         h('table', { class: 'table' },
           h('thead', null, h('tr', null,
             h('th', null, 'Project'),
-            h('th', null, 'Client'),
+            h('th', null, 'Contact'),
             h('th', null, 'Open tasks'),
             h('th', { style: { minWidth: '200px' } }, 'Budget'),
             h('th', { class: 'num' }, 'Logged'),
@@ -168,6 +168,10 @@ export function render_(host, { actions }) {
 
     return h('tr', null,
       h('td', null,
+        // Who the work is for, above what the work is — the same grouping the
+        // task board reads. Absent rather than "—" when there is no client:
+        // an internal project has none, and a dash in every row is noise.
+        p.clientName ? h('div', { class: 'client-eyebrow' }, p.clientName) : null,
         h('div', { class: 'dot-tag' },
           h('span', { class: 'dot', style: { background: p.color } }),
           h('span', { style: { fontWeight: '600' } }, p.name),
@@ -204,7 +208,33 @@ export function render_(host, { actions }) {
   function editor(project) {
     const editing = !!project;
     const nameInput = h('input', { class: 'input', maxlength: '120', placeholder: 'Project name', value: project?.name || '' });
-    const clientInput = h('input', { class: 'input', maxlength: '120', placeholder: 'Client or internal team', value: project?.client || '' });
+    const contactInput = h('input', { class: 'input', maxlength: '120', placeholder: 'Who you deal with', value: project?.client || '' });
+
+    /* The client is picked, not typed, wherever one already exists: this whole
+       round started because five projects belonged to one client and only a
+       hand-kept naming convention said so. A free text box would let "The
+       Piano Boutique" and "Piano Boutique" become two sections for the same
+       people, which is the same failure wearing a different hat. Typing is
+       reserved for a genuinely new one. */
+    const clientNames = [...new Set(state.projects.map((p) => p.clientName).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+    const clientSel = select([
+      { value: '', label: 'No client' },
+      ...clientNames.map((n) => ({ value: n, label: n })),
+    ], { value: project?.clientName || '' });
+    // "New client…" is marked on the option, not by a magic value: every value
+    // in this list is a client name, so any sentinel string is a name somebody
+    // could one day type. The dataset flag cannot be collided with.
+    clientSel.append(h('option', { value: '', dataset: { newClient: '1' } }, 'New client…'));
+    const wantsNew = () => clientSel.selectedOptions[0]?.dataset.newClient === '1';
+
+    const newClientInput = h('input', { class: 'input', maxlength: '120', placeholder: 'e.g. The Piano Boutique' });
+    const newClientField = h('div', { hidden: true }, field('New client', newClientInput));
+    clientSel.addEventListener('change', () => {
+      newClientField.hidden = !wantsNew();
+      if (!newClientField.hidden) newClientInput.focus();
+    });
+    const chosenClient = () => (wantsNew() ? newClientInput.value.trim() : clientSel.value);
     const codeInput = h('input', { class: 'input', maxlength: '16', placeholder: 'e.g. PLAT', value: project?.code || '' });
     const budgetInput = h('input', {
       class: 'input', placeholder: 'e.g. 120h — leave blank for none',
@@ -258,8 +288,13 @@ export function render_(host, { actions }) {
       title: editing ? 'Edit project' : 'New project',
       body: () => [
         field('Name', nameInput),
-        h('div', { class: 'row' }, field('Client', clientInput), field('Code', codeInput, 'Short tag for dense views')),
-        h('div', { class: 'row' }, field('Budget', budgetInput, 'Accepts 120h or 7200m'), editing ? field('Status', statusSel) : null),
+        h('div', { class: 'row' },
+          field('Client', clientSel, 'Groups this project on the task board'),
+          field('Contact', contactInput, 'The person, not the company'),
+        ),
+        newClientField,
+        h('div', { class: 'row' }, field('Code', codeInput, 'Short tag for dense views'), field('Budget', budgetInput, 'Accepts 120h or 7200m')),
+        editing ? field('Status', statusSel) : null,
         h('div', { class: 'field' }, h('span', { class: 'label' }, 'Colour'), swatches),
         h('label', { class: 'switch' }, billable, h('span', { class: 'track' }), h('span', null, 'Billable work')),
         errLine,
@@ -310,11 +345,17 @@ export function render_(host, { actions }) {
               errLine.hidden = false;
               return budgetInput.focus();
             }
+            if (wantsNew() && !newClientInput.value.trim()) {
+              errLine.textContent = 'Name the new client, or choose one from the list.';
+              errLine.hidden = false;
+              return newClientInput.focus();
+            }
             e.target.disabled = true;
             try {
               await saveProject(project?.id, {
                 name: nameInput.value.trim(),
-                client: clientInput.value.trim(),
+                client: contactInput.value.trim(),
+                clientName: chosenClient(),
                 code: codeInput.value.trim(),
                 color,
                 billable: billable.checked,
