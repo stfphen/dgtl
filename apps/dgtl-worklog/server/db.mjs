@@ -52,17 +52,25 @@ export function addColumn(table, col, definition) {
 // Columns added to tables that already existed, in order, forever. A brand new
 // table belongs in schema.sql — this list is only for widening an old one.
 //
-// Empty on purpose: the shifts round added a table and no columns. Filing an
-// entry against a shift (time_entries.shift_id) is the column it looks like it
-// wants, and it is exactly the one this app must not have — which shift a
-// stretch of work falls inside is derived from its timestamps at read time, so
-// storing it would freeze an answer that has to move when an entry is edited.
+// Every entry here is ALSO in schema.sql, and has to be: schema.sql is the one
+// description of the shape, and it is what a fresh database is built from. This
+// list is what carries the same column onto a database built before it existed.
+//
+// What has repeatedly looked like it belongs here and does not: a column
+// holding something derived. `time_entries.shift_id` is the standing example —
+// which shift a stretch of work falls inside is computed from its timestamps at
+// read time, so storing it would freeze an answer that has to move when the
+// entry is edited.
 const COLUMN_MIGRATIONS = [
   // Added when the Today ring stopped measuring hours present and started
   // measuring the share of them that reaches an invoice. daily_target_minutes
   // keeps its own meaning — how long a day is — rather than being quietly
   // redefined under the people already using it.
   ['users', 'billable_target_pct', 'INTEGER NOT NULL DEFAULT 60'],
+  // The recurrence rule, and the only thing the repeat model stores. Nullable
+  // with no default, so every task that already exists carries NULL — does not
+  // repeat — which is exactly what each of them meant before the column landed.
+  ['tasks', 'recurrence', 'TEXT'],
 ];
 for (const [table, col, definition] of COLUMN_MIGRATIONS) addColumn(table, col, definition);
 

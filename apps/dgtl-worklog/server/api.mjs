@@ -93,6 +93,100 @@ const colorOr = (v, dflt = DEFAULT_PROJECT_COLOR) => {
 /** Does `actor` own row `ownerId`, or outrank it? */
 const canEditFor = (actor, ownerId) => actor.role === 'admin' || actor.id === ownerId;
 
+// ---------------------------------------------------------------- recurring
+/**
+ * Two rules, and deliberately only two.
+ *
+ * The list this was built for carries "Weekly progress note to Michael" twice —
+ * Due Fri and Due 21 Aug, two rows typed a week apart — and the same shape
+ * again for the monthly invoice reminder. Weekly and monthly are the whole of
+ * the observed need. An RRULE parser for a three-person agency would be more
+ * code than the app's entire task module to serve cases nobody has, and every
+ * one of its extra fields would be another thing a reader has to check before
+ * trusting a due date.
+ */
+const RECURRENCES = ['weekly', 'monthly'];
+
+/** undefined leaves the rule alone; '' / null / 'none' clears it. */
+const recurrenceOr = (v, dflt = null) => {
+  if (v === undefined) return dflt;
+  if (v === null || v === '' || v === 'none') return null;
+  const s = String(v);
+  if (!RECURRENCES.includes(s)) throw bad(`Repeat must be one of: ${RECURRENCES.join(', ')}`);
+  return s;
+};
+
+/**
+ * Same day next month, clamped to the month's length: 31 Jan → 28 Feb.
+ *
+ * Kept in calendar space like every other date helper — a YYYY-MM-DD in and a
+ * YYYY-MM-DD out, no local midnight anywhere near it — so a DST step cannot
+ * move a due date by a day.
+ */
+function addMonthsClamped(date, n) {
+  const [y, m, d] = date.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(y, m - 1 + n + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m - 1 + n, Math.min(d, lastDay))).toISOString().slice(0, 10);
+}
+
+const stepDue = (date, rule) => (rule === 'monthly' ? addMonthsClamped(date, 1) : addDays(date, 7));
+
+/**
+ * When the next instance of a repeating task falls due.
+ *
+ * Stepped from the CURRENT due date, never from the day it was ticked off and
+ * never from a stored counter: a Friday note stays on Friday however late it
+ * was written, and the twelfth instance of a monthly is the eleventh stepped
+ * once — not an accumulated offset that has drifted a day per year of DST.
+ *
+ * Then stepped again until it is past `after`. Without that, finishing three
+ * weeks of notes in one sitting writes three instances that were already
+ * overdue when they were created, and the series never catches up with the
+ * calendar — a schedule permanently in the past has stopped being a schedule.
+ * The catch-up keeps the phase: whole steps only, so it is still a Friday.
+ *
+ * The cap is a stop, not a rule. A due date a decade stale rolls forward as far
+ * as it can and lands wherever that leaves it, which is visibly odd and
+ * therefore correctable — a route that hung would not be.
+ */
+function nextDueDate(due, rule, after) {
+  let d = stepDue(due, rule);
+  for (let i = 0; i < 600 && d <= after; i++) d = stepDue(d, rule);
+  return d;
+}
+
+/**
+ * Write the next instance of a repeating task, and only what belongs on it.
+ *
+ * Carried over: everything that describes the WORK — title, notes, project,
+ * assignee, estimate, priority, and the rule itself, so the series continues.
+ *
+ * Not carried, each for its own reason:
+ *   • `done_at` — the new instance is not done, and reports count completions
+ *     from that column.
+ *   • logged time — it is not copied because it is not a column: entries point
+ *     at the task they were worked on. Next week's note has been worked on for
+ *     no minutes, and the estimate is what says how long it should take.
+ *   • `position` — it goes to the top of the list exactly as a hand-typed task
+ *     does. Inheriting the finished row's slot would file next week's work into
+ *     the middle of a board somebody has dragged into an order.
+ *   • `archived` — a series that spawned archived instances would be a rule for
+ *     generating rows nobody sees.
+ */
+function spawnNextInstance(task, today = localDate()) {
+  const now = nowISO();
+  const top = one('SELECT COALESCE(MIN(position), 0) - 1 AS p FROM tasks').p;
+  const res = run(`
+    INSERT INTO tasks (project_id, title, notes, assignee_id, status, priority,
+                       estimate_minutes, due_date, recurrence, position, done_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, 'todo', ?, ?, ?, ?, ?, NULL, ?, ?)`,
+    task.project_id, task.title, task.notes, task.assignee_id, task.priority,
+    task.estimate_minutes, nextDueDate(task.due_date, task.recurrence, today),
+    task.recurrence, top, now, now,
+  );
+  return one('SELECT * FROM tasks WHERE id = ?', Number(res.lastInsertRowid));
+}
+
 /**
  * Minutes as people read them, for the inside of a refusal. The client has its
  * own `hm()`; a message that says "cannot bill 254 against 180" makes the
@@ -133,6 +227,10 @@ const taskRow = (t) => ({
   assigneeId: t.assignee_id, status: t.status, priority: t.priority,
   estimateMinutes: t.estimate_minutes, dueDate: t.due_date, position: t.position,
   doneAt: t.done_at, archived: !!t.archived, loggedMinutes: t.logged_minutes ?? 0,
+  // null means "does not repeat". The next due date is NOT sent alongside it:
+  // it is a function of this row's due date and this rule, so the client can
+  // say it whenever it needs to, and a stale copy of it can never be shipped.
+  recurrence: t.recurrence || null,
 });
 
 const entryRow = (e) => ({
@@ -653,6 +751,42 @@ function streaks(userId, today) {
   return { current, longest, activeDays: days.length };
 }
 
+/**
+ * Tasks finished inside a calendar range — the one definition, used by the
+ * report's KPI and by the client digest, so the two cannot disagree about what
+ * "completed this week" means while sitting on the same screen.
+ *
+ * `done_at` is an ISO instant and every other date in this app is a calendar
+ * date in APP_TIMEZONE, so the comparison has to cross between them. SQLite's
+ * date() reads that instant as UTC: a task ticked off at 21:00 on Sunday in
+ * Toronto is 01:00 Monday in UTC, and a UTC-dated filter files it into next
+ * week — which is a report that is right in the morning and wrong in the
+ * evening. The SQL therefore only WIDENS by a day either side (no offset
+ * anywhere is a whole day), and the calendar date each row actually files under
+ * is computed with the same localDate() everything else uses.
+ */
+function completedBetween({ from, to, assigneeId = null, projectIds = null }) {
+  const where = ['t.archived = 0', "t.status = 'done'", 't.done_at IS NOT NULL',
+    'date(t.done_at) BETWEEN ? AND ?'];
+  const params = [addDays(from, -1), addDays(to, 1)];
+  if (assigneeId) { where.push('t.assignee_id = ?'); params.push(assigneeId); }
+  if (projectIds) {
+    if (!projectIds.length) return [];
+    where.push(`t.project_id IN (${projectIds.map(() => '?').join(',')})`);
+    params.push(...projectIds);
+  }
+  return all(`
+    SELECT t.*, p.name AS project_name, p.color AS project_color, u.name AS assignee_name,
+           (SELECT COALESCE(SUM(minutes), 0) FROM time_entries te WHERE te.task_id = t.id) AS logged_minutes
+      FROM tasks t
+      LEFT JOIN projects p ON p.id = t.project_id
+      LEFT JOIN users    u ON u.id = t.assignee_id
+     WHERE ${where.join(' AND ')}
+     ORDER BY t.done_at ASC, t.id ASC`, ...params)
+    .map((t) => ({ ...t, done_date: localDate(new Date(t.done_at)) }))
+    .filter((t) => t.done_date >= from && t.done_date <= to);
+}
+
 function buildReport({ from, to, userId }) {
   // One scoping clause, bound not interpolated. `q` appends the user id only
   // when the report is scoped to one person, keeping placeholders aligned.
@@ -692,11 +826,15 @@ function buildReport({ from, to, userId }) {
   const taskScope = userId ? 'AND t.assignee_id = ?' : '';
   const tasks = all(`
     SELECT
-      SUM(CASE WHEN t.status = 'done' AND date(t.done_at) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS done,
       SUM(CASE WHEN t.status <> 'done' THEN 1 ELSE 0 END) AS open,
       SUM(CASE WHEN t.status <> 'done' AND t.due_date IS NOT NULL AND t.due_date < ? THEN 1 ELSE 0 END) AS overdue
     FROM tasks t WHERE t.archived = 0 ${taskScope}`,
-    ...[from, to, to, ...(userId ? [userId] : [])])[0];
+    ...[to, ...(userId ? [userId] : [])])[0];
+  // Counted through the shared helper rather than in the query above, because
+  // done_at is an instant and this range is calendar dates — see the comment on
+  // completedBetween. Inline, this KPI read a UTC date and disagreed with the
+  // digest beside it for the last few hours of every day.
+  const tasksDone = completedBetween({ from, to, assigneeId: userId }).length;
 
   // Trailing 90 days ending at `to` — the heatmap, straight out of the habit tracker.
   const heatFrom = addDays(to, -89);
@@ -713,7 +851,7 @@ function buildReport({ from, to, userId }) {
       entries: totals.entries, days: totals.days,
     },
     byDay, byProject, byUser,
-    tasks: { done: tasks.done ?? 0, open: tasks.open ?? 0, overdue: tasks.overdue ?? 0 },
+    tasks: { done: tasksDone, open: tasks.open ?? 0, overdue: tasks.overdue ?? 0 },
     heatmap: { from: heatFrom, to, days: heatmap },
     streak: userId ? streaks(userId, localDate()) : null,
   };
@@ -902,19 +1040,35 @@ route('POST', '/api/tasks', ({ req, body }) => {
   const user = requireUser(req);
   const now = nowISO();
   const next = one('SELECT COALESCE(MIN(position), 0) - 1 AS p FROM tasks').p;
+  const dueDate = dateOr(body.dueDate, null);
+  const recurrence = recurrenceOr(body.recurrence);
+  // A rule steps FROM a due date. With none there is nothing to step, and the
+  // only remaining answer would be to invent one off the day it was ticked —
+  // which is how a Friday note becomes a Tuesday note. Refused at both ends
+  // instead, so a task can never sit in the database carrying a rule it cannot
+  // execute.
+  if (recurrence && !dueDate) throw bad('A repeating task needs a due date — that is what it repeats from');
+
+  const status = pick(body.status, ['todo', 'doing', 'done'], { name: 'Status', dflt: 'todo' });
   const res = run(`
     INSERT INTO tasks (project_id, title, notes, assignee_id, status, priority,
-                       estimate_minutes, due_date, position, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                       estimate_minutes, due_date, recurrence, position, done_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     int(body.projectId, { name: 'Project', nullable: true }),
     str(body.title, { name: 'Task title', required: true, max: 200 }),
     str(body.notes, { name: 'Notes', max: 4000 }),
     body.assigneeId === undefined ? user.id : int(body.assigneeId, { name: 'Assignee', nullable: true }),
-    pick(body.status, ['todo', 'doing', 'done'], { name: 'Status', dflt: 'todo' }),
+    status,
     pick(body.priority, ['low', 'normal', 'high'], { name: 'Priority', dflt: 'normal' }),
     int(body.estimateMinutes, { name: 'Estimate', min: 0, max: 10 ** 6, nullable: true }),
-    dateOr(body.dueDate, null),
-    next, now, now,
+    dueDate, recurrence,
+    next,
+    // Stamped here as well as on the PATCH transition. Filed as done — which is
+    // how work already finished gets recorded, and how an importer writes
+    // history — this column was left NULL, and every "completed this week"
+    // count in the app reads it, so the task was done and counted nowhere.
+    status === 'done' ? now : null,
+    now, now,
   );
   return { task: taskRow(one('SELECT * FROM tasks WHERE id = ?', Number(res.lastInsertRowid))) };
 });
@@ -928,24 +1082,47 @@ route('PATCH', '/api/tasks/:id', ({ req, body, params }) => {
   // done_at is the timestamp reports count "completed this week" from, so it
   // is stamped on the transition and cleared if a task is reopened.
   const doneAt = status === 'done' ? (t.done_at || nowISO()) : null;
+  const dueDate = body.dueDate === undefined ? t.due_date : dateOr(body.dueDate, null);
+  const recurrence = recurrenceOr(body.recurrence, t.recurrence || null);
+  const archived = bool01(body.archived, t.archived);
+  if (recurrence && !dueDate) throw bad('A repeating task needs a due date — that is what it repeats from');
 
-  run(`UPDATE tasks SET project_id = ?, title = ?, notes = ?, assignee_id = ?, status = ?,
-         priority = ?, estimate_minutes = ?, due_date = ?, position = ?, archived = ?,
-         done_at = ?, updated_at = ? WHERE id = ?`,
-    body.projectId === undefined ? t.project_id : int(body.projectId, { name: 'Project', nullable: true }),
-    str(body.title, { name: 'Task title', dflt: t.title, max: 200 }) || t.title,
-    body.notes === undefined ? t.notes : str(body.notes, { name: 'Notes', max: 4000 }),
-    body.assigneeId === undefined ? t.assignee_id : int(body.assigneeId, { name: 'Assignee', nullable: true }),
-    status,
-    pick(body.priority, ['low', 'normal', 'high'], { name: 'Priority', dflt: t.priority }),
-    body.estimateMinutes === undefined ? t.estimate_minutes
-      : int(body.estimateMinutes, { name: 'Estimate', min: 0, max: 10 ** 6, nullable: true }),
-    body.dueDate === undefined ? t.due_date : dateOr(body.dueDate, null),
-    body.position === undefined ? t.position : int(body.position, { name: 'Position', min: -(10 ** 6) }),
-    bool01(body.archived, t.archived),
-    doneAt, nowISO(), t.id,
-  );
-  return { task: taskRow(one('SELECT * FROM tasks WHERE id = ?', t.id)) };
+  // A rule fires on the CROSSING into done, not on the state. Without the first
+  // clause every later edit of a finished task — retagging it, fixing a typo —
+  // would send the same PATCH with status still 'done' and mint another
+  // instance, which is precisely the duplicate this feature exists to stop.
+  const completing = t.status !== 'done' && status === 'done' && !!recurrence && !archived;
+
+  return tx(() => {
+    run(`UPDATE tasks SET project_id = ?, title = ?, notes = ?, assignee_id = ?, status = ?,
+           priority = ?, estimate_minutes = ?, due_date = ?, recurrence = ?, position = ?, archived = ?,
+           done_at = ?, updated_at = ? WHERE id = ?`,
+      body.projectId === undefined ? t.project_id : int(body.projectId, { name: 'Project', nullable: true }),
+      str(body.title, { name: 'Task title', dflt: t.title, max: 200 }) || t.title,
+      body.notes === undefined ? t.notes : str(body.notes, { name: 'Notes', max: 4000 }),
+      body.assigneeId === undefined ? t.assignee_id : int(body.assigneeId, { name: 'Assignee', nullable: true }),
+      status,
+      pick(body.priority, ['low', 'normal', 'high'], { name: 'Priority', dflt: t.priority }),
+      body.estimateMinutes === undefined ? t.estimate_minutes
+        : int(body.estimateMinutes, { name: 'Estimate', min: 0, max: 10 ** 6, nullable: true }),
+      dueDate, recurrence,
+      body.position === undefined ? t.position : int(body.position, { name: 'Position', min: -(10 ** 6) }),
+      archived,
+      doneAt, nowISO(), t.id,
+    );
+    const saved = one('SELECT * FROM tasks WHERE id = ?', t.id);
+    // Built from the row as it now stands, not as it arrived: an estimate
+    // corrected in the same breath as ticking the box is the estimate the next
+    // instance should carry.
+    //
+    // Reopening one does NOT retract the instance it spawned. Two rows would
+    // then be the same week's work, which is the mess this replaced — but
+    // deleting a row somebody may already have logged hours against, to undo a
+    // tick, is worse. The one to delete is the one you can see; the app offers
+    // that, and this does not guess.
+    const next = completing ? spawnNextInstance(saved) : null;
+    return { task: taskRow(saved), next: next ? taskRow(next) : null };
+  });
 });
 
 route('DELETE', '/api/tasks/:id', ({ req, params }) => {
@@ -1354,6 +1531,300 @@ route('GET', '/api/report', ({ req, query }) => {
   const userId = scope === 'team' ? null
     : (query.get('userId') ? int(query.get('userId'), { name: 'User' }) : user.id);
   return buildReport({ from, to, userId });
+});
+
+// ------------------------------------------------------------------- digest
+/**
+ * The weekly client note, as data.
+ *
+ * The list this was built for carries "Weekly progress note to Michael" as
+ * recurring manual work: an hour every Friday assembling, by hand, facts this
+ * database already holds. This endpoint is those facts, for one client, over
+ * one week — hours by workstream, what closed, the notes people wrote on their
+ * own time entries as the narrative, and what falls due next.
+ *
+ * It is NOT a page. `dgtl-worklog-status-report` already builds the
+ * client-facing artefact, and a second presentation layer competing with it
+ * would be two things to keep in step and one of them always stale. What that
+ * skill has to do by hand today is exactly the arithmetic below — closed over
+ * scheduled per workstream, estimate remaining, logged minutes from the project
+ * totals rather than the task totals, completions sorted by doneAt — so the
+ * payload is shaped as its inputs and it can read this instead of computing it.
+ *
+ * ---------------------------------------------------------------------------
+ * The rule that governs every figure here: A NUMBER THAT CANNOT NAME ITS ROWS
+ * DOES NOT GO IN.
+ *
+ * Every claim is emitted twice — once where it is read, and once in
+ * `provenance`, carrying the ids of the rows it was summed from. Nothing is
+ * rounded for readability, nothing is estimated, and there is no figure in the
+ * payload that is not either a claim or built from claims. That is what makes
+ * it checkable by a test rather than by a careful reader: sum the named rows,
+ * compare to the stated value, and the digest is either honest or red.
+ */
+const MAX_DIGEST_DAYS = 92;
+
+/** One provenance claim: what was said, and which rows say it. */
+const claim = (id, kind, label, value, source) => ({ id, kind, label, value, ...source });
+
+function buildDigest({ client, from, to, timezone = APP_TIMEZONE }) {
+  const projects = all(`
+    SELECT p.* FROM projects p
+      JOIN project_clients pc ON pc.project_id = p.id
+     WHERE pc.client_id = ?
+     ORDER BY p.status ASC, p.position ASC, p.id ASC`, client.id);
+  const projectIds = projects.map((p) => p.id);
+  const provenance = [];
+
+  const entries = projectIds.length ? all(`
+    SELECT e.*, p.name AS project_name, p.color AS project_color,
+           t.title AS task_title, u.name AS user_name
+      FROM time_entries e
+      LEFT JOIN projects p ON p.id = e.project_id
+      LEFT JOIN tasks    t ON t.id = e.task_id
+      LEFT JOIN users    u ON u.id = e.user_id
+     WHERE e.date BETWEEN ? AND ?
+       AND e.project_id IN (${projectIds.map(() => '?').join(',')})
+     ORDER BY e.date ASC, e.id ASC`, from, to, ...projectIds) : [];
+
+  const completed = completedBetween({ from, to, projectIds });
+
+  // Open work with a date on it, split at the end of the range: what is coming
+  // and what is already late. Both are rows that exist — a recurring task's
+  // NEXT instance is not here, because it has not been written yet and a digest
+  // that promised it would be promising a row nobody can open.
+  const horizon = addDays(to, 7);
+  const dated = projectIds.length ? all(`
+    SELECT t.*, p.name AS project_name, p.color AS project_color, u.name AS assignee_name
+      FROM tasks t
+      LEFT JOIN projects p ON p.id = t.project_id
+      LEFT JOIN users    u ON u.id = t.assignee_id
+     WHERE t.archived = 0 AND t.status <> 'done' AND t.due_date IS NOT NULL
+       AND t.due_date <= ?
+       AND t.project_id IN (${projectIds.map(() => '?').join(',')})
+     ORDER BY t.due_date ASC, t.id ASC`, horizon, ...projectIds) : [];
+
+  const openByProject = new Map();
+  for (const t of projectIds.length ? all(`
+    SELECT project_id, COUNT(*) AS open,
+           COALESCE(SUM(COALESCE(estimate_minutes, 0)), 0) AS estimate_open,
+           COUNT(*) FILTER (WHERE priority = 'high') AS high
+      FROM tasks
+     WHERE archived = 0 AND status <> 'done'
+       AND project_id IN (${projectIds.map(() => '?').join(',')})
+     GROUP BY project_id`, ...projectIds) : []) openByProject.set(t.project_id, t);
+
+  const doneAllByProject = new Map(projectIds.length ? all(`
+    SELECT project_id, COUNT(*) AS n FROM tasks
+     WHERE archived = 0 AND status = 'done'
+       AND project_id IN (${projectIds.map(() => '?').join(',')})
+     GROUP BY project_id`, ...projectIds).map((r) => [r.project_id, r.n]) : []);
+
+  const loggedAllByProject = new Map(projectIds.length ? all(`
+    SELECT project_id, COALESCE(SUM(minutes), 0) AS m FROM time_entries
+     WHERE project_id IN (${projectIds.map(() => '?').join(',')})
+     GROUP BY project_id`, ...projectIds).map((r) => [r.project_id, r.m]) : []);
+
+  const sum = (rows, f = (e) => e.minutes) => rows.reduce((n, e) => n + f(e), 0);
+  const ids = (rows) => rows.map((e) => e.id);
+
+  const workstreams = projects.map((p) => {
+    const mine = entries.filter((e) => e.project_id === p.id);
+    const billable = mine.filter((e) => e.billable);
+    const open = openByProject.get(p.id) || { open: 0, estimate_open: 0, high: 0 };
+    const closedInRange = completed.filter((t) => t.project_id === p.id);
+    const doneAll = doneAllByProject.get(p.id) || 0;
+    const scheduled = doneAll + open.open;
+    return {
+      projectId: p.id, name: p.name, code: p.code, color: p.color, status: p.status,
+      contact: p.client,
+      minutes: sum(mine), billableMinutes: sum(billable), entries: mine.length,
+      entryIds: ids(mine),
+      // All-time, and named all-time: a budget is not spent by one week.
+      loggedAllTimeMinutes: loggedAllByProject.get(p.id) || 0,
+      budgetMinutes: p.budget_minutes,
+      tasksClosedInRange: closedInRange.length,
+      tasksClosed: doneAll,
+      tasksOpen: open.open,
+      tasksHighPriorityOpen: open.high,
+      // Closed over scheduled, the basis stated: a percentage of task COUNTS,
+      // never of hours, and null rather than 0 where the project holds no tasks
+      // at all — "nothing planned" is not "nothing done".
+      tasksScheduled: scheduled,
+      closedPct: scheduled ? (doneAll / scheduled) * 100 : null,
+      estimateRemainingMinutes: open.estimate_open,
+    };
+  });
+
+  const active = workstreams.filter((w) =>
+    w.entries || w.tasksClosedInRange || dated.some((t) => t.project_id === w.projectId));
+
+  const narrative = entries.filter((e) => e.note.trim()).map((e) => ({
+    entryId: e.id, date: e.date, minutes: e.minutes, note: e.note,
+    projectId: e.project_id, projectName: e.project_name,
+    taskId: e.task_id, taskTitle: e.task_title,
+    userId: e.user_id, userName: e.user_name, billable: !!e.billable,
+  }));
+
+  const people = [...entries.reduce((m, e) => {
+    const row = m.get(e.user_id) || { userId: e.user_id, name: e.user_name || 'Removed user', minutes: 0, entryIds: [] };
+    row.minutes += e.minutes;
+    row.entryIds.push(e.id);
+    return m.set(e.user_id, row);
+  }, new Map()).values()].sort((a, b) => b.minutes - a.minutes);
+
+  // Three buckets, and every one of them is a statement about the REPORTED
+  // range rather than about the instant this ran — so last week's digest reads
+  // the same today, tomorrow and next year.
+  //
+  //   before  — due before the week even started and still open. Late on any
+  //             reading of the calendar, which is what earns the word.
+  //   inWeek  — due inside the reported week and still open. Deliberately NOT
+  //             called overdue: a digest written on Tuesday for the current
+  //             week would be accusing Friday's work of being late.
+  //   next    — due in the seven days after the range. This is the "what is
+  //             coming" list.
+  const bucketOf = (due) => (due < from ? 'before' : due <= to ? 'inWeek' : 'next');
+  const upcoming = dated.map((t) => ({
+    taskId: t.id, title: t.title, dueDate: t.due_date, status: t.status,
+    priority: t.priority, estimateMinutes: t.estimate_minutes,
+    projectId: t.project_id, projectName: t.project_name,
+    assigneeId: t.assignee_id, assigneeName: t.assignee_name,
+    recurrence: t.recurrence || null,
+    bucket: bucketOf(t.due_date),
+    overdue: t.due_date < from,
+  }));
+
+  const notedMinutes = sum(narrative);
+  const totals = {
+    minutes: sum(entries),
+    billableMinutes: sum(entries.filter((e) => e.billable)),
+    entries: entries.length,
+    days: new Set(entries.map((e) => e.date)).size,
+    tasksCompleted: completed.length,
+    tasksOpen: workstreams.reduce((n, w) => n + w.tasksOpen, 0),
+    tasksHighPriorityOpen: workstreams.reduce((n, w) => n + w.tasksHighPriorityOpen, 0),
+    estimateRemainingMinutes: workstreams.reduce((n, w) => n + w.estimateRemainingMinutes, 0),
+    dueNextWeek: upcoming.filter((t) => t.bucket === 'next').length,
+    openInWeek: upcoming.filter((t) => t.bucket === 'inWeek').length,
+    overdue: upcoming.filter((t) => t.bucket === 'before').length,
+  };
+
+  // ---- provenance: one line per claim, each naming the rows it came from ----
+  provenance.push(
+    claim('totals.minutes', 'minutes', `${dur(totals.minutes)} logged across the week`,
+      totals.minutes, { entryIds: ids(entries) }),
+    claim('totals.billableMinutes', 'minutes', `${dur(totals.billableMinutes)} of it billable`,
+      totals.billableMinutes, { entryIds: ids(entries.filter((e) => e.billable)) }),
+  );
+  for (const w of active) {
+    provenance.push(claim(`workstream.${w.projectId}.minutes`, 'minutes',
+      `${w.name} — ${dur(w.minutes)}`, w.minutes, { entryIds: w.entryIds }));
+    provenance.push(claim(`workstream.${w.projectId}.billableMinutes`, 'minutes',
+      `${w.name} — ${dur(w.billableMinutes)} billable`, w.billableMinutes,
+      { entryIds: w.entryIds.filter((id) => entries.find((e) => e.id === id).billable) }));
+  }
+  provenance.push(claim('totals.tasksCompleted', 'tasks',
+    `${completed.length} ${completed.length === 1 ? 'task' : 'tasks'} completed`,
+    completed.length, { taskIds: completed.map((t) => t.id) }));
+  for (const t of completed) {
+    provenance.push(claim(`completed.${t.id}.doneDate`, 'task-date',
+      `"${t.title}" completed ${t.done_date}`, t.done_date, { taskIds: [t.id], field: 'doneAt' }));
+  }
+  provenance.push(claim('totals.dueNextWeek', 'tasks',
+    `${totals.dueNextWeek} due between ${addDays(to, 1)} and ${horizon}`, totals.dueNextWeek,
+    { taskIds: upcoming.filter((t) => t.bucket === 'next').map((t) => t.taskId) }));
+  provenance.push(claim('totals.openInWeek', 'tasks',
+    `${totals.openInWeek} due inside the week and still open`, totals.openInWeek,
+    { taskIds: upcoming.filter((t) => t.bucket === 'inWeek').map((t) => t.taskId) }));
+  provenance.push(claim('totals.overdue', 'tasks',
+    `${totals.overdue} still open from before ${from}`, totals.overdue,
+    { taskIds: upcoming.filter((t) => t.bucket === 'before').map((t) => t.taskId) }));
+  for (const t of upcoming) {
+    provenance.push(claim(`upcoming.${t.taskId}.dueDate`, 'task-date',
+      `"${t.title}" due ${t.dueDate}`, t.dueDate, { taskIds: [t.taskId], field: 'dueDate' }));
+  }
+  provenance.push(claim('narrative.minutes', 'minutes',
+    `${dur(notedMinutes)} of the week carries a written note`, notedMinutes,
+    { entryIds: narrative.map((n) => n.entryId) }));
+  for (const n of narrative) {
+    provenance.push(claim(`narrative.${n.entryId}.note`, 'text',
+      n.note, n.note, { entryIds: [n.entryId], field: 'note' }));
+  }
+  for (const p of people) {
+    provenance.push(claim(`person.${p.userId}.minutes`, 'minutes',
+      `${p.name} — ${dur(p.minutes)}`, p.minutes, { entryIds: p.entryIds }));
+  }
+
+  return {
+    client: { id: client.id, name: client.name },
+    range: { from, to, days: 1 + Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000) },
+    horizon,
+    generatedAt: nowISO(),
+    timezone,
+    projects: projects.map((p) => ({
+      projectId: p.id, name: p.name, code: p.code, color: p.color, status: p.status,
+    })),
+    // Named so a reader knows they were looked at and had nothing, rather than
+    // wondering whether the digest simply missed them.
+    silentProjects: workstreams.filter((w) => !active.includes(w))
+      .map((w) => ({ projectId: w.projectId, name: w.name, code: w.code, status: w.status })),
+    totals,
+    workstreams: active,
+    completed: completed.map((t) => ({
+      taskId: t.id, title: t.title, notes: t.notes,
+      projectId: t.project_id, projectName: t.project_name, projectColor: t.project_color,
+      doneAt: t.done_at, doneDate: t.done_date,
+      assigneeId: t.assignee_id, assigneeName: t.assignee_name,
+      priority: t.priority, estimateMinutes: t.estimate_minutes, loggedMinutes: t.logged_minutes,
+      recurrence: t.recurrence || null,
+    })),
+    narrative,
+    // What share of the week the narrative actually speaks for. A story built
+    // from the notes on 40% of the hours is a story about 40% of the hours, and
+    // saying so is the difference between a spine and a claim of completeness.
+    coverage: {
+      minutes: totals.minutes,
+      notedMinutes,
+      unnotedMinutes: totals.minutes - notedMinutes,
+      notedEntries: narrative.length,
+    },
+    upcoming,
+    people,
+    provenance,
+  };
+}
+
+route('GET', '/api/digest', ({ req, query }) => {
+  const user = requireUser(req);
+  const clientId = int(query.get('clientId'), { name: 'Client', min: 1 });
+  const client = one('SELECT * FROM clients WHERE id = ?', clientId);
+  if (!client) throw new HttpError(404, 'Client not found');
+
+  // The week the caller's own calendar is on, which is the week they are
+  // writing the note for. Both ends can be given instead; the pair is what
+  // makes last week's digest reproducible after the fact.
+  const from = dateOr(query.get('from'), startOfWeek(localDate(), user.weekStart));
+  const to = dateOr(query.get('to'), addDays(from, 6));
+  if (from > to) throw bad('The start of the range is after its end');
+  const days = 1 + Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
+  // A digest lists every note in its range, so an unbounded one is a way to ask
+  // for the whole workspace in a single response.
+  if (days > MAX_DIGEST_DAYS) throw bad(`A digest covers at most ${MAX_DIGEST_DAYS} days — this one asks for ${days}`);
+
+  return buildDigest({ client, from, to });
+});
+
+/** Clients that have projects, for the digest picker. */
+route('GET', '/api/clients', ({ req }) => {
+  requireUser(req);
+  return {
+    clients: all(`
+      SELECT c.id, c.name, COUNT(pc.project_id) AS projects
+        FROM clients c
+        JOIN project_clients pc ON pc.client_id = c.id
+       GROUP BY c.id ORDER BY c.name`).map((c) => ({ id: c.id, name: c.name, projects: c.projects })),
+  };
 });
 
 /**

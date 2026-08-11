@@ -81,6 +81,13 @@ CREATE TABLE IF NOT EXISTS tasks (
   priority         TEXT    NOT NULL DEFAULT 'normal', -- 'low' | 'normal' | 'high'
   estimate_minutes INTEGER,
   due_date         TEXT,                              -- YYYY-MM-DD
+  -- NULL | 'weekly' | 'monthly'. The whole recurrence model is this one column:
+  -- completing a task carrying a rule writes its next instance, whose due date
+  -- is computed from THIS row's due date and the rule at that moment. Nothing
+  -- about the series is stored — no schedule table, no parent id, no
+  -- "occurrence 4 of n" — because every one of those is an answer that would
+  -- freeze while the row it describes goes on being edited. See api.mjs.
+  recurrence       TEXT,
   position         INTEGER NOT NULL DEFAULT 0,
   done_at          TEXT,
   archived         INTEGER NOT NULL DEFAULT 0,

@@ -37,6 +37,10 @@ const BASE_3 = `http://127.0.0.1:${PORT_3}`;
 // across a restart, so the port is freed between the two boots.
 const PORT_4 = PORT + 1000;
 const BASE_4 = `http://127.0.0.1:${PORT_4}`;
+// The digest, read out of a timezone fourteen hours ahead of the one every
+// other boot here runs in.
+const PORT_5 = PORT + 1300;
+const BASE_5 = `http://127.0.0.1:${PORT_5}`;
 const PASSWORD = 'smoke-test-password';
 const TZ = 'America/Toronto';
 
@@ -1616,6 +1620,328 @@ try {
   ok('report breaks down by project', report.body.byProject.length > 0);
   ok('inverted date range is rejected',
     (await call('GET', '/api/report?from=2026-05-01&to=2026-01-01')).status === 400);
+
+  console.log('\nrepeating work');
+  // NOTHING in this section is a date built from this machine's clock.
+  //
+  // Every rule is stepped from one of two kinds of anchor: a FIXED one far
+  // enough ahead that no step can reach the present — asserted, not assumed,
+  // on the next line — or a date expressed relative to the day the SERVER
+  // reports, compared only against that same day. A literal like "next Friday"
+  // computed here would be a fixture that ages, and a fixture that ages is how
+  // a suite comes to pass only in the morning.
+  const serverToday = (await call('GET', '/api/bootstrap')).body.today;
+  ok('the fixed anchors these rules step from are still in the future',
+    serverToday < '2099-01-01', `today is ${serverToday} — the anchors below need rewriting`);
+
+  const shiftDate = (date, n) => {
+    const d = new Date(`${date}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+  const daysApart = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+  const weekdayOf = (date) => new Date(`${date}T00:00:00Z`).getUTCDay();
+
+  const mkTask = async (patch) => (await call('POST', '/api/tasks', patch)).body.task;
+  const finish = async (id, extra = {}) => (await call('PATCH', `/api/tasks/${id}`, { status: 'done', ...extra })).body;
+  const allTasks = async () => (await call('GET', '/api/tasks?archived=1')).body.tasks;
+
+  const weeklyFar = await mkTask({ title: 'Weekly note (anchored)', dueDate: '2099-01-01', recurrence: 'weekly' });
+  const weeklyHeir = (await finish(weeklyFar.id)).next;
+  ok('completing a weekly task writes the next one, seven days on',
+    weeklyHeir?.dueDate === '2099-01-08', String(weeklyHeir?.dueDate));
+
+  const monthEnd = await mkTask({ title: 'Invoice (month end)', dueDate: '2099-01-31', recurrence: 'monthly' });
+  const febDue = (await finish(monthEnd.id)).next;
+  ok('a monthly on the 31st lands on the last day of a short month, not on the 3rd of the next',
+    febDue?.dueDate === '2099-02-28', String(febDue?.dueDate));
+  const marDue = (await finish(febDue.id)).next;
+  ok('and it stays where the clamp put it — there is no hidden anchor day to spring back to',
+    marDue?.dueDate === '2099-03-28', String(marDue?.dueDate));
+
+  // Three weeks of Friday notes written in one sitting. Stepping once would
+  // have created an instance that was already a fortnight late.
+  const stale = await mkTask({
+    title: 'Weekly note (three weeks stale)', dueDate: shiftDate(serverToday, -21), recurrence: 'weekly',
+  });
+  const caught = (await finish(stale.id)).next;
+  ok('a series finished three weeks late catches up instead of being born overdue',
+    caught.dueDate > serverToday, `${caught.dueDate} against a today of ${serverToday}`);
+  ok('it catches up in whole steps, so the note is still due on the weekday it always was',
+    daysApart(stale.dueDate, caught.dueDate) % 7 === 0
+    && weekdayOf(stale.dueDate) === weekdayOf(caught.dueDate),
+    `${stale.dueDate} → ${caught.dueDate}`);
+  ok('and it is the FIRST week that has not happened, not one convenient distance ahead',
+    daysApart(serverToday, caught.dueDate) >= 1 && daysApart(serverToday, caught.dueDate) <= 7,
+    `${caught.dueDate} is ${daysApart(serverToday, caught.dueDate)} days out`);
+
+  const src = await mkTask({
+    title: 'Weekly progress note to Michael', projectId, dueDate: '2099-06-05', recurrence: 'weekly',
+    estimateMinutes: 60, priority: 'high', notes: 'Assembled from the worklog',
+  });
+  await call('POST', '/api/entries', { projectId, taskId: src.id, minutes: 75, note: 'writing this week\'s' });
+  const handover = await finish(src.id);
+  const heir = handover.next;
+  ok('the next instance carries everything that describes the WORK',
+    heir.title === src.title && heir.projectId === src.projectId && heir.assigneeId === src.assigneeId
+    && heir.estimateMinutes === 60 && heir.priority === 'high' && heir.notes === src.notes
+    && heir.recurrence === 'weekly', JSON.stringify(heir));
+  ok('and nothing that described the one now finished',
+    heir.status === 'todo' && heir.doneAt === null && handover.task.doneAt !== null, JSON.stringify(heir));
+  // Read off the LIST, not off the PATCH response: only the list query joins
+  // the entry totals in, so asserting loggedMinutes on the response above would
+  // be comparing 0 to a 0 that means "not asked for".
+  const afterHandover = await allTasks();
+  const srcRow = afterHandover.find((t) => t.id === src.id);
+  const heirRow = afterHandover.find((t) => t.id === heir.id);
+  ok('the hours stay on the instance they were actually worked on',
+    srcRow.loggedMinutes === 75 && heirRow.loggedMinutes === 0,
+    JSON.stringify({ done: srcRow.loggedMinutes, next: heirRow.loggedMinutes }));
+  const positions = afterHandover.map((t) => t.position);
+  ok('it starts at the top of the board, not in the finished row\'s slot',
+    heir.position < src.position && heir.position === Math.min(...positions),
+    `${heir.position} against a minimum of ${Math.min(...positions)}`);
+
+  const before3 = (await allTasks()).length;
+  const reEdit = await call('PATCH', `/api/tasks/${src.id}`, { status: 'done', notes: 'tidied afterwards' });
+  ok('editing a task that is already done does not mint a second instance',
+    reEdit.body.next === null && (await allTasks()).length === before3,
+    `${before3} → ${(await allTasks()).length}`);
+  await call('PATCH', `/api/tasks/${src.id}`, { status: 'todo' });
+  ok('reopening one does not retract the instance it already created',
+    (await allTasks()).length === before3);
+
+  const plain = await mkTask({ title: 'One-off', dueDate: '2099-01-01' });
+  ok('a task with no rule creates nothing when it is completed', (await finish(plain.id)).next === null);
+
+  const ruleDropped = await mkTask({ title: 'Ends here', dueDate: '2099-01-01', recurrence: 'weekly' });
+  await call('PATCH', `/api/tasks/${ruleDropped.id}`, { recurrence: null });
+  const stoppedDone = await finish(ruleDropped.id);
+  ok('clearing the rule mid-series ends it: the instance stays, the next is never written',
+    stoppedDone.next === null && stoppedDone.task.recurrence === null, JSON.stringify(stoppedDone.task));
+
+  const shelved = await mkTask({ title: 'Shelved', dueDate: '2099-01-01', recurrence: 'weekly' });
+  ok('archiving and completing in one move writes nothing — a rule spawning rows nobody sees is not a rule',
+    (await finish(shelved.id, { archived: 1 })).next === null);
+
+  const doomedSeries = await mkTask({ title: 'Deleted series', dueDate: '2099-01-01', recurrence: 'weekly' });
+  await call('DELETE', `/api/tasks/${doomedSeries.id}`);
+  ok('deleting the open instance ends the series, because the row IS the series',
+    !(await allTasks()).some((t) => t.title === 'Deleted series'));
+
+  ok('a rule with no due date is refused — there would be nothing to step from',
+    (await call('POST', '/api/tasks', { title: 'Undated', recurrence: 'weekly' })).status === 400);
+  ok('a rule this app does not have is refused rather than silently ignored',
+    (await call('POST', '/api/tasks', { title: 'Daily', dueDate: '2099-01-01', recurrence: 'daily' })).status === 400);
+  ok('and a due date cannot be cleared out from under a rule already set',
+    (await call('PATCH', `/api/tasks/${heir.id}`, { dueDate: null })).status === 400);
+
+  const bornDone = await mkTask({ title: 'Filed as already finished', status: 'done' });
+  ok('a task filed as already done is stamped, so completion counts can see it at all',
+    !!bornDone.doneAt, JSON.stringify(bornDone.doneAt));
+
+  console.log('\nthe Friday client note');
+  // A fixed week, and four completions placed at four positions on the clock —
+  // midnight, morning, late evening, and late evening the day BEFORE the week.
+  // Two of those four have a UTC date on the other side of the boundary from
+  // their Toronto date, which is the whole point: they are the cases a
+  // UTC-dated filter gets wrong, and they are asserted on every run at every
+  // hour rather than waiting for the suite to happen to run in the evening.
+  const DFROM = '2026-05-04';                 // Monday
+  const DTO = '2026-05-10';                   // Sunday
+  const dgUrl = (q) => `/api/digest?${q}`;
+
+  const ws1 = (await call('POST', '/api/projects', {
+    name: 'Ashcombe — Site & Listings', code: 'ASH-A', clientName: 'Ashcombe Pianos', budgetMinutes: 2400,
+  })).body.project;
+  const ws2 = (await call('POST', '/api/projects', {
+    name: 'Ashcombe — Studio Content', code: 'ASH-B', clientName: 'Ashcombe Pianos',
+  })).body.project;
+  const ws3 = (await call('POST', '/api/projects', {
+    name: 'Ashcombe — Nothing Happened', code: 'ASH-C', clientName: 'Ashcombe Pianos',
+  })).body.project;
+  const elsewhere = (await call('POST', '/api/projects', { name: 'Someone else entirely', code: 'ELSE' })).body.project;
+  const ashcombeId = ws1.clientId;
+
+  const E = async (projectId, date, minutes, note, billable = true) =>
+    (await call('POST', '/api/entries', { projectId, date, minutes, note, billable })).body.entry;
+  const inWeek = [
+    await E(ws1.id, '2026-05-04', 95, 'Rebuilt the listings feed and resubmitted the sitemap'),
+    await E(ws1.id, '2026-05-06', 50, 'Fixed the duplicate NAP across three aggregators'),
+    await E(ws1.id, '2026-05-06', 40, '', false),        // logged with no note — coverage
+    await E(ws2.id, '2026-05-07', 130, 'Second pass on the studio shoot brief'),
+    await E(ws2.id, '2026-05-10', 25, 'Uploaded the retouched set', false),
+  ];
+  const outsiders = [
+    await E(elsewhere.id, '2026-05-06', 200, 'nothing to do with this client'),
+    await E(ws1.id, '2026-05-03', 60, 'the day before the week'),
+    await E(ws1.id, '2026-05-11', 60, 'the day after the week'),
+  ];
+
+  /** A completed task placed at an exact instant — done_at is stamped, not sent. */
+  const finishedAt = async (title, projectId, iso, estimateMinutes = 60) => {
+    const t = (await call('POST', '/api/tasks', { title, projectId, estimateMinutes })).body.task;
+    sql((w) => w("UPDATE tasks SET status = 'done', done_at = ? WHERE id = ?", iso, t.id));
+    return t;
+  };
+  const atMidnight = await finishedAt('Claimed the duplicate listing', ws1.id, '2026-05-04T04:00:00Z');
+  const atMorning = await finishedAt('Rewrote the opening hours', ws1.id, '2026-05-06T12:00:00Z');
+  const atNight = await finishedAt('Delivered the retouched set', ws2.id, '2026-05-11T02:30:00Z');
+  const nightBefore = await finishedAt('Signed off the shoot list', ws1.id, '2026-05-04T03:30:00Z');
+
+  const dueNext = await mkTask({ title: 'Ship the photography brief', projectId: ws1.id, dueDate: '2026-05-14', estimateMinutes: 120 });
+  const dueInside = await mkTask({ title: 'Confirm the delivery slot', projectId: ws2.id, dueDate: '2026-05-06', estimateMinutes: 30 });
+  const dueBefore = await mkTask({ title: 'Chase the domain transfer', projectId: ws1.id, dueDate: '2026-04-20', estimateMinutes: 45 });
+  const dueFar = await mkTask({ title: 'Quarterly review', projectId: ws1.id, dueDate: '2026-05-30', estimateMinutes: 90 });
+
+  const dg = (await call('GET', dgUrl(`clientId=${ashcombeId}&from=${DFROM}&to=${DTO}`))).body;
+
+  ok('the digest answers for the week it was asked for',
+    dg.range.from === DFROM && dg.range.to === DTO && dg.range.days === 7 && dg.horizon === '2026-05-17',
+    JSON.stringify(dg.range));
+  ok('it totals only the hours inside that week, on that client\'s projects',
+    dg.totals.minutes === 340 && dg.totals.billableMinutes === 275
+    && dg.totals.entries === 5 && dg.totals.days === 4, JSON.stringify(dg.totals));
+  const claimed = new Set(dg.provenance.find((p) => p.id === 'totals.minutes').entryIds);
+  ok('another client\'s hours, and the days either side, are not in it',
+    outsiders.every((e) => !claimed.has(e.id)) && inWeek.every((e) => claimed.has(e.id)),
+    `${[...claimed].join()} vs outsiders ${outsiders.map((e) => e.id).join()}`);
+
+  const wsById = new Map(dg.workstreams.map((w) => [w.projectId, w]));
+  ok('each workstream carries its own hours', wsById.get(ws1.id).minutes === 185 && wsById.get(ws2.id).minutes === 155,
+    JSON.stringify(dg.workstreams.map((w) => [w.name, w.minutes])));
+  ok('the workstreams add up to the total, with nothing left over',
+    dg.workstreams.reduce((n, w) => n + w.minutes, 0) === dg.totals.minutes);
+  const wsIds = dg.workstreams.flatMap((w) => w.entryIds);
+  ok('and no entry is counted in two of them',
+    new Set(wsIds).size === wsIds.length && wsIds.length === dg.totals.entries);
+  ok('a project of theirs with nothing in it is named as silent, not quietly dropped',
+    dg.silentProjects.some((p) => p.projectId === ws3.id) && !wsById.has(ws3.id),
+    JSON.stringify(dg.silentProjects));
+
+  const doneIds = dg.completed.map((c) => c.taskId);
+  ok('a task ticked off at 22:30 on the last evening belongs to that week, not to the next one',
+    doneIds.includes(atNight.id), `completed: ${dg.completed.map((c) => c.title).join(' | ')}`);
+  ok('and one ticked off at 23:30 the night BEFORE it belongs to the week before',
+    !doneIds.includes(nightBefore.id));
+  ok('the ordinary ones are there too, and nothing else is',
+    doneIds.length === 3 && doneIds.includes(atMidnight.id) && doneIds.includes(atMorning.id)
+    && dg.totals.tasksCompleted === 3, doneIds.join());
+  ok('every completion states a date inside the week it is reported in',
+    dg.completed.every((c) => c.doneDate >= DFROM && c.doneDate <= DTO),
+    dg.completed.map((c) => `${c.title}:${c.doneDate}`).join(' | '));
+
+  ok('the narrative is the notes people wrote, verbatim and in order',
+    dg.narrative.length === 4
+    && dg.narrative.map((n) => n.note).join('|') === inWeek.filter((e) => e.note).map((e) => e.note).join('|'),
+    dg.narrative.map((n) => n.note).join(' | '));
+  ok('the hours it does NOT speak for are stated rather than implied away',
+    dg.coverage.notedMinutes === 300 && dg.coverage.unnotedMinutes === 40
+    && dg.coverage.notedMinutes + dg.coverage.unnotedMinutes === dg.totals.minutes,
+    JSON.stringify(dg.coverage));
+
+  const bucket = (id) => dg.upcoming.find((u) => u.taskId === id)?.bucket;
+  ok('what falls due next week, what is still open inside it, and what was late before it',
+    bucket(dueNext.id) === 'next' && bucket(dueInside.id) === 'inWeek' && bucket(dueBefore.id) === 'before',
+    JSON.stringify(dg.upcoming.map((u) => [u.title, u.bucket])));
+  ok('only the one that predates the week is called overdue — Friday is not late on Tuesday',
+    dg.upcoming.filter((u) => u.overdue).map((u) => u.taskId).join() === String(dueBefore.id)
+    && dg.totals.overdue === 1 && dg.totals.dueNextWeek === 1 && dg.totals.openInWeek === 1,
+    JSON.stringify(dg.totals));
+  ok('and work beyond the horizon is left for the digest that will cover it',
+    !dg.upcoming.some((u) => u.taskId === dueFar.id));
+
+  // ---- the provenance sweep -------------------------------------------
+  // Every claim, checked against rows fetched from a DIFFERENT endpoint than
+  // the one that made it. This is the assertion the digest exists to pass: a
+  // figure nobody can trace to a row is a figure somebody invented.
+  const rangeRows = (await call('GET', `/api/entries?scope=team&from=${DFROM}&to=${DTO}`)).body.entries;
+  const entryById = new Map(rangeRows.map((e) => [e.id, e]));
+  const taskById = new Map((await allTasks()).map((t) => [t.id, t]));
+  const unreconciled = [];
+  const kinds = new Set();
+  for (const p of dg.provenance) {
+    kinds.add(p.kind);
+    if (p.kind === 'minutes') {
+      const rows = p.entryIds.map((id) => entryById.get(id));
+      if (rows.some((r) => !r)) unreconciled.push(`${p.id}: names a row the range does not hold`);
+      else if (rows.reduce((n, r) => n + r.minutes, 0) !== p.value) {
+        unreconciled.push(`${p.id}: rows sum ${rows.reduce((n, r) => n + r.minutes, 0)}, claim says ${p.value}`);
+      }
+    } else if (p.kind === 'tasks') {
+      if (p.taskIds.length !== p.value) unreconciled.push(`${p.id}: ${p.taskIds.length} ids for a claim of ${p.value}`);
+      if (p.taskIds.some((id) => !taskById.has(id))) unreconciled.push(`${p.id}: names a task that is not there`);
+    } else if (p.kind === 'task-date') {
+      const t = taskById.get(p.taskIds[0]);
+      const actual = p.field === 'doneAt' ? localDay(Date.parse(t.doneAt)) : t.dueDate;
+      if (actual !== p.value) unreconciled.push(`${p.id}: row says ${actual}, claim says ${p.value}`);
+    } else if (p.kind === 'text') {
+      if (entryById.get(p.entryIds[0])?.note !== p.value) unreconciled.push(`${p.id}: the note does not match the row`);
+    } else unreconciled.push(`${p.id}: no rule knows how to check a "${p.kind}" claim`);
+  }
+  ok('every claim in the digest reconciles against the rows it names',
+    unreconciled.length === 0, unreconciled.join('; '));
+  ok('and there were claims of every kind to check, so that sweep cannot pass on an empty list',
+    dg.provenance.length >= 20 && kinds.size === 4, `${dg.provenance.length} claims, kinds ${[...kinds].join()}`);
+  const stated = new Set(dg.provenance.map((p) => p.id));
+  ok('every figure the digest leads with is one of those claims',
+    ['totals.minutes', 'totals.billableMinutes', 'totals.tasksCompleted', 'totals.dueNextWeek',
+      'totals.overdue', 'narrative.minutes'].every((id) => stated.has(id))
+    && dg.workstreams.every((w) => stated.has(`workstream.${w.projectId}.minutes`)),
+    [...stated].join(' '));
+
+  // ---- the same boundary, on the KPI beside it -------------------------
+  // Reports counts completions from the same column. Measured as a delta, so
+  // whatever else the suite has finished today cannot move it.
+  const doneInWeek = async (from, to) =>
+    (await call('GET', `/api/report?scope=team&from=${from}&to=${to}`)).body.tasks.done;
+  const week1Before = await doneInWeek(DFROM, DTO);
+  const week2Before = await doneInWeek('2026-05-11', '2026-05-17');
+  const lateOne = await finishedAt('Sent the Sunday recap', ws1.id, '2026-05-11T02:45:00Z');
+  ok('the Reports KPI files that 22:30 completion into the same week the digest does',
+    (await doneInWeek(DFROM, DTO)) === week1Before + 1
+    && (await doneInWeek('2026-05-11', '2026-05-17')) === week2Before,
+    `week1 ${week1Before} → ${await doneInWeek(DFROM, DTO)}, week2 ${week2Before} → ${await doneInWeek('2026-05-11', '2026-05-17')}`);
+  sql((w) => w('DELETE FROM tasks WHERE id = ?', lateOne.id));
+
+  // ---- the same fixtures, read in a zone fourteen hours ahead ----------
+  // Not a second opinion about the boundary: the mirror image of it. In +14
+  // both of those completions cross the other way, and a digest that read UTC
+  // — or this machine — would give the same answer twice.
+  const ahead = bootServer({ PORT: String(PORT_5), APP_TIMEZONE: 'Pacific/Kiritimati' });
+  await ready(ahead, 'the +14 boot');
+  const ajar = {};
+  await callOn(BASE_5, 'POST', '/api/auth/login', { email: 'smoke@dgtlgroup.io', password: PASSWORD }, ajar);
+  const dgAhead = (await callOn(BASE_5, 'GET', dgUrl(`clientId=${ashcombeId}&from=${DFROM}&to=${DTO}`), null, ajar)).body;
+  const aheadIds = dgAhead.completed.map((c) => c.taskId);
+  ok('fourteen hours east, the 22:30 completion has moved into the following week',
+    !aheadIds.includes(atNight.id), dgAhead.completed.map((c) => `${c.title}:${c.doneDate}`).join(' | '));
+  ok('and the one from the night before has moved into this one',
+    aheadIds.includes(nightBefore.id), aheadIds.join());
+  ok('the hours are unmoved, because an entry files under a date it was given',
+    dgAhead.totals.minutes === dg.totals.minutes && dgAhead.totals.entries === dg.totals.entries);
+  ok('and the digest still reconciles in that zone',
+    dgAhead.provenance.filter((p) => p.kind === 'minutes')
+      .every((p) => p.entryIds.reduce((n, id) => n + (entryById.get(id)?.minutes ?? NaN), 0) === p.value),
+    'a claim in +14 does not match its rows');
+  await stop(ahead.proc);
+
+  // ---- the shape of the thing ------------------------------------------
+  const dflt = (await call('GET', dgUrl(`clientId=${ashcombeId}`))).body;
+  ok('with no range it covers the caller\'s current week — seven days, today inside them',
+    dflt.range.days === 7 && dflt.range.from <= serverToday && dflt.range.to >= serverToday,
+    JSON.stringify(dflt.range));
+  ok('a digest cannot be asked to list a decade of notes in one response',
+    (await call('GET', dgUrl(`clientId=${ashcombeId}&from=1970-01-01&to=${DTO}`))).status === 400);
+  ok('an inverted range is refused here too',
+    (await call('GET', dgUrl(`clientId=${ashcombeId}&from=${DTO}&to=${DFROM}`))).status === 400);
+  ok('a client that does not exist is a 404, not an empty digest that reads as a quiet week',
+    (await call('GET', dgUrl('clientId=99999'))).status === 404);
+  ok('and no client at all is refused', (await call('GET', '/api/digest')).status === 400);
+  const clientList = (await call('GET', '/api/clients')).body.clients;
+  ok('the client list carries the client its projects were filed under',
+    clientList.some((c) => c.id === ashcombeId && c.name === 'Ashcombe Pianos' && c.projects === 3),
+    JSON.stringify(clientList));
 
   console.log('\nusers + permissions');
   const member = await call('POST', '/api/users', {

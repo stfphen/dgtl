@@ -249,6 +249,21 @@ export async function saveTask(id, patch) {
   return res.task;
 }
 
+/**
+ * Tick a task off, and say what that produced.
+ *
+ * Its own action rather than `saveTask(id, { status: 'done' })` because
+ * completing a REPEATING task writes a second row — next week's instance — and
+ * the caller has to be able to tell the person so. `saveTask` returns the task
+ * it saved and several screens rely on that shape, so the extra fact rides
+ * here: `{ task, next }`, with `next` null for everything that does not repeat.
+ */
+export async function completeTask(id) {
+  const res = await api.updateTask(id, { status: 'done' });
+  await load();
+  return { task: res.task, next: res.next || null };
+}
+
 export async function removeTask(id) {
   await api.deleteTask(id);
   await load();

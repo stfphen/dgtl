@@ -8,7 +8,7 @@ import {
   ring, rollup, select, sortButton, sorter, toast, userOptions,
 } from '../ui.js';
 import { taskEditor } from '../editors.js';
-import { projectById, reorderTasks, saveTask, startTimer, state, userById } from '../store.js';
+import { completeTask, projectById, reorderTasks, saveTask, startTimer, state, userById } from '../store.js';
 
 export const title = 'Tasks';
 export const subtitle = () => 'Everything the team has on';
@@ -307,8 +307,17 @@ export function render_(host, { actions }) {
         title: done ? 'Mark as not done' : 'Mark done',
         onclick: async () => {
           try {
-            await saveTask(t.id, { status: done ? 'todo' : 'done' });
-            if (!done) toast('Task completed', 'success');
+            if (done) {
+              await saveTask(t.id, { status: 'todo' });
+            } else {
+              // A repeating task's completion writes next week's instance, and
+              // the toast is where that gets said. Silently, the board simply
+              // grows a row that looks like the one just ticked off.
+              const { next } = await completeTask(t.id);
+              toast(next
+                ? `Task completed · next one due ${relativeDay(next.dueDate)}`
+                : 'Task completed', 'success');
+            }
             draw();
           } catch (e) { fail(e); }
         },
@@ -335,6 +344,12 @@ export function render_(host, { actions }) {
               `${hm(t.loggedMinutes, { zero: '0h' })}${t.estimateMinutes ? ` of ${hm(t.estimateMinutes)}` : ' logged'}`)
             : null,
           t.status === 'doing' ? h('span', { class: 'pill' }, 'In progress') : null,
+          // Shown on the finished row too: it is what explains the identical
+          // row that appeared above it the moment this one was ticked off.
+          // Words, not a glyph — ui.js carries no repeat icon, and an
+          // approximate one (the clock, the arrow) would have to be learnt.
+          t.recurrence ? h('span', { class: 'repeats' },
+            t.recurrence === 'monthly' ? 'Repeats monthly' : 'Repeats weekly') : null,
         ),
       ),
 

@@ -483,6 +483,10 @@ body{
 .task:focus-within .task-side .btn-icon{color:var(--text)}
 .prio-high{color:var(--error)}
 .prio-low{color:var(--text-dim)}
+/* A rule, not a state: quieter than the "In progress" pill, which is about this
+   row, while this is about the ones after it. --gold-tan on --surface-1 is
+   4.53:1; the same words in --gold would read as an alert. */
+.repeats{color:var(--gold-tan)}
 .due-over{color:var(--error);font-weight:600}
 .due-soon{color:var(--warning)}
 
@@ -586,6 +590,59 @@ body{
 .chart-target{position:relative;height:0;border-top:1px dashed #3a3a3a}
 .chart-target span{position:absolute;right:0;top:-16px;font-size:10px;color:var(--text-dim)}
 
+/* ==================== the client digest ====================
+   One client, one week, assembled from rows. It sits inside Reports rather than
+   in a screen of its own: it is a way of READING the same hours, not a seventh
+   place to go looking for them. */
+.digest-head h2{font-size:26px;font-weight:800;color:var(--text-strong);letter-spacing:-.4px}
+.digest-range{font-size:14px;color:var(--text-muted);margin-top:6px}
+.digest-head .hint{margin-top:12px;max-width:74ch}
+
+.digest-list{display:flex;flex-direction:column}
+.digest-item{padding:13px 0;border-top:1px solid var(--border-row)}
+.digest-item:first-child{border-top:none;padding-top:0}
+/* Wraps rather than truncates: a task title is the claim being made, and half
+   of one with an ellipsis is a claim nobody can check. */
+.digest-item-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.digest-item-title{font-size:14px;font-weight:600;color:var(--text);flex:1 1 200px;min-width:0;word-break:break-word}
+.digest-when{font-size:12px;color:var(--text-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.digest-item-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px;
+                  font-size:12px;color:var(--text-dim)}
+
+.digest-day + .digest-day{margin-top:16px}
+.digest-day-head{
+  font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold-tan);
+  padding-bottom:8px;border-bottom:1px solid var(--border-row);
+}
+/* The minutes column is fixed and the note takes the rest, so a week of notes
+   reads down the page as one column of figures and one of prose. Below 560 the
+   figure moves above the note (see responsive) rather than squeezing it. */
+.digest-note{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--border-row);font-size:13px}
+.digest-note:first-of-type{border-top:none}
+.digest-note-min{flex:none;width:64px;font-weight:700;color:var(--text-muted);
+                 font-variant-numeric:tabular-nums}
+.digest-note-what{flex:1;min-width:0;color:var(--text);word-break:break-word}
+.digest-note-what .dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+                       margin-right:8px;vertical-align:middle}
+.digest-note-src{display:block;font-size:11px;color:var(--text-dim);margin-top:3px}
+
+/* Folded by default: an audit trail is for when a figure is questioned, not
+   part of the read. */
+.digest-prov summary{
+  cursor:pointer;font-size:15px;font-weight:700;color:#fff;margin-bottom:16px;
+  list-style:none;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+}
+.digest-prov summary::-webkit-details-marker{display:none}
+.digest-prov summary::before{content:"▸";color:var(--gold);font-size:12px}
+.digest-prov[open] summary::before{content:"▾"}
+.digest-prov summary .dim{font-size:12px;font-weight:500}
+/* Its own scroller in both directions of the breakpoint: an id list is the one
+   cell here whose width is data, and clipping it would hide the very rows the
+   table exists to name. */
+.digest-prov .table-wrap{overflow-x:auto}
+.digest-prov .table td:last-child{white-space:normal;word-break:break-word;min-width:120px}
+.digest-prov .table td.mono-code{font-variant-numeric:tabular-nums}
+
 /* ==================== modal, toast, empty ==================== */
 .overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(3px);
@@ -677,6 +734,10 @@ body{
 @media (max-width:560px){
   .cols-4{grid-template-columns:1fr}
   .elapsed{font-size:42px}
+  /* 64px of fixed figure column plus a gap leaves a phone ~200px for the note
+     itself, which breaks mid-word. The figure takes its own line instead. */
+  .digest-note{flex-direction:column;gap:2px}
+  .digest-note-min{width:auto}
   .page-actions{width:100%}
   .quick-hero{padding:26px 16px 22px}
   .btn-hero{width:100%;justify-content:center}

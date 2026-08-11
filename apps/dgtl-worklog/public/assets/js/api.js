@@ -77,6 +77,10 @@ export const api = {
   suggestions: () => call('GET', '/api/suggestions'),
 
   report: (params) => call('GET', `/api/report${qs(params)}`),
+  clients: () => call('GET', '/api/clients'),
+  // The week's facts for one client. Everything the digest states arrives with
+  // the row ids behind it, so nothing has to be recomputed — or trusted — here.
+  digest: (params) => call('GET', `/api/digest${qs(params)}`),
 
   users: () => call('GET', '/api/users'),
   createUser: (data) => call('POST', '/api/users', data),
