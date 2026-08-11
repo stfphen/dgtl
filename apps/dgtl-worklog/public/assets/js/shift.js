@@ -25,11 +25,11 @@ const figure = (label, value, id) => h('div', null,
 );
 
 /* Presence ticks; the gap holds steady while a clock runs and grows while
-   nothing does. Self-cancelling, like the other clocks in the app — the strip
-   is rebuilt on every draw and the node it was pointed at simply goes. */
+   nothing does. Cleared on every build and restarted only for an open shift —
+   a closed one still renders these nodes, so leaving the old interval alive
+   would keep writing a constant into them forever. */
 let tick = null;
 function startTick() {
-  clearInterval(tick);
   tick = setInterval(() => {
     const el = document.getElementById('shift-elapsed');
     if (!el) return clearInterval(tick);
@@ -47,6 +47,7 @@ function startTick() {
  * the workspace has reloaded, so the host view can redraw around it.
  */
 export function shiftStrip(onChange) {
+  clearInterval(tick);
   const s = isCurrent(state.shift) ? state.shift : null;
   const on = !!s && s.open;
 
