@@ -5,8 +5,9 @@
  *   • everyone   — logs their own time, creates and edits tasks, reads team reports
  *   • admins     — additionally manage projects, manage users, and edit anyone's time
  *
- * Derived numbers (streaks, totals, completion %) are computed here from
- * time_entries on every read. Nothing derived is ever stored.
+ * Derived numbers (totals, completion %, what a shift or a day accounts for)
+ * are computed here from time_entries on every read. Nothing derived is ever
+ * stored.
  */
 
 import { all, one, run, tx } from './db.mjs';
@@ -502,7 +503,7 @@ const shiftsForDay = (userId, today) => all(
 /**
  * Reconcile a shift against the work filed inside it. Computed on every read
  * and never stored, so an entry corrected three weeks later moves these
- * numbers exactly the way it moves a streak or a budget bar.
+ * numbers exactly the way it moves a budget bar.
  *
  * A time entry accounts for presence up to the span it actually covers inside
  * the shift, and no further than the minutes it claims — min(claimed,
@@ -568,7 +569,12 @@ function shiftView(s) {
   const claimedMinutes = Math.round(claimedMs / 60000);
 
   return {
-    id: s.id, date: s.date, endedDate: s.ended_at ? localDate(new Date(end)) : null,
+    id: s.id,
+    // Whose presence this is. A team-scoped range comes back as one list, and
+    // a spell nobody can be named against is one no reader can act on — nor
+    // can a screen tell whether the correction buttons are theirs to press.
+    userId: s.user_id,
+    date: s.date, endedDate: s.ended_at ? localDate(new Date(end)) : null,
     startedAt: s.started_at, endedAt: s.ended_at,
     note: s.note, open: !s.ended_at,
     presentMinutes,
@@ -581,6 +587,69 @@ function shiftView(s) {
     overclaimedMinutes: Math.max(0, claimedMinutes - presentMinutes),
   };
 }
+
+/**
+ * The same reconciliation, one level up: a whole local day instead of one
+ * spell of it.
+ *
+ * Per-shift figures cannot see the ground between two shifts. An entry whose
+ * window runs past a clock-out and into the hour before the next clock-in is
+ * counted, by each spell, only for the part that spell contained — correctly —
+ * and the part belonging to neither is counted by nobody. That hour is how a
+ * DAY comes to bill more than it was present for while every spell on it
+ * reports no overclaim, and it is also the hour a stretch clocked entirely
+ * outside every shift lives in: not attributed, not open, not unplaced, named
+ * nowhere. One computation answers both, so the two figures cannot drift.
+ *
+ * Presence is the UNION of the day's shifts — they cannot overlap through any
+ * route, and merging means a hand-edited pair still cannot count one minute
+ * twice. The claim is every WINDOWED entry that began on this date: a manual
+ * block has no window, so nothing places it inside or outside a shift, and it
+ * stays reported apart as `unplacedMinutes`. Filed by the instant a stretch
+ * began, the same rule that decides the day it files under, so a stretch is
+ * counted by exactly one day however far past midnight it runs.
+ *
+ * The running timer is left out. It has written no entry yet, and counting a
+ * claim that does not exist could only ever invent an accusation.
+ */
+function dayView(userId, date) {
+  const union = [];
+  for (const w of all(
+    'SELECT started_at, ended_at FROM shifts WHERE user_id = ? AND date = ? ORDER BY started_at ASC',
+    userId, date,
+  ).map((s) => ({ from: Date.parse(s.started_at), to: s.ended_at ? Date.parse(s.ended_at) : Date.now() }))) {
+    const last = union[union.length - 1];
+    if (last && w.from <= last.to) last.to = Math.max(last.to, w.to);
+    else union.push(w);
+  }
+  const presenceMinutes = Math.round(union.reduce((n, w) => n + (w.to - w.from), 0) / 60000);
+
+  // Widened by a day either side and then filed exactly, the same shape
+  // completedBetween uses: no zone offset anywhere is a whole day, so the SQL
+  // can only ever over-select, and localDate() decides.
+  let claimedMinutes = 0;
+  let offShiftMinutes = 0;
+  for (const e of all(`
+    SELECT minutes, started_at, ended_at FROM time_entries
+     WHERE user_id = ? AND started_at IS NOT NULL AND ended_at IS NOT NULL
+       AND started_at >= ? AND started_at < ?`,
+  userId, `${addDays(date, -1)}T00:00:00.000Z`, `${addDays(date, 2)}T00:00:00.000Z`)) {
+    const from = Date.parse(e.started_at);
+    if (localDate(new Date(from)) !== date) continue;
+    claimedMinutes += e.minutes;
+    const to = Date.parse(e.ended_at);
+    const inside = union.reduce((n, w) => n + Math.max(0, Math.min(to, w.to) - Math.max(from, w.from)), 0);
+    // Zero overlap, not partial: a stretch that merely runs past a clock-out
+    // has a real half inside the presence, and calling the whole of it
+    // "while nobody was clocked in" would be a bigger lie than saying nothing.
+    if (inside === 0) offShiftMinutes += e.minutes;
+  }
+
+  return { presenceMinutes, claimedMinutes, offShiftMinutes };
+}
+
+/** What a day bills beyond what it was present for. Zero on a well-formed day. */
+const dayOverclaim = (d) => Math.max(0, d.claimedMinutes - d.presenceMinutes);
 
 /**
  * The same presence, laid out end to end instead of summed: every stretch of a
@@ -713,43 +782,22 @@ function shiftSheet(s) {
       SELECT COALESCE(SUM(minutes), 0) AS minutes FROM time_entries
        WHERE user_id = ? AND date = ? AND (started_at IS NULL OR ended_at IS NULL)`,
       s.user_id, s.date).minutes,
+    // The day this spell sits in, because two of the things a reader needs are
+    // facts about the day and not about the spell: work that ran while nobody
+    // was clocked in at all, and a day billing past its own presence while
+    // every spell on it reconciles.
+    day: dayView(s.user_id, s.date),
   };
 }
 
 // ------------------------------------------------------------------ reports
 
-/**
- * Longest and current run of consecutive days with any time logged — the
- * habit tracker's streak, re-pointed at hours instead of check-ins. Computed
- * over the user's whole history, never stored.
- */
-function streaks(userId, today) {
-  const days = all(
-    'SELECT DISTINCT date FROM time_entries WHERE user_id = ? AND minutes > 0 ORDER BY date ASC',
-    userId,
-  ).map((r) => r.date);
-  if (!days.length) return { current: 0, longest: 0, activeDays: 0 };
-
-  let longest = 1;
-  let run_ = 1;
-  for (let i = 1; i < days.length; i++) {
-    run_ = addDays(days[i - 1], 1) === days[i] ? run_ + 1 : 1;
-    if (run_ > longest) longest = run_;
-  }
-
-  // The current streak survives "today not logged yet" — it only breaks once
-  // yesterday has also gone unlogged, so an early-morning check-in reads right.
-  const last = days[days.length - 1];
-  let current = 0;
-  if (last === today || last === addDays(today, -1)) {
-    current = 1;
-    for (let i = days.length - 1; i > 0; i--) {
-      if (addDays(days[i - 1], 1) === days[i]) current++;
-      else break;
-    }
-  }
-  return { current, longest, activeDays: days.length };
-}
+/* The streak — days in a row with any time logged — was removed from here and
+   from every screen. It measures showing up, not selling: a figure this
+   workspace could hold at 100 while billing 13% of it, which is the same
+   argument that took it off the Today screen. The trailing-90-day heatmap on
+   the Reports screen shows consistency better than one integer, and it is
+   still here. */
 
 /**
  * Tasks finished inside a calendar range — the one definition, used by the
@@ -853,7 +901,6 @@ function buildReport({ from, to, userId }) {
     byDay, byProject, byUser,
     tasks: { done: tasksDone, open: tasks.open ?? 0, overdue: tasks.overdue ?? 0 },
     heatmap: { from: heatFrom, to, days: heatmap },
-    streak: userId ? streaks(userId, localDate()) : null,
   };
 }
 
@@ -1188,11 +1235,24 @@ route('PATCH', '/api/entries/:id', ({ req, body, params }) => {
   if (!e) throw new HttpError(404, 'Time entry not found');
   if (!canEditFor(user, e.user_id)) throw new HttpError(403, "You can only edit your own time");
 
+  // A stretch with a clock behind it is filed by its window, not by this
+  // column — that is what makes midnight and DST reconcile — so moving the date
+  // alone would leave the row on one day and its attendance on another, and the
+  // strip and the KPI above it would read different totals for the same work.
+  // Refused rather than fixed up: shifting the window silently is a bigger
+  // change than the reader asked for, and this app does not store an answer it
+  // can derive.
+  const date = dateOr(body.date, e.date);
+  if (e.started_at && date !== e.date) {
+    throw bad(`That stretch's clock ran on ${localDate(new Date(Date.parse(e.started_at)))}, so it `
+      + 'is filed there. Correct the times it ran, or log it again on the day you meant.');
+  }
+
   run(`UPDATE time_entries SET project_id = ?, task_id = ?, date = ?, minutes = ?, note = ?,
          billable = ?, updated_at = ? WHERE id = ?`,
     body.projectId === undefined ? e.project_id : int(body.projectId, { name: 'Project', nullable: true }),
     body.taskId === undefined ? e.task_id : int(body.taskId, { name: 'Task', nullable: true }),
-    dateOr(body.date, e.date),
+    date,
     body.minutes === undefined ? e.minutes : int(body.minutes, { name: 'Minutes', min: 1, max: 24 * 60 }),
     body.note === undefined ? e.note : str(body.note, { name: 'Note', max: 500 }),
     bool01(body.billable, e.billable),
@@ -1476,6 +1536,7 @@ route('POST', '/api/shift/:id/dispose', ({ req, body, params }) => {
 
   const note = str(body.note, { name: 'Note', max: 500 });
   const before = shiftView(s);
+  const dayBefore = dayView(s.user_id, s.date);
 
   const parts = shiftSegments(s).gaps
     .map((g) => ({ from: Math.max(g.from, from ?? g.from), to: Math.min(g.to, to ?? g.to) }))
@@ -1510,6 +1571,18 @@ route('POST', '/api/shift/:id/dispose', ({ req, body, params }) => {
       throw bad(`Filling this gap would bill ${dur(after.claimedMinutes)} against `
         + `${dur(after.presentMinutes)} of presence. Something on this day already claims more `
         + 'minutes than its own clock ran — correct that entry first.');
+    }
+
+    // And the same question one level up. The check above is per shift, and a
+    // stretch running through the ground BETWEEN two spells is counted by
+    // neither of them, so a day could be pushed past its own presence with
+    // every spell on it still reporting nothing wrong. Recomputed rather than
+    // reasoned about, for the same reason as the check above it.
+    const dayAfter = dayView(s.user_id, s.date);
+    if (dayOverclaim(dayAfter) > dayOverclaim(dayBefore)) {
+      throw bad(`Filling this gap would bill ${dur(dayAfter.claimedMinutes)} against `
+        + `${dur(dayAfter.presenceMinutes)} of presence across the whole of this day. Something on `
+        + 'it runs past the hours anybody was clocked in — correct that entry first.');
     }
 
     return {

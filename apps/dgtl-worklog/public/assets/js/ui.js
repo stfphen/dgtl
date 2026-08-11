@@ -205,9 +205,16 @@ export function ringGeometry(size, stroke, inner) {
  * @param center       false drops the figure in the middle — a 44px ring in a
  *                     section header has no room for it, and the header states
  *                     both numbers as text beside it instead
+ * @param label        what the middle reads, defaulting to the CLAMPED arc. The
+ *                     arc stays clamped whatever this says, because a circle has
+ *                     nowhere past full to go — but the text beside a full ring
+ *                     was already saying 167% while the ring's own middle said
+ *                     100%, which is one component contradicting itself. Pass
+ *                     the real figure and the two agree.
  */
 export function ring(pct, {
   caption = 'of target', size = 132, stroke = 10, inner = null, center = true, title = null,
+  label = null,
 } = {}) {
   const clamped = Math.max(0, Math.min(100, pct || 0));
   const { outerR, innerR, drawInner } = ringGeometry(size, stroke, inner);
@@ -247,7 +254,7 @@ export function ring(pct, {
   if (center) {
     wrap.append(h('div', { class: 'mid' },
       h('div', null,
-        h('div', { class: 'pct' }, `${Math.round(clamped)}%`),
+        h('div', { class: 'pct' }, label ?? `${Math.round(clamped)}%`),
         h('div', { class: 'cap' }, caption),
       ),
     ));

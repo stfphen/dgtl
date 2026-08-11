@@ -208,6 +208,11 @@ export function render_(host) {
       h('div', { class: 'ring-wrap' },
         ring(v.progressPct ?? 0, {
           caption: set ? 'of target' : 'no target',
+          // The arc clamps at full; the figure inside it does not. Past the
+          // target the ring has nowhere left to go, and a middle reading 100%
+          // beside a card reading 167% is the component disagreeing with
+          // itself on the one screen this number is read from.
+          label: set ? `${Math.round(v.progressPct)}%` : null,
           title: set
             ? `${hm(v.billableMinutes, { zero: '0h' })} billable of ${hm(v.targetMinutes)} targeted`
             : 'No billable target to measure against yet',

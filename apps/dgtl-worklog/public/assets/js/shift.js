@@ -220,6 +220,13 @@ export function shiftSheet(shift, onChange) {
       return;
     }
     const g = sheet.shift;
+    const day = sheet.day || { presenceMinutes: 0, claimedMinutes: 0, offShiftMinutes: 0 };
+    // A day can bill past its own presence while every spell on it reconciles:
+    // the hour between a clock-out and the next clock-in belongs to no spell,
+    // so no spell can report it. This is the only figure on the sheet that is
+    // about the day rather than about this spell, which is why it is labelled
+    // as one.
+    const beyondDay = Math.max(0, day.claimedMinutes - day.presenceMinutes);
     render(host,
       h('div', { class: 'row sheet-figures' },
         figure('Present', hm(g.presentMinutes, { zero: '0m' })),
@@ -229,6 +236,7 @@ export function shiftSheet(shift, onChange) {
         g.overclaimedMinutes
           ? figure('Overclaimed', hm(g.overclaimedMinutes), null, 'var(--warning)')
           : null,
+        beyondDay ? figure('Beyond the day', hm(beyondDay), null, 'var(--warning)') : null,
       ),
 
       sheet.segments.length
@@ -261,6 +269,20 @@ export function shiftSheet(shift, onChange) {
         ? h('p', { class: 'hint' },
           `${hm(sheet.unplacedMinutes)} logged by hand on this day carries no start and end, `
           + 'so nothing can place it inside this presence.')
+        : null,
+      // Both of these are facts about the DAY, and neither is reachable from
+      // any one spell: a stretch clocked outside every shift is attributed to
+      // nothing, open in nothing and unplaced in nothing, and a day billing
+      // past its presence can be made of spells that each reconcile.
+      day.offShiftMinutes
+        ? h('p', { class: 'hint' },
+          `${hm(day.offShiftMinutes)} logged on this day ran while nobody was clocked in.`)
+        : null,
+      beyondDay
+        ? h('p', { class: 'hint warn' },
+          `${hm(beyondDay)} of this day's work has no presence behind it — the day bills `
+          + `${hm(day.claimedMinutes)} against ${hm(day.presenceMinutes, { zero: 'no presence' })} `
+          + 'across every spell on it.')
         : null,
 
       disposeStrip(),

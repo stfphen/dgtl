@@ -21,6 +21,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { groupByClient, mergeRollups, ringGeometry, rollup, sorter } from '../public/assets/js/ui.js';
 import { billableStanding } from '../public/assets/js/store.js';
+import { api } from '../public/assets/js/api.js';
 import { budgetBar } from '../public/assets/js/views/projects.js';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -1582,6 +1583,176 @@ try {
     allowed.status === 200 && allowed.body.shift.unattributedMinutes === 0
     && allowed.body.shift.overclaimedMinutes === 0, JSON.stringify(allowed.body.shift || allowed.body));
 
+  console.log('\nreaching a spell that is not today\'s');
+  // The wrapper whose absence made a whole endpoint unreachable from the app:
+  // PATCH and DELETE need a shift id, the bootstrap carries only today's, and
+  // without this the range endpoint existed with nothing calling it. Driven
+  // through a stubbed fetch, so what is asserted is the request the browser
+  // would really make rather than the presence of a key.
+  const asked = [];
+  if (typeof api.shifts === 'function') {
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      asked.push(`${init?.method} ${url}`);
+      return new Response(JSON.stringify({ shifts: [] }), { headers: { 'content-type': 'application/json' } });
+    };
+    try {
+      await api.shifts({ from: '2026-10-06', to: '2026-10-06', userId: 3 });
+      await api.shifts({ from: '2026-10-06', to: '2026-10-06', scope: 'team' });
+    } finally { globalThis.fetch = realFetch; }
+  }
+  ok('the app can ask for attendance over a range, for one person or the team',
+    asked[0] === 'GET /api/shifts?from=2026-10-06&to=2026-10-06&userId=3'
+    && asked[1] === 'GET /api/shifts?from=2026-10-06&to=2026-10-06&scope=team',
+    asked.join(' | ') || 'there is no api.shifts to call');
+
+  console.log('\nthe day, which no single spell can see');
+  // Every figure above this line is per shift, and the ground BETWEEN two
+  // spells belongs to none of them. Walked here through the documented buttons
+  // only — clock in, clock out, the pencil, Assign — because that is how it was
+  // reached: nothing below writes a fixture the app itself could not produce.
+  //
+  //   clock in/out → pencil the spell to 09:00–12:00
+  //   dispose the whole gap                  → 180m filed, window 09:00–12:00
+  //   pencil the SAME spell to end at 10:00
+  //
+  // The spell now reports open 0, unaccounted 0, overclaimed 0 — all true of
+  // the spell. The day it sits in bills three hours against one of presence.
+  // Fixed instants on quiet days, which is the only way an attendance fixture
+  // can be placed at all — but a fixture day that IS the day of the run would
+  // collect this person's own clock-ins from the sections above and read a
+  // different presence. Stated as an assertion rather than assumed.
+  const runDay = (await call('GET', '/api/bootstrap')).body.today;
+  ok('the quiet days these fixtures sit on are not the day this run happens on',
+    runDay !== '2026-10-06' && runDay !== '2026-10-08' && runDay !== '2026-10-09',
+    `today is ${runDay} — move the fixtures`);
+
+  const penciled = async (from, to) => {
+    await call('POST', '/api/shift/in');
+    const closed = (await call('POST', '/api/shift/out')).body.shift;
+    const res = await call('PATCH', `/api/shift/${closed.id}`, {
+      startedAt: new Date(from).toISOString(),
+      ...(to === null ? {} : { endedAt: new Date(to).toISOString() }),
+    });
+    return res.body.shift;
+  };
+
+  const d1 = await penciled(atLocal(2026, 10, 6, 9, 0), atLocal(2026, 10, 6, 12, 0));
+  ok('a spell corrected onto a quiet day is three hours of presence with nothing in it',
+    d1.presentMinutes === 180 && d1.date === '2026-10-06', JSON.stringify(d1));
+  const d1Filed = await call('POST', `/api/shift/${d1.id}/dispose`, { projectId: overhead.id });
+  ok('disposing of the whole of it files three hours against the bucket',
+    d1Filed.status === 200 && d1Filed.body.minutes === 180, JSON.stringify(d1Filed.body.error || d1Filed.body.minutes));
+
+  await call('PATCH', `/api/shift/${d1.id}`, { endedAt: new Date(atLocal(2026, 10, 6, 10, 0)).toISOString() });
+  // `day` read through a helper, never off the payload directly: a block that
+  // vanished must read as a failed assertion, not as a crash that takes every
+  // check after it with it.
+  const dayOf = (sheet) => sheet.day || {};
+  const shrunk = (await call('GET', `/api/shift/${d1.id}`)).body;
+  ok('shortening the spell under the work leaves the spell itself reconciled',
+    shrunk.shift.presentMinutes === 60 && shrunk.shift.unattributedMinutes === 0
+    && shrunk.openMinutes === 0 && shrunk.shift.overclaimedMinutes === 0,
+    JSON.stringify({ shift: shrunk.shift, open: shrunk.openMinutes }));
+  ok('while the DAY it sits in bills three hours against one of presence',
+    dayOf(shrunk).presenceMinutes === 60 && dayOf(shrunk).claimedMinutes === 180,
+    JSON.stringify(dayOf(shrunk)));
+  // The stretch runs past the clock-out, so an hour of it is real work inside
+  // real presence. Counting the whole of it as "while nobody was clocked in"
+  // would be a bigger lie than the one it replaces.
+  ok('and a stretch that merely overruns the clock-out is not called off-shift',
+    dayOf(shrunk).offShiftMinutes === 0, String(dayOf(shrunk).offShiftMinutes));
+
+  const rowsBeforeDay = (await everyEntry()).length;
+  const secondSpell = await penciled(atLocal(2026, 10, 6, 11, 0), atLocal(2026, 10, 6, 14, 0));
+  const pushed = await call('POST', `/api/shift/${secondSpell.id}/dispose`, { projectId: overhead.id });
+  ok('filling a second spell\'s gap is refused once the DAY would bill past its presence',
+    pushed.status === 400, `status ${pushed.status} — ${JSON.stringify(pushed.body)}`);
+  ok('and the refusal states the day\'s arithmetic, not the spell\'s',
+    /5h against 4h of presence across the whole of this day/.test(pushed.body.error || ''),
+    pushed.body.error);
+  ok('nothing was written on the way to that refusal either',
+    (await everyEntry()).length === rowsBeforeDay,
+    `${rowsBeforeDay} rows before, ${(await everyEntry()).length} after`);
+
+  // The refusal is about the day, not about disposing: give the day back the
+  // presence the pencil took away and the same call goes through.
+  await call('PATCH', `/api/shift/${d1.id}`, { endedAt: new Date(atLocal(2026, 10, 6, 11, 0)).toISOString() });
+  const nowAllowed = await call('POST', `/api/shift/${secondSpell.id}/dispose`, { projectId: overhead.id });
+  ok('correct the presence and the same disposition goes through',
+    nowAllowed.status === 200 && nowAllowed.body.minutes === 120,
+    JSON.stringify(nowAllowed.body.error || nowAllowed.body.minutes));
+  const dayAfterFix = (await call('GET', `/api/shift/${secondSpell.id}`)).body;
+  ok('and the day then bills exactly what it was present for',
+    dayOf(dayAfterFix).claimedMinutes === 300 && dayOf(dayAfterFix).presenceMinutes === 300,
+    JSON.stringify(dayOf(dayAfterFix)));
+
+  // A stretch clocked entirely outside every spell: not attributed, not open,
+  // not a shortfall, not unplaced — it carries a window, so unplacedMinutes
+  // (which counts only rows with none) cannot see it. Before this it was on the
+  // timesheet and named nowhere.
+  const offIn = atLocal(2026, 10, 8, 9, 0);
+  placeShift(offIn, atLocal(2026, 10, 8, 17, 0), [
+    [atLocal(2026, 10, 8, 9, 0), atLocal(2026, 10, 8, 11, 0), P1],
+    [atLocal(2026, 10, 8, 15, 0), atLocal(2026, 10, 8, 16, 0), P2],
+  ]);
+  const offId = (await readShift('2026-10-08')).id;
+  await call('PATCH', `/api/shift/${offId}`, { endedAt: new Date(atLocal(2026, 10, 8, 12, 0)).toISOString() });
+  const offSheet = (await call('GET', `/api/shift/${offId}`)).body;
+  ok('the afternoon hour is in none of the spell\'s own figures',
+    offSheet.shift.presentMinutes === 180 && offSheet.shift.attributedMinutes === 120
+    && offSheet.openMinutes === 60 && offSheet.shortfallMinutes === 0
+    && offSheet.unplacedMinutes === 0,
+    JSON.stringify({ shift: offSheet.shift, open: offSheet.openMinutes, short: offSheet.shortfallMinutes }));
+  ok('and it is named as the hour nobody was clocked in for',
+    dayOf(offSheet).offShiftMinutes === 60, JSON.stringify(dayOf(offSheet)));
+  // Two different facts, and neither one covers the other: this day bills
+  // exactly its presence and still has an hour of work outside it.
+  ok('a day can bill exactly its presence and still hold work outside it',
+    dayOf(offSheet).claimedMinutes === 180 && dayOf(offSheet).presenceMinutes === 180
+    && dayOf(offSheet).offShiftMinutes === 60, JSON.stringify(dayOf(offSheet)));
+  const ordinary = (await call('GET', `/api/shift/${sheetId}`)).body;
+  ok('an ordinary day reports neither',
+    dayOf(ordinary).offShiftMinutes === 0
+    && dayOf(ordinary).claimedMinutes <= dayOf(ordinary).presenceMinutes,
+    JSON.stringify(dayOf(ordinary)));
+  // Manual blocks have no window, so nothing places them inside or outside a
+  // spell. They stay reported apart rather than being counted as work done
+  // while nobody was here.
+  await call('POST', '/api/entries', { projectId: P1, minutes: 45, date: '2026-10-08', note: 'By hand' });
+  const withManual = (await call('GET', `/api/shift/${offId}`)).body;
+  ok('a block logged by hand is not counted as work done off the clock',
+    dayOf(withManual).offShiftMinutes === 60 && dayOf(withManual).claimedMinutes === 180
+    && withManual.unplacedMinutes === 45, JSON.stringify(dayOf(withManual)));
+
+  console.log('\nmoving an entry\'s date');
+  // The window is the attribution — that is what makes midnight and DST
+  // reconcile — so moving the date column alone left the row on one day and its
+  // clock on another: the strip read "Attributed 1m" while the KPI above it
+  // read "Logged today 0h".
+  const windowed = (await call('GET', '/api/entries?from=2026-10-08&to=2026-10-08')).body.entries
+    .find((e) => e.startedAt);
+  const moved = await call('PATCH', `/api/entries/${windowed.id}`, { date: '2026-10-09' });
+  ok('a stretch with a clock behind it cannot be moved to another date',
+    moved.status === 400, `status ${moved.status}`);
+  ok('and the refusal names the day its clock ran',
+    /clock ran on 2026-10-08/.test(moved.body.error || ''), moved.body.error);
+  ok('the row is exactly where it was',
+    (await call('GET', '/api/entries?from=2026-10-08&to=2026-10-08')).body.entries
+      .some((e) => e.id === windowed.id));
+  // The editor sends every field on every save, date included. Re-sending the
+  // one it already has is not a move, and refusing it would make the note
+  // uneditable on every timed entry in the workspace.
+  const resaved = await call('PATCH', `/api/entries/${windowed.id}`,
+    { date: '2026-10-08', note: 'Same day, new label' });
+  ok('re-sending the date it already has is not a move',
+    resaved.status === 200 && resaved.body.entry.note === 'Same day, new label',
+    JSON.stringify(resaved.body));
+  const byHandRow = (await call('GET', '/api/entries?from=2026-10-08&to=2026-10-08')).body.entries
+    .find((e) => e.note === 'By hand');
+  ok('a block logged by hand still moves freely — it has no clock to disagree with',
+    (await call('PATCH', `/api/entries/${byHandRow.id}`, { date: '2026-10-09' })).status === 200);
+
   console.log('\na fresh process mid-shift');
   await call('POST', '/api/shift/in');
   const midTimer = await call('POST', '/api/timer/start', { projectId: P1, note: 'Still going' });
@@ -1616,7 +1787,14 @@ try {
   const report = await call('GET', '/api/report?scope=me');
   ok('report returns totals', report.status === 200 && typeof report.body.totals.minutes === 'number');
   ok('report includes a 90-day heatmap', Array.isArray(report.body.heatmap.days));
-  ok('report computes a streak', typeof report.body.streak.current === 'number');
+  // The streak is gone from the payload as well as from the screen. It counted
+  // days in a row with ANY time logged — showing up, not selling — and the
+  // heatmap on the same screen shows consistency better than one integer. A
+  // field still shipped is a field something will read again.
+  ok('no report carries a streak any more',
+    !('streak' in report.body)
+    && !('streak' in (await call('GET', '/api/report?scope=team')).body),
+    Object.keys(report.body).join(','));
   ok('report breaks down by project', report.body.byProject.length > 0);
   ok('inverted date range is rejected',
     (await call('GET', '/api/report?from=2026-05-01&to=2026-01-01')).status === 400);

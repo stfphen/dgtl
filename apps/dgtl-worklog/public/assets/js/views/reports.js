@@ -152,7 +152,7 @@ export function render_(host, { actions }) {
       return;
     }
 
-    const { totals, byDay, byProject, byUser, tasks, streak, heatmap: heat, range: r } = report;
+    const { totals, byDay, byProject, byUser, tasks, heatmap: heat, range: r } = report;
     const days = range(r.from, r.to);
     const workdays = days.filter((d) => ![0, 6].includes(new Date(`${d}T00:00:00Z`).getUTCDay())).length;
 
@@ -178,12 +178,14 @@ export function render_(host, { actions }) {
           label: 'Tasks completed', value: String(tasks.done),
           foot: tasks.overdue ? `${tasks.overdue} open and overdue` : `${tasks.open} still open`,
         }),
-        streak
-          ? kpi({ label: 'Current streak', value: `${streak.current}`, foot: `best run ${streak.longest} days` })
-          : kpi({
-            label: 'Daily average', value: hm(workdays ? Math.round(totals.minutes / workdays) : 0, { zero: '0h' }),
-            foot: 'per weekday in range',
-          }),
+        // Where the streak used to sit, on both scopes. It counted days in a
+        // row with ANY time logged — showing up, not selling — and the heatmap
+        // further down this same screen shows consistency better than one
+        // integer can. The average is at least a figure about the work.
+        kpi({
+          label: 'Daily average', value: hm(workdays ? Math.round(totals.minutes / workdays) : 0, { zero: '0h' }),
+          foot: 'per weekday in range',
+        }),
       ),
 
       h('div', { class: 'card' },

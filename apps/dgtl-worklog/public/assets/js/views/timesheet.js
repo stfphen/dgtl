@@ -8,6 +8,7 @@ import {
 } from '../util.js';
 import { empty, fail, icon, modal, render, select, sortButton, sorter, userOptions } from '../ui.js';
 import { entryEditor } from '../editors.js';
+import { shiftEditor, shiftSheet } from '../shift.js';
 import { isAdmin, projectById, state } from '../store.js';
 import { api } from '../api.js';
 
@@ -258,43 +259,104 @@ export function render_(host, { actions }) {
     dayModal(rows, `${projectById(projectId)?.name || 'No project'} · ${relativeDay(date)}`, date, projectId);
   }
 
-  function openDay(date) {
+  /* A day, with the attendance that day was worked inside. The strip on Today
+     only ever holds today's spells, so before this the id of Monday's forgotten
+     nineteen-hour clock-out was unreachable from any screen by Tuesday — and
+     PATCH and DELETE need an id. This is the one screen that already knows how
+     to look at a day that is not today. */
+  async function openDay(date) {
     const rows = entries.filter((e) => e.date === date);
-    if (!rows.length) {
+    let shifts = [];
+    try {
+      const res = await api.shifts(ui.userId
+        ? { from: date, to: date, userId: ui.userId }
+        : { from: date, to: date, scope: 'team' });
+      shifts = res.shifts;
+    } catch (e) { fail(e); }
+    if (!rows.length && !shifts.length) {
       entryEditor(null, { date }, load);
       return;
     }
-    dayModal(rows, relativeDay(date), date);
+    dayModal(rows, relativeDay(date), date, undefined, shifts);
   }
 
-  function dayModal(rows, heading, date, projectId) {
+  /** One spell of presence: when it ran, what it accounted for, and the two
+      buttons that reach the correction endpoints at all. */
+  function shiftRow(s, date) {
+    const who = state.users.find((u) => u.id === s.userId);
+    const clock = (iso) => new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    // Re-opened against the corrected day: the editor replaces this modal
+    // (there is only ever one), so there is nothing left to redraw in place.
+    const after = async () => { await load(); openDay(date); };
+
+    return h('div', {
+      class: 'row',
+      style: { justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-row)' },
+    },
+      h('div', { style: { minWidth: '0' } },
+        h('div', { class: 'dot-tag' },
+          h('span', { class: 'dot dot-open' }),
+          s.open ? 'On the clock' : 'Clocked out',
+          !ui.userId && who ? h('span', { class: 'pill' }, who.name) : null),
+        h('div', { class: 'dim', style: { fontSize: '12px', marginTop: '4px' } },
+          `${clock(s.startedAt)} – ${s.endedAt ? clock(s.endedAt) : 'still running'}`
+          + ` · ${hm(s.attributedMinutes, { zero: '0m' })} attributed`
+          + (s.unattributedMinutes ? `, ${hm(s.unattributedMinutes)} unaccounted` : '')),
+      ),
+      h('div', { class: 'row tight' },
+        h('span', { style: { fontWeight: '700' } }, hm(s.presentMinutes, { zero: '0m' })),
+        h('button', {
+          class: 'btn btn-ghost btn-sm', onclick: () => shiftSheet(s, load),
+        }, 'Review'),
+        isAdmin() || s.userId === state.user.id
+          ? h('button', {
+            class: 'btn-icon', title: 'Correct these hours',
+            onclick: () => shiftEditor(s, after),
+          }, icon('pencil'))
+          : null,
+      ),
+    );
+  }
+
+  function dayModal(rows, heading, date, projectId, shifts = []) {
     const total = rows.reduce((s, e) => s + e.minutes, 0);
     const editable = (e) => isAdmin() || e.userId === state.user.id;
 
     modal({
       title: heading,
-      subtitle: `${hm(total)} across ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}`,
-      body: (close) => rows.map((e) => h('div', {
-        class: 'row',
-        style: { justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-row)' },
-      },
-        h('div', { style: { minWidth: '0' } },
-          h('div', { class: 'dot-tag' },
-            h('span', { class: 'dot', style: { background: e.projectColor || 'var(--nil)' } }),
-            e.projectName || 'No project'),
-          h('div', { class: 'dim', style: { fontSize: '12px', marginTop: '4px' } },
-            [e.taskTitle, e.note, !ui.userId ? e.userName : null].filter(Boolean).join(' · ') || '—'),
-        ),
-        h('div', { class: 'row tight' },
-          h('span', { style: { fontWeight: '700' } }, hm(e.minutes)),
-          editable(e)
-            ? h('button', {
-              class: 'btn-icon', title: 'Edit entry',
-              onclick: () => { close(); entryEditor(e, {}, load); },
-            }, icon('pencil'))
-            : null,
-        ),
-      )),
+      // "0h across 0 entries" is what a day of attendance and no work would
+      // otherwise read, on the screen somebody opened to find exactly that.
+      subtitle: [
+        rows.length ? `${hm(total)} across ${rows.length} ${rows.length === 1 ? 'entry' : 'entries'}` : 'Nothing logged',
+        shifts.length ? `${shifts.length} ${shifts.length === 1 ? 'spell' : 'spells'} of presence` : null,
+      ].filter(Boolean).join(' · '),
+      body: (close) => [
+        // Presence above the work, because it is what the work is measured
+        // against — and because a day with attendance and no entries is
+        // exactly the day somebody needs to reach.
+        ...shifts.map((s) => shiftRow(s, date)),
+        ...rows.map((e) => h('div', {
+          class: 'row',
+          style: { justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-row)' },
+        },
+          h('div', { style: { minWidth: '0' } },
+            h('div', { class: 'dot-tag' },
+              h('span', { class: 'dot', style: { background: e.projectColor || 'var(--nil)' } }),
+              e.projectName || 'No project'),
+            h('div', { class: 'dim', style: { fontSize: '12px', marginTop: '4px' } },
+              [e.taskTitle, e.note, !ui.userId ? e.userName : null].filter(Boolean).join(' · ') || '—'),
+          ),
+          h('div', { class: 'row tight' },
+            h('span', { style: { fontWeight: '700' } }, hm(e.minutes)),
+            editable(e)
+              ? h('button', {
+                class: 'btn-icon', title: 'Edit entry',
+                onclick: () => { close(); entryEditor(e, {}, load); },
+              }, icon('pencil'))
+              : null,
+          ),
+        )),
+      ],
       actions: (close) => [
         h('button', { class: 'btn btn-ghost', onclick: close }, 'Close'),
         h('button', {

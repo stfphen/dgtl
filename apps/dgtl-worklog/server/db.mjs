@@ -14,9 +14,12 @@ fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 export const db = new DatabaseSync(DB_PATH);
 
+// busy_timeout first, and deliberately: switching journal_mode takes a lock, so
+// a second process opening the same database at the same moment — seed and the
+// server starting together — hit SQLITE_BUSY with nothing to wait on.
+db.exec('PRAGMA busy_timeout = 5000');
 db.exec('PRAGMA journal_mode = WAL');
 db.exec('PRAGMA foreign_keys = ON');
-db.exec('PRAGMA busy_timeout = 5000');
 db.exec(fs.readFileSync(path.join(APP_DIR, 'schema.sql'), 'utf8'));
 
 /** Rows for a SELECT. */

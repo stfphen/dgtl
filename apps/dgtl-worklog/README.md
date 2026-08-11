@@ -19,8 +19,8 @@ and *derive-everything* rule are the skeleton here, retargeted from habits to bi
 | — | **Tasks** — the shared to-do list, grouped by client, with drag ordering and per-task time |
 | — | **Shifts** — attendance, reconciled against the work filed inside it |
 
-The rule that carried over unchanged: **streaks, totals, budget usage, billable share,
-completion percentages and the unattributed part of a shift are never stored.** They are
+The rule that carried over unchanged: **totals, budget usage, billable share, completion
+percentages and the unattributed part of a shift or a day are never stored.** They are
 computed from `time_entries` on every read, so editing a mistake three weeks back leaves every
 number correct. The one thing the app writes on your behalf — the next instance of a repeating
 task — is a row you can see and edit, not a derived figure.
@@ -94,7 +94,9 @@ hand. Four KPI cards: what is logged today, the week so far, **billable share**,
 tasks. The ring measures **the share of the day that reached an invoice** against your
 billable target — not hours present, because 8h logged is a figure an agency can hit every
 day while selling nothing. Its denominator is the day that actually happened: presence when
-somebody clocked in, otherwise the work filed into the day, otherwise the daily target.
+somebody clocked in, otherwise the work filed into the day, otherwise the daily target. Past
+the target the **arc** stays full — a circle has nowhere further to go — but the figure inside
+it prints the real percentage, so a ring reading 100% never sits beside a card reading 167%.
 "Your focus" surfaces overdue and in-progress work first.
 
 **Shifts** — attendance, which is deliberately not work. Clock in and out from the strip at
@@ -107,6 +109,13 @@ window, so nothing can place them inside a shift — they are reported apart, as
 `unplacedMinutes`, at the level of the day. Two numbers point the other way and are stated
 outright: `overclaimedMinutes`, where the timesheet bills more minutes than the presence
 contained, and `shortfallMinutes`, where presence is unattributed but not open.
+
+Two more are facts about the **day** rather than about one spell, because no spell can see
+them. The ground between a clock-out and the next clock-in belongs to neither shift, so a
+stretch lying in it is counted by nobody: `offShiftMinutes` names work that ran while nobody
+was clocked in at all, and the sheet's fourth figure names a day billing past the presence of
+every spell on it while each spell reconciles. Both come off the same read-time computation
+over the day's shifts and the entries that began on it, so they cannot disagree.
 
 **Tasks** — the shared to-do list, read the way the work is organised: **client → project →
 tasks**, each section collapsible and carrying a **paired ring** — the outer arc is how many
@@ -122,7 +131,10 @@ writes the next instance. See [Repeating work](#repeating-work) below.
 
 **Timesheet** — **Week** is a project × day grid you fill in by clicking a cell, with
 sortable column headings. **Month** is a calendar shaded by hours. Both switch between one
-person and the whole team.
+person and the whole team. Opening a day in Month lists that day's **spells of presence**
+above its entries, each with the same Review sheet and pencil the Today strip has — which is
+how a clock-out forgotten last Tuesday gets corrected at all, since the strip only ever holds
+today's.
 
 **Projects** — client, contact, code, colour, billable flag, budget. The **client** is who
 the work is for and is a row of its own, picked rather than typed twice; the **contact** is
@@ -133,8 +145,11 @@ orphaned; deleting one reports how many tasks it detached.
 
 **Reports** — two things, behind one switch.
 *Activity* is the internal read: hours per day, split by project and by person, tasks
-completed, billable share, current streak, and a trailing-90-day heatmap. Any range; scoped
-to you or the team.
+completed, billable share, the daily average, and a trailing-90-day heatmap. Any range;
+scoped to you or the team. There is no streak on it any more: it counted days in a row with
+ANY time logged, which is showing up rather than selling — a figure this workspace could hold
+at 100 while billing 13% of it — and the heatmap on the same screen reads consistency better
+than one integer.
 *Client digest* is the outward one — see [The client digest](#the-client-digest).
 
 **Settings** — your name, daily target and week start; change password; JSON export.
@@ -241,7 +256,7 @@ apps/dgtl-worklog/
 │   ├── http.mjs            bodies, cookies, static serving
 │   └── config.mjs          .env loading and the timezone-aware date helpers
 ├── scripts/{seed,demo,user}.mjs
-├── tests/smoke.mjs         325 assertions over the real HTTP surface
+├── tests/smoke.mjs         347 assertions over the real HTTP surface
 ├── public/                 the app — served as static files, no build
 │   ├── index.html · login.html
 │   └── assets/
@@ -301,7 +316,10 @@ GET    /api/export
 Payload notes worth knowing: `/api/bootstrap` carries `billableTargetPct` (the share of the
 day meant to reach an invoice, so the client never assumes one), the day's `shifts`, and
 `unplacedMinutes` — time logged by hand today, which carries no window and therefore belongs
-to no shift. Project rows carry `clientId`/`clientName` alongside `client` (the contact) and
+to no shift. A shift row carries `userId`, so a team-scoped range can say whose presence it is.
+`GET /api/shift/:id` additionally carries a `day` block — `presenceMinutes`, `claimedMinutes`,
+`offShiftMinutes` for the whole local date — which is what the two day-level figures are drawn
+from. Project rows carry `clientId`/`clientName` alongside `client` (the contact) and
 `billableMinutes` counted per entry.
 
 Behaviours that are deliberate rather than accidental:
@@ -312,6 +330,11 @@ Behaviours that are deliberate rather than accidental:
 - **A timer stopped under a minute is discarded**, so a mis-click never litters the timesheet.
   Elapsed time is **floored**, so what an entry bills and the window it holds are the same
   fact — which is what lets an overrun be seen at all.
+- **`PATCH /api/entries/:id` refuses to move the date of a stretch with a clock behind it**,
+  naming the day that clock ran. A windowed entry is attributed by its window — which is what
+  makes midnight and DST reconcile — so moving the date alone leaves the row on one day and its
+  attendance on another, and the strip and the KPI above it read different totals for the same
+  work. A block logged by hand has no window and still moves freely.
 - **`PATCH /api/timer` never touches `started_at`.** Elapsed time is a fact; only what the
   time was *for* is editable mid-run. It also drops a task that belongs to a different
   project rather than silently mis-filing the hours.
@@ -320,8 +343,11 @@ Behaviours that are deliberate rather than accidental:
 - **`POST /api/shift/:id/dispose` writes ordinary time entries** — one per open stretch, each
   with a real start and end. There is no second kind of row and no "this was a gap" flag; an
   overhead bucket is just a project flagged non-billable, which is why the entry takes its
-  billable flag from the project rather than from the caller. It refuses if the day already
-  bills more minutes than its clocks ran.
+  billable flag from the project rather than from the caller. It refuses twice over: if the
+  SPELL would then bill more minutes than it was present for, and if the DAY would — the second
+  because a stretch running through the ground between two spells is counted by neither of
+  them, so a day could otherwise be pushed past its presence with every spell on it still
+  reporting nothing wrong. Both checks are recomputations inside the transaction.
 - **`done_at` is stamped on completion and cleared on reopen** — and stamped on creation too,
   when a task is filed as already done, because every "completed this week" count reads it.
 - **Completing a task carrying a recurrence returns `{ task, next }`**, `next` being the
@@ -415,7 +441,7 @@ Do **not** re-paste the brand kit over this file. Five tokens and two rules woul
 ## Verifying a change
 
 ```bash
-npm test                       # 325 assertions over the real HTTP surface; exit 1 on any failure
+npm test                       # 347 assertions over the real HTTP surface; exit 1 on any failure
 ```
 
 The suite boots the real server against a throwaway database on a spare port and drives it

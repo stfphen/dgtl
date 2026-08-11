@@ -69,6 +69,10 @@ export const api = {
 
   clockIn: (data) => call('POST', '/api/shift/in', data),
   clockOut: () => call('POST', '/api/shift/out'),
+  // Attendance over a range. The bootstrap payload carries only today's
+  // spells, and PATCH/DELETE need an id from somewhere — without this, a
+  // clock-out forgotten on Monday cannot be reached from any screen on Tuesday.
+  shifts: (params) => call('GET', `/api/shifts${qs(params)}`),
   shiftSheet: (id) => call('GET', `/api/shift/${id}`),
   updateShift: (id, patch) => call('PATCH', `/api/shift/${id}`, patch),
   deleteShift: (id) => call('DELETE', `/api/shift/${id}`),
