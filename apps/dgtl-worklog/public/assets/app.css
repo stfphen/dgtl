@@ -642,6 +642,12 @@ body{
 .digest-prov .table-wrap{overflow-x:auto}
 .digest-prov .table td:last-child{white-space:normal;word-break:break-word;min-width:120px}
 .digest-prov .table td.mono-code{font-variant-numeric:tabular-nums}
+/* Written at .table td's own weight, and it has to be: tokens.css sets
+   `.table td{color:var(--text)}`, which is one element more specific than a
+   lone class, so `.due-soon` on a cell computed to plain --text and the amber
+   never painted. Measured, not assumed — the cell read rgb(240,240,240). */
+.table td.due-soon{color:var(--warning)}
+.table td.due-over{color:var(--error);font-weight:600}
 
 /* ==================== modal, toast, empty ==================== */
 .overlay{

@@ -87,6 +87,8 @@ export function render_(host, { actions }) {
       onclick: () => { ui.week = w.key; loadDigest(); },
     }, w.label)));
 
+  // No icon: ui.js carries no clipboard glyph, and the download arrow — the
+  // only near miss in the set — would promise a file this button does not make.
   const copyBtn = h('button', {
     class: 'btn btn-ghost btn-sm',
     onclick: async () => {
@@ -95,7 +97,7 @@ export function render_(host, { actions }) {
       toast(done ? 'Digest copied' : 'Could not reach the clipboard — select the text instead',
         done ? 'success' : 'error');
     },
-  }, icon('download'), 'Copy');
+  }, 'Copy');
 
   function drawActions() {
     if (ui.mode === 'activity') {
@@ -382,19 +384,29 @@ export function render_(host, { actions }) {
         : quiet('No time entry this week carries a note, so there is no narrative to draw from — '
           + 'only the hours and the task list above.')),
 
+      // The count in this heading is bigger than the "Due next week" card
+      // above it, and it has to be — the table also holds work due INSIDE the
+      // week that is still open. Left unsaid, that is two figures for one thing
+      // and a reader who stops believing either. The split is stated.
       card(`What is due next (${d.upcoming.length})`, d.upcoming.length
-        ? h('div', { class: 'table-wrap' }, h('table', { class: 'table' },
-          h('thead', null, h('tr', null,
-            h('th', null, 'Task'), h('th', null, 'Workstream'),
-            h('th', null, 'Due'), h('th', null, 'Owner'))),
-          h('tbody', null, d.upcoming.map((u) => h('tr', null,
-            h('td', null, u.title),
-            h('td', null, u.projectName || '—'),
-            h('td', { class: u.bucket === 'before' ? 'due-over' : u.bucket === 'inWeek' ? 'due-soon' : '' },
-              `${dateMed(u.dueDate)}${u.bucket === 'before' ? ' · overdue' : ''}`),
-            h('td', null, u.assigneeName || 'Unassigned'),
-          ))),
-        ))
+        ? h('div', null,
+          h('p', { class: 'hint', style: { marginTop: '0', marginBottom: '14px' } },
+            [`${t.dueNextWeek} due in the seven days after this week`,
+              t.openInWeek ? `${t.openInWeek} due inside it and still open` : null,
+              t.overdue ? `${t.overdue} carried in from before it` : null,
+            ].filter(Boolean).join(' · ')),
+          h('div', { class: 'table-wrap' }, h('table', { class: 'table' },
+            h('thead', null, h('tr', null,
+              h('th', null, 'Task'), h('th', null, 'Workstream'),
+              h('th', null, 'Due'), h('th', null, 'Owner'))),
+            h('tbody', null, d.upcoming.map((u) => h('tr', null,
+              h('td', null, u.title),
+              h('td', null, u.projectName || '—'),
+              h('td', { class: u.bucket === 'before' ? 'due-over' : u.bucket === 'inWeek' ? 'due-soon' : '' },
+                `${dateMed(u.dueDate)}${u.bucket === 'before' ? ' · overdue' : ''}`),
+              h('td', null, u.assigneeName || 'Unassigned'),
+            ))),
+          )))
         : quiet('Nothing on this client falls due in the seven days after the week.')),
 
       provenanceCard(d),
@@ -466,7 +478,8 @@ export function render_(host, { actions }) {
         ? d.narrative.map((n) => `  ${n.date}  ${hm(n.minutes)}  ${n.note}`)
         : ['  no time entry carries a note']),
       '',
-      'DUE NEXT',
+      `DUE NEXT (${t.dueNextWeek} after this week, ${t.openInWeek} inside it and still open, `
+      + `${t.overdue} from before it)`,
       ...(d.upcoming.length
         ? d.upcoming.map((u) => `  ${u.dueDate}  ${u.title}${u.bucket === 'before' ? '  (overdue)' : ''}`)
         : ['  nothing falls due in the following week']),
