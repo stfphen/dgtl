@@ -58,6 +58,24 @@ function mail_last_dev_body(): ?array
     return $GLOBALS['__last_dev_mail'] ?? null;
 }
 
+/**
+ * Why the last send failed, in words.
+ *
+ * mail_send() returns a bare bool and a failed send must never take a request
+ * down, so the reason used to live only in the PHP error log — which is exactly
+ * where nobody looks. The admin status page reads this instead.
+ */
+function mail_last_error(): ?string
+{
+    return $GLOBALS['__smtp_error'] ?? null;
+}
+
+function mail_note_error(string $why): void
+{
+    $GLOBALS['__smtp_error'] = $why;
+    error_log('creator-intake smtp: ' . $why);
+}
+
 function mail_encode_word(string $s): string
 {
     return preg_match('/[^\x20-\x7E]/', $s)
@@ -67,13 +85,21 @@ function mail_encode_word(string $s): string
 
 function smtp_submit(string $from, string $to, string $message): bool
 {
+    $GLOBALS['__smtp_error'] = null;
+
     $host = env('SMTP_HOST');
     $port = (int) env('SMTP_PORT', '465');
     $user = env('SMTP_USER');
     $pass = env('SMTP_PASS');
     if (!$host || !$user || !$pass) {
         // Email not configured yet (staging) — never take the request down over it.
-        error_log("creator-intake smtp: not configured, skipped send to $to");
+        $absent = [];
+        foreach (['SMTP_HOST' => $host, 'SMTP_USER' => $user, 'SMTP_PASS' => $pass] as $k => $v) {
+            if (!$v) {
+                $absent[] = $k;
+            }
+        }
+        mail_note_error('not configured (missing ' . implode(', ', $absent) . "), skipped send to $to");
         return false;
     }
 
@@ -83,40 +109,68 @@ function smtp_submit(string $from, string $to, string $message): bool
         stream_context_create(['ssl' => ['verify_peer' => true, 'verify_peer_name' => true]])
     );
     if (!$fp) {
-        error_log("creator-intake smtp connect: $errno $errstr");
+        mail_note_error("connect to ssl://$host:$port failed: $errno $errstr");
         return false;
     }
     stream_set_timeout($fp, 30);
 
-    $expect = function (array $codes) use ($fp): bool {
+    // Records the server's own words for the stage that failed, so "no emails
+    // are arriving" resolves to e.g. "authentication refused: 535 …".
+    $last = '';
+    $expect = function (array $codes) use ($fp, &$last): bool {
         do {
             $line = fgets($fp, 1024);
             if ($line === false) {
+                $last = '(no response — timed out or connection closed)';
                 return false;
             }
         } while (isset($line[3]) && $line[3] === '-'); // skip multi-line continuations
+        $last = trim((string) $line);
         return in_array((int) substr((string) $line, 0, 3), $codes, true);
     };
     $say = function (string $cmd) use ($fp): void {
         fwrite($fp, $cmd . "\r\n");
     };
 
+    $stage = 'greeting';
     $ok = $expect([220]);
-    $say('EHLO ' . (parse_url(env('APP_URL', 'localhost'), PHP_URL_HOST) ?: 'localhost'));
-    $ok = $ok && $expect([250]);
-    $say('AUTH LOGIN');
-    $ok = $ok && $expect([334]);
-    $say(base64_encode($user));
-    $ok = $ok && $expect([334]);
-    $say(base64_encode($pass));
-    $ok = $ok && $expect([235]);
-    $say("MAIL FROM:<$from>");
-    $ok = $ok && $expect([250]);
-    $say("RCPT TO:<$to>");
-    $ok = $ok && $expect([250, 251]);
-    $say('DATA');
-    $ok = $ok && $expect([354]);
     if ($ok) {
+        $stage = 'EHLO';
+        $say('EHLO ' . (parse_url(env('APP_URL', 'localhost'), PHP_URL_HOST) ?: 'localhost'));
+        $ok = $expect([250]);
+    }
+    if ($ok) {
+        $stage = 'AUTH LOGIN';
+        $say('AUTH LOGIN');
+        $ok = $expect([334]);
+    }
+    if ($ok) {
+        $stage = 'username';
+        $say(base64_encode($user));
+        $ok = $expect([334]);
+    }
+    if ($ok) {
+        $stage = 'authentication';
+        $say(base64_encode($pass));
+        $ok = $expect([235]);
+    }
+    if ($ok) {
+        $stage = "MAIL FROM <$from>";
+        $say("MAIL FROM:<$from>");
+        $ok = $expect([250]);
+    }
+    if ($ok) {
+        $stage = "RCPT TO <$to>";
+        $say("RCPT TO:<$to>");
+        $ok = $expect([250, 251]);
+    }
+    if ($ok) {
+        $stage = 'DATA';
+        $say('DATA');
+        $ok = $expect([354]);
+    }
+    if ($ok) {
+        $stage = 'message body';
         // dot-stuff lines starting with '.' per RFC 5321
         fwrite($fp, preg_replace('/^\./m', '..', $message) . "\r\n.\r\n");
         $ok = $expect([250]);
@@ -125,7 +179,7 @@ function smtp_submit(string $from, string $to, string $message): bool
     fclose($fp);
 
     if (!$ok) {
-        error_log("creator-intake smtp: send to $to failed");
+        mail_note_error("send to $to rejected at $stage: " . ($last ?: 'no detail'));
     }
     return $ok;
 }
