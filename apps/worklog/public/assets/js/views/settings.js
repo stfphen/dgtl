@@ -5,7 +5,7 @@ import { h, hm, parseDuration } from '../util.js';
 import {
   avatar, confirmDialog, fail, field, icon, modal, render, select, toast,
 } from '../ui.js';
-import { isAdmin, saveMe, state } from '../store.js';
+import { isAdmin, saveMe, saveUser, state } from '../store.js';
 import { api } from '../api.js';
 
 export const title = 'Settings';
@@ -202,8 +202,11 @@ export function render_(host) {
             const target = targetInput.value.trim() ? parseDuration(targetInput.value) : 0;
             e.target.disabled = true;
             try {
+              // Through the store, not straight at the API: it reloads the
+              // workspace, so someone added here is in every assignee and
+              // report picker immediately instead of after a page reload.
               if (editing) {
-                await api.updateUser(user.id, {
+                await saveUser(user.id, {
                   name: nameInput.value.trim(),
                   role: roleSel.value,
                   active: activeToggle.checked,
@@ -211,7 +214,7 @@ export function render_(host) {
                   ...(passInput.value ? { password: passInput.value } : {}),
                 });
               } else {
-                await api.createUser({
+                await saveUser(null, {
                   name: nameInput.value.trim(),
                   email: emailInput.value.trim(),
                   role: roleSel.value,

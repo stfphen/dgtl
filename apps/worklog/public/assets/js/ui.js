@@ -32,6 +32,10 @@ export const icons = {
   logout: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>', 16),
   download: svg('<path d="M12 3v12M7 11l5 5 5-5M4 21h16"/>', 16),
   arrow: svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 16),
+  // Points up at rest, because a sort indicator is read as an arrow and
+  // ascending points up. The descending state rotates it — see .sort-caret.down.
+  caret: svg('<path d="m6 15 6-6 6 6"/>', 14),
+  chevron: svg('<path d="m9 6 6 6-6 6"/>', 16),
 };
 
 export const icon = (name, cls) => h('span', { class: cls, html: icons[name] || '' });
@@ -165,27 +169,252 @@ export function kpi({ label, value, foot, hero = false }) {
   );
 }
 
-/** Progress ring — the habit tracker's completion ring, now hours vs target. */
-export function ring(pct, { caption = 'of target', size = 132, stroke = 10 } = {}) {
+/**
+ * Where the two arcs sit, and whether the inner one is drawn at all.
+ *
+ * Split out of `ring()` because that last decision is the one that matters and
+ * the one a DOM-free test can read: `inner: null` means nothing was ever
+ * estimated, and drawing an empty inner track for it would claim "0% of the
+ * estimate spent" — a much better-sounding thing than "we never said". The
+ * size floor is the other half: below it the inner arc is thinner than its own
+ * stroke and reads as a smudge, so it is dropped rather than drawn badly.
+ */
+export function ringGeometry(size, stroke, inner) {
+  const outerR = (size - stroke) / 2;
+  // A gap of its own, or the two arcs read as one thick band at 44px.
+  const innerR = outerR - stroke - Math.max(2, stroke * 0.4);
+  return { outerR, innerR, drawInner: inner !== null && inner !== undefined && innerR > stroke };
+}
+
+/**
+ * Progress ring — the habit tracker's completion ring, now hours vs target.
+ *
+ * Pass `inner` and it draws a SECOND, concentric arc inside the first, because
+ * one arc cannot answer the question a workstream actually raises. The outer
+ * arc is how much of the work is finished; the inner is how much of the
+ * estimate has been spent. It is the divergence between them that says
+ * something: 80% of the tasks done against 130% of the estimate is a
+ * workstream losing money, and a single ring reads that as "nearly there".
+ *
+ * `inner: null` draws nothing inside, which is the honest answer when there is
+ * no estimate to measure against — an empty inner track would read as "0% of
+ * the estimate spent", a far better-sounding claim than "we never said".
+ *
+ * @param pct          outer arc, 0–100 (clamped)
+ * @param inner        inner arc percentage, or null for no inner ring at all
+ * @param center       false drops the figure in the middle — a 44px ring in a
+ *                     section header has no room for it, and the header states
+ *                     both numbers as text beside it instead
+ * @param label        what the middle reads, defaulting to the CLAMPED arc. The
+ *                     arc stays clamped whatever this says, because a circle has
+ *                     nowhere past full to go — but the text beside a full ring
+ *                     was already saying 167% while the ring's own middle said
+ *                     100%, which is one component contradicting itself. Pass
+ *                     the real figure and the two agree.
+ */
+export function ring(pct, {
+  caption = 'of target', size = 132, stroke = 10, inner = null, center = true, title = null,
+  label = null,
+} = {}) {
   const clamped = Math.max(0, Math.min(100, pct || 0));
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
+  const { outerR, innerR, drawInner } = ringGeometry(size, stroke, inner);
+
+  // Every stroke comes from `style`, not the `stroke` attribute: a presentation
+  // attribute cannot hold var(), and the declaration re-resolves on its own if
+  // the palette ever changes under a ring that is already on screen.
+  const arc = (r, value, token, track) => {
+    const c = 2 * Math.PI * r;
+    const v = Math.max(0, Math.min(100, value || 0));
+    return `
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke-width="${stroke}"
+              style="stroke:var(${track})"/>
+      ${v > 0 ? `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke-width="${stroke}"
+              stroke-linecap="round" stroke-dasharray="${c}"
+              stroke-dashoffset="${c - (c * v) / 100}"
+              style="stroke:var(${token});transition:stroke-dashoffset .5s ease"/>` : ''}`;
+  };
+
   const wrap = h('div', { class: 'ring', style: { width: `${size}px`, height: `${size}px` } });
+  if (title) wrap.title = title;
+  // Past the estimate the arc has nowhere left to go, so the colour carries it:
+  // a full red ring is over budget, a full blue one is exactly on it.
+  const innerToken = inner !== null && inner > 100 ? '--error' : '--chart-4';
+  // The inner track is the "there IS an estimate" signal — whether it is drawn
+  // at all is what separates a workstream at 0% spent from one nobody ever
+  // estimated. --chart-grid reads 1.16:1 on this surface, which cannot carry a
+  // signal, so the inner track is --nil: the palette's own swatch for absent
+  // data, 4.4:1 here, and an unspent estimate is exactly that. The OUTER track
+  // stays --chart-grid, because Today's ring is this same function and its
+  // remainder means nothing beyond "the rest of the circle".
   wrap.innerHTML = `
     <svg width="${size}" height="${size}" aria-hidden="true">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#1c1c1c" stroke-width="${stroke}"/>
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#F0CF50" stroke-width="${stroke}"
-              stroke-linecap="round" stroke-dasharray="${c}"
-              stroke-dashoffset="${c - (c * clamped) / 100}"
-              style="transition:stroke-dashoffset .5s ease"/>
+      ${arc(outerR, clamped, '--gold', '--chart-grid')}
+      ${drawInner ? arc(innerR, inner, innerToken, '--nil') : ''}
     </svg>`;
-  wrap.append(h('div', { class: 'mid' },
-    h('div', null,
-      h('div', { class: 'pct' }, `${Math.round(clamped)}%`),
-      h('div', { class: 'cap' }, caption),
-    ),
-  ));
+  if (center) {
+    wrap.append(h('div', { class: 'mid' },
+      h('div', null,
+        h('div', { class: 'pct' }, label ?? `${Math.round(clamped)}%`),
+        h('div', { class: 'cap' }, caption),
+      ),
+    ));
+  }
   return wrap;
+}
+
+/* ------------------------------------------------------- section rollups -- */
+/* Pure arithmetic over rows already in memory. `/api/bootstrap` ships every
+   project and every task on a cold start, so a client → project → task rollup
+   is a loop in the browser and needs no endpoint of its own. Kept here, and
+   kept pure, so the numbers the rings draw are the same ones a test can read
+   without a DOM. */
+
+/**
+ * What a section header states and its ring draws.
+ *
+ * `loggedMinutes` is the PROJECT's total, not the sum of its tasks': hours get
+ * logged against a project with no task attached all the time — every one of
+ * this workspace's TPB hours did — and a figure that quietly dropped them
+ * would disagree with the Logged column on the Projects screen.
+ *
+ * The budget wins over the task estimates where a project has both, for the
+ * same reason. The budget is what the client bought and it is already on the
+ * Projects screen as a bar; measuring against the internal estimate instead
+ * would put 84% here and 453% there for one project, and a reader who sees two
+ * numbers for one thing stops believing both. `basis` names which was used, so
+ * "of 5h budget" and "of 27h estimated" are never mistaken for each other.
+ */
+export function rollup(tasks, { loggedMinutes = 0, budgetMinutes = null } = {}) {
+  let total = 0;
+  let done = 0;
+  let estimate = 0;
+  for (const t of tasks) {
+    if (t.archived) continue;
+    total++;
+    if (t.status === 'done') done++;
+    estimate += t.estimateMinutes || 0;
+  }
+  const target = budgetMinutes || estimate || 0;
+  return {
+    total, done, estimate, target, loggedMinutes,
+    basis: budgetMinutes ? 'budget' : (estimate ? 'estimate' : null),
+    // Hours that no target covers. Zero for a project — it either has a target
+    // or it does not — but it is what keeps a client's ratio honest below.
+    unplannedMinutes: target ? 0 : loggedMinutes,
+    donePct: total ? (done / total) * 100 : null,
+    // null, not 0 — "nothing to measure against" and "nothing spent" are
+    // different claims, and only one of them earns an arc.
+    effortPct: target ? (loggedMinutes / target) * 100 : null,
+  };
+}
+
+/**
+ * Roll several project rollups into the client that owns them.
+ *
+ * The effort ratio counts only the projects that have something to be measured
+ * against. Hours on a project with no budget and no estimates would otherwise
+ * be divided by the other projects' targets, and one unplanned workstream
+ * would put the whole account into the red on arithmetic alone. They are
+ * carried out separately as `unplannedMinutes` so the header can state them
+ * rather than the ratio quietly swallowing them.
+ */
+export function mergeRollups(list) {
+  const out = { total: 0, done: 0, estimate: 0, target: 0, loggedMinutes: 0, unplannedMinutes: 0 };
+  const bases = new Set();
+  for (const r of list) {
+    out.total += r.total; out.done += r.done; out.estimate += r.estimate; out.target += r.target;
+    out.unplannedMinutes += r.unplannedMinutes;
+    if (r.target) out.loggedMinutes += r.loggedMinutes;
+    if (r.basis) bases.add(r.basis);
+  }
+  out.basis = bases.size === 1 ? [...bases][0] : (bases.size ? 'mixed' : null);
+  out.donePct = out.total ? (out.done / out.total) * 100 : null;
+  out.effortPct = out.target ? (out.loggedMinutes / out.target) * 100 : null;
+  return out;
+}
+
+/** Projects bucketed by client, named clients first, "no client" last. */
+export function groupByClient(projects) {
+  const groups = new Map();
+  for (const p of projects) {
+    const key = p.clientId ? `c${p.clientId}` : 'none';
+    if (!groups.has(key)) {
+      groups.set(key, { key, clientId: p.clientId ?? null, name: p.clientName || '', projects: [] });
+    }
+    groups.get(key).projects.push(p);
+  }
+  return [...groups.values()].sort((a, b) =>
+    (a.clientId ? 0 : 1) - (b.clientId ? 0 : 1) || a.name.localeCompare(b.name));
+}
+
+/* ------------------------------------------------------------- sorting ---- */
+
+/**
+ * Click-to-sort state. Built once and handed to `sortButton`, so the task
+ * board and the timesheet cannot drift into two different ideas of what a
+ * second click does.
+ *
+ * @param columns  [{ key, label, get(row), num?, dir? }] — `dir` is the
+ *                 direction the column starts in when it is first picked
+ *                 (hours want 'desc'; names want 'asc')
+ * @param key      the column to start on, or null for the order rows arrived in
+ */
+export function sorter(columns, { key = null, dir = 'asc' } = {}) {
+  const find = (k) => columns.find((c) => c.key === k);
+  const st = {
+    columns,
+    key,
+    dir,
+    /** A new column starts in its own direction; the same column reverses. */
+    toggle(k) {
+      if (st.key === k) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+      else { st.key = k; st.dir = find(k)?.dir || 'asc'; }
+      return st;
+    },
+    apply(rows) {
+      const col = find(st.key);
+      if (!col?.get) return rows.slice();
+      const sign = st.dir === 'desc' ? -1 : 1;
+      // Decorated with the arrival index: Array#sort is stable, but only for
+      // ties the comparator declares, and an empty value has to sort last in
+      // BOTH directions — otherwise every task with no due date jumps to the
+      // top the moment you reverse the column.
+      return rows
+        .map((r, i) => [r, col.get(r), i])
+        .sort(([, av, ai], [, bv, bi]) => {
+          const an = av === null || av === undefined || av === '';
+          const bn = bv === null || bv === undefined || bv === '';
+          if (an !== bn) return an ? 1 : -1;
+          if (an) return ai - bi;
+          if (av < bv) return -sign;
+          if (av > bv) return sign;
+          return ai - bi;
+        })
+        .map(([r]) => r);
+    },
+  };
+  return st;
+}
+
+/**
+ * One sortable column heading. The caret span is always present, empty when
+ * the column is not the active one, so the label does not shift sideways as
+ * the sort moves between columns.
+ */
+export function sortButton(col, st, onChange) {
+  const on = st.key === col.key;
+  return h('button', {
+    type: 'button',
+    class: `sort-btn${on ? ' on' : ''}${col.num ? ' num' : ''}`,
+    'aria-label': on
+      ? `${col.label}, sorted ${st.dir === 'asc' ? 'ascending' : 'descending'} — activate to reverse`
+      : `Sort by ${col.label}`,
+    title: on ? `Sorted by ${col.label} — click to reverse` : `Sort by ${col.label}`,
+    onclick: () => { st.toggle(col.key); onChange(st); },
+  },
+    h('span', null, col.label),
+    h('span', { class: `sort-caret${on && st.dir === 'desc' ? ' down' : ''}`, html: on ? icons.caret : '' }),
+  );
 }
 
 /** Horizontal bar list — project breakdowns, budget usage. */
