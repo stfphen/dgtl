@@ -14,6 +14,21 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 
 ## Repository/platform integration audit (2026-08-13)
 
+- **DGTL Core migration 009 is implemented but not applied/reconciled against production data.**
+  Before production: back up, apply in staging against a production-shaped copy, compare legacy and
+  canonical row counts/relationships, inspect duplicate candidates, then apply in production. Reads
+  safely retain live compatibility projections; canonical writes intentionally fail closed until the
+  migration exists. `docs/architecture/dgtl-core-phase-1.md` · [[13-Data-Model]]
+- **Core is read-first UI; legacy dual-write and reviewed write APIs are Phase 2.** Lead intake,
+  enterprise prospecting, outreach, telephony, and draft creation still write their established
+  tables. The hybrid repository prevents invisibility, but compatibility snapshots currently load
+  several legacy collections per routed read and need caching/query-specific adapters before large
+  datasets. Buying-committee JSON remains a compatibility projection until reviewed contact creation.
+- **Core direct database relations rely on the service layer for cross-team relationship validation.**
+  Every routed/service access is team-scoped and tested, and each primary table has a team FK; a later
+  hardening pass should add composite team-aware relationship constraints or database RLS before
+  exposing generalized write APIs to external agents.
+
 - ✅ **Platform migration build verified 2026-08-13.** Final `npm run build` on merged local `main`
   with Next 15.5.23 compiled, type-checked, generated 49/49 static pages, collected traces, and exited
   0. Earlier attempts failed fetching Geist Mono, so the root layout's seven Google font families

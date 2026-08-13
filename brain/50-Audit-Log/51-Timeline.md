@@ -12,6 +12,18 @@ Chronological history, reconstructed from repo docs + git. **Append newest entri
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
 
 ## 2026-08
+- 2026-08-13 — **DGTL Core Phase 1 implemented on `codex/core-domain-phase-1`.** Added the
+  canonical Company → Contact → Opportunity graph with provenance-bearing Research, canonical
+  Campaign/Message/Activity records, Artifact + GenerationJob separation, ExternalLink integration
+  references, and reversible spreadsheet-import staging in additive migration 009. Legacy leads,
+  target accounts, account campaigns, outreach drafts/queue/events, and calls remain operational
+  through deterministic compatibility projections; canonical records win on ID collision and no
+  production row is automatically merged or removed. Added authenticated routed modules for
+  `/companies`, `/contacts`, and `/opportunities` plus all three detail routes; the old `/admin` and
+  host-resolved `/` behavior remain intact. New Core tests: **10/10**; full platform suite:
+  **366 passed, 0 failed**; production build on Next 15.5.23 compiled/type-checked, generated 49/49
+  static pages, listed all six new dynamic routes, collected traces, exit 0. Architecture/import
+  contract: `docs/architecture/dgtl-core-phase-1.md`. [[13-Data-Model]] · [[14-Routes-Map]]
 - 2026-08-13 — **Full repository, branch, worktree and operating-platform audit completed.** The
   evidence and recommended target architecture are recorded in
   `docs/audits/2026-08-13-repository-and-platform-audit.md`. Consolidated tested local WIP into

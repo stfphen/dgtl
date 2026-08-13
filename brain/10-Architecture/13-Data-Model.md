@@ -3,13 +3,13 @@ title: 13 · Data Model
 type: reference
 tags: [architecture, leads, tenancy]
 status: stable
-updated: 2026-07-04
-source: migrations/001-008, lib/store.js
+updated: 2026-08-13
+source: migrations/001-009, lib/store.js, lib/core/
 ---
 
 # Data Model
 
-Postgres schema, defined by ordered migrations (`migrations/`, latest `008`, run via `npm run migrate`).
+Postgres schema, defined by ordered migrations (`migrations/`, latest `009`, run via `npm run migrate`).
 The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 (`data/app-store.json`) used when `DATABASE_URL` is unset — local dev only.
 
@@ -45,11 +45,27 @@ The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 ### `008_outreach_drip.sql` — outreach drip/scheduling (2026-07-04)
 - **`outreach_campaigns`** gains `follow_up_template_id`, `follow_up_delay_days`, `test_mode`; **`outreach_queue`** gains `step` (0 = intro, 1+ = follow-up). Powers the follow-up drip + scheduled drain. Store adds claim/due primitives (`claimOutreachQueueItem`, `listDueQueueItems`). See [[26-Outreach]].
 
+### `009_core_domain.sql` — DGTL Core commercial graph (2026-08-13)
+- Canonical **`companies`**, **`contacts`**, **`opportunities`** + **`opportunity_contacts`**, and provenance-bearing **`research_records`**.
+- Canonical **`campaigns`**, **`messages`**, and append-only commercial **`activities`**. Existing outreach/call tables remain operational behind compatibility projections; `audit_logs` remains the separate security audit trail.
+- Artifact registry **`artifacts`**, process records **`generation_jobs`**, and many-result join **`generation_job_artifacts`**. `media_assets` remains presentation media and is not conflated with pitch/audit/report artifacts.
+- Polymorphic **`external_links`** stores identities/cursors for Worklog, pitch/audit/report deployment, GitHub, email providers, DGTL OS, and future systems without replicating their authoritative fields.
+- **`import_batches`** + **`import_rows`** stage raw/normalized spreadsheet data, duplicate candidates, before-state, applied changes, and imported IDs for previewed/reversible imports.
+- Safe deterministic backfill from `leads`, `target_accounts`, `account_campaigns`, `outreach_campaigns`, `outreach_queue`, and `draft_emails`; no legacy delete, merge, or rename. `lib/core/` merges canonical rows with live compatibility projections so post-migration legacy writes stay visible during dual-write rollout.
+- Full contract and retirement map: `docs/architecture/dgtl-core-phase-1.md`.
+
 ## Entity relationships (mental model)
 ```
 team ─┬─ users (via team_memberships, with role + telephony fields)
       ├─ tenants ── config (funnel/branding/packages/telephony)
-      ├─ leads ─┬─ calls ── call_events
+      ├─ companies ─┬─ contacts
+      │             ├─ opportunities ─┬─ research_records
+      │             │                 ├─ campaigns ── messages
+      │             │                 ├─ activities
+      │             │                 ├─ artifacts ← generation_jobs
+      │             │                 └─ external_links
+      │             └─ research_records / external_links
+      ├─ leads (compatibility) ─┬─ calls ── call_events
       │         ├─ draft_emails
       │         ├─ outreach_queue / outreach_events
       │         └─ tasks
@@ -58,5 +74,8 @@ team ─┬─ users (via team_memberships, with role + telephony fields)
       └─ outreach_templates / campaigns / suppression_list
 sessions ── users        audit_logs ── users
 ```
+
+`Opportunity` is the operational center of a sales approach; one Company may have many. Worklog
+task/time data is never copied into this graph — only an `external_links` reference is stored.
 
 Up: [[10-Architecture-MOC]]
