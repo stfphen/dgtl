@@ -26,7 +26,11 @@ Dates are from doc timestamps / commit themes; treat older "status" claims as po
   from eight advisories to three high advisories; the remaining npm-proposed fix is a breaking Next
   16 upgrade. The three formerly untracked tenant modules were reviewed: no credentials, two
   compatibility re-exports, but Polish Stone carries a `555` phone number and unproven commercial
-  claims that require owner validation before publication.
+  claims that require owner validation before publication. Integration then merged into local
+  `main`; 17 fully merged local branches were deleted with `git branch -d`, stale rent-worktree
+  metadata was pruned without deleting its branch, and both live worktrees were left clean after
+  their remaining files were preserved in named stashes. No remote branch, PR, deployment, or push
+  was changed.
 
 - 2026-08-01 — **Creator-feature template un-rotted: new packs now validate clean without hand-editing paths.** The template still shipped pre-pack-model relative paths (`../assets/…`, `../index.html`, `../cases/…`) plus a related-card pointing at a `peter-mckinnon.html` that never existed — ~25 broken local refs in every pack built from it, each one hand-fixed after the fact. Fixed at both ends: the template is now authored at pack-hub depth (`../../_shared/…`), and `populate.py` gained `journal_depth()`/`reroot()` so a feature page one level deeper gets `../../../_shared/…` automatically. SKILL.md's path table is now true as written — the "shared CSS/JS" column is marked automatic, only the "own media" column is hand-written, and a feature-page populate example was added. Verified by building the example fields to both depths: `validate.py` → 9 ok / 1 warn (empty `og:image`, a fields-content placeholder) / **0 failures** at each, no manual path editing; `tools/check-links.py` → `checked=859 missing=0` (unchanged — it does not scan `engine/`, which is why this rotted unseen). [[53-Known-Issues]] · [[52-Decision-Log]]
 

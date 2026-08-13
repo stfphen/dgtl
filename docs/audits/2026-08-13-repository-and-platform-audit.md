@@ -4,7 +4,7 @@
 
 **Repository:** `stfphen/dgtl`
 
-**Audit branch:** `audit-for-full-integration`
+**Audit branch:** `audit-for-full-integration` (merged into local `main`, then deleted)
 **Scope:** tracked source, local WIP, local and remote branches, worktrees, open pull requests,
 verification gates, current product architecture, and a recommended target architecture for the
 DGTL operating engine.
@@ -203,10 +203,11 @@ a content and deployment decision without a release signal.
 
 ### Local branches
 
-- `audit-for-full-integration` is the active integration line.
-- `feat/report-deploy` and `feature/worklog-mcp` contain the report/Worklog MCP history already
-  represented by the squash commit on `origin/main`, plus the report go-live fix on the audit line.
-- `claude/sweet-wozniak-cc9baf` contains one valid creator-template path fix and should be merged.
+- `audit-for-full-integration` was merged into local `main` and its local branch was deleted.
+- `feat/report-deploy` and `feature/worklog-mcp` were fully represented by the integration history;
+  their local branches were deleted after Git confirmed they were merged.
+- `claude/sweet-wozniak-cc9baf` contained one valid creator-template path fix. It is merged; the branch
+  remains only because its clean live worktree has not been deleted without separate confirmation.
 - `feature/dgtlneon-site` contains useful but mixed-scope WIP; its valid site, ops, and diagnostics
   changes should land as separate commits before the branch is retired.
 - `feat/dgtl-rent-site` is a real 3D Node application with about 105 files and large model assets.
@@ -217,8 +218,7 @@ a content and deployment decision without a release signal.
   patch content is already represented on main; do not re-merge old history merely to make the graph
   look tidy.
 - `consolidate-vps`, `feat/coolify-deploy`, `feat/root-to-admin`, `release/vps-prep`, and ten
-  `worktree-wf_*` branches are already ancestors of `origin/main`. They are deletion candidates after
-  one human review of branch-retention policy.
+  `worktree-wf_*` branches were confirmed fully merged and deleted locally with safe `git branch -d`.
 - The `feat/site-*` branches correspond to the open placeholder PRs and should follow their PR
   disposition.
 
@@ -231,9 +231,9 @@ Remote-only historical/deployment branches should be archived or deleted only af
 | Worktree | State | Action |
 |---|---|---|
 | repository root | active integration work | Keep. |
-| `.../scratchpad/wt-rent` | directory missing; registration prunable | Prune stale metadata only. Preserve branch. |
-| `.claude/worktrees/project-zip-dev-comparison-4f5677` | live; dead temp launch paths and untracked instruction copy | Keep until its PR/branch decision; do not delete user work. |
-| `.claude/worktrees/sweet-wozniak-cc9baf` | live; creator path fix committed | Merge fix, then remove only with explicit final confirmation. |
+| `.../scratchpad/wt-rent` | directory missing | Stale registration pruned; `feat/dgtl-rent-site` branch preserved. |
+| `.claude/worktrees/project-zip-dev-comparison-4f5677` | live and clean | Remaining local files preserved in named stash; keep until branch decision. |
+| `.claude/worktrees/sweet-wozniak-cc9baf` | live and clean; fix merged | Instruction copy preserved in named stash; remove only with explicit confirmation. |
 
 ## Engineering risks and non-standard areas
 
