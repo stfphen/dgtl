@@ -3,13 +3,27 @@ title: 51 · Project Timeline
 type: log
 tags: [audit]
 status: living
-updated: 2026-07-28
+updated: 2026-08-13
 ---
 
 # Project Timeline
 
 Chronological history, reconstructed from repo docs + git. **Append newest entries at the top.**
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
+
+## 2026-08
+
+- 2026-08-13 — **Full repository, branch, worktree and operating-platform audit completed.** The
+  evidence and recommended target architecture are recorded in
+  `docs/audits/2026-08-13-repository-and-platform-audit.md`. Consolidated tested local WIP into
+  scoped commits: Worklog v2 (375/375 tests), creator-intake diagnostics (26/26 tests + PHP lint),
+  DGTL Residency and Studios Maud pitches/audit, Piano Boutique's explicitly reconstructed findings
+  ledger, DGTL Neon, the local ops automation spine, and a non-breaking Next 15 lock refresh. The
+  publishing check improved from 19 to five root-absolute warnings and remains `missing=0`.
+  Platform release confidence remains red: 351/356 tests pass, the five failures require live
+  enrichment network access, and `next build` still fails fetching Google font files even when
+  outbound access is allowed. Production dependency audit is down from eight advisories to three
+  high advisories; the remaining npm-proposed fix is a breaking Next 16 upgrade.
 
 ## 2026-07
 - 2026-07-28 — **VPS offboard consolidation** (branch `consolidate-vps`): audited `dgtl-offboard-20260721` against the monorepo. VPS app source = `fe2d78a` (nothing newer than `platform/`); decks rig identical. Imported the VPS-only material: 18 live pitch sites into `pitches/` (live-URL slugs kept; old escott draft → `escott-brand`; escott set documented as the portal-led pattern in `pitches/_templates/PORTAL-PATTERN.md`), deploy portal source → `deploy/portal/`, prod decks override, DGTL OS → `os/` (secrets stripped; folded into `apps/dgtl-os/` on 07-28 when the skill-integration branch landed with the 07-18 standalone-product layout — wiring notes now in `apps/dgtl-os/local/README.md`). assets.dgtlgroup.io confirmed stale → retired. Data/secrets remain only in the offline bundle. See MIGRATION.md addendum.
@@ -764,3 +778,8 @@ Up: [[50-Audit-Log-MOC]]
 
 - 2026-08-10 — Added `pitches/dgtl-residency/` via dgtl-pitch-composer: "The DGTL Residency" services-for-accommodation offer for Toronto rental operators (3/6-month dual-track exchange, $0 invoiced). Includes BLOCK-PLAN.md, sourced market stats (CMHC/Rentals.ca/Urbanation), and prospects.md dossier (14 ranked operators + decision-makers, verified-vs-pattern contacts). Registered in pitches.index.json; check-links missing=0. Screenshot verify skipped (no browser in sandbox); structural validation passed.
   - **Went live same day (2026-08-10 evening):** DNS A records (apex/www/audit/deploy → 37.27.198.189) set at the registrar; both stacks up on the VPS from `feat/report-deploy`. Two hiccups, both resolved: (1) debug port 8091 was already bound by `dgtl-journal`, so `dgtl-report-host` sat in Created — moved to 8092 (committed); (2) the Let's Encrypt cert for the report-host router failed its first issuance while the container was down — a `--force-recreate` retriggered ACME and `dgtl.report` now serves a valid LE cert. First real deploy confirmed end-to-end: `dgtl.report/piano-boutique-status-v1/` (Piano Boutique status report via the portal). Recurring unrelated ACME error for `dgtlinfluence.com` observed in coolify-proxy logs — logged in Known Issues.
+
+- 2026-08-10 — **New sixth surface `audits/` opened, and the first pair of deliverables for the 20 Maud studio venture shipped.** Target: a working Toronto sound engineer (name not yet supplied) who owns a full recording/mixing/mastering chain but no room, considering **Unit B3, lower level, 20 Maud Street** — the unit beside Archive Threads / "20 Maud" (B1/B2) — from Strashin Developments. Deal shape as briefed: he signs the lease and keeps the gear, the engineering and his existing clients; DGTL brings brand, website + booking, client pipeline and DGTL Records as the rights back end, paid on originated work plus a build fee.
+  - `pitches/dgtl-studios-maud/index.html` (+ `pitch.json`, registered in `pitches.index.json`) — built with `dgtl-pitch-pages`. Single self-contained file, 14-section blueprint plus a **"What We're Not Claiming"** section that is load-bearing and must not be removed. Centerpiece is "Two Engines" (billable hours vs. rights). Four `data-slot`s: `engineer-name`, `studio-name`, `unit`, `start-date`. `check-links.py` → `missing=0`; structural validation passed (tag balance, all 39 base64 payloads decode); **screenshot verification skipped — no browser in sandbox.**
+  - `audits/dgtl-studios-maud/DGTL-PartnerFit-Audit-20-Maud-Studio.pdf` (25pp) + `audit.html` + `build_audit.py` — built with `dgtl-partner-fit-audit`. **23 findings across six categories, 6 Critical.** Four research lanes: Toronto studio market, the Archive Threads adjacency thesis, publishing/rights economics, and the building record. All 25 page PNGs reviewed.
+  - Three findings gate everything and each is a single phone call: **A-01** the operator has not been assessed (no name/entity/credits supplied), **B-01** the Strashin tenant roll records B3 as occupied by Alexandra Harcourt and no below-grade vacancy at 20 Maud is publicly listed at any rate, **C-01** the footfall version of the adjacency thesis is unsupported — two research passes found no case anywhere of a studio attributing bookings to a neighbouring shop, and the brand-funded in-store studio (Converse Rubber Tracks, Red Bull, House of Vans) has closed everywhere it was tried.

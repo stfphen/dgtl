@@ -31,8 +31,9 @@ Current release confidence is **red** for the main platform and **amber** for th
 - A non-breaking dependency refresh reduced the production audit from eight vulnerabilities to three
   high-severity advisories. Removing the final three requires a deliberate Next.js 16 migration or
   an explicitly supported mitigation.
-- Publishing link integrity is good (`missing=0`), but 19 root-absolute pitch links violate the
-  subfolder deployment rule and three ESCOTT assets remain explicitly pending.
+- Publishing link integrity is good (`missing=0`). Fourteen root-absolute pitch links were repaired;
+  five unresolved links remain in the Hotels pitch because their intended full-pitch target does not
+  exist. Three ESCOTT assets remain explicitly pending.
 - Open PRs have no CI statuses. Most are isolated domain placeholders, two are superseded, and one is
   an unmergeable mixed-scope branch.
 - The new Worklog v2 implementation is materially better than the tracked version and passes all 375
@@ -255,7 +256,8 @@ Remote-only historical/deployment branches should be archived or deleted only af
 ### P2 — repository hygiene and operability
 
 1. Update top-level documentation for `audits/`, `ops/`, current domains, and actual deploy ownership.
-2. Fix 19 root-absolute pitch links and supply or explicitly retire the three pending ESCOTT assets.
+2. Resolve the five Hotels pitch links after identifying their intended target, and supply or
+   explicitly retire the three pending ESCOTT assets.
 3. Separate network integration tests from deterministic unit tests. A known failure should be skipped
    with an explicit condition or supplied a fixture; it should not make the primary gate permanently red.
 4. Add CODEOWNERS or an equivalent ownership map for platform, apps, publishing, deploy, sites,
@@ -313,7 +315,8 @@ Commands run during this audit:
 
 | Command | Result |
 |---|---|
-| `python3 tools/check-links.py` | exit 0; `checked=1040 missing=0 pending=3 root_absolute=19` |
+| `python3 tools/check-links.py` (initial) | exit 0; `checked=1040 missing=0 pending=3 root_absolute=19` |
+| `python3 tools/check-links.py` (after safe link fixes) | exit 0; `checked=1054 missing=0 pending=3 root_absolute=5` |
 | `cd apps/creator-intake && php tests/run.php` | `26 passed, 0 failed` |
 | PHP lint on new creator diagnostics/status/mailer | no syntax errors |
 | `cd platform && npm test` | 356 total; 351 pass, 5 network-dependent enrichment failures; exit 1 |

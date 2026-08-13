@@ -3,7 +3,7 @@ title: 53 · Known Issues, Risks & Tech Debt
 type: log
 tags: [audit, security]
 status: living
-updated: 2026-08-04
+updated: 2026-08-13
 source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, status docs
 ---
 
@@ -11,6 +11,30 @@ source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, statu
 
 Open problems. Full security analysis in [[61-Security-Review]]. **Update status here as items are fixed.**
 Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-02`).
+
+## Repository/platform integration audit (2026-08-13)
+
+- **Platform build remains a release blocker.** Both the sandboxed build and a build with network
+  permission failed while fetching Google-hosted fonts; the latter exhausted retries on Geist Mono
+  from `fonts.gstatic.com`. The root layout imports seven font families and the admin imports Manrope
+  again. Self-host or pin the required files, reduce the set, and make `npm run build` a required CI
+  check. The migration is still unverified.
+- **Three high production dependency advisories remain** after updating the lock to Next 15.5.23
+  and applying non-breaking audit fixes. They are transitive PostCSS and Sharp advisories through
+  Next 15; npm proposes Next 16.3.0 as a breaking fix. Test a deliberate Next 16 migration rather
+  than running `npm audit fix --force` on the production line.
+- **The primary platform test command is permanently red** (351/356): five enrichment tests require
+  network access. Move them to an explicitly conditioned integration suite or give them deterministic
+  fixtures so the unit/release gate can become trustworthy.
+- **Worklog v2 passes 375/375 tests but is not production-migration verified.** Back up the live
+  database, dry-run schema migration and restore against a production-shaped copy, then extend
+  `apps/worklog-mcp` for the new client, shift, reconciliation, and digest endpoints before deploy.
+- **Five root-absolute pitch links remain**, all in `pitches/hotels/index.html`, pointing to a
+  nonexistent `/full/` target. Fourteen other invalid teaser links were repaired. Choose the actual
+  full pitch or remove the calls to action. Three ESCOTT media files remain declared pending.
+- **Twelve open GitHub PRs have no CI statuses.** PRs 19 and 20 are superseded; PR 23 is an
+  unmergeable mixed-scope branch; PRs 13–18 and 21–22 are unverified domain placeholders; PR 24 is
+  the isolated DGTL Neon review branch. See the 2026-08-13 audit before merging or closing them.
 
 ## 🔴 Security — Critical
 | ID | Issue | Location | Fix |
@@ -36,7 +60,7 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 | **L3** | Historic `.env.example` shipped `ADMIN_PASSWORD=change-this-password` placeholder. |
 | **L4 (NEW)** | `telephony/transcription` webhook accepts unsigned requests (proceeds when `X-Twilio-Signature` absent); the other four telephony callbacks hard-require a valid signature. Low impact (limited to our own account's transcripts). | `app/api/telephony/transcription/route.js` |
 | **L5 (NEW)** | Portfolio embed `<iframe src>` has no scheme allowlist (admin-controlled data, so low risk). | `components/FunnelPage.jsx` |
-| **L6 — ACCEPTED (07-02)** | `npm audit`: 2 moderate — postcss <8.5.10 XSS in CSS-stringify output, bundled by **next** (every next release 9.3.4→16.x-canary pins a vulnerable postcss, so no non-breaking fix exists; `npm audit fix --force` would downgrade next to 9.3.3 — never do that). Build-time-only surface. Re-check on each next upgrade. | `node_modules/next` (transitive) |
+| **L6 — SUPERSEDED (08-13)** | The July two-moderate snapshot is obsolete. After refreshing to Next 15.5.23, `npm audit --omit=dev` reports three high transitive PostCSS/Sharp advisories; npm offers only the breaking Next 16.3.0 fix. Track in the 2026-08-13 integration section above. | `node_modules/next` (transitive) |
 
 ## 🐛 Functional / correctness (NEW — 07-02 audit)
 - ✅ **RESOLVED: pipeline status not validated on update.** `updateLeadStatus` now rejects statuses outside `pipelineStatuses` (Postgres stored junk verbatim; file store silently reset the lead to `new`). Test: `tests/lead-status-validation.test.js`.
@@ -169,7 +193,7 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 | ID | Issue | Detail | Fix |
 |---|---|---|---|
 | **M1** | **~556 MB of prototype renders exist only on the Mac, with no backup.** | `prototypes/` (scroll-world + tower-3d video, netlify builds, a 184 MB zip, plus Finder-duplicate `… 2`/`… 3` dirs) is not in this repo and was **never** tracked in `content-checkout-funnel` either — that `.gitignore` excluded it from the start because the zip exceeds GitHub's 100 MB file limit. Not a regression, but a single disk failure loses all of it. | Decide a home: LFS in a dedicated archive repo, or object storage (S3/R2/Backblaze). Exclude the 184 MB zip and the duplicate dirs either way — the zip is a redundant build archive. **Partial mitigation 2026-07-28:** every *deployed* pitch site (18 slugs) is now tracked in `pitches/` via the VPS offboard bundle — only unshipped renders/WIP remain Mac-only. |
-| **M2** | **`npm run build` has never been verified on the migrated tree.** | `next/font/google` fetches Manrope, Geist, Bricolage Grotesque, Space Grotesk, Instrument Serif and Fraunces at build time; the migration sandbox had no outbound network. Tests pass (351/356) but a build break would surface only on deploy. | `cd platform && npm ci && npm run build` on a networked machine; record the result in [[51-Timeline]]. Blocks calling the migration done. |
+| **M2** | **`npm run build` has never been verified on the migrated tree.** | `next/font/google` fetches Manrope, Geist, Geist Mono, Bricolage Grotesque, Space Grotesk, Instrument Serif and Fraunces at build time. On 2026-08-13 the build failed both in the sandbox and with network permission; the latter exhausted retries fetching Geist Mono. Tests execute 351/356 successfully, but the build remains non-deterministic and unverified. | Self-host/pin the required font files (and reduce duplicate imports), then run `cd platform && npm ci && npm run build` in required CI. Blocks calling the migration done. |
 | **M3** | **Three tenant configs were never committed to the old repo and have never been reviewed.** | `platform/lib/tenants/polishStone.js`, `nowakStoneworks.js`, `dziuraStoneTile.js` are imported by `lib/store.js` — the app does not boot without them — yet they were untracked in `content-checkout-funnel`. They are committed here, so this repo boots and the archive does not. | Read them before trusting them; confirm no client data or credentials are embedded. |
 | **M4** | **~30 branches and open PR #2 stayed in the archive.** | This repo starts from one squashed commit. `feature/platform-landing` had unpushed commits; PR #2 (AI prospect enrichment) was never merged or closed. | When a feature looks missing, read it out of the archive and re-apply as new work here. Never add the old repo as a remote. |
 | **M5** | **Stale `.git/index.lock` is a recurring failure mode — third occurrence.** | `dgtl-repo/.git/index.lock` + `HEAD.lock` (07-24 22:38) stranded this repo's bootstrap commit, leaving `main` with zero commits despite a complete tree. `content-checkout-funnel/.git/index.lock` dates to **07-19** and blocked that repo for six days — which is why the 07-19/07-20 auto-sync brain edits are still staged-but-uncommitted there. | Check `ls .git/*.lock` before any commit run. If a commit fails, clear the stale lock rather than retrying blindly — a silent retry loop is how six days were lost. |
