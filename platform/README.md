@@ -43,6 +43,9 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
   funding survey), rendered by the template the tenant selects
 - `/admin/login` — DGTL-branded sign-in
 - `/admin` — the tabbed admin shell
+- `/companies`, `/contacts`, `/opportunities` — the routed DGTL Core commercial
+  graph, with detail routes at `/<entity>/[id]`. The legacy admin remains available
+  while workflows migrate.
 
 The admin shell has eight tabs: **pipeline**, **funding**, **prospecting**,
 **accounts**, **outreach**, **calls**, **tenants**, **team**. Its styling lives in
@@ -81,6 +84,10 @@ Run in order by `npm run migrate`; each file is idempotent.
 | `006_enterprise_prospecting.sql` | Account-based prospecting: target accounts and account campaigns |
 | `007_media_assets.sql` | Team-scoped media library referenced from tenant config by id |
 | `008_outreach_drip.sql` | Drip sequences and scheduled sends on outreach campaigns/queue |
+| `009_core_domain.sql` | Additive DGTL Core graph, artifact/job/external-link registry, safe legacy backfill, and reversible import staging |
+
+The Core architecture, legacy mapping, and spreadsheet-import contract are documented
+in [`docs/architecture/dgtl-core-phase-1.md`](../docs/architecture/dgtl-core-phase-1.md).
 
 ## Configuration
 
