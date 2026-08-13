@@ -77,11 +77,12 @@ two stray `.DS_Store` files, deliberately excluded.
 | | tests | pass | fail |
 |---|---|---|---|
 | origin `content-checkout-funnel` | 356 | 350 | 6 |
-| migrated `platform/` | 356 | 351 | 5 |
+| migrated `platform/` at migration | 356 | 351 | 5 |
+| migrated `platform/` after 2026-08-13 audit fix | 356 | 356 | 0 |
 
-The 5 failures are identical pre-existing ones in both repos and are all network-dependent
-(website scraping and lead-enrichment tests that need outbound HTTP, which the build sandbox
-blocks). No failure was introduced by the migration.
+The five inherited failures stubbed `fetch` but still performed real DNS through the SSRF guard,
+so the mock was never reached. The enrichment path now accepts an injectable DNS lookup for tests;
+production still uses the real SSRF-validated resolver. The full suite is deterministic and green.
 
 **Platform build — VERIFIED 2026-08-13.** On the merged local `main`, Next 15.5.23 compiled,
 type-checked, generated all 49 static pages, collected traces, and exited 0:
@@ -105,8 +106,6 @@ use where. No live credential is committed.
    testimonial claims with the owner before publication.
 5. Consider `lib/integrations/secEdgar.js` — its default `SEC_EDGAR_USER_AGENT` still carries an
    origin-repo contact string. Changing it is a behaviour change, so it was left alone.
-6. Once this repo is confirmed working, plan the removal of the migrated directories from
-   `content-checkout-funnel` as its own PR.
 
 ---
 

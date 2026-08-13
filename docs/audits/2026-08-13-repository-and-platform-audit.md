@@ -27,8 +27,9 @@ Current release confidence is **red** for the main platform and **amber** for th
 - The required production build completed on merged local `main` with Next 15.5.23: compilation,
   type checks, 49 static pages, optimization, and trace collection all passed. It still fetches seven
   Google-hosted font families, so reproducibility depends on a third-party endpoint.
-- The platform tests execute 356 cases, but five network-dependent enrichment tests fail. Treating
-  these as permanently “known” failures makes the gate non-enforcing.
+- The inherited platform test failures were test-isolation defects, not live integration tests:
+  mocked `fetch` calls still triggered real DNS in the SSRF guard. An injectable lookup seam now
+  keeps production validation intact and the suite passes 356/356 without network access.
 - A non-breaking dependency refresh reduced the production audit from eight vulnerabilities to three
   high-severity advisories. Removing the final three requires a deliberate Next.js 16 migration or
   an explicitly supported mitigation.
@@ -262,8 +263,8 @@ Remote-only historical/deployment branches should be archived or deleted only af
 1. Update top-level documentation for `audits/`, `ops/`, current domains, and actual deploy ownership.
 2. Resolve the five Hotels pitch links after identifying their intended target, and supply or
    explicitly retire the three pending ESCOTT assets.
-3. Separate network integration tests from deterministic unit tests. A known failure should be skipped
-   with an explicit condition or supplied a fixture; it should not make the primary gate permanently red.
+3. Keep the new SSRF DNS injection seam test-only and preserve dedicated real-network smoke tests
+   outside the deterministic unit gate.
 4. Add CODEOWNERS or an equivalent ownership map for platform, apps, publishing, deploy, sites,
    audits, and ops.
 5. Adopt branch retention: delete merged temporary branches after a short grace period; label parked
@@ -323,7 +324,8 @@ Commands run during this audit:
 | `python3 tools/check-links.py` (after safe link fixes) | exit 0; `checked=1054 missing=0 pending=3 root_absolute=5` |
 | `cd apps/creator-intake && php tests/run.php` | `26 passed, 0 failed` |
 | PHP lint on new creator diagnostics/status/mailer | no syntax errors |
-| `cd platform && npm test` | 356 total; 351 pass, 5 network-dependent enrichment failures; exit 1 |
+| `cd platform && npm test` (initial) | 356 total; 351 pass, 5 DNS-dependent fixture failures; exit 1 |
+| `cd platform && npm test` (after lookup injection fix) | exit 0; `356 passed, 0 failed` |
 | `cd platform && npm run build` (sandbox) | failed resolving Google font hosts |
 | `cd platform && npm run build` (network permitted, first attempt) | failed after retries fetching Geist Mono from `fonts.gstatic.com` |
 | `cd platform && npm run build` (merged `main`, final) | exit 0; Next 15.5.23 compiled, type-checked, generated 49/49 static pages, and collected build traces |
@@ -335,8 +337,9 @@ Commands run during this audit:
 | JSON validation for pitch manifests/index, audit ledger, and ops workflows | valid JSON |
 | repository object check `git fsck --full --no-reflogs` | no corruption; four dangling commits and two dangling trees, recoverable through normal Git retention until garbage collection |
 
-The build gate is green. The overall release gate is not: five tests and three high production
-dependency advisories remain, so this audit does not claim the current platform is production-ready.
+The test and build gates are green. The overall release gate is not: three high production
+dependency advisories and the absence of required CI remain, so this audit does not claim the
+current platform is production-ready.
 
 ## Definition of success for the next release
 

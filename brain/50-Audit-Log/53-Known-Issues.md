@@ -22,9 +22,10 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
   and applying non-breaking audit fixes. They are transitive PostCSS and Sharp advisories through
   Next 15; npm proposes Next 16.3.0 as a breaking fix. Test a deliberate Next 16 migration rather
   than running `npm audit fix --force` on the production line.
-- **The primary platform test command is permanently red** (351/356): five enrichment tests require
-  network access. Move them to an explicitly conditioned integration suite or give them deterministic
-  fixtures so the unit/release gate can become trustworthy.
+- ✅ **Primary platform test gate repaired 2026-08-13.** Five enrichment fixtures mocked `fetch` but
+  not the SSRF guard's preceding DNS lookup. The lookup is now injectable through the enrichment
+  path, tests use a fixed public address, production continues to resolve and validate real DNS, and
+  the complete suite passes 356/356.
 - **Worklog v2 passes 375/375 tests but is not production-migration verified.** Back up the live
   database, dry-run schema migration and restore against a production-shaped copy, then extend
   `apps/worklog-mcp` for the new client, shift, reconciliation, and digest endpoints before deploy.

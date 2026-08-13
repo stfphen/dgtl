@@ -3,6 +3,8 @@ import test from "node:test";
 import { enrichWebsite } from "../lib/enrichment/website.js";
 import { getDomainFromUrl, isHttpUrl, normalizeUrl, sameDomain } from "../lib/enrichment/url.js";
 
+const PUBLIC_LOOKUP = async () => [{ address: "93.184.216.34", family: 4 }];
+
 function htmlResponse(html, url, contentType = "text/html; charset=utf-8") {
   return {
     ok: true,
@@ -99,7 +101,8 @@ test("extracts title, meta description, contacts, social links, and priority pag
   try {
     const result = await enrichWebsite({
       url: "example.com",
-      business: "Example Dental"
+      business: "Example Dental",
+      lookup: PUBLIC_LOOKUP
     });
 
     assert.equal(result.ok, true);
@@ -161,7 +164,8 @@ test("handles timeout and fetch failure gracefully with structured output", asyn
   try {
     const result = await enrichWebsite({
       url: "https://example.com",
-      timeoutMs: 5
+      timeoutMs: 5,
+      lookup: PUBLIC_LOOKUP
     });
 
     assert.equal(result.ok, false);
@@ -196,7 +200,8 @@ test("does not throw on invalid HTML and still returns structured partial data",
 
   try {
     const result = await enrichWebsite({
-      url: "https://example.com"
+      url: "https://example.com",
+      lookup: PUBLIC_LOOKUP
     });
 
     assert.equal(result.ok, true);
