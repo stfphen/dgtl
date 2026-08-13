@@ -24,13 +24,22 @@ function admin_head(string $title): void
         . '<link rel="stylesheet" href="../assets/intake.css"></head><body>';
 }
 
-function admin_nav(): void
+/** @param string $active which nav item to mark current: queue|status */
+function admin_nav(string $active = 'queue'): void
 {
+    $link = function (string $key, string $href, string $label) use ($active): string {
+        $style = $key === $active ? ' style="color:var(--gold)"' : '';
+        $aria = $key === $active ? ' aria-current="page"' : '';
+        return '<a class="plain" href="' . $href . '"' . $style . $aria . '>' . $label . '</a>';
+    };
+
     echo '<header class="nav glass-bar"><div class="nav-inner">'
         . '<a class="nav-brand" href="index.php" aria-label="Intake review — queue">'
         . '<img class="wordmark" src="../assets/img/logo-white-gold.svg" alt="DGTL" width="70" height="26">'
         . '<span class="kicker">Intake Review</span></a>'
-        . '<nav class="nav-actions"><a class="plain" href="index.php">Queue</a>'
+        . '<nav class="nav-actions">'
+        . $link('queue', 'index.php', 'Queue')
+        . $link('status', 'status.php', 'Status')
         . '<form method="post" action="logout.php" style="display:inline">'
         . '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">'
         . '<button class="btn btn-ghost btn-sm" type="submit">Sign out</button></form>'

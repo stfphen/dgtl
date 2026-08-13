@@ -42,3 +42,6 @@ apps/dgtl-os/local/knowledge/knowledge.json.local
 # creator-intake local dev artifacts
 apps/creator-intake/*.sqlite
 apps/creator-intake/dev-mail/
+
+# Local Worklog v2 handoff/review bundle; canonical source lives in apps/worklog/
+apps/dgtl-worklog-demo/

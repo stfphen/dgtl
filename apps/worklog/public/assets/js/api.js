@@ -67,9 +67,24 @@ export const api = {
   stopTimer: () => call('POST', '/api/timer/stop'),
   discardTimer: () => call('POST', '/api/timer/discard'),
 
+  clockIn: (data) => call('POST', '/api/shift/in', data),
+  clockOut: () => call('POST', '/api/shift/out'),
+  // Attendance over a range. The bootstrap payload carries only today's
+  // spells, and PATCH/DELETE need an id from somewhere — without this, a
+  // clock-out forgotten on Monday cannot be reached from any screen on Tuesday.
+  shifts: (params) => call('GET', `/api/shifts${qs(params)}`),
+  shiftSheet: (id) => call('GET', `/api/shift/${id}`),
+  updateShift: (id, patch) => call('PATCH', `/api/shift/${id}`, patch),
+  deleteShift: (id) => call('DELETE', `/api/shift/${id}`),
+  disposeGap: (id, data) => call('POST', `/api/shift/${id}/dispose`, data),
+
   suggestions: () => call('GET', '/api/suggestions'),
 
   report: (params) => call('GET', `/api/report${qs(params)}`),
+  clients: () => call('GET', '/api/clients'),
+  // The week's facts for one client. Everything the digest states arrives with
+  // the row ids behind it, so nothing has to be recomputed — or trusted — here.
+  digest: (params) => call('GET', `/api/digest${qs(params)}`),
 
   users: () => call('GET', '/api/users'),
   createUser: (data) => call('POST', '/api/users', data),

@@ -28,8 +28,10 @@ site/               ← the webroot
   assets/logos.js   data-URL brand assets (generated — see below)
   api/*.php         JSON endpoints (draft, magic-link, resume, presign,
                     confirm-upload, delete-media, submit, health)
-  admin/*.php       session-authed review queue, detail, actions, export
-  lib/*.php         shared PHP (fields registry, validation, R2 SigV4, mailer…)
+  admin/*.php       session-authed review queue, detail, actions, export,
+                    plus status.php — live self-check (see Troubleshooting)
+  lib/*.php         shared PHP (fields registry, validation, R2 SigV4, mailer,
+                    diagnostics…)
 tests/run.php       unit suites (validation, SigV4 vectors, tokens, limiter)
 tests/smoke.sh      end-to-end over HTTP (local php -S or production)
 ```
@@ -126,6 +128,40 @@ python3 engine/dgtl-brand-kit/scripts/logo-data-urls.py   # then rebuild the JSO
 
 The export JSON is intentionally generator-agnostic: media kits, articles and
 portfolio pages can consume the same file.
+
+## Troubleshooting — `/admin/status.php`
+
+**Go here first** whenever submissions or emails seem to be missing. The page runs
+its checks live on the server and needs no SSH: it reports which database the app
+is *actually* writing to (name and driver, not what `.env` claims), whether that
+connection can write, whether SMTP will authenticate, where drafts are stalling,
+and the last twenty audit-log entries. `lib/diagnostics.php` holds the checks. It
+runs one reversible database write probe (insert then delete); the other checks
+are read-only apart from the explicit "send test email" button. None of them
+ever print a secret.
+
+Three failures cause almost every "it's silently broken" report, and the page names
+all three:
+
+- **`APP_ENV` is not exactly `production`.** `is_dev()` then returns true, which
+  swaps MySQL for the local SQLite file **and** diverts every email to
+  `dev-mail/*.eml`. One wrong word explains both symptoms at once.
+- **`APP_URL`'s host ≠ the host being served.** `require_json_post()` compares the
+  browser's Origin against `APP_URL` and returns `403 bad_origin`, so drafts and
+  submits die before they reach the database. This bites whenever the app is moved
+  to a new domain and `.env` isn't followed. **The live deployment is
+  `dgtl.press`**, not the `join.dgtlinfluence.com` this README was written against —
+  `APP_URL`, the canonical/OG tags in `site/*.html`, and the `deploy.sh` domain
+  default all need to agree with whatever is actually being served.
+- **SMTP silently skipped.** With `SMTP_PASS` empty, `smtp_submit()` logs and
+  returns false so the submission still succeeds; and `ADMIN_NOTIFY_EMAIL` being
+  unset means *you* are never told about a new application even when applicant
+  receipts are going out fine. The status page probes SMTP for real (TLS connect +
+  `AUTH LOGIN`, no message sent) and names the stage that failed —
+  `mail_last_error()` carries the server's own words instead of a bare `false`.
+
+The queue page (`admin/index.php`) carries the headline counts and links here when
+the database is empty or the app is in dev mode.
 
 ## Security posture
 

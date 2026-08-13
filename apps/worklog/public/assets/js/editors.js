@@ -147,6 +147,12 @@ export function taskEditor(task = null, defaults = {}, onDone) {
     value: task?.estimateMinutes ? hm(task.estimateMinutes, { zero: '' }) : '',
   });
   const dueInput = h('input', { class: 'input', type: 'date', value: task?.dueDate || defaults.dueDate || '' });
+  const repeatSel = select(
+    [{ value: '', label: 'Does not repeat' },
+      { value: 'weekly', label: 'Weekly' },
+      { value: 'monthly', label: 'Monthly' }],
+    { value: task?.recurrence || '' },
+  );
   const notesInput = h('textarea', { class: 'textarea', maxlength: '4000', placeholder: 'Detail, links, context…' },
     task?.notes || '');
   const errLine = h('div', { class: 'err', hidden: true });
@@ -168,6 +174,8 @@ export function taskEditor(task = null, defaults = {}, onDone) {
         field('Estimate', estInput, 'Optional — compared against logged time'),
         field('Due date', dueInput),
       ),
+      field('Repeats', repeatSel,
+        'Completing it creates the next one, stepped from the due date above'),
       field('Notes', notesInput),
       errLine,
     ],
@@ -198,6 +206,16 @@ export function taskEditor(task = null, defaults = {}, onDone) {
             titleInput.focus();
             return;
           }
+          // The server refuses this too — it has to, since it is the only thing
+          // guarding the database — but the refusal arrives as a toast over a
+          // dialog whose Due date field is the thing to fix. Said here, beside
+          // the field, with the dialog still open.
+          if (repeatSel.value && !dueInput.value) {
+            errLine.textContent = 'A repeating task needs a due date — that is what it repeats from.';
+            errLine.hidden = false;
+            dueInput.focus();
+            return;
+          }
           e.target.disabled = true;
           try {
             await saveTask(task?.id, {
@@ -208,6 +226,7 @@ export function taskEditor(task = null, defaults = {}, onDone) {
               priority: prioSel.value,
               estimateMinutes: estInput.value.trim() ? parseDuration(estInput.value) : null,
               dueDate: dueInput.value || null,
+              recurrence: repeatSel.value || null,
               notes: notesInput.value,
             });
             toast(editing ? 'Task updated' : 'Task added', 'success');

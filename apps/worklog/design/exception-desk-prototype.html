@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DGTL Worklog — Exception Desk prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* DGTL brand tokens — mirrored from apps/worklog/public/assets/tokens.css.
+   This prototype is a design artifact, not shipping code: it inlines the tokens
+   so it can be opened from disk. Shipping code must reference the stylesheet. */
+:root{
+  --bg:#000; --surface-1:#0a0a0a; --surface-2:#111; --surface-card:rgba(0,0,0,.45);
+  --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a; --text-ghost:#5a5a56;
+  --gold:#F0CF50; --gold-tan:#b3a06a; --gold-tint:rgba(240,207,80,.08); --gold-ring:rgba(240,207,80,.15);
+  --border:#2a2a2a; --border-subtle:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.4);
+  --success:#7BC47F; --success-tint:rgba(123,196,127,.10);
+  --warning:#E8A33D; --warning-tint:rgba(232,163,61,.10);
+  --error:#E5484D;   --error-tint:rgba(229,72,77,.10);
+  --info:#6E9FDB;    --info-tint:rgba(110,159,219,.10);
+  --chart-grid:#1c1c1c;
+  --r-control:7px; --r-card:16px; --r-pill:9999px;
+  --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 24px 80px}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan)}
+.dim{color:var(--text-dim)} .muted{color:var(--text-muted)}
+.mono{font-variant-numeric:tabular-nums}
+
+/* header */
+header.bar{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--border)}
+header.bar h1{font-size:30px;font-weight:800;letter-spacing:-.6px;color:#fff}
+header.bar p{font-size:14px;color:var(--text-dim);margin-top:2px}
+.spacer{flex:1}
+.stamp{font-size:11px;color:var(--text-ghost);text-align:right;line-height:1.6}
+
+/* tabs */
+.tabs{display:flex;gap:6px;margin:22px 0 26px;flex-wrap:wrap}
+.tab{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font);
+     font-weight:600;font-size:13px;padding:9px 16px;border-radius:var(--r-pill);cursor:pointer;transition:.15s}
+.tab:hover{color:#fff;border-color:#3a3a3a}
+.tab[aria-selected="true"]{background:var(--gold);border-color:var(--gold);color:#000}
+.panel[hidden]{display:none}
+
+/* cards / kpis */
+.card{background:var(--surface-card);border:1px solid var(--border);border-radius:var(--r-card);padding:22px}
+.grid{display:grid;gap:14px}
+.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:860px){.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi .label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
+.kpi .value{font-size:30px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;margin-top:6px;line-height:1.1}
+.kpi .foot{font-size:12px;color:var(--text-dim);margin-top:6px}
+.kpi.alarm .value{color:var(--error)}
+.kpi.good .value{color:var(--success)}
+.kpi.hero{border-color:rgba(240,207,80,.35);background:var(--gold-tint)}
+.kpi.hero .value{color:var(--gold)}
+
+/* exception queue */
+.queue{margin-top:26px;border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+.queue-head{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.queue-head h2{font-size:15px;font-weight:700;color:#fff}
+.count-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:var(--r-pill);background:var(--error-tint);color:var(--error)}
+.count-pill.clear{background:var(--success-tint);color:var(--success)}
+
+.ex{border-bottom:1px solid var(--chart-grid);transition:opacity .3s,transform .3s}
+.ex:last-child{border-bottom:0}
+.ex.resolved{opacity:.35}
+.ex-top{display:flex;align-items:flex-start;gap:14px;padding:16px 20px;cursor:pointer;background:none;border:0;width:100%;text-align:left;font-family:var(--font);color:inherit}
+.ex-top:hover{background:#0f0f0f}
+.ex-top:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--gold-ring)}
+.sev{flex:0 0 auto;width:8px;height:8px;border-radius:50%;margin-top:8px}
+.sev.high{background:var(--error);box-shadow:0 0 0 4px var(--error-tint)}
+.sev.med{background:var(--warning);box-shadow:0 0 0 4px var(--warning-tint)}
+.sev.low{background:var(--info);box-shadow:0 0 0 4px var(--info-tint)}
+.ex-body{flex:1;min-width:0}
+.ex-title{font-size:14.5px;font-weight:700;color:#fff}
+.ex-sub{font-size:12.5px;color:var(--text-dim);margin-top:4px}
+.ex-cost{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--text-muted);text-align:right;font-variant-numeric:tabular-nums;padding-top:2px}
+.ex-cost small{display:block;font-weight:500;color:var(--text-ghost);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.chev{flex:0 0 auto;color:var(--text-ghost);font-size:12px;padding-top:4px;transition:transform .2s}
+.ex[open-state="1"] .chev{transform:rotate(90deg)}
+
+.ex-detail{padding:0 20px 20px 56px;display:none}
+.ex[open-state="1"] .ex-detail{display:block}
+.evidence{background:var(--surface-1);border:1px solid var(--border);border-left:3px solid var(--gold);
+          border-radius:var(--r-control);padding:12px 14px;font-size:12.5px;color:var(--text-muted);margin-bottom:14px}
+.evidence code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--gold-tan)}
+.fixes{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-weight:700;font-size:13px;
+     border-radius:var(--r-control);padding:10px 16px;border:1px solid transparent;cursor:pointer;transition:.15s;line-height:1}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
+.btn-secondary:hover{background:var(--surface-2)}
+.btn-ghost{background:transparent;color:var(--text-dim);font-weight:500}
+.btn-ghost:hover{color:#fff}
+
+/* the honest stop dialog */
+.stage{display:flex;justify-content:center;padding:34px 0}
+.dialog{width:100%;max-width:600px;background:var(--surface-1);border:1px solid var(--border);
+        border-radius:var(--r-card);box-shadow:0 6px 6px rgba(0,0,0,.3),0 0 20px rgba(0,0,0,.15);overflow:hidden}
+.dialog-head{padding:22px 24px 18px;border-bottom:1px solid var(--border)}
+.dialog-head h3{font-size:19px;font-weight:800;color:#fff;margin-top:8px}
+.dialog-head p{font-size:13px;color:var(--text-dim);margin-top:6px}
+.dialog-body{padding:22px 24px}
+.tl{position:relative;height:74px;margin:6px 0 22px;background:var(--chart-grid);border-radius:var(--r-control);overflow:hidden}
+.tl-seg{position:absolute;top:0;bottom:0}
+.tl-seg.worked{background:var(--gold);opacity:.85}
+.tl-seg.dark{background:repeating-linear-gradient(45deg,#1c1c1c,#1c1c1c 6px,#141414 6px,#141414 12px)}
+.tl-lab{position:absolute;bottom:7px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.tl-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.25)}
+.tl-tick span{position:absolute;top:6px;left:6px;font-size:10px;color:var(--text-muted);white-space:nowrap}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid var(--border);
+     border-radius:var(--r-control);cursor:pointer;margin-bottom:9px;transition:.15s;background:var(--surface-2)}
+.opt:hover{border-color:#3a3a3a}
+.opt.on{border-color:var(--gold);background:var(--gold-tint)}
+.opt input{margin-top:3px;accent-color:var(--gold)}
+.opt .t{font-size:14px;font-weight:700;color:#fff}
+.opt .s{font-size:12.5px;color:var(--text-dim);margin-top:3px}
+.opt .amt{margin-left:auto;font-size:14px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dialog-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface-2)}
+.outcome{font-size:12.5px;color:var(--text-dim)}
+.outcome b{color:var(--gold)}
+
+/* screen map */
+.map{display:grid;gap:14px;grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.map{grid-template-columns:1fr}}
+.node{border:1px solid var(--border);border-radius:var(--r-card);padding:18px;background:var(--surface-card)}
+.node.new{border-color:var(--gold);background:var(--gold-tint)}
+.node.gone{border-style:dashed;opacity:.55}
+.node h4{font-size:14px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px}
+.node .tagx{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:var(--r-pill)}
+.tag-new{background:var(--gold-tint);color:var(--gold)}
+.tag-keep{background:var(--info-tint);color:var(--info)}
+.tag-gone{background:var(--error-tint);color:var(--error)}
+.node ul{margin-top:10px;padding-left:16px}
+.node li{font-size:12.5px;color:var(--text-muted);margin-bottom:5px}
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan);margin:26px 0 12px}
+.note{font-size:12.5px;color:var(--text-ghost);margin-top:18px;line-height:1.7}
+table.model{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+table.model th{background:var(--surface-2);color:var(--text-dim);font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.1em;font-weight:600;text-align:left;padding:10px 14px}
+table.model td{padding:11px 14px;border-top:1px solid var(--chart-grid);vertical-align:top}
+table.model code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--gold)}
+.wrapt{border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1 class="sr-only">DGTL Worklog Exception Desk prototype — an interactive design artifact showing a proposed home screen built from real worklog data, a runaway-timer resolution dialog, and a screen map.</h1>
+
+<header class="bar">
+  <div>
+    <div class="eyebrow">DGTL Worklog &#183; office.dgtl.at &#183; design prototype</div>
+    <h1>Exception Desk</h1>
+    <p>The screen that replaces the dashboard. It is empty when nothing is wrong.</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="stamp">
+    Built from live data via the worklog MCP bridge<br>
+    9 entries &#183; 30h 05m &#183; 71 open tasks &#183; 2026-08-10<br>
+    Not shipping code &#8212; a reference for the build
+  </div>
+</header>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true" data-panel="p1">Exception Desk</button>
+  <button class="tab" role="tab" aria-selected="false" data-panel="p2">The Honest Stop</button>
+  <button class="tab" role="tab" aria-selected="false" data-panel="p3">Screen map &amp; model</button>
+</div>
+
+<!-- ============================= PANEL 1 ============================= -->
+<section class="panel" id="p1" role="tabpanel">
+
+  <div class="grid cols-4">
+    <div class="card kpi hero">
+      <div class="label">Needs a decision</div>
+      <div class="value" id="k-open">6</div>
+      <div class="foot" id="k-open-foot">things only a human can settle</div>
+    </div>
+    <div class="card kpi alarm">
+      <div class="label">Time at risk</div>
+      <div class="value" id="k-risk">25h 56m</div>
+      <div class="foot">of 30h 05m logged &#8212; 86%</div>
+    </div>
+    <div class="card kpi">
+      <div class="label">Unattributable</div>
+      <div class="value">3h 38m</div>
+      <div class="foot">no project &#183; cannot be invoiced</div>
+    </div>
+    <div class="card kpi good">
+      <div class="label">Signed &amp; billable</div>
+      <div class="value" id="k-clean">1h 44m</div>
+      <div class="foot">what you could invoice today</div>
+    </div>
+  </div>
+
+  <div class="queue">
+    <div class="queue-head">
+      <h2>Exceptions</h2>
+      <span class="count-pill" id="pill">6 open</span>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost" id="reset">Reset prototype</button>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <p class="note">
+    Every row above is a real condition in the database right now, found through the MCP bridge &#8212; nothing here is
+    illustrative. The design claim is narrow: this list is a <b>work queue</b>, not a filter and not a dashboard. A row
+    only appears when a human decision is required, it carries the cost of leaving it alone, and it disappears when
+    settled. Sorting a table cannot do that; sorting tells you the order of things you already knew.
+  </p>
+</section>
+
+<!-- ============================= PANEL 2 ============================= -->
+<section class="panel" id="p2" role="tabpanel" hidden>
+  <div class="stage">
+    <div class="dialog">
+      <div class="dialog-head">
+        <div class="eyebrow">Timer stopped &#183; presence gap detected</div>
+        <h3>This timer ran for 22h&#8201;38m</h3>
+        <p>You were last seen in the app at <b>23:12</b> on Sunday. The timer kept running for another 18h&#8201;24m
+           after that. Pick what actually happened &#8212; nothing is written until you do.</p>
+      </div>
+      <div class="dialog-body">
+        <div class="tl" aria-hidden="true">
+          <div class="tl-seg worked" style="left:0;width:18.4%"></div>
+          <div class="tl-seg dark" style="left:18.4%;width:81.6%"></div>
+          <div class="tl-tick" style="left:0"><span>18:58 Sun &#183; start</span></div>
+          <div class="tl-tick" style="left:18.4%"><span>23:12 &#183; last seen</span></div>
+          <div class="tl-tick" style="left:99.6%"></div>
+          <div class="tl-lab" style="left:10px;color:#000">proven</div>
+          <div class="tl-lab" style="left:24%;color:var(--text-ghost)">no evidence of presence &#8212; 18h 24m</div>
+        </div>
+
+        <label class="opt on"><input type="radio" name="stop" checked data-min="254" data-lab="truncated to last proven presence">
+          <span><span class="t">Truncate to last proven presence</span>
+          <span class="s">Ends the entry at 23:12 Sunday. The 18h 24m gap is discarded.</span></span>
+          <span class="amt">4h 14m</span></label>
+
+        <label class="opt"><input type="radio" name="stop" data-min="1358" data-lab="kept in full, signed by you">
+          <span><span class="t">Keep it all &#8212; I really did work through</span>
+          <span class="s">Splits into two rows at local midnight so no day exceeds 24h. Requires your signature.</span></span>
+          <span class="amt">22h 38m</span></label>
+
+        <label class="opt"><input type="radio" name="stop" data-min="0" data-lab="discarded entirely">
+          <span><span class="t">Discard &#8212; I forgot to stop it</span>
+          <span class="s">Writes nothing. The timer never existed.</span></span>
+          <span class="amt">0h 00m</span></label>
+
+        <label class="opt"><input type="radio" name="stop" data-min="-1" data-lab="left provisional for later">
+          <span><span class="t">Leave provisional, decide later</span>
+          <span class="s">Stays out of every KPI, budget bar and invoice until signed. Sits on the Exception Desk.</span></span>
+          <span class="amt">held</span></label>
+      </div>
+      <div class="dialog-foot">
+        <div class="outcome" id="outcome">FlockaMG Music Video will show <b>4h 14m</b> &#183; 85% of budget &#183; non-billable</div>
+        <span class="spacer"></span>
+        <button class="btn btn-primary">Sign &amp; write</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    The mechanism is one column. <code style="color:var(--gold)">timers.last_seen_at</code> is stamped by any authenticated
+    request from that user while their timer runs &#8212; no desktop agent, no idle daemon, no new permission. On stop, the
+    server compares the gap between last proven presence and the stop time; when it exceeds a threshold it writes the entry
+    as <code style="color:var(--gold)">state = 'provisional'</code> and hands the human this dialog. Presence is proven,
+    not absence detected &#8212; which matters, because the browser tab is not where the work happens.
+    <br><br>
+    The honest limit: if you spend the evening in Figma with the worklog tab closed, presence looks identical to absence.
+    That is why the default is a choice, not an auto-truncation, and why &#8220;keep it all&#8221; is one click.
+  </p>
+</section>
+
+<!-- ============================= PANEL 3 ============================= -->
+<section class="panel" id="p3" role="tabpanel" hidden>
+
+  <div class="section-label">Screens &#8212; what changes</div>
+  <div class="map">
+    <div class="node new"><h4>Exception Desk <span class="tagx tag-new">new &#183; becomes home</span></h4>
+      <ul><li>Only rows needing a human decision</li><li>Each carries what it costs to ignore</li>
+      <li>Inline resolution, no navigation</li><li>Empty state is the goal, not a failure</li></ul></div>
+    <div class="node"><h4>Quick log <span class="tagx tag-keep">unchanged</span></h4>
+      <ul><li>Its one rule stays: starting the clock never waits on a decision</li>
+      <li>Stopping gains the Honest Stop dialog</li></ul></div>
+    <div class="node"><h4>Today <span class="tagx tag-keep">unchanged</span></h4>
+      <ul><li>The daily loop and the ring stay exactly as they are</li>
+      <li>Provisional entries render struck-through, excluded from the ring</li></ul></div>
+    <div class="node"><h4>Tasks <span class="tagx tag-keep">one addition</span></h4>
+      <ul><li>Starting a timer from a task binds <code>task_id</code></li>
+      <li>Fixes: 71 open tasks, 0 entries linked to any of them</li></ul></div>
+    <div class="node"><h4>Projects <span class="tagx tag-gone">KPI row deleted</span></h4>
+      <ul><li>Three of the audit&#8217;s seven defects live in 17 lines of KPI code</li>
+      <li>Eight rows &#8212; the eye already answers what those KPIs ask</li>
+      <li>Budget bar gains an overflow segment past 100%</li></ul></div>
+    <div class="node"><h4>Reports <span class="tagx tag-keep">unchanged shape</span></h4>
+      <ul><li>Stops disagreeing with Projects because there is one billable rule</li>
+      <li>Provisional time reported separately, never silently included</li></ul></div>
+  </div>
+
+  <div class="section-label">Model &#8212; the smallest change that carries it</div>
+  <div class="wrapt">
+  <table class="model">
+    <thead><tr><th>Table</th><th>Change</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>timers</code></td><td>add <code>last_seen_at TEXT</code></td>
+        <td>Presence is proven by any authenticated request while the timer runs. One column, no agent.</td></tr>
+      <tr><td><code>time_entries</code></td><td>add <code>state TEXT NOT NULL DEFAULT 'signed'</code><br>&#8212; <code>'provisional' | 'signed'</code></td>
+        <td>Nothing provisional reaches a KPI, a budget bar or an invoice. Gives the Exception Desk its queue.</td></tr>
+      <tr><td><code>time_entries</code></td><td><code>billable</code> becomes <code>billable_override INTEGER NULL</code></td>
+        <td>Billability is derived from the project unless explicitly overridden &#8212; obeying the schema&#8217;s own
+            stated law that derived values are computed at read time and never stored. This is what makes 13% and 100% agree.</td></tr>
+      <tr><td><code>time_entries</code></td><td>split rows at local midnight on write</td>
+        <td>An interval that crosses midnight becomes one row per day, so no calendar day can report more than 24 hours.</td></tr>
+      <tr><td><code>projects</code></td><td>add <code>contact TEXT</code>; leave <code>client</code> alone</td>
+        <td>The <code>client</code> column already holds contact names (Michael, Max Gregan, Elliot). Add the real field;
+            do not rename an occupied one in place.</td></tr>
+      <tr><td><code>projects</code></td><td>no <code>parent_id</code> yet</td>
+        <td>Group on the <code>code</code> prefix &#8212; 111 &#8594; 111-A&#8230;D, 222, 333. The hierarchy is already
+            authored by hand and correct; validating the shape costs one line and no migration.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="note">
+    Sequence: derived billability and the Honest Stop ship together as one commit, because the Honest Stop writes entries
+    and there is no point writing new ones under the old billable rule. The Exception Desk is built on top &#8212; it needs
+    <code>state</code> to exist before it has a queue. Everything else is independent.
+  </p>
+</section>
+
+</div>
+
+<script>
+/* ---- tabs ---- */
+document.querySelectorAll('.tab').forEach(function (t) {
+  t.addEventListener('click', function () {
+    document.querySelectorAll('.tab').forEach(function (x) { x.setAttribute('aria-selected', 'false'); });
+    document.querySelectorAll('.panel').forEach(function (p) { p.hidden = true; });
+    t.setAttribute('aria-selected', 'true');
+    document.getElementById(t.dataset.panel).hidden = false;
+  });
+});
+
+/* ---- exception queue, seeded from the live database ---- */
+var EXCEPTIONS = [
+  { id: 'runaway', sev: 'high', title: 'A timer ran for 22h 38m and was written in full',
+    sub: 'entry #8 · FlockaMG Music Video · started 18:58 Sun, stopped 17:36 Mon',
+    cost: '1,358 min', costLab: 'at risk',
+    ev: 'Verified: <code>started_at 2026-08-09T18:58:23Z</code> → <code>ended_at 2026-08-10T17:36:23Z</code>, <code>source: timer</code>. This single row is 75% of every minute in the database and dated entirely to 2026-08-09, producing a 22.7-hour calendar day. <code>api.mjs:147</code> computes end minus start with no cap and no presence check. <b>The app already knows this is invalid:</b> the manual-entry route bounds minutes with <code>{ min: 1, max: 24*60 }</code> at <code>api.mjs:498</code>. A value the form would have rejected walks straight in through the timer.',
+    fixes: ['Open the Honest Stop dialog', 'Split at midnight', 'Mark provisional'] },
+
+  { id: 'billable', sev: 'high', title: 'Billable share reports 13% here and 100% in Reports',
+    sub: 'FlockaMG is a non-billable project holding 1,358 billable minutes',
+    cost: '2 answers', costLab: 'same question',
+    ev: 'Projects sums <code>loggedMinutes</code> on projects whose project-level <code>billable</code> flag is set (<code>projects.js:63-66</code>). Reports and the MCP bridge sum <code>CASE WHEN e.billable = 1</code> off entries (<code>api.mjs:207-209</code>). All 9 entries carry <code>billable: 1</code> because <code>api.mjs:551</code> defaults it and the PATCH re-tag never re-derives it. Live MCP report right now returns <code>billablePct: 100</code>.',
+    fixes: ['Derive from project at read time', 'Add explicit override column'] },
+
+  { id: 'orphan', sev: 'high', title: 'Deleting TPB · A would silently orphan 17 tasks',
+    sub: 'the Delete button is live on it now — 0h logged, so nothing blocks it',
+    cost: '17 tasks', costLab: 'one click',
+    ev: 'The server blocks deletion when time is logged, but not when tasks exist, and <code>tasks.project_id</code> is <code>ON DELETE SET NULL</code> (<code>schema.sql:39</code>). The confirm text says &ldquo;Tasks keep their history but lose the project&rdquo; without naming a number.',
+    fixes: ['Put the count in the dialog', 'Block and offer reassignment'] },
+
+  { id: 'untagged', sev: 'med', title: '3h 38m of logged time has no project',
+    sub: '4 of 9 entries · entries #1, #2, #3, #4 · 12% of everything logged',
+    cost: '218 min', costLab: 'uninvoiceable',
+    ev: 'Live MCP data: four entries with <code>projectId: null</code>, notes &ldquo;Q&rdquo;, &ldquo;&rdquo;, &ldquo;&rdquo;, &ldquo;&rdquo;. The largest is 187 minutes. Nothing in the app ever asks about them again — they simply appear in reports as &ldquo;Unassigned&rdquo;.',
+    fixes: ['Assign in one pass', 'Write off as internal'] },
+
+  { id: 'tasklink', sev: 'med', title: 'No time entry is linked to any of the 71 open tasks',
+    sub: 'all 9 entries have taskId: null — the task list and the timer never touch',
+    cost: '71 / 0', costLab: 'tasks / linked',
+    ev: 'The two halves of the app share a database and nothing else. Task-level effort, estimate accuracy and per-workstream budgets are all uncomputable — not because the model lacks the column, but because nothing populates <code>time_entries.task_id</code>. Worse, <code>api.mjs:579</code> silently drops the task tag when the chosen project and task disagree and still returns 200, so a user who did tag a task can be told it worked when it did not.',
+    fixes: ['Bind task on timer start from Tasks', 'Suggest task at stop'] },
+
+  { id: 'overdue', sev: 'low', title: 'A task is due today and the report says 0 overdue',
+    sub: 'task #3 · Send Email 2 — Tuner, Waters, logo tiers · due 2026-08-10',
+    cost: 'due today', costLab: 'not surfaced',
+    ev: 'Three definitions of the same word. The Tasks <code>Due</code> filter is inclusive — <code>dueDate &lt;= today</code> (<code>tasks.js:17</code>). The overdue badge beside it is exclusive — <code>dueDate &lt; today</code> (<code>tasks.js:96</code>). The report counts <code>due_date &lt; ?</code> bound to the range END, not to today (<code>api.mjs:241,243</code>), so picking a past range end makes the divergence larger, not smaller. Three more tasks fall due tomorrow.',
+    fixes: ['Align the two definitions', 'Open the task'] }
+];
+
+var state = {};
+function reset() { EXCEPTIONS.forEach(function (e) { state[e.id] = { open: false, done: false }; }); paint(); }
+
+function paint() {
+  var list = document.getElementById('list');
+  list.innerHTML = '';
+  EXCEPTIONS.forEach(function (e) {
+    var st = state[e.id];
+    var row = document.createElement('div');
+    row.className = 'ex' + (st.done ? ' resolved' : '');
+    row.setAttribute('open-state', st.open ? '1' : '0');
+
+    var btn = document.createElement('button');
+    btn.className = 'ex-top';
+    btn.setAttribute('aria-expanded', st.open ? 'true' : 'false');
+    btn.innerHTML =
+      '<span class="sev ' + e.sev + '"></span>' +
+      '<span class="ex-body"><span class="ex-title">' + (st.done ? '✓ ' : '') + e.title + '</span>' +
+      '<span class="ex-sub">' + e.sub + '</span></span>' +
+      '<span class="ex-cost">' + e.cost + '<small>' + e.costLab + '</small></span>' +
+      '<span class="chev">▶</span>';
+    btn.addEventListener('click', function () { st.open = !st.open; paint(); });
+
+    var det = document.createElement('div');
+    det.className = 'ex-detail';
+    var ev = document.createElement('div');
+    ev.className = 'evidence';
+    ev.innerHTML = e.ev;
+    var fx = document.createElement('div');
+    fx.className = 'fixes';
+    e.fixes.forEach(function (f, i) {
+      var b = document.createElement('button');
+      b.className = 'btn ' + (i === 0 ? 'btn-primary' : 'btn-secondary');
+      b.textContent = f;
+      b.addEventListener('click', function () { st.done = true; st.open = false; paint(); });
+      fx.appendChild(b);
+    });
+    var skip = document.createElement('button');
+    skip.className = 'btn btn-ghost';
+    skip.textContent = 'Not a problem';
+    skip.addEventListener('click', function () { st.done = true; st.open = false; paint(); });
+    fx.appendChild(skip);
+
+    det.appendChild(ev); det.appendChild(fx);
+    row.appendChild(btn); row.appendChild(det);
+    list.appendChild(row);
+  });
+
+  var openCount = EXCEPTIONS.filter(function (e) { return !state[e.id].done; }).length;
+  var pill = document.getElementById('pill');
+  pill.textContent = openCount ? openCount + ' open' : 'Desk clear';
+  pill.className = 'count-pill' + (openCount ? '' : ' clear');
+  document.getElementById('k-open').textContent = String(openCount);
+  document.getElementById('k-open-foot').textContent =
+    openCount ? 'things only a human can settle' : 'nothing needs you — go and work';
+}
+
+document.getElementById('reset').addEventListener('click', reset);
+
+/* ---- honest stop dialog ---- */
+function hm(m) { return Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm'; }
+document.querySelectorAll('.opt input').forEach(function (r) {
+  r.addEventListener('change', function () {
+    document.querySelectorAll('.opt').forEach(function (o) { o.classList.remove('on'); });
+    r.closest('.opt').classList.add('on');
+    var m = Number(r.dataset.min);
+    var out = document.getElementById('outcome');
+    if (m === -1) {
+      out.innerHTML = 'Held off the books. FlockaMG shows <b>0h 00m</b> until you sign it — the row waits on the Exception Desk.';
+    } else if (m === 0) {
+      out.innerHTML = 'Nothing written. FlockaMG shows <b>0h 00m</b> · 0% of budget.';
+    } else {
+      var pct = Math.round((m / 300) * 100);
+      out.innerHTML = 'FlockaMG Music Video will show <b>' + hm(m) + '</b> · ' + pct + '% of budget · non-billable ('
+        + r.dataset.lab + ')';
+    }
+  });
+});
+
+reset();
+</script>
+</body>
+</html>

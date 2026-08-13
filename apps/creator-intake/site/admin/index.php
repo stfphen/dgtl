@@ -45,11 +45,40 @@ $tabs = [
     'rejected' => 'Rejected', 'draft' => 'Drafts', 'all' => 'All',
 ];
 
+// Headline counts, so the queue answers "is anything coming in?" at a glance.
+// Cheap enough to run on every load; the deep checks live on status.php.
+require __DIR__ . '/../lib/diagnostics.php';
+$stats = diag_stats();
+
 admin_head('Queue');
-admin_nav();
+admin_nav('queue');
 ?>
 <h1 style="color:#fff;font-size:24px;margin-bottom:4px">Review queue</h1>
 <p class="dim" style="font-size:14px">Submitted applications, oldest first. Opening one moves it to “in review”.</p>
+
+<div class="statband" style="margin:20px 0">
+  <div><div class="n"><?= (int) (($stats['by_status']['submitted'] ?? 0) + ($stats['by_status']['in_review'] ?? 0)) ?></div><div class="l">Awaiting review</div></div>
+  <div><div class="n"><?= (int) $stats['submitted_7d'] ?></div><div class="l">Submitted · 7d</div></div>
+  <div><div class="n"><?= (int) ($stats['by_status']['draft'] ?? 0) ?></div><div class="l">In progress</div></div>
+  <div><div class="n"><?= (int) $stats['total'] ?></div><div class="l">All time</div></div>
+</div>
+
+<?php if ($stats['error'] || $stats['total'] === 0 || is_dev()): ?>
+  <div class="card card-callout" style="margin:0 0 20px">
+    <p style="margin:0;font-size:13.5px;color:#c8c8c8">
+      <?php if ($stats['error']): ?>
+        The database could not be read. <a class="gold" href="status.php">Run the health checks</a>.
+      <?php elseif (is_dev()): ?>
+        <strong style="color:#fff">This server is running in dev mode.</strong> Submissions go to a
+        local SQLite file and emails are written to disk instead of sent.
+        <a class="gold" href="status.php">See what to change</a>.
+      <?php else: ?>
+        No applications in this database yet. If the site is live and taking submissions, they are
+        landing somewhere else — <a class="gold" href="status.php">check where the app is writing</a>.
+      <?php endif ?>
+    </p>
+  </div>
+<?php endif ?>
 
 <form class="filter-row" method="get">
   <?php foreach ($tabs as $key => $label): ?>
