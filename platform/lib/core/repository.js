@@ -319,14 +319,16 @@ export class PostgresCoreRepository {
 
   async createGenerationJob(record) {
     const result = await this.db.query(
-      `insert into generation_jobs
+       `insert into generation_jobs
        (id, team_id, tenant_id, company_id, opportunity_id, requested_tool,
-        requested_skill, brief, status, created_by, result_metadata, created_at, updated_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11::jsonb,$12,$13) returning *`,
+        requested_skill, brief, status, created_by, error_metadata, result_metadata,
+        created_at, updated_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11::jsonb,$12::jsonb,$13,$14) returning *`,
       [record.id, record.teamId, record.tenantId || null, record.companyId || null,
         record.opportunityId || null, record.requestedTool, record.requestedSkill || null,
         JSON.stringify(record.brief || {}), record.status, record.createdBy || null,
-        JSON.stringify(record.metadata || {}), record.createdAt, record.updatedAt]
+        JSON.stringify(record.errorMetadata || {}), JSON.stringify(record.resultMetadata || {}),
+        record.createdAt, record.updatedAt]
     );
     return mapRow(result.rows[0]);
   }

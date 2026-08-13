@@ -175,7 +175,14 @@ test("research, generation jobs, artifacts, activities, and external links join 
   const contact = await core.createContact({ companyId: company.id, fullName: "Primary Buyer" });
   const opportunity = await core.createOpportunity({ companyId: company.id, primaryContactId: contact.id, name: "Graph proof" });
   const research = await core.createResearch({ opportunityId: opportunity.id, sourceType: "website", sourceUrl: "https://graph.test", content: "Verified expansion signal", verificationStatus: "verified" });
-  const job = await core.createGenerationJob({ opportunityId: opportunity.id, requestedTool: "pitch.dgtlmag.com", requestedSkill: "dgtl-pitch-composer", brief: { angle: "expansion" } });
+  const job = await core.createGenerationJob({
+    opportunityId: opportunity.id,
+    requestedTool: "pitch.dgtlmag.com",
+    requestedSkill: "dgtl-pitch-composer",
+    brief: { angle: "expansion" },
+    errorMetadata: { retryable: false },
+    resultMetadata: { requestId: "request_1" }
+  });
   const asset = await core.createAsset({ opportunityId: opportunity.id, generationJobId: job.id, kind: "pitch", slug: "graph-co" });
   const link = await core.createExternalLink({ localEntityType: "opportunity", localEntityId: opportunity.id, externalSystem: "worklog", externalObjectType: "engagement", externalId: "eng_42" });
   const activity = await core.createActivity({ opportunityId: opportunity.id, contactId: contact.id, activityType: "research_verified", summary: "Research verified" });
@@ -186,6 +193,8 @@ test("research, generation jobs, artifacts, activities, and external links join 
   assert.deepEqual(graph.contacts.map((record) => record.id), [contact.id]);
   assert.deepEqual(graph.research.map((record) => record.id), [research.id]);
   assert.deepEqual(graph.generationJobs.map((record) => record.id), [job.id]);
+  assert.deepEqual(job.errorMetadata, { retryable: false });
+  assert.deepEqual(job.resultMetadata, { requestId: "request_1" });
   assert.deepEqual(graph.assets.map((record) => record.id), [asset.id]);
   assert.deepEqual(graph.externalLinks.map((record) => record.id), [link.id]);
   assert.deepEqual(graph.activities.map((record) => record.id), [activity.id]);

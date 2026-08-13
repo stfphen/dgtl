@@ -596,7 +596,9 @@ select
   outreach_queue.tenant_id,
   'opportunity_lead_' || outreach_queue.lead_id,
   case when nullif(outreach_queue.campaign_id, '') is null then null
-       else 'campaign_outreach_' || outreach_queue.campaign_id end,
+       when exists (select 1 from outreach_campaigns where outreach_campaigns.id = outreach_queue.campaign_id)
+       then 'campaign_outreach_' || outreach_queue.campaign_id
+       else null end,
   'contact_lead_' || outreach_queue.lead_id,
   'email',
   'outbound',
@@ -631,7 +633,9 @@ select
   draft_emails.tenant_id,
   'opportunity_lead_' || draft_emails.lead_id,
   case when nullif(leads.campaign_id, '') is null then null
-       else 'campaign_outreach_' || leads.campaign_id end,
+       when exists (select 1 from outreach_campaigns where outreach_campaigns.id = leads.campaign_id)
+       then 'campaign_outreach_' || leads.campaign_id
+       else null end,
   'contact_lead_' || draft_emails.lead_id,
   'email',
   'outbound',

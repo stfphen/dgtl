@@ -195,7 +195,8 @@ export class CoreService {
       brief: input.brief || {},
       status: input.status || "queued",
       createdBy: input.createdBy || "",
-      metadata: input.metadata || {},
+      errorMetadata: input.errorMetadata || {},
+      resultMetadata: input.resultMetadata || {},
       createdAt: at,
       updatedAt: at
     });
