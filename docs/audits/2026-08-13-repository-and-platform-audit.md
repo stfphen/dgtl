@@ -24,8 +24,9 @@ should remain independently deployable and connect through authenticated APIs/MC
 
 Current release confidence is **red** for the main platform and **amber** for the wider monorepo:
 
-- The required production build has never completed. It currently fails while fetching Google-hosted
-  font files, even with network access. A release depends on a third-party font endpoint.
+- The required production build completed on merged local `main` with Next 15.5.23: compilation,
+  type checks, 49 static pages, optimization, and trace collection all passed. It still fetches seven
+  Google-hosted font families, so reproducibility depends on a third-party endpoint.
 - The platform tests execute 356 cases, but five network-dependent enrichment tests fail. Treating
   these as permanently “known” failures makes the gate non-enforcing.
 - A non-breaking dependency refresh reduced the production audit from eight vulnerabilities to three
@@ -38,6 +39,9 @@ Current release confidence is **red** for the main platform and **amber** for th
   an unmergeable mixed-scope branch.
 - The new Worklog v2 implementation is materially better than the tracked version and passes all 375
   tests. Its production database migration and backup/restore runbook still require a dry run.
+- The three formerly untracked tenant modules contain no credentials and two are compatibility
+  re-exports. The actual Polish Stone config is not publish-ready: it carries a `555` phone number and
+  unsupported pricing, portfolio, partner-logo, and testimonial claims that require owner sign-off.
 
 ## Repository inventory
 
@@ -235,8 +239,8 @@ Remote-only historical/deployment branches should be archived or deleted only af
 
 ### P0 — release blockers
 
-1. **Make the platform build deterministic.** Self-host/pin the seven font families or reduce the
-   set; remove build-time dependence on Google font downloads. Run the required build in CI.
+1. **Make the verified platform build deterministic.** Self-host/pin the seven font families or
+   reduce the set; remove build-time dependence on Google font downloads and run the build in CI.
 2. **Create a real required CI gate.** Platform tests/build, Worklog tests, creator-intake tests and
    PHP lint, JSON validation, and the repository link check must report on every relevant PR.
 3. **Back up and dry-run the Worklog v2 schema migration.** Verify restore, not only migration.
@@ -321,7 +325,8 @@ Commands run during this audit:
 | PHP lint on new creator diagnostics/status/mailer | no syntax errors |
 | `cd platform && npm test` | 356 total; 351 pass, 5 network-dependent enrichment failures; exit 1 |
 | `cd platform && npm run build` (sandbox) | failed resolving Google font hosts |
-| `cd platform && npm run build` (network permitted) | failed after retries fetching Geist Mono from `fonts.gstatic.com` |
+| `cd platform && npm run build` (network permitted, first attempt) | failed after retries fetching Geist Mono from `fonts.gstatic.com` |
+| `cd platform && npm run build` (merged `main`, final) | exit 0; Next 15.5.23 compiled, type-checked, generated 49/49 static pages, and collected build traces |
 | `cd platform && npm audit --omit=dev` before refresh | 8 production vulnerabilities: 6 high, 2 moderate |
 | `npm update next` and `npm audit fix --omit=dev` | Next 15.5.23 locked; 3 high remain; no forced major upgrade |
 | old tracked `cd apps/worklog && npm test` | 55 pass, 1 fail; exposed test DB isolation bug |
@@ -330,7 +335,8 @@ Commands run during this audit:
 | JSON validation for pitch manifests/index, audit ledger, and ops workflows | valid JSON |
 | repository object check `git fsck --full --no-reflogs` | no corruption; four dangling commits and two dangling trees, recoverable through normal Git retention until garbage collection |
 
-The build gate is not green, so this audit does not claim the current platform is production-ready.
+The build gate is green. The overall release gate is not: five tests and three high production
+dependency advisories remain, so this audit does not claim the current platform is production-ready.
 
 ## Definition of success for the next release
 

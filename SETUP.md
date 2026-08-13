@@ -19,7 +19,7 @@ Verify before shipping:
 
 ```bash
 npm test                  # expect 356 tests · 5 known network-dependent failures
-npm run build             # requires outbound network (next/font fetches Google Fonts)
+npm run build             # verified 2026-08-13; still fetches Google Fonts during build
 ```
 
 Postgres is optional for local work — with no `DATABASE_URL`, `lib/store.js` falls back to a
@@ -115,5 +115,5 @@ Journal fixes merged in from the parallel build:
   they matter, they need a deliberate home (LFS in an archive repo, or object storage) rather than
   silence. See `brain/50-Audit-Log/53-Known-Issues.md`.
 - `MIGRATION.md` records what moved, what did not, what is verified, and the open follow-ups.
-  Its first two items — the unverified `npm run build` and the three previously-untracked tenant
-  configs — are the current priority. See `CLAUDE.md`.
+  The build and the three previously-untracked tenant modules were reviewed on 2026-08-13. Current
+  release-gate and Polish Stone content risks are recorded in `CLAUDE.md` and the brain.

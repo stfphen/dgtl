@@ -14,11 +14,10 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 
 ## Repository/platform integration audit (2026-08-13)
 
-- **Platform build remains a release blocker.** Both the sandboxed build and a build with network
-  permission failed while fetching Google-hosted fonts; the latter exhausted retries on Geist Mono
-  from `fonts.gstatic.com`. The root layout imports seven font families and the admin imports Manrope
-  again. Self-host or pin the required files, reduce the set, and make `npm run build` a required CI
-  check. The migration is still unverified.
+- ✅ **Platform migration build verified 2026-08-13.** Final `npm run build` on merged local `main`
+  with Next 15.5.23 compiled, type-checked, generated 49/49 static pages, collected traces, and exited
+  0. Earlier attempts failed fetching Geist Mono, so the root layout's seven Google font families
+  remain a reproducibility risk. Self-host/pin or reduce them and make the build required CI.
 - **Three high production dependency advisories remain** after updating the lock to Next 15.5.23
   and applying non-breaking audit fixes. They are transitive PostCSS and Sharp advisories through
   Next 15; npm proposes Next 16.3.0 as a breaking fix. Test a deliberate Next 16 migration rather
@@ -35,6 +34,10 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 - **Twelve open GitHub PRs have no CI statuses.** PRs 19 and 20 are superseded; PR 23 is an
   unmergeable mixed-scope branch; PRs 13–18 and 21–22 are unverified domain placeholders; PR 24 is
   the isolated DGTL Neon review branch. See the 2026-08-13 audit before merging or closing them.
+- **Polish Stone tenant content is not publish-ready.** The three formerly untracked modules contain
+  no credentials; `nowakStoneworks.js` and `dziuraStoneTile.js` are compatibility re-exports. The
+  actual config contains `(437) 555-0140` plus pricing, portfolio, partner-logo, and testimonial claims
+  with no recorded provenance. Replace/verify every one with the owner before enabling the tenant.
 
 ## 🔴 Security — Critical
 | ID | Issue | Location | Fix |
@@ -211,8 +214,8 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 | ID | Issue | Detail | Fix |
 |---|---|---|---|
 | **M1** | **~556 MB of prototype renders exist only on the Mac, with no backup.** | `prototypes/` (scroll-world + tower-3d video, netlify builds, a 184 MB zip, plus Finder-duplicate `… 2`/`… 3` dirs) is not in this repo and was **never** tracked in `content-checkout-funnel` either — that `.gitignore` excluded it from the start because the zip exceeds GitHub's 100 MB file limit. Not a regression, but a single disk failure loses all of it. | Decide a home: LFS in a dedicated archive repo, or object storage (S3/R2/Backblaze). Exclude the 184 MB zip and the duplicate dirs either way — the zip is a redundant build archive. **Partial mitigation 2026-07-28:** every *deployed* pitch site (18 slugs) is now tracked in `pitches/` via the VPS offboard bundle — only unshipped renders/WIP remain Mac-only. |
-| **M2** | **`npm run build` has never been verified on the migrated tree.** | `next/font/google` fetches Manrope, Geist, Geist Mono, Bricolage Grotesque, Space Grotesk, Instrument Serif and Fraunces at build time. On 2026-08-13 the build failed both in the sandbox and with network permission; the latter exhausted retries fetching Geist Mono. Tests execute 351/356 successfully, but the build remains non-deterministic and unverified. | Self-host/pin the required font files (and reduce duplicate imports), then run `cd platform && npm ci && npm run build` in required CI. Blocks calling the migration done. |
-| **M3** | **Three tenant configs were never committed to the old repo and have never been reviewed.** | `platform/lib/tenants/polishStone.js`, `nowakStoneworks.js`, `dziuraStoneTile.js` are imported by `lib/store.js` — the app does not boot without them — yet they were untracked in `content-checkout-funnel`. They are committed here, so this repo boots and the archive does not. | Read them before trusting them; confirm no client data or credentials are embedded. |
+| ✅ **M2 — RESOLVED (08-13)** | **`npm run build` is verified on the migrated tree.** | Final merged-local-main run compiled, type-checked, generated 49/49 static pages, collected traces, exit 0. Font downloads remain a reliability risk, tracked above. | Put the same command in required CI and self-host/pin fonts. |
+| ✅ **M3 — CODE REVIEWED (08-13), CONTENT GATE OPEN** | **Three tenant modules had been untracked in the old repo.** | They contain no credentials. Two are compatibility re-exports; Polish Stone is the actual config and uses bundled assets. Its `555` phone and unsupported commercial claims prevent publication. | Owner verification and real contact/routing data before enabling. |
 | **M4** | **~30 branches and open PR #2 stayed in the archive.** | This repo starts from one squashed commit. `feature/platform-landing` had unpushed commits; PR #2 (AI prospect enrichment) was never merged or closed. | When a feature looks missing, read it out of the archive and re-apply as new work here. Never add the old repo as a remote. |
 | **M5** | **Stale `.git/index.lock` is a recurring failure mode — third occurrence.** | `dgtl-repo/.git/index.lock` + `HEAD.lock` (07-24 22:38) stranded this repo's bootstrap commit, leaving `main` with zero commits despite a complete tree. `content-checkout-funnel/.git/index.lock` dates to **07-19** and blocked that repo for six days — which is why the 07-19/07-20 auto-sync brain edits are still staged-but-uncommitted there. | Check `ls .git/*.lock` before any commit run. If a commit fails, clear the stale lock rather than retrying blindly — a silent retry loop is how six days were lost. |
 

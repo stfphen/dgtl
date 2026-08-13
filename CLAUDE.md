@@ -45,22 +45,22 @@ one grant source, and a funnel a prospect can buy through without a human in the
 publishing half exists to feed it — the Influence Journal and pitch pages are the top of the
 funnel, not a side project.
 
-Product sequence, once the migration is verified (below): stabilise the admin shell → build the
+Product sequence, now that the migration build is verified: stabilise the admin shell → build the
 **Funding Program / grant-opportunity engine** → connect funding opportunities to lead matching and
 outreach → package the whole thing as a priced B2B offer.
 
-## Current priority: finish verifying the migration
+## Current priority: stabilise the platform and its release gate
 
-Do this before starting new features. From `MIGRATION.md`:
+The migration build was verified on 2026-08-13. Address these audit findings before starting large
+new features:
 
-1. **`npm run build` has never been verified.** It could not run in the sandbox —
-   `next/font/google` fetches six font families at build time and there was no outbound network.
-   Run `cd platform && npm ci && npm run build` on a networked machine and record the result in
-   the brain. Until this passes, treat the platform migration as unproven.
-2. **Three tenant configs** (`platform/lib/tenants/polishStone.js`, `nowakStoneworks.js`,
-   `dziuraStoneTile.js`) were untracked in the old repo despite `lib/store.js` importing them.
-   They are committed here — so this repo boots and the old one does not — but nobody has ever
-   reviewed them. Read them before trusting them.
+1. **Make the release gate trustworthy.** `npm run build` passes on Next 15.5.23, but `npm test`
+   remains 351/356 because five website-enrichment tests depend on DNS/network behavior. Isolate or
+   fixture those tests, add required CI, and resolve the three remaining high production advisories.
+2. **Review Polish Stone content with the owner before publishing.** The three formerly untracked
+   tenant modules were code-reviewed on 2026-08-13 and contain no credentials; the two legacy modules
+   are compatibility re-exports. The live config still contains a `555` phone number and several
+   pricing, portfolio, partner-logo, and testimonial claims whose provenance is not recorded.
 3. **Canonical / OG URLs** in journal pages still point at old `…/journal/creators/<slug>.html`
    paths, and all six `pack.json` `canonicalUrl` fields are empty. Both wait on the deploy domain.
 
