@@ -1,12 +1,15 @@
 {
   "collection": "DGTL pitches",
-  "updated": "2026-08-01",
+  "updated": "2026-08-10",
+  "_comment": "dgtl-studios-maud added 2026-08-10 — DGTL Studios × DGTL Records, Unit B3 at 20 Maud St.",
   "deployScheme": "https://pitch.dgtlmag.com/<slug>/",
   "pitches": [
     "auckland247",
     "cottage",
     "dgtl-pay-for-brands",
     "dgtl-pay-for-creators",
+    "dgtl-residency",
+    "dgtl-studios-maud",
     "dmtv-bose",
     "elixr",
     "escott",

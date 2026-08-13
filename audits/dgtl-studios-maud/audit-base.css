@@ -1,0 +1,298 @@
+/* ============================================================================
+   DGTL Client Audit — print stylesheet (WeasyPrint)
+   Black + gold #F0CF50, Manrope stack. Drop this in a <style> block.
+
+   Two rules in here are load-bearing and easy to lose in an edit:
+
+   1. `@page { background:#000 }` — WeasyPrint does NOT propagate the html/body
+      background into the page margin box. Without this you get white strips
+      down the edges of every page and it looks broken.
+   2. Font stack is 'Manrope','Carlito','DejaVu Sans'. Do NOT add a <link> to
+      fonts.googleapis.com — it is usually unreachable from the sandbox and can
+      hang the render. Carlito is the practical stand-in at print sizes.
+
+   Also: no CSS grid anywhere. WeasyPrint's grid support is partial and reflows
+   silently. Everything here is flexbox or tables.
+   ============================================================================ */
+
+/* ---------- page ---------- */
+  @page {
+    size: A4;
+    margin: 17mm 15mm 15mm 15mm;
+    background: #000000;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Manrope','Carlito','DejaVu Sans',sans-serif;
+      font-size: 7.5pt;
+      color: #6f6f6f;
+      letter-spacing: .04em;
+    }
+    @bottom-left {
+      content: "DGTL Group · Digital Presence Audit · CLIENT NAME";  /* <-- set the client name */
+      font-family: 'Manrope','Carlito','DejaVu Sans',sans-serif;
+      font-size: 7.5pt;
+      color: #4a4a4a;
+      letter-spacing: .04em;
+    }
+  }
+  @page :first {
+    @bottom-right { content: ""; }
+    @bottom-left  { content: ""; }
+  }
+
+  html, body {
+    background: #000000;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: 'Manrope','Carlito','DejaVu Sans',sans-serif;
+    font-size: 9pt;
+    line-height: 1.5;
+    color: #F0F0F0;
+    hyphens: none;
+  }
+
+  /* ---------- typography ---------- */
+  .kicker {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    color: #b3a06a;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+  }
+  h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -.01em; }
+  .sec-title {
+    font-size: 19pt;
+    color: #F0F0F0;
+    margin: 0 0 4px 0;
+    letter-spacing: -.02em;
+  }
+  .sec-title .g { color: #F0CF50; }
+  .sec-rule {
+    height: 1px;
+    background: #2a2a2a;
+    margin: 12px 0 16px 0;
+  }
+  p { margin: 0 0 9px 0; color: #D0D0D0; }
+  p.lead { color: #F0F0F0; font-size: 10pt; line-height: 1.55; }
+  strong { color: #F0F0F0; font-weight: 700; }
+  em { color: #D0D0D0; }
+  .dim { color: #8a8a8a; }
+  .gold { color: #F0CF50; }
+  ul { margin: 0 0 9px 0; padding-left: 14px; color: #D0D0D0; }
+  li { margin-bottom: 4px; }
+
+  .section { page-break-before: always; }
+  .avoid { page-break-inside: avoid; }
+
+  /* ---------- cover ---------- */
+  .cover {
+    height: 263mm;
+    position: relative;
+    page-break-after: always;
+  }
+  .cover-watermark {
+    position: absolute;
+    top: 52mm; left: 46mm;
+    width: 118mm;
+    opacity: .07;
+  }
+  .cover-inner { position: relative; }
+  .cover-logo { height: 13mm; margin-bottom: 46mm; }
+  .cover-wordmark {
+    font-size: 30pt; font-weight: 800; color: #F0F0F0;
+    letter-spacing: .02em; margin-bottom: 44mm;
+  }
+  .cover-wordmark .dot { color: #F0CF50; }
+  .cover h1 {
+    font-size: 40pt;
+    line-height: 1.02;
+    letter-spacing: -.035em;
+    color: #F0F0F0;
+    margin: 0 0 14mm 0;
+  }
+  .cover h1 .g { color: #F0CF50; }
+  .cover-meta-rule { height: 1px; background: #2a2a2a; margin-bottom: 7mm; }
+  .cover-subject { font-size: 14pt; font-weight: 700; color: #F0F0F0; margin-bottom: 3px; }
+  .cover-subject-sub { font-size: 9.5pt; color: #8a8a8a; margin-bottom: 11mm; }
+  .cover-foot {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+  }
+  .cover-foot-rule { height: 1px; background: #2a2a2a; margin-bottom: 6mm; }
+  .cover-foot-row { font-size: 9pt; color: #D0D0D0; margin-bottom: 4px; }
+  .cover-conf { font-size: 7.5pt; color: #6f6f6f; line-height: 1.5; margin-top: 5mm; }
+
+  /* ---------- generic table ---------- */
+  table.t {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+  }
+  table.t th {
+    text-align: left;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #b3a06a;
+    font-weight: 700;
+    padding: 7px 8px;
+    border-bottom: 1px solid #2a2a2a;
+    vertical-align: bottom;
+  }
+  table.t td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #1c1c1c;
+    color: #D0D0D0;
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  table.t tr { page-break-inside: avoid; }
+  table.t td.id { color: #F0CF50; font-weight: 700; font-variant-numeric: tabular-nums; }
+  table.t td.w { color: #F0F0F0; font-weight: 700; }
+  table.t td .u { color: #8a8a8a; word-wrap: break-word; font-size: 7.2pt; }
+
+  /* ---------- at-a-glance severity strip ---------- */
+  .glance { display: flex; margin: 0 0 4px 0; }
+  .glance-cell {
+    flex: 1;
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 12px 12px 11px 12px;
+    margin-right: 8px;
+    background: #0a0a0a;
+  }
+  .glance-cell:last-child { margin-right: 0; }
+  .glance-cell .n {
+    font-size: 26pt; font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums; margin-bottom: 5px;
+  }
+  .glance-cell .l {
+    font-size: 7pt; text-transform: uppercase; letter-spacing: .14em;
+    color: #8a8a8a; font-weight: 700;
+  }
+  .n-crit { color: #F0CF50; }
+  .n-high { color: #F0F0F0; }
+  .n-med  { color: #D0D0D0; }
+  .n-low  { color: #8a8a8a; }
+
+  /* ---------- callout ---------- */
+  .callout {
+    border: 1px solid #2a2a2a;
+    border-left: 3px solid #F0CF50;
+    border-radius: 16px;
+    background: #0a0a0a;
+    padding: 13px 16px;
+    margin: 0 0 14px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .kicker { margin-bottom: 5px; }
+
+  .note {
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    background: #0a0a0a;
+    padding: 12px 15px;
+    margin: 0 0 12px 0;
+  }
+  .note p:last-child { margin-bottom: 0; }
+
+  /* ---------- findings ---------- */
+  .cat-group { break-inside: avoid; page-break-inside: avoid; }
+  .cat-group.new-page { break-before: page; page-break-before: always; }
+  .cat-head { margin: 0 0 12px 0; break-after: avoid; page-break-after: avoid; }
+  .cat-head .cat-title {
+    font-size: 12.5pt; font-weight: 700; color: #F0F0F0; letter-spacing: -.01em;
+  }
+  .cat-head .cat-sub { font-size: 8pt; color: #8a8a8a; margin-top: 3px; }
+  .cat-head .cat-rule { height: 1px; background: #2a2a2a; margin-top: 9px; }
+
+  .finding {
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    background: #0a0a0a;
+    padding: 13px 15px 11px 15px;
+    margin: 0 0 11px 0;
+    page-break-inside: avoid;
+  }
+  .f-head { margin-bottom: 9px; }
+  .f-id {
+    font-size: 8pt; font-weight: 800; color: #F0CF50;
+    letter-spacing: .06em; margin-right: 9px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 6.5pt; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .13em;
+    padding: 2.5px 9px 2.5px 9px;
+    border-radius: 9999px;
+    vertical-align: 1.5px;
+  }
+  .b-crit { background: #F0CF50; color: #000000; border: 1px solid #F0CF50; }
+  .b-high { background: rgba(240,207,80,0.08); color: #F0CF50; border: 1px solid #F0CF50; }
+  .b-med  { background: transparent; color: #D0D0D0; border: 1px solid #4a4a4a; }
+  .b-low  { background: transparent; color: #8a8a8a; border: 1px solid #2a2a2a; }
+  .f-title {
+    display: block;
+    font-size: 10.5pt; font-weight: 700; color: #F0F0F0;
+    letter-spacing: -.01em; margin-top: 7px; line-height: 1.25;
+  }
+  table.f-body { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  table.f-body td.lab {
+    width: 26mm;
+    font-size: 6.8pt; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .12em;
+    color: #8a8a8a;
+    padding: 3.5px 8px 3.5px 0;
+    vertical-align: top;
+    line-height: 1.7;
+  }
+  table.f-body td.val {
+    font-size: 8.3pt;
+    color: #D0D0D0;
+    padding: 3.5px 0;
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  table.f-body td.val .ev {
+    font-family: 'DejaVu Sans Mono', monospace;
+    font-size: 7.2pt;
+    color: #b3a06a;
+    word-wrap: break-word;
+  }
+  .f-foot {
+    margin-top: 9px;
+    padding-top: 8px;
+    border-top: 1px solid #1c1c1c;
+    font-size: 7.2pt;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #8a8a8a;
+    font-weight: 700;
+  }
+  .f-foot .v { color: #F0F0F0; }
+  .f-foot .sep { color: #2a2a2a; margin: 0 8px; }
+  .f-note {
+    margin-top: 8px;
+    font-size: 7.6pt;
+    color: #8a8a8a;
+    line-height: 1.45;
+  }
+  .f-note.italic { font-style: italic; }
+  .f-note .k { color: #b3a06a; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 6.8pt; font-style: normal; }
+
+  /* ---------- running header on content pages ---------- */
+  .page-head {
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .page-head .ph-logo { height: 6.5mm; }
+  .page-head .ph-spacer { flex: 1; }
+  .page-head .ph-txt {
+    font-size: 6.8pt; text-transform: uppercase; letter-spacing: .16em;
+    color: #4a4a4a; font-weight: 700; text-align: right;
+  }
