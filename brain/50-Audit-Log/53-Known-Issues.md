@@ -3,7 +3,7 @@ title: 53 · Known Issues, Risks & Tech Debt
 type: log
 tags: [audit, security]
 status: living
-updated: 2026-07-25
+updated: 2026-08-01
 source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, status docs
 ---
 
@@ -53,6 +53,24 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 - **N+1 write loops (MED):** bulk lead import, outreach enqueue (+per-item event) run per-row INSERTs with no surrounding transaction. Fix: multi-row INSERT inside `withTransaction`.
 
 ## ⚙️ Operational / tech debt
+- ✅ **RESOLVED (08-01) — Creator-feature template shipped stale relative paths; every new pack failed
+  `validate.py` with ~25 broken local refs until someone hand-rewrote them.**
+  `engine/dgtl-creator-features/assets/creator-feature-template.html` still carried the *pre-pack*
+  layout: `../assets/dgtl-editorial.css`, `../assets/journal.js`, `../assets/logos/…`,
+  `../index.html`, `../cases/…` — plus a related-card pointing at `peter-mckinnon.html`, a sibling
+  that has never existed. Under the pack model those needed `../../_shared/…`, `../../index.html`,
+  `../../cases/…`. **Why it went unnoticed:** `tools/check-links.py` scopes to `journal/`, `pitches/`
+  and `sites/` — it does not scan `engine/`, and it *cannot* usefully do so, because the template's
+  paths are correct relative to a pack hub, not relative to where the file itself sits. So the only
+  thing that ever caught this was `validate.py`, i.e. after each pack was already built.
+  **Fix (two halves, both needed):** the template now ships pack-hub-correct paths, *and*
+  `populate.py` re-depths them from `--out` (`journal_depth()` + `reroot()`), so a feature page at
+  `packs/<slug>/features/<x>.html` gets `../../../_shared/…` automatically. That second half is what
+  makes SKILL.md's hub-vs-feature path table true as written — fixing only the template would have
+  left feature pages broken at the other depth. Own-media paths still come from `fields.json` and are
+  deliberately untouched by the rewrite (it runs before media injection). Verified by populating the
+  example fields to both depths: 0 failures from `validate.py` with no manual path editing.
+  [[16-Design-System]]
 - ⚠️ **RECURRING (07-13): git commits succeed but every in-sandbox commit leaves stale `.git/*.lock`
   files behind — clear them on the Mac.** Good news: the original 07-04 blocker is gone and commits now
   land — FAYELLA committed `4d12dfe` on the Mac (07-12 23:10) and the 07-13 brain sync committed

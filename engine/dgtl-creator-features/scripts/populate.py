@@ -3,6 +3,8 @@
 Populate the DGTL creator-feature template from a fields.json.
 
 - Replaces every {{TOKEN}} with tokens[TOKEN].
+- Re-depths the template's shared-asset and journal links for wherever --out lands,
+  so a feature page nested one level deeper still resolves.
 - Injects real images into the hero + 6 portfolio slots (media.hero, media.pf1..pf6),
   replacing the on-brand gradient placeholders. Omitted slots keep their gradient.
 - Cleans up unused sameAs schema entries.
@@ -15,6 +17,41 @@ Usage:
 """
 import argparse, json, re, sys, html
 from pathlib import Path
+
+# The template's chrome links (_shared assets, the journal hub, journal/cases, sibling
+# packs) are written for a pack hub — journal/packs/<slug>/index.html, two directories
+# below the journal root. A page nested deeper, e.g. a feature at
+# packs/<slug>/features/<x>.html, needs one more `../` on every one of them.
+TEMPLATE_DEPTH = 2
+
+
+def journal_depth(out_path):
+    """How many directories below the journal root `out` sits, or None if outside one."""
+    p = out_path.resolve()
+    for anc in p.parents:
+        if anc.name == "journal" and (anc / "_shared").is_dir():
+            return len(p.parent.relative_to(anc).parts)
+    return None
+
+
+def reroot(text, depth):
+    """Prefix the template's relative chrome links so they resolve from `depth`.
+
+    Only touches refs already written as `../…` — own-media paths come from
+    fields.json written relative to the page, so they are injected afterwards.
+    """
+    extra = depth - TEMPLATE_DEPTH
+    if extra <= 0:
+        return text, 0
+    count = 0
+
+    def bump(m):
+        nonlocal count
+        count += 1
+        return f'{m.group(1)}="{"../" * extra}{m.group(2)}"'
+
+    text = re.sub(r'\b(href|src)="((?:\.\./)+[^"]*)"', bump, text)
+    return text, count
 
 
 def inject_hero(text, media):
@@ -64,8 +101,22 @@ def main():
     data = json.loads(Path(args.fields).read_text(encoding="utf-8"))
     tokens = data.get("tokens", {})
     media = data.get("media", {})
+    out = Path(args.out)
 
-    # 1. images first (structural anchors are stable in the raw template)
+    # 0. re-depth the chrome links for where this page lands, before any media
+    #    from fields.json (already page-relative) is injected
+    depth = journal_depth(out)
+    rerooted = 0
+    if depth is None:
+        print(
+            f"  ⚠ {out} is not inside a journal/ tree — shared-asset links left at "
+            "pack-hub depth (../../_shared/…) and may not resolve.",
+            file=sys.stderr,
+        )
+    else:
+        text, rerooted = reroot(text, depth)
+
+    # 1. images (structural anchors are stable in the raw template)
     text = inject_hero(text, media)
     text = inject_portfolio(text, media)
 
@@ -82,11 +133,12 @@ def main():
 
     # 5. report leftovers
     leftover = sorted(set(re.findall(r"\{\{[A-Z0-9_]+\}\}", text)))
-    out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(text, encoding="utf-8")
 
     print(f"✓ wrote {out}")
+    if rerooted:
+        print(f"  re-depthed {rerooted} chrome link(s) for a page {depth} dirs below journal/")
     if media:
         print(f"  injected media: {', '.join(sorted(media.keys()))}")
     if leftover:
