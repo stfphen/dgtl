@@ -1,0 +1,470 @@
+{
+  "name": "DGTL Agency Spine — Internal Ops",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## DGTL Agency Spine\nProspect URL → audit → pitch → teaser → link-check gate → staged deck → human deploy gate.\n\n**Runs self-hosted only** (`npx n8n` on the Mac) — the Claude nodes need the `claude` CLI and the dgtl repo checkout. Execute Command does not exist on n8n Cloud.\n\nBrand: black + gold `#F0CF50`, Manrope.",
+        "height": 240,
+        "width": 420
+      },
+      "id": "0f1e2d3c-9001-4a4a-9a9a-000000009001",
+      "name": "Note — Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-60, -260]
+    },
+    {
+      "parameters": {
+        "content": "### ComfyUI render rail\nPOST an API-format SDXL graph to `/prompt`, then poll `/history/<prompt_id>` every 20s until the render exists. Output filename is extracted for the pitch composer.\n\nTemplates for manual runs live in `ops/comfyui/`.",
+        "height": 200,
+        "width": 380,
+        "color": 4
+      },
+      "id": "0f1e2d3c-9002-4a4a-9a9a-000000009002",
+      "name": "Note — Render Rail",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, 560]
+    },
+    {
+      "parameters": {
+        "content": "### Human gate\nEverything left of here is automated. **Going live is not.** Review the staged deck, then `git push` and run `./deploy.sh` on the VPS. This node stays disabled on purpose.",
+        "height": 160,
+        "width": 340,
+        "color": 3
+      },
+      "id": "0f1e2d3c-9003-4a4a-9a9a-000000009003",
+      "name": "Note — Human Gate",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2500, -20]
+    },
+    {
+      "parameters": {
+        "content": "### QBR loop\n1st of every month 09:00 — `dgtl-client-reports` walks every open findings ledger and drafts the monthly report; quarterly flags a QBR.",
+        "height": 150,
+        "width": 340,
+        "color": 5
+      },
+      "id": "0f1e2d3c-9004-4a4a-9a9a-000000009004",
+      "name": "Note — QBR Loop",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-60, 620]
+    },
+    {
+      "parameters": {
+        "formTitle": "DGTL — New Prospect",
+        "formDescription": "Drop a prospect in at the top of the spine. Audit → pitch → teaser → staged deck.",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "Prospect URL", "requiredField": true },
+            { "fieldLabel": "Business name", "requiredField": true },
+            { "fieldLabel": "Notes" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0f1e2d3c-0001-4a4a-9a9a-000000000001",
+      "name": "Prospect Intake",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [-40, 60],
+      "webhookId": "0f1e2d3c-aaaa-4a4a-9a9a-000000000001"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "c1", "name": "repoPath", "value": "/Users/stephenprokopich/dgtl", "type": "string" },
+            { "id": "c2", "name": "comfyHost", "value": "http://127.0.0.1:8188", "type": "string" },
+            { "id": "c3", "name": "businessName", "value": "={{ $json['Business name'] }}", "type": "string" },
+            { "id": "c4", "name": "prospectUrl", "value": "={{ $json['Prospect URL'] }}", "type": "string" },
+            { "id": "c5", "name": "notes", "value": "={{ $json['Notes'] || '' }}", "type": "string" },
+            { "id": "c6", "name": "slug", "value": "={{ ($json['Business name'] || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') }}", "type": "string" },
+            { "id": "c7", "name": "brandGold", "value": "#F0CF50", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0f1e2d3c-0002-4a4a-9a9a-000000000002",
+      "name": "Job Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [200, 60]
+    },
+    {
+      "parameters": {
+        "command": "=cd {{ $('Job Config').item.json.repoPath }} && claude -p \"Use the dgtl-client-audit skill to audit {{ $('Job Config').item.json.prospectUrl }} for {{ $('Job Config').item.json.businessName }} (slug: {{ $('Job Config').item.json.slug }}). Operator notes: {{ $('Job Config').item.json.notes }}. Produce the severity-rated audit brief PDF and the plain-language findings that will seed the pitch.\" --output-format text --permission-mode acceptEdits"
+      },
+      "id": "0f1e2d3c-0003-4a4a-9a9a-000000000003",
+      "name": "Client Audit (Claude)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [460, 60]
+    },
+    {
+      "parameters": {
+        "command": "=find {{ $('Job Config').item.json.repoPath }} -iname \"*{{ $('Job Config').item.json.slug }}*.pdf\" -mmin -360 2>/dev/null | head -5"
+      },
+      "id": "0f1e2d3c-0004-4a4a-9a9a-000000000004",
+      "name": "Locate Audit PDF",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "position": [700, 60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Job Config').item.json.comfyHost }}/prompt",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"prompt\": { \"1\": { \"class_type\": \"CheckpointLoaderSimple\", \"inputs\": { \"ckpt_name\": \"sd_xl_base_1.0.safetensors\" } }, \"2\": { \"class_type\": \"CLIPTextEncode\", \"inputs\": { \"clip\": [\"1\", 1], \"text\": \"premium abstract hero background, deep matte black surface, molten gold accent lines and light particles, colour {{ $('Job Config').item.json.brandGold }}, dramatic rim lighting, minimalist editorial composition, wide negative space for a headline, high-end agency aesthetic, sharp focus\" } }, \"3\": { \"class_type\": \"CLIPTextEncode\", \"inputs\": { \"clip\": [\"1\", 1], \"text\": \"text, watermark, logo, people, faces, hands, clutter, low quality, jpeg artifacts, oversaturated\" } }, \"4\": { \"class_type\": \"EmptyLatentImage\", \"inputs\": { \"width\": 1920, \"height\": 1088, \"batch_size\": 1 } }, \"5\": { \"class_type\": \"KSampler\", \"inputs\": { \"model\": [\"1\", 0], \"positive\": [\"2\", 0], \"negative\": [\"3\", 0], \"latent_image\": [\"4\", 0], \"seed\": 612792371, \"steps\": 30, \"cfg\": 6.5, \"sampler_name\": \"dpmpp_2m\", \"scheduler\": \"karras\", \"denoise\": 1.0 } }, \"6\": { \"class_type\": \"VAEDecode\", \"inputs\": { \"samples\": [\"5\", 0], \"vae\": [\"1\", 2] } }, \"7\": { \"class_type\": \"SaveImage\", \"inputs\": { \"images\": [\"6\", 0], \"filename_prefix\": \"DGTL/{{ $('Job Config').item.json.slug }}-brand-plate\" } } } }",
+        "options": {}
+      },
+      "id": "0f1e2d3c-0005-4a4a-9a9a-000000000005",
+      "name": "Comfy · Brand Plate (SDXL)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [200, 380]
+    },
+    {
+      "parameters": {
+        "amount": 20,
+        "unit": "seconds"
+      },
+      "id": "0f1e2d3c-0006-4a4a-9a9a-000000000006",
+      "name": "Wait 20s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [440, 380],
+      "webhookId": "0f1e2d3c-bbbb-4a4a-9a9a-000000000006"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Job Config').item.json.comfyHost }}/history/{{ $('Comfy · Brand Plate (SDXL)').item.json.prompt_id }}",
+        "options": {}
+      },
+      "id": "0f1e2d3c-0007-4a4a-9a9a-000000000007",
+      "name": "Fetch Render Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "position": [660, 380]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "r1",
+              "leftValue": "={{ !!$json[$('Comfy · Brand Plate (SDXL)').item.json.prompt_id] }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0f1e2d3c-0017-4a4a-9a9a-000000000017",
+      "name": "Render Done?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [880, 380]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "x1", "name": "renderFile", "value": "={{ Object.values($json)[0]?.outputs?.['7']?.images?.[0]?.filename || 'not-found' }}", "type": "string" },
+            { "id": "x2", "name": "renderSubfolder", "value": "={{ Object.values($json)[0]?.outputs?.['7']?.images?.[0]?.subfolder || '' }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0f1e2d3c-0018-4a4a-9a9a-000000000018",
+      "name": "Extract Render Info",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1100, 380]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "0f1e2d3c-0008-4a4a-9a9a-000000000008",
+      "name": "Merge Audit + Render",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "command": "=cd {{ $('Job Config').item.json.repoPath }} && claude -p \"Use the dgtl-pitch-composer skill to compose pitches/{{ $('Job Config').item.json.slug }}/index.html for {{ $('Job Config').item.json.businessName }}, grounded in the audit brief just produced for this slug. A rendered hero background candidate is in the ComfyUI output folder: {{ $('Extract Render Info').item.json.renderFile }}. Create pitch.json and register the pitch in pitches/pitches.index.json. No root-absolute links.\" --output-format text --permission-mode acceptEdits"
+      },
+      "id": "0f1e2d3c-0009-4a4a-9a9a-000000000009",
+      "name": "Pitch Composer (Claude)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "position": [1580, 200]
+    },
+    {
+      "parameters": {
+        "command": "=cd {{ $('Job Config').item.json.repoPath }} && claude -p \"Use the dgtl-pitch-teasers skill to build pitches/{{ $('Job Config').item.json.slug }}/teaser.html — the one-idea front-of-funnel page. Link the full pitch as index.html (relative link, never /full/ or any root-absolute path).\" --output-format text --permission-mode acceptEdits"
+      },
+      "id": "0f1e2d3c-0010-4a4a-9a9a-000000000010",
+      "name": "Teaser Build (Claude)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "position": [1820, 200]
+    },
+    {
+      "parameters": {
+        "command": "=cd {{ $('Job Config').item.json.repoPath }} && python3 tools/check-links.py"
+      },
+      "id": "0f1e2d3c-0011-4a4a-9a9a-000000000011",
+      "name": "Link Check Gate",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "onError": "continueErrorOutput",
+      "position": [2060, 200]
+    },
+    {
+      "parameters": {
+        "command": "=cd {{ $('Job Config').item.json.repoPath }}/deploy/decks && mkdir -p site/pitch/{{ $('Job Config').item.json.slug }} && cp -R ../../pitches/{{ $('Job Config').item.json.slug }}/. site/pitch/{{ $('Job Config').item.json.slug }}/ && ./scripts/build-index.sh"
+      },
+      "id": "0f1e2d3c-0012-4a4a-9a9a-000000000012",
+      "name": "Stage to Decks",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "position": [2300, 200]
+    },
+    {
+      "parameters": {
+        "command": "=echo \"HUMAN GATE — review the staged deck, then: git add deploy/decks/site/pitch/{{ $('Job Config').item.json.slug }} && git commit && git push, then on the VPS: cd /opt/dgtl/deploy/decks && ./deploy.sh\""
+      },
+      "id": "0f1e2d3c-0013-4a4a-9a9a-000000000013",
+      "name": "Deploy to VPS (human gate)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2540, 200],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "u1", "name": "liveUrl", "value": "=https://pitch.dgtlmag.com/{{ $('Job Config').item.json.slug }}/", "type": "string" },
+            { "id": "u2", "name": "teaserUrl", "value": "=https://pitch.dgtlmag.com/{{ $('Job Config').item.json.slug }}/teaser.html", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0f1e2d3c-0014-4a4a-9a9a-000000000014",
+      "name": "Live Pitch URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2780, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "s1", "name": "business", "value": "={{ $('Job Config').item.json.businessName }}", "type": "string" },
+            { "id": "s2", "name": "prospectUrl", "value": "={{ $('Job Config').item.json.prospectUrl }}", "type": "string" },
+            { "id": "s3", "name": "liveUrl", "value": "={{ $json.liveUrl }}", "type": "string" },
+            { "id": "s4", "name": "teaserUrl", "value": "={{ $json.teaserUrl }}", "type": "string" },
+            { "id": "s5", "name": "auditPdf", "value": "={{ ($('Locate Audit PDF').item.json.stdout || 'not located').split('\\n')[0] }}", "type": "string" },
+            { "id": "s6", "name": "heroRender", "value": "={{ $('Extract Render Info').item.json.renderFile }}", "type": "string" },
+            { "id": "s7", "name": "deployState", "value": "staged — awaiting human deploy gate", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0f1e2d3c-0019-4a4a-9a9a-000000000019",
+      "name": "Run Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3020, 200]
+    },
+    {
+      "parameters": {
+        "command": "=osascript -e 'display notification \"Pitch staged for {{ $('Job Config').item.json.businessName }} — review then push to deploy\" with title \"DGTL Spine — run complete\" sound name \"Glass\"'"
+      },
+      "id": "0f1e2d3c-0020-4a4a-9a9a-000000000020",
+      "name": "Notify — Done",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [3260, 200]
+    },
+    {
+      "parameters": {
+        "command": "=osascript -e 'display notification \"check-links.py failed for {{ $('Job Config').item.json.slug }} — pitch NOT staged\" with title \"DGTL Spine — link check FAILED\" sound name \"Basso\"'"
+      },
+      "id": "0f1e2d3c-0021-4a4a-9a9a-000000000021",
+      "name": "Notify — Link Check Failed",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2300, 420]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "months", "triggerAtDayOfMonth": 1, "triggerAtHour": 9 }
+          ]
+        }
+      },
+      "id": "0f1e2d3c-0015-4a4a-9a9a-000000000015",
+      "name": "Monthly Report Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-40, 820]
+    },
+    {
+      "parameters": {
+        "command": "=cd /Users/stephenprokopich/dgtl && claude -p \"Use the dgtl-client-reports skill: for every client with an open findings ledger, produce this month's progress report seeded from their audit brief, and flag any client due a quarterly business review.\" --output-format text --permission-mode acceptEdits"
+      },
+      "id": "0f1e2d3c-0016-4a4a-9a9a-000000000016",
+      "name": "Client Reports (Claude)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [220, 820]
+    },
+    {
+      "parameters": {
+        "command": "=osascript -e 'display notification \"Monthly client reports drafted — review before sending\" with title \"DGTL Spine — QBR loop\" sound name \"Glass\"'"
+      },
+      "id": "0f1e2d3c-0022-4a4a-9a9a-000000000022",
+      "name": "Notify — Reports Ready",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [460, 820]
+    }
+  ],
+  "connections": {
+    "Prospect Intake": {
+      "main": [
+        [ { "node": "Job Config", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Job Config": {
+      "main": [
+        [
+          { "node": "Client Audit (Claude)", "type": "main", "index": 0 },
+          { "node": "Comfy · Brand Plate (SDXL)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Client Audit (Claude)": {
+      "main": [
+        [ { "node": "Locate Audit PDF", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Locate Audit PDF": {
+      "main": [
+        [ { "node": "Merge Audit + Render", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Comfy · Brand Plate (SDXL)": {
+      "main": [
+        [ { "node": "Wait 20s", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Wait 20s": {
+      "main": [
+        [ { "node": "Fetch Render Status", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Fetch Render Status": {
+      "main": [
+        [ { "node": "Render Done?", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Render Done?": {
+      "main": [
+        [ { "node": "Extract Render Info", "type": "main", "index": 0 } ],
+        [ { "node": "Wait 20s", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Extract Render Info": {
+      "main": [
+        [ { "node": "Merge Audit + Render", "type": "main", "index": 1 } ]
+      ]
+    },
+    "Merge Audit + Render": {
+      "main": [
+        [ { "node": "Pitch Composer (Claude)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Pitch Composer (Claude)": {
+      "main": [
+        [ { "node": "Teaser Build (Claude)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Teaser Build (Claude)": {
+      "main": [
+        [ { "node": "Link Check Gate", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Link Check Gate": {
+      "main": [
+        [ { "node": "Stage to Decks", "type": "main", "index": 0 } ],
+        [ { "node": "Notify — Link Check Failed", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Stage to Decks": {
+      "main": [
+        [ { "node": "Deploy to VPS (human gate)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Deploy to VPS (human gate)": {
+      "main": [
+        [ { "node": "Live Pitch URL", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Live Pitch URL": {
+      "main": [
+        [ { "node": "Run Summary", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Run Summary": {
+      "main": [
+        [ { "node": "Notify — Done", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Monthly Report Trigger": {
+      "main": [
+        [ { "node": "Client Reports (Claude)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Client Reports (Claude)": {
+      "main": [
+        [ { "node": "Notify — Reports Ready", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {}
+}
