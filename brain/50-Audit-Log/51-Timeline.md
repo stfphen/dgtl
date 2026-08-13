@@ -12,7 +12,6 @@ Chronological history, reconstructed from repo docs + git. **Append newest entri
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
 
 ## 2026-08
-
 - 2026-08-13 — **Full repository, branch, worktree and operating-platform audit completed.** The
   evidence and recommended target architecture are recorded in
   `docs/audits/2026-08-13-repository-and-platform-audit.md`. Consolidated tested local WIP into
@@ -24,6 +23,8 @@ Dates are from doc timestamps / commit themes; treat older "status" claims as po
   enrichment network access, and `next build` still fails fetching Google font files even when
   outbound access is allowed. Production dependency audit is down from eight advisories to three
   high advisories; the remaining npm-proposed fix is a breaking Next 16 upgrade.
+
+- 2026-08-01 — **Creator-feature template un-rotted: new packs now validate clean without hand-editing paths.** The template still shipped pre-pack-model relative paths (`../assets/…`, `../index.html`, `../cases/…`) plus a related-card pointing at a `peter-mckinnon.html` that never existed — ~25 broken local refs in every pack built from it, each one hand-fixed after the fact. Fixed at both ends: the template is now authored at pack-hub depth (`../../_shared/…`), and `populate.py` gained `journal_depth()`/`reroot()` so a feature page one level deeper gets `../../../_shared/…` automatically. SKILL.md's path table is now true as written — the "shared CSS/JS" column is marked automatic, only the "own media" column is hand-written, and a feature-page populate example was added. Verified by building the example fields to both depths: `validate.py` → 9 ok / 1 warn (empty `og:image`, a fields-content placeholder) / **0 failures** at each, no manual path editing; `tools/check-links.py` → `checked=859 missing=0` (unchanged — it does not scan `engine/`, which is why this rotted unseen). [[53-Known-Issues]] · [[52-Decision-Log]]
 
 ## 2026-07
 - 2026-07-28 — **VPS offboard consolidation** (branch `consolidate-vps`): audited `dgtl-offboard-20260721` against the monorepo. VPS app source = `fe2d78a` (nothing newer than `platform/`); decks rig identical. Imported the VPS-only material: 18 live pitch sites into `pitches/` (live-URL slugs kept; old escott draft → `escott-brand`; escott set documented as the portal-led pattern in `pitches/_templates/PORTAL-PATTERN.md`), deploy portal source → `deploy/portal/`, prod decks override, DGTL OS → `os/` (secrets stripped; folded into `apps/dgtl-os/` on 07-28 when the skill-integration branch landed with the 07-18 standalone-product layout — wiring notes now in `apps/dgtl-os/local/README.md`). assets.dgtlgroup.io confirmed stale → retired. Data/secrets remain only in the offline bundle. See MIGRATION.md addendum.

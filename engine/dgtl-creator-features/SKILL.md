@@ -82,6 +82,12 @@ python3 engine/dgtl-creator-features/scripts/populate.py \
   --template engine/dgtl-creator-features/assets/creator-feature-template.html \
   --fields journal/packs/<slug>/media/<slug>.fields.json \
   --out    journal/packs/<slug>/index.html
+
+# a feature page just changes --out; the script re-depths the chrome links itself
+python3 engine/dgtl-creator-features/scripts/populate.py \
+  --template engine/dgtl-creator-features/assets/creator-feature-template.html \
+  --fields journal/packs/<slug>/media/<brand>.fields.json \
+  --out    journal/packs/<slug>/features/<brand>.html
 ```
 
 `fields.json` shape (full reference in `references/field-guide.md`):
@@ -96,14 +102,25 @@ python3 engine/dgtl-creator-features/scripts/populate.py \
 ```
 
 Paths in `media` are written **as they must appear in the final page**, so they depend on where the
-page sits in the pack:
+page sits in the pack. The template's own chrome links — shared CSS/JS/logos, the journal hub,
+`journal/cases/`, sibling packs — are **not** yours to write: the template ships them at pack-hub
+depth and `populate.py` adds a `../` for every level `--out` sits deeper than that.
 
 | Page | shared CSS/JS | own media | pack hub |
 |---|---|---|---|
-| hub — `packs/<slug>/index.html` | `../../_shared/…` | `media/…` | — |
-| feature — `packs/<slug>/features/<x>.html` | `../../../_shared/…` | `../media/…` | `../index.html` |
+| hub — `packs/<slug>/index.html` | `../../_shared/…` *(automatic)* | `media/…` | — |
+| feature — `packs/<slug>/features/<x>.html` | `../../../_shared/…` *(automatic)* | `../media/…` | `../index.html` |
+
+So you only ever hand-write the **own media** column. Never hand-fix a `_shared/` path in a populated
+page — if one is wrong, `--out` was wrong or the page was moved after populating, and the fix is to
+re-run populate rather than patch the output.
 
 Any hero/pf slot you omit keeps its on-brand gradient placeholder.
+
+The template's three "More from the Journal" cards ship pointing at real, resolving pages
+(`../shane-boyer/index.html`, `journal/cases/a-day-with-swae-lee.html`, the journal index) so a
+fresh pack validates before you have touched them. They are still **placeholders for editorial
+purposes** — repoint at least two at packs genuinely related to this creator per step 8.
 
 ### 5. Validate
 

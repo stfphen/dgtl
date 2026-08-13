@@ -96,6 +96,24 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 - **N+1 write loops (MED):** bulk lead import, outreach enqueue (+per-item event) run per-row INSERTs with no surrounding transaction. Fix: multi-row INSERT inside `withTransaction`.
 
 ## ⚙️ Operational / tech debt
+- ✅ **RESOLVED (08-01) — Creator-feature template shipped stale relative paths; every new pack failed
+  `validate.py` with ~25 broken local refs until someone hand-rewrote them.**
+  `engine/dgtl-creator-features/assets/creator-feature-template.html` still carried the *pre-pack*
+  layout: `../assets/dgtl-editorial.css`, `../assets/journal.js`, `../assets/logos/…`,
+  `../index.html`, `../cases/…` — plus a related-card pointing at `peter-mckinnon.html`, a sibling
+  that has never existed. Under the pack model those needed `../../_shared/…`, `../../index.html`,
+  `../../cases/…`. **Why it went unnoticed:** `tools/check-links.py` scopes to `journal/`, `pitches/`
+  and `sites/` — it does not scan `engine/`, and it *cannot* usefully do so, because the template's
+  paths are correct relative to a pack hub, not relative to where the file itself sits. So the only
+  thing that ever caught this was `validate.py`, i.e. after each pack was already built.
+  **Fix (two halves, both needed):** the template now ships pack-hub-correct paths, *and*
+  `populate.py` re-depths them from `--out` (`journal_depth()` + `reroot()`), so a feature page at
+  `packs/<slug>/features/<x>.html` gets `../../../_shared/…` automatically. That second half is what
+  makes SKILL.md's hub-vs-feature path table true as written — fixing only the template would have
+  left feature pages broken at the other depth. Own-media paths still come from `fields.json` and are
+  deliberately untouched by the rewrite (it runs before media injection). Verified by populating the
+  example fields to both depths: 0 failures from `validate.py` with no manual path editing.
+  [[16-Design-System]]
 - ⚠️ **RECURRING (07-13): git commits succeed but every in-sandbox commit leaves stale `.git/*.lock`
   files behind — clear them on the Mac.** Good news: the original 07-04 blocker is gone and commits now
   land — FAYELLA committed `4d12dfe` on the Mac (07-12 23:10) and the 07-13 brain sync committed
@@ -221,22 +239,13 @@ Code-side C2/H2/M1/M2/L1 and login-H1 are **done**. Remaining, in order:
 
 Up: [[50-Audit-Log-MOC]]
 
-## Creator-feature template ships stale relative paths (found 2026-08-01)
+## ✅ Creator-feature template relative paths — resolved 2026-08-13
 
-`engine/dgtl-creator-features/assets/creator-feature-template.html` still references the **pre-pack**
-layout — `../assets/dgtl-editorial.css`, `../assets/journal.js`, `../assets/logos/*.svg`,
-`../index.html#creators`, `../cases/a-day-with-swae-lee.html`, and a related-card pointing at a
-sibling `peter-mckinnon.html`. Under the pack model a hub sits at `journal/packs/<slug>/index.html`
-and needs `../../_shared/…` and `../../index.html`.
-
-So `populate.py` reports "all tokens filled" and then `validate.py` immediately fails with ~25
-broken local refs. Every pack built from this template has needed the same manual post-populate
-rewrite (Shane Boyer's page carries the corrected paths; Casper's needed it too). It is a silent
-tax on every new pack and it makes the skill's documented workflow wrong as written.
-
-**Fix:** update the template to the pack-relative paths and repoint the related-cards at real pages,
-or teach `populate.py` to rewrite them. Not done here — it changes the shared engine and belongs in
-its own PR, not one adding a creator.
+The template is now authored at pack-hub depth and `populate.py` deterministically re-roots shared
+chrome links for deeper feature/case output paths without changing author-supplied media paths. Both
+hub and nested example builds validate with 9 checks OK, one expected empty-`og:image` warning, and
+zero failures. The engine still needs a regression test in a required CI job because the repository
+link checker intentionally does not scan templates under `engine/`.
 
 ## Creator intake — pre-launch gates (2026-08-03)
 
