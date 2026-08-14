@@ -3,13 +3,13 @@ title: 13 · Data Model
 type: reference
 tags: [architecture, leads, tenancy]
 status: stable
-updated: 2026-08-13
-source: migrations/001-010, lib/store.js, lib/core/, lib/stage2/
+updated: 2026-08-14
+source: migrations/001-011, lib/store.js, lib/core/, lib/stage2/
 ---
 
 # Data Model
 
-Postgres schema, defined by ordered migrations (`migrations/`, latest `010`, run via `npm run migrate`).
+Postgres schema, defined by ordered migrations (`migrations/`, latest `011`, run via `npm run migrate`).
 The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 (`data/app-store.json`) used when `DATABASE_URL` is unset — local dev only.
 
@@ -62,6 +62,17 @@ The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 - **`provider_events`**, **`inbound_replies`**, and **`operation_exceptions`** retain provider correlation, review-required replies, and exception-desk resolution.
 - `opportunity_contacts.team_id` is backfilled and protected by composite team FKs; new runtime writes always supply it. It remains nullable so the 009→010 pair can be safely re-run and re-backfill old relationship rows.
 - Full workflow, compatibility choices, authorization, rollback, and production-send boundary: `docs/architecture/dgtl-core-phase-2.md`.
+
+### `011_core_release_gate.sql` — delivery + team-integrity hardening (2026-08-14)
+- Freezes approved sender/recipient envelope fields and records unknown delivery outcomes separately
+  from ordinary retries.
+- Adds team-scoped worker heartbeats plus partial due/lease/provider indexes for operations health and
+  bounded claims.
+- Adds composite `(id, team_id)` uniqueness where required and `NOT VALID` team-aware foreign keys
+  across Company/Contact/Opportunity, Campaign/Message, imports, attempts, suppressions, provider
+  events, replies, and Activity. New writes are protected immediately; historical validation is an
+  explicit release step.
+- Production-shaped validation and recovery evidence: `docs/operations/dgtl-core-release-checkpoint.md`.
 
 ## Entity relationships (mental model)
 ```

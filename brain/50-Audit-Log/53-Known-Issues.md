@@ -3,7 +3,7 @@ title: 53 · Known Issues, Risks & Tech Debt
 type: log
 tags: [audit, security]
 status: living
-updated: 2026-08-13
+updated: 2026-08-14
 source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, status docs
 ---
 
@@ -14,29 +14,26 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 
 ## Repository/platform integration audit (2026-08-13)
 
-- **DGTL Core migration 009 is implemented but not applied/reconciled against production data.**
-  Before production: back up, apply in staging against a production-shaped copy, compare legacy and
-  canonical row counts/relationships, inspect duplicate candidates, then apply in production. Reads
-  safely retain live compatibility projections; canonical writes intentionally fail closed until the
-  migration exists. `docs/architecture/dgtl-core-phase-1.md` · [[13-Data-Model]]
-- **Core is read-first UI; legacy dual-write and reviewed write APIs are Phase 2.** Lead intake,
-  enterprise prospecting, outreach, telephony, and draft creation still write their established
-  tables. The hybrid repository prevents invisibility, but compatibility snapshots currently load
-  several legacy collections per routed read and need caching/query-specific adapters before large
-  datasets. Buying-committee JSON remains a compatibility projection until reviewed contact creation.
-- **Core direct database relations rely on the service layer for cross-team relationship validation.**
-  Every routed/service access is team-scoped and tested, and each primary table has a team FK; a later
-  hardening pass should add composite team-aware relationship constraints or database RLS before
-  exposing generalized write APIs to external agents.
+- ✅ **Core 009–011 rehearsed on a production-shaped copy (08-14).** The sealed 2026-07-21 dump
+  restored into isolated PostgreSQL 16; backfills reconciled, repeat execution was stable, all
+  deferred team constraints validated, and there were zero orphans/cross-team rows. Remaining risk:
+  that dump is not current. A fresh backup/restore and isolated staging run are mandatory before
+  production. `docs/operations/dgtl-core-release-checkpoint.md` · [[13-Data-Model]]
+- **Legacy and canonical outreach engines still coexist.** Canonical imports/campaigns/messages do
+  not blindly dual-write, while legacy lead/outreach features retain their existing tables. The first
+  post-release migration should move `outreach_campaigns`/`outreach_queue` onto canonical IDs; two
+  independent delivery concepts are the largest duplication risk.
+- ✅ **Composite team-aware relationships added in migration 011.** All Core routes derive team from
+  the authenticated session and direct-ID attacks are covered. PostgreSQL RLS remains future
+  defense-in-depth and should be designed platform-wide before generalized agent writes.
 
 - ✅ **Platform migration build verified 2026-08-13.** Final `npm run build` on merged local `main`
   with Next 15.5.23 compiled, type-checked, generated 49/49 static pages, collected traces, and exited
   0. Earlier attempts failed fetching Geist Mono, so the root layout's seven Google font families
   remain a reproducibility risk. Self-host/pin or reduce them and make the build required CI.
-- **Three high production dependency advisories remain** after updating the lock to Next 15.5.23
-  and applying non-breaking audit fixes. They are transitive PostCSS and Sharp advisories through
-  Next 15; npm proposes Next 16.3.0 as a breaking fix. Test a deliberate Next 16 migration rather
-  than running `npm audit fix --force` on the production line.
+- ✅ **Three high production dependency advisories resolved 2026-08-14.** Narrow lockfile overrides
+  use patched PostCSS 8.5.26 and Sharp 0.35.3 without a breaking Next 16 upgrade. `npm audit
+  --omit=dev` reports zero vulnerabilities; platform tests pass 407/407 and production build passes.
 - ✅ **Primary platform test gate repaired 2026-08-13.** Five enrichment fixtures mocked `fetch` but
   not the SSRF guard's preceding DNS lookup. The lookup is now injectable through the enrichment
   path, tests use a fixed public address, production continues to resolve and validate real DNS, and
@@ -47,7 +44,7 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 - **Five root-absolute pitch links remain**, all in `pitches/hotels/index.html`, pointing to a
   nonexistent `/full/` target. Fourteen other invalid teaser links were repaired. Choose the actual
   full pitch or remove the calls to action. Three ESCOTT media files remain declared pending.
-- **Twelve open GitHub PRs have no CI statuses.** PRs 19 and 20 are superseded; PR 23 is an
+- **Twelve pre-existing open GitHub PRs had no CI statuses.** PRs 19 and 20 are superseded; PR 23 is an
   unmergeable mixed-scope branch; PRs 13–18 and 21–22 are unverified domain placeholders; PR 24 is
   the isolated DGTL Neon review branch. See the 2026-08-13 audit before merging or closing them.
 - **Polish Stone tenant content is not publish-ready.** The three formerly untracked modules contain
@@ -79,7 +76,7 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 | **L3** | Historic `.env.example` shipped `ADMIN_PASSWORD=change-this-password` placeholder. |
 | **L4 (NEW)** | `telephony/transcription` webhook accepts unsigned requests (proceeds when `X-Twilio-Signature` absent); the other four telephony callbacks hard-require a valid signature. Low impact (limited to our own account's transcripts). | `app/api/telephony/transcription/route.js` |
 | **L5 (NEW)** | Portfolio embed `<iframe src>` has no scheme allowlist (admin-controlled data, so low risk). | `components/FunnelPage.jsx` |
-| **L6 — SUPERSEDED (08-13)** | The July two-moderate snapshot is obsolete. After refreshing to Next 15.5.23, `npm audit --omit=dev` reports three high transitive PostCSS/Sharp advisories; npm offers only the breaking Next 16.3.0 fix. Track in the 2026-08-13 integration section above. | `node_modules/next` (transitive) |
+| ✅ **L6 — RESOLVED (08-14)** | The July snapshot and 08-13 three-high snapshot are obsolete. Locked overrides now resolve PostCSS 8.5.26 and Sharp 0.35.3; audit is zero and Next 15 tests/build pass. | `platform/package.json`, lockfile |
 
 ## 🐛 Functional / correctness (NEW — 07-02 audit)
 - ✅ **RESOLVED: pipeline status not validated on update.** `updateLeadStatus` now rejects statuses outside `pipelineStatuses` (Postgres stored junk verbatim; file store silently reset the lead to `new`). Test: `tests/lead-status-validation.test.js`.
@@ -172,7 +169,6 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 - **Branch sprawl** (~15+ local + backups + wip/rescue + remotes) — needs consolidation. [[47-Git-Workflow]]
 - **`team_default` workaround** — built-in tenants tied to one team; blocks clean multi-team onboarding. [[15-Multi-Tenancy]] / [[33-Sprint-2-Productization]]
 - **No `lint` script** despite the mobile prompt referencing `npm run lint`. [[11-Tech-Stack]]
-- **2 moderate npm advisories** (`npm install`) — not yet addressed.
 - **VPS drift risk** — ✅ RESOLVED 2026-07-03: VPS runs the current tip (`main@14a746b`, smoke green;
   migrations 006+007 applied, 5/5 tenants seeded, uploads volume mounted). Keep it current via
   `docs/DEPLOY_NEXT.md`. Still missing: an uptime monitor (Phase 12) to catch 502s automatically.
@@ -279,9 +275,18 @@ link checker intentionally does not scan templates under `engine/`.
 
 ## DGTL Core Phase 2 follow-ups (2026-08-13)
 
-- **Production migration still requires a production-shaped snapshot rehearsal.** Clean PostgreSQL 16 and synthetic legacy backfill rehearsals passed, including direct repeat execution, but no production data/schema statistics were available. Validate the `NOT VALID` team constraints and reconcile actual legacy counts before production.
+- ✅ **Production-shaped rehearsal completed 08-14** using the sealed 2026-07-21 dump. A fresh/current
+  backup and a separate staging target are still required before production.
 - **Native XLSX is not parsed.** `/imports` accepts CSV/TSV (8 MB, 10,000 rows). Add a reviewed streaming workbook parser before operators upload `.xlsx` directly.
 - **Merge reversal is conservative.** Batch-created records compensate safely; restoring explicitly merged fields from `before_state` after concurrent edits needs a field-level conflict UI.
-- **No production canonical email adapter or inbound webhook exists.** This is deliberate. Add signed provider webhooks, delivery/rate observability, lease recovery, account/domain caps, and an explicit production enablement gate before commercial use.
+- ✅ **Outbound adapter boundary hardened 08-14:** fail-closed release gates, signed Resend events,
+  health, lease recovery, unknown-outcome quarantine, idempotency, and provider-independent caps are
+  implemented. Production stays disabled. No production inbound mailbox exists; connect one only
+  behind the tested deterministic correlation boundary.
+- **No isolated platform staging target exists.** The current compose and DNS are production-shaped;
+  do not reuse them. Follow `docs/operations/dgtl-core-staging-runbook.md` after authorization.
+- **GitHub branch protection must select `Required DGTL Core checkpoint`.** The workflow produces the
+  aggregate check, but a repository admin must make it required before merge bypass is mechanically
+  prevented.
 - **Application authorization is primary; PostgreSQL RLS is absent.** Composite team checks were added where practical, but RLS should be designed platform-wide rather than applied only to Stage 2.
 - **Import review UI exposes JSON mapping and candidate decisions, not a polished visual mapper/diff.** The workflow is complete and auditable; drag/drop mapping, per-field merge diffs, bulk decisions, and native large-sheet pagination remain Phase 3 ergonomics.

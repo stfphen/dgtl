@@ -3,7 +3,7 @@ title: 51 · Project Timeline
 type: log
 tags: [audit]
 status: living
-updated: 2026-08-13
+updated: 2026-08-14
 ---
 
 # Project Timeline
@@ -12,6 +12,21 @@ Chronological history, reconstructed from repo docs + git. **Append newest entri
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
 
 ## 2026-08
+- 2026-08-14 — **DGTL Core Phase 1 + 2 release checkpoint hardened and rehearsed.** Added the
+  `Required DGTL Core checkpoint` GitHub Actions gate (repository integrity, PostgreSQL 16
+  migrations, explicit Core suites, complete platform test/build, acceptance workflow, Worklog, and
+  creator-intake). Migration 011 freezes approved sender/recipient envelopes, adds worker heartbeat
+  and outbox indexes, and enforces new composite team relationships. Canonical workers now serialize
+  claim capacity per team, recover only pre-attempt leases, and quarantine all post-attempt/provider
+  ambiguity for manual review; Resend stays off by default behind release-bound multi-factor config,
+  signed Svix events, provider idempotency, and conservative rate policy. A sealed 2026-07-21
+  production-shaped dump restored into isolated PostgreSQL 16 and migrations 009–011 reconciled to
+  362 companies / 361 contacts / 362 opportunities / 357 research / 1 campaign / 9 messages with
+  zero orphans and zero cross-team rows; all deferred constraints validated and direct repeat
+  execution was stable. Concurrent acceptance workers split 1/1 deliveries and the repeat drain was
+  empty. Full platform **407/407**, Worklog **375/375**, creator intake **26/26**, build 54/54, links
+  `missing=0`, and npm audit **0 vulnerabilities** after narrow PostCSS/Sharp overrides.
+  `docs/operations/dgtl-core-release-checkpoint.md` · [[13-Data-Model]] · [[26-Outreach]]
 - 2026-08-13 — **DGTL Core Phase 1 implemented on `codex/core-domain-phase-1`.** Added the
   canonical Company → Contact → Opportunity graph with provenance-bearing Research, canonical
   Campaign/Message/Activity records, Artifact + GenerationJob separation, ExternalLink integration
