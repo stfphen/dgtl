@@ -301,7 +301,8 @@ test("HOME page and palette ship no credentials and no consequential natural-lan
   assert.doesNotMatch(homePage, /CORE_WORKLOG_(PASSWORD|EMAIL)|RESEND_API_KEY/, "no secrets in the page");
   const palette = await readFile(path.join(root, "platform", "components", "core", "CommandPalette.jsx"), "utf8");
   assert.match(palette, /api\/core\/search/, "palette uses the server search API");
-  assert.doesNotMatch(palette, /assistant|Ask AI|DGTL\.chat/i, "no AI assistant is advertised in Stage 5");
+  assert.match(palette, /go\(`\/chat\?q=\$\{encodeURIComponent\(query\.trim\(\)\)\}`\)/, "the Stage 6 Ask DGTL row only navigates to /chat with the query");
+  assert.doesNotMatch(palette, /api\/core\/chat\/threads|confirm|proposal|execute/i, "the palette itself never runs a conversational turn or a consequential action");
   const route = await readFile(path.join(root, "platform", "app", "api", "core", "search", "route.js"), "utf8");
   assert.match(route, /requireSession/, "search requires an authenticated session");
   assert.match(route, /getSessionTeamId/, "search derives the team from the session, never the request");

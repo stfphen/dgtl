@@ -90,8 +90,21 @@ export default function CommandPalette() {
               <kbd>esc</kbd>
             </div>
             <div className="core-cmdk__results" role="listbox">
+              {query.trim().length >= 2 ? (
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  className="core-cmdk__result core-cmdk__ask"
+                  onClick={() => go(`/chat?q=${encodeURIComponent(query.trim())}`)}
+                >
+                  <span className="core-cmdk__kind">Ask DGTL</span>
+                  <span className="core-cmdk__title">{query.trim()}</span>
+                  <span className="core-cmdk__subtitle">Open in DGTL.chat</span>
+                </button>
+              ) : null}
               {loading ? <p className="core-cmdk__hint">Searching…</p> : null}
-              {!loading && query.trim().length >= 2 && !results.length ? <p className="core-cmdk__hint">No matches in this team.</p> : null}
+              {!loading && query.trim().length >= 2 && !results.length ? <p className="core-cmdk__hint">No direct matches in this team — Ask DGTL above hands the question to chat.</p> : null}
               {!loading && query.trim().length < 2 ? <p className="core-cmdk__hint">Type at least two characters. Results stay inside your team.</p> : null}
               {results.map((result, index) => (
                 <button

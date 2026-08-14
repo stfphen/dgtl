@@ -22,7 +22,12 @@ export const CORE_ID_PREFIXES = Object.freeze({
   artifactFamily: "artifact_family",
   artifactDeployment: "artifact_deployment",
   messageArtifact: "message_artifact",
-  integrationOperation: "integration_operation"
+  integrationOperation: "integration_operation",
+  assistantThread: "assistant_thread",
+  assistantMessage: "assistant_message",
+  assistantToolRun: "assistant_tool_run",
+  assistantTurn: "assistant_turn",
+  actionProposal: "action_proposal"
 });
 
 export function createCoreId(entityType, randomUUID = crypto.randomUUID) {

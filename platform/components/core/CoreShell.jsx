@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
+import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, MessageCircle, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
 
 // Grouped navigation. Groups render as label rows inside ONE .core-nav grid so
 // the mobile bottom bar stays a single horizontal strip (labels hide <=820px).
 const navigation = [
-  { label: "", items: [{ href: "/home", label: "Home", icon: Home, mobile: true }] },
+  { label: "", items: [
+    { href: "/home", label: "Home", icon: Home, mobile: true },
+    { href: "/chat", label: "DGTL.chat", icon: MessageCircle, mobile: true },
+  ] },
   {
     label: "Grow",
     items: [

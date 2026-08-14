@@ -36,6 +36,7 @@ export default async function CompanyDetailPage({ params, searchParams }) {
   return (
     <div className="core-page">
       <PageHeader eyebrow="Company" title={company.displayName} description={company.researchSummary || "Canonical organization record and its connected commercial activity."} backHref="/companies" backLabel="Companies" />
+      <p className="core-home-note"><a href={`/chat?q=${encodeURIComponent(`Tell me about ${company.displayName}`)}`}>Ask DGTL about this →</a></p>
       {query?.notice ? <p className="core-notice">{query.notice}</p> : null}
       <div className="core-grid">
         {worklog ? <CompanyWorklogSection companyId={company.id} link={worklogLink} match={worklogMatch} matchError={worklogMatchError} findHref={`/companies/${encodeURIComponent(company.id)}?worklog=find`} /> : null}

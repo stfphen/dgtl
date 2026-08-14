@@ -246,3 +246,51 @@ export function generateJson({ system, prompt, schema, documents = [], model } =
     () => apiKeyGenerateJson({ system, prompt, schema, documents, model })
   );
 }
+
+/**
+ * One bounded chat turn with client-defined tools (Stage 6 DGTL.chat).
+ *
+ * Deliberately API-key-only: the subscription/Agent-SDK path runs with
+ * bypassed permissions, which is safe for the empty/web-only tool sets above
+ * but is NOT an acceptable substrate for a client-defined tool loop — Stage 6
+ * keeps its confirmation gate in Core, outside any model permission system.
+ * Bounded: explicit timeout, at most one retry (SDK-level), capped tokens.
+ * Returns either { type: "tool_call", toolId, args, callId, usage } or
+ * { type: "final", content, usage }. Never returns vendor response objects.
+ */
+export async function runChatToolTurn({ system, messages, tools, model, timeoutMs = 30_000, maxTokens = 1200 } = {}) {
+  if (!process.env.ANTHROPIC_API_KEY) throw aiNotConfiguredError();
+  const client = new Anthropic({ timeout: timeoutMs, maxRetries: 1 });
+  const encodeToolId = (id) => String(id).replaceAll(".", "__");
+  const decodeToolId = (name) => String(name).replaceAll("__", ".");
+  const clamp = (value, cap) => { const text = String(value ?? ""); return text.length > cap ? `${text.slice(0, cap)}…` : text; };
+  const providerMessages = [];
+  for (const message of messages || []) {
+    if (message.role === "user") providerMessages.push({ role: "user", content: clamp(message.content, 4000) });
+    else if (message.role === "assistant") providerMessages.push({ role: "assistant", content: clamp(message.content, 4000) });
+    else if (message.role === "assistant_tool_call") providerMessages.push({ role: "assistant", content: [{ type: "tool_use", id: message.callId, name: encodeToolId(message.toolId), input: message.args || {} }] });
+    else if (message.role === "tool_result") providerMessages.push({ role: "user", content: [{ type: "tool_result", tool_use_id: message.callId, content: clamp(message.content, 6000) }] });
+  }
+  let response;
+  try {
+    response = await client.messages.create({
+      model: model || process.env.CORE_CHAT_MODEL || "claude-sonnet-5",
+      max_tokens: maxTokens,
+      system,
+      tools: (tools || []).map((tool) => ({ name: encodeToolId(tool.id), description: tool.description, input_schema: tool.inputSchema })),
+      messages: providerMessages
+    });
+  } catch (error) {
+    // Secret-safe: only a status/name reaches the caller, never headers/body.
+    throw Object.assign(new Error(`Model provider error (${error?.status || error?.name || "unknown"}).`), { status: 502, code: "provider_error" });
+  }
+  if (response.stop_reason === "refusal") {
+    const error = new Error("The model declined the request.");
+    error.name = "AiRefused";
+    throw error;
+  }
+  const usage = { inputTokens: response.usage?.input_tokens ?? null, outputTokens: response.usage?.output_tokens ?? null };
+  const toolUse = (response.content || []).find((block) => block.type === "tool_use");
+  if (toolUse) return { type: "tool_call", toolId: decodeToolId(toolUse.name), args: toolUse.input || {}, callId: toolUse.id, usage };
+  return { type: "final", content: clamp(extractText(response), 8000), usage };
+}
