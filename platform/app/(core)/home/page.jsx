@@ -217,11 +217,10 @@ export default async function HomePage() {
         <Section title="Today" description="What is actually due.">
           <TodayList today={snapshot.today} />
         </Section>
-        <div id="approvals" style={{ display: "contents" }}>
-          <Section title="Approvals" count={snapshot.approvals.state === "ok" ? snapshot.approvals.data.count : undefined}>
-            <ApprovalsList approvals={snapshot.approvals} />
-          </Section>
-        </div>
+        <Section title="Approvals" count={snapshot.approvals.state === "ok" ? snapshot.approvals.data.count : undefined}>
+          <span id="approvals" aria-hidden />
+          <ApprovalsList approvals={snapshot.approvals} />
+        </Section>
         <Section title="Pipeline" description="Live canonical opportunities." className="is-wide">
           <PipelinePanel pipeline={snapshot.pipeline} />
         </Section>
