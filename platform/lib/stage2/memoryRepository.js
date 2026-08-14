@@ -15,6 +15,7 @@ export class MemoryStage2Repository extends MemoryCoreRepository {
     this.providerEvents = clone(seed.providerEvents || []);
     this.inboundReplies = clone(seed.inboundReplies || []);
     this.operationExceptions = clone(seed.operationExceptions || []);
+    this.workerHeartbeats = clone(seed.workerHeartbeats || []);
   }
 
   async transaction(work) {
@@ -25,7 +26,7 @@ export class MemoryStage2Repository extends MemoryCoreRepository {
       importReviews: this.importReviews, campaignMembers: this.campaignMembers,
       deliveryAttempts: this.deliveryAttempts, suppressions: this.suppressions,
       providerEvents: this.providerEvents, inboundReplies: this.inboundReplies,
-      operationExceptions: this.operationExceptions
+      operationExceptions: this.operationExceptions, workerHeartbeats: this.workerHeartbeats
     });
     try { return await work(this); }
     catch (error) { Object.assign(this, snapshot); throw error; }
@@ -61,19 +62,45 @@ export class MemoryStage2Repository extends MemoryCoreRepository {
   async createMessage(record) { this.messages.push(record); return record; }
   async getMessage(id, teamId) { return this.messages.find((item) => item.id === id && item.teamId === teamId) || null; }
   async listMessages(teamId, filters = {}) { return this.messages.filter((item) => item.teamId === teamId && (!filters.campaignId || item.campaignId === filters.campaignId)); }
+  async findMessagesByExternalId(teamId, providerMessageId) { return this.messages.filter((item) => item.teamId === teamId && item.externalMessageId === providerMessageId); }
   async updateMessage(id, teamId, patch, expected = {}) {
     const record = await this.getMessage(id, teamId);
     if (!record || Object.entries(expected).some(([key, value]) => record[key] !== value)) return null;
     Object.assign(record, patch); return record;
   }
-  async claimDueMessages(teamId, now, limit, workerId) {
-    return this.messages.filter((item) => item.teamId === teamId && ["queued", "retry"].includes(item.queueState) && (!item.scheduledAt || item.scheduledAt <= now) && (!item.nextAttemptAt || item.nextAttemptAt <= now)).slice(0, limit).flatMap((item) => {
+  async claimDueMessages(teamId, now, limit, workerId, leaseCutoff, workerConcurrency) {
+    const active = this.messages.filter((item) => item.teamId === teamId && item.queueState === "sending" && item.lockedAt >= leaseCutoff).length;
+    const available = Math.max(0, Number(workerConcurrency || 1) - active);
+    return this.messages.filter((item) => item.teamId === teamId && ["queued", "retry"].includes(item.queueState) && (!item.scheduledAt || item.scheduledAt <= now) && (!item.nextAttemptAt || item.nextAttemptAt <= now)).slice(0, Math.min(limit, available)).flatMap((item) => {
       if (item.lockedAt) return [];
       Object.assign(item, { queueState: "sending", lockedAt: now, lockedBy: workerId });
       return [item];
     });
   }
+  async recoverExpiredLeases(teamId, leaseCutoff, now) {
+    const recovered = [];
+    for (const message of this.messages.filter((item) => item.teamId === teamId && item.queueState === "sending" && item.lockedAt < leaseCutoff)) {
+      const attempt = this.deliveryAttempts.find((item) => item.teamId === teamId && item.messageId === message.id && item.attemptNumber === Number(message.attemptCount || 0) + 1 && item.status === "sending");
+      const outcomeUnknown = Boolean(attempt);
+      Object.assign(message, {
+        status: outcomeUnknown ? "delivery_uncertain" : "queued",
+        queueState: outcomeUnknown ? "delivery_uncertain" : "retry",
+        nextAttemptAt: outcomeUnknown ? "" : now,
+        deliveryUncertainAt: outcomeUnknown ? now : "",
+        failureReason: outcomeUnknown ? "Worker lease expired after delivery started; provider outcome is unknown." : "Worker lease expired before delivery started.",
+        lockedAt: "", lockedBy: "", updatedAt: now
+      });
+      if (attempt) Object.assign(attempt, { status: "outcome_unknown", errorCode: "worker_lease_expired", errorMessage: "Worker lease expired before the provider result was persisted.", completedAt: now });
+      recovered.push({ ...message, outcomeUnknown });
+    }
+    return recovered;
+  }
   async createDeliveryAttempt(record) { this.deliveryAttempts.push(record); return record; }
+  async updateDeliveryAttempt(id, teamId, patch) { return this.patch(this.deliveryAttempts, id, teamId, patch); }
+  async listRatePolicyUsage(teamId, since) { return this.messages.filter((item) => {
+    if (item.teamId !== teamId || !["sent", "sending", "delivery_uncertain"].includes(item.queueState)) return false;
+    return String(item.sentAt || item.lockedAt || item.deliveryUncertainAt || item.lastAttemptAt || item.updatedAt || "") >= since;
+  }); }
   async createSuppression(record) {
     const existing = this.suppressions.find((item) => item.teamId === record.teamId && item.active && ((record.normalizedEmail && item.normalizedEmail === record.normalizedEmail) || (record.normalizedDomain && item.normalizedDomain === record.normalizedDomain)));
     if (existing) return existing;
@@ -89,4 +116,29 @@ export class MemoryStage2Repository extends MemoryCoreRepository {
   async createOperationException(record) { this.operationExceptions.push(record); return record; }
   async listOperationExceptions(teamId, status = "open") { return this.operationExceptions.filter((item) => item.teamId === teamId && (!status || item.status === status)); }
   async updateOperationException(id, teamId, patch) { return this.patch(this.operationExceptions, id, teamId, patch); }
+  async recordWorkerHeartbeat(record) {
+    const existing = this.workerHeartbeats.find((item) => item.teamId === record.teamId && item.workerId === record.workerId);
+    if (!existing) { this.workerHeartbeats.push(record); return record; }
+    Object.assign(existing, {
+      ...record,
+      lastStartedAt: record.lastStartedAt || existing.lastStartedAt,
+      lastSuccessAt: record.lastSuccessAt || existing.lastSuccessAt,
+      lastErrorAt: record.lastErrorAt || existing.lastErrorAt
+    });
+    return existing;
+  }
+  async getOperationalHealth(teamId, activeSince) {
+    const messages = this.messages.filter((item) => item.teamId === teamId);
+    const heartbeats = this.workerHeartbeats.filter((item) => item.teamId === teamId);
+    return {
+      pendingOutbox: messages.filter((item) => ["queued", "retry"].includes(item.queueState)).length,
+      retryCount: messages.filter((item) => item.queueState === "retry").length,
+      deadLetterCount: messages.filter((item) => item.queueState === "dead_letter").length,
+      uncertainCount: messages.filter((item) => item.queueState === "delivery_uncertain").length,
+      failedImports: this.importBatches.filter((item) => item.teamId === teamId && item.status === "failed").length,
+      unresolvedExceptions: this.operationExceptions.filter((item) => item.teamId === teamId && item.status === "open").length,
+      lastSuccessfulWorkerCycle: heartbeats.map((item) => item.lastSuccessAt).filter(Boolean).sort().at(-1) || "",
+      workerRunning: heartbeats.some((item) => item.state === "running" && item.updatedAt >= activeSince)
+    };
+  }
 }

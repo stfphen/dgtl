@@ -4,5 +4,8 @@ export * from "./matching.js";
 export * from "./memoryRepository.js";
 export * from "./normalization.js";
 export * from "./outreachService.js";
+export * from "./ratePolicy.js";
 export * from "./repository.js";
+export * from "./resendWebhook.js";
 export * from "./testTransport.js";
+export * from "./transport.js";

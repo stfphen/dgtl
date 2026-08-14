@@ -31,15 +31,21 @@ try {
   batch = await imports.apply(batch.id);
 
   const opportunities = await repository.listOpportunities(teamId);
-  const outreach = new OutreachService({ teamId, actor, repository, transport: createTestTransport() });
+  const transport = createTestTransport();
+  const outreach = new OutreachService({ teamId, actor, repository, transport });
   const campaign = await outreach.createCampaign({ name: "Stage 2 acceptance campaign", tenantId, sendingIdentity: { email: "test@dgtl.invalid" }, personalizationConfig: { instructions: "Use sourced signals and the reviewed approach angle." } });
   await outreach.addCohort(campaign.id, opportunities.map((opportunity) => ({ opportunityId: opportunity.id, contactId: opportunity.primaryContactId, importBatchId: batch.id })));
   const drafts = await outreach.draftMessages(campaign.id, { subject: "An idea for {{company}}", body: "Hi {{first_name}},\n\nI noticed {{recent_signal}}\n\n{{approach_angle}} The first step is {{offer}}." });
   for (const draft of drafts) await outreach.approveMessage(draft.id);
   await outreach.approveCampaign(campaign.id);
   for (const draft of drafts) await outreach.queueMessage(draft.id);
-  const firstDrain = await outreach.processOutbox({ workerId: "acceptance_worker_1" });
-  const secondDrain = await outreach.processOutbox({ workerId: "acceptance_worker_2" });
+  const concurrentWorker = new OutreachService({ teamId, actor: { id: "acceptance-worker-2", role: "system" }, repository, transport });
+  const concurrentDrains = await Promise.all([
+    outreach.processOutbox({ workerId: "acceptance_worker_1" }),
+    concurrentWorker.processOutbox({ workerId: "acceptance_worker_2" })
+  ]);
+  const firstDrain = concurrentDrains.flat();
+  const secondDrain = await outreach.processOutbox({ workerId: "acceptance_worker_repeat" });
   const sent = await repository.listMessages(teamId, { campaignId: campaign.id });
   await outreach.recordProviderEvent({ provider: "test", providerEventId: `event_${suffix}`, providerMessageId: sent[0].externalMessageId, eventType: "delivered" });
   const counts = await pool.query(`select
@@ -53,7 +59,8 @@ try {
     (select count(*)::int from message_delivery_attempts where team_id=$1) attempts`, [teamId]);
   console.log(JSON.stringify({
     isolated: true, teamId, importBatchId: batch.id, appliedRows: batch.appliedRows,
-    firstDrain, secondDrain, duplicateDeliveryPrevented: secondDrain.length === 0,
+    concurrentWorkerResults: concurrentDrains.map((items) => items.length), firstDrain, secondDrain,
+    duplicateDeliveryPrevented: firstDrain.filter((item) => item.outcome === "sent").length === drafts.length && secondDrain.length === 0,
     provider: "test", externalNetworkCalls: 0, counts: counts.rows[0]
   }, null, 2));
 } finally {
