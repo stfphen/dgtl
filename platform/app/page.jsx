@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic";
 // The root page is host-resolved. A host explicitly claimed by a tenant
 // renders that tenant's page, so client custom domains keep working. Any
 // unclaimed host — dgtlmag.com (the app host), local dev, the bare VPS
-// hostname — goes straight to the admin panel: the app's
-// front door is the login, not a marketing funnel. Tenant pages (including
-// Content Day at /t/dgtlmag and the Growth Platform page at /t/dgtl-platform)
-// remain reachable under /t/[slug].
+// hostname — goes to /home, the authenticated DGTL operating command
+// center (which itself bounces unauthenticated visitors to /admin/login).
+// Tenant pages (including Content Day at /t/dgtlmag and the Growth
+// Platform page at /t/dgtl-platform) remain reachable under /t/[slug].
 export async function generateMetadata() {
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") || headerList.get("host") || "";
@@ -25,7 +25,7 @@ export default async function HomePage() {
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") || headerList.get("host") || "";
   const tenant = await getTenantClaimingHost(host);
-  if (!tenant) redirect("/admin");
+  if (!tenant) redirect("/home");
   // Media-library references (mediaId) become plain src urls server-side.
   const resolved = await resolveTenantMediaConfig(tenant, { teamId: tenant.teamId });
 

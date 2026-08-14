@@ -48,13 +48,15 @@ review → all tenant-scoped, permissioned, and audit-logged.*
 - [[29-Funding-Program]] — the biggest/newest subsystem.
 
 ## 🧭 Status at a glance (2026-08-14)
-- **Current priority:** review and merge DGTL Core Stage 4 — the Worklog delivery bridge:
-  Company↔Worklog Client, Opportunity↔Worklog Project, approved idempotent task handoff, and
-  read-through delivery status. Worklog remains the only execution authority; production Worklog
-  and the integration account remain deliberately unconfigured. [[2F-Worklog-Bridge]]
-- **Active branch:** `claude/dgtl-core-stage-4-95myaw`, created from merged Stage 3 checkpoint
-  `main@33c0bde` (PR #27). Migration 013, the Worklog connector/operations, and the real-local-
-  Worklog acceptance rehearsal are implemented; no Stage 4 merge or deploy is authorized.
+- **Current priority:** review and merge DGTL Core Stage 5 — the HOME command center: `/home`
+  as a pure projection over Stages 1–4 (attention, today, approvals, pipeline, delivery, health,
+  activity, ⌘K search), grouped navigation, and the app-host root landing on HOME.
+  [[2G-Home-Command-Center]]
+- **Active branch:** `codex/home-command-center-phase-5`, created from squash-merged Stage 4
+  checkpoint `main@2fa56f9` (PR #28, remote checkpoint green). No migration; no Stage 5 merge or
+  deploy is authorized.
+- **Stage 4** merged via PR #28 (`main@2fa56f9`): the Worklog delivery bridge — approved
+  idempotent handoff, read-through status, real-local-Worklog acceptance. [[2F-Worklog-Bridge]]
 - **Stage 3** merged via PR #27 (`main@33c0bde`): bounded artifact automation, immutable
   versions, sandboxed preview, test deployment, exact Message attachment. [[2E-Artifact-Automation]]
 - **`main`:** Phase 1+2 Core checkpoint merged. Company/Contact/Opportunity, staged import,
