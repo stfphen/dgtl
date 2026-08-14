@@ -12,6 +12,20 @@ Chronological history, reconstructed from repo docs + git. **Append newest entri
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
 
 ## 2026-08
+- 2026-08-14 — **DGTL Core Phase 3 implemented locally from merged PR #26.** Added additive
+  migration 012, bounded generation/deployment registries, immutable Opportunity context and
+  Artifact version chains, scoped service-worker APIs, isolated Git-worktree pitch generation,
+  deterministic repository validation, sandboxed routed previews, review/revision/deployment UI,
+  exact Message–Artifact snapshots, and Activity/exception integration. The capability audit marks
+  audit/report generation unavailable until their external skills are versioned under `engine/`;
+  real deploy portals remain disabled. Disposable PostgreSQL 16 applied/repeated 001–012, reconciled
+  legacy fixtures with zero orphans, and blocked direct Stage 3 cross-team writes. The real
+  `dgtl-pitch-pages` acceptance path created distinct v1/v2 commits, pinned a test Message to v1,
+  rejected duplicate result submission, recorded 13 Activities, and performed no production deploy
+  or email. The authenticated, fixed-root preview route served the actual generated HTML with CSP
+  plus iframe sandboxing. Independent Git-status validation rejects undeclared writes and previews
+  reject symlinks/non-regular files. Focused suite: **16/16**; full platform: **423/423**; build:
+  **57/57**. [[2E-Artifact-Automation]] · [[13-Data-Model]]
 - 2026-08-14 — **DGTL Core Phase 1 + 2 release checkpoint hardened and rehearsed.** Added the
   `Required DGTL Core checkpoint` GitHub Actions gate (repository integrity, PostgreSQL 16
   migrations, explicit Core suites, complete platform test/build, acceptance workflow, Worklog, and
@@ -29,8 +43,8 @@ Dates are from doc timestamps / commit themes; treat older "status" claims as po
   GitHub run then exposed a nondeterministic Worklog SQLite WAL-startup lock; startup now skips an
   already-WAL database and retries only `SQLITE_BUSY`, with three consecutive 375/375 stress runs.
   Final GitHub Actions run `31771897952` passed repository integrity, standalone app gates, the full
-  platform/migration/safe-delivery job, and the aggregate required checkpoint; draft PR #26 remains
-  unmerged for human review.
+  platform/migration/safe-delivery job, and the aggregate required checkpoint; PR #26 subsequently
+  merged to `main` as `4076f44` and is the Phase 3 baseline.
   `docs/operations/dgtl-core-release-checkpoint.md` · [[13-Data-Model]] · [[26-Outreach]]
 - 2026-08-13 — **DGTL Core Phase 1 implemented on `codex/core-domain-phase-1`.** Added the
   canonical Company → Contact → Opportunity graph with provenance-bearing Research, canonical

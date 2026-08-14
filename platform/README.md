@@ -32,6 +32,7 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
 | `npm run migrate` | Runs the SQL migrations in order |
 | `npm run validate:migrations` | Rehearses migrations against disposable localhost PostgreSQL; requires the explicit isolation guard |
 | `npm run worker:core` | Runs one bounded canonical outbox worker cycle using the configured transport |
+| `npm run rehearse:stage3` | Runs the guarded Opportunity → isolated pitch → immutable versions → test deploy acceptance path |
 | `npm run create-owner` | Bootstraps the first owner user + team |
 | `npm run seed:tenants` | Seeds demo tenants |
 | `npm run seed:funding-demo` | Seeds funding-program demo data |
@@ -53,6 +54,8 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
   exact campaign/message approval.
 - `/operations/outbox`, `/operations/exceptions` — durable test-delivery state and
   the human exception desk. The legacy admin remains available while workflows migrate.
+- `/generation-jobs`, `/artifacts` — immutable generation context, bounded agent jobs,
+  validation/review, artifact versions, test deployment, and exact Message attachments.
 - `/api/core/health` — authenticated, team-scoped worker/outbox/import/exception health.
 
 The admin shell has eight tabs: **pipeline**, **funding**, **prospecting**,
@@ -95,11 +98,16 @@ Run in order by `npm run migrate`; each file is idempotent.
 | `009_core_domain.sql` | Additive DGTL Core graph, artifact/job/external-link registry, safe legacy backfill, and reversible import staging |
 | `010_import_outreach_phase_2.sql` | Reviewed imports, canonical campaign cohorts, immutable message approvals, durable outbox, suppression, provider/reply association, and exception operations |
 | `011_core_release_gate.sql` | Approved delivery envelopes, uncertain-outcome quarantine, worker heartbeats, indexes, and composite team-integrity constraints |
+| `012_artifact_automation_phase_3.sql` | Artifact families and immutable versions, bounded job leases, deployment attempts, and exact Message–Artifact relationships |
 
 The Core architecture, legacy mapping, and spreadsheet-import contract are documented
 in [`docs/architecture/dgtl-core-phase-1.md`](../docs/architecture/dgtl-core-phase-1.md).
 Stage 2's working revenue workflow and safety boundaries are documented in
 [`docs/architecture/dgtl-core-phase-2.md`](../docs/architecture/dgtl-core-phase-2.md).
+Stage 3's bounded generation, immutable Artifact, and test-deployment contract is documented in
+[`docs/architecture/dgtl-core-phase-3.md`](../docs/architecture/dgtl-core-phase-3.md); worker and
+staging procedures are in
+[`docs/operations/dgtl-artifact-worker-runbook.md`](../docs/operations/dgtl-artifact-worker-runbook.md).
 The safe staging procedure is documented in
 [`docs/operations/dgtl-core-staging-runbook.md`](../docs/operations/dgtl-core-staging-runbook.md).
 

@@ -80,7 +80,7 @@ jobs:
         run: npm ci
       - name: Reject known production dependency advisories
         run: npm audit --omit=dev
-      - name: Rehearse 001-011 with seeded legacy fixtures and repeat execution
+      - name: Rehearse 001-012 with seeded legacy fixtures and repeat execution
         env:
           CORE_MIGRATION_REHEARSAL_CONFIRM: isolated
         run: npm run validate:migrations
@@ -92,12 +92,18 @@ jobs:
         run: node --test tests/stage2-import-outreach.test.js
       - name: Run release security, worker, provider, and health tests explicitly
         run: node --test tests/core-release-gate.test.js
+      - name: Run Stage 3 artifact automation tests explicitly
+        run: node --test tests/stage3-artifact-automation.test.js
       - name: Run complete deterministic platform suite
         run: npm test
       - name: Rehearse import through duplicate-safe test delivery
         env:
           STAGE2_REHEARSAL_CONFIRM: isolated
         run: npm run rehearse:stage2
+      - name: Rehearse Opportunity through isolated pitch version and test deployment
+        env:
+          STAGE3_REHEARSAL_CONFIRM: isolated
+        run: npm run rehearse:stage3
       - name: Build production Next.js output
         run: npm run build
 

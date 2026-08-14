@@ -14,6 +14,14 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 
 ## Repository/platform integration audit (2026-08-13)
 
+- **Stage 3 is local/test only.** The bounded worker protocol, isolated `pitch.pages` worker library,
+  immutable Artifact registry, and preview deployment are implemented, but no continuously operated
+  staging worker or production deploy adapter is enabled. Before production: use a fresh snapshot,
+  validate deferred team constraints, operate the worker with scoped secrets in staging, and wrap the
+  real portal with checksum/hostname verification and unknown-outcome recovery. Audit/report
+  generation remains `installed_unavailable` until its skills live under versioned `engine/` sources.
+  [[2E-Artifact-Automation]]
+
 - ✅ **Core 009–011 rehearsed on a production-shaped copy (08-14).** The sealed 2026-07-21 dump
   restored into isolated PostgreSQL 16; backfills reconciled, repeat execution was stable, all
   deferred team constraints validated, and there were zero orphans/cross-team rows. Remaining risk:
