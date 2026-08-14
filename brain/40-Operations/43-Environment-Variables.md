@@ -77,6 +77,14 @@ See [[2E-Artifact-Automation]] and `docs/operations/dgtl-artifact-worker-runbook
 
 See [[2F-Worklog-Bridge]] and `docs/architecture/dgtl-core-phase-4.md` (production setup section).
 
+## DGTL.chat (Stage 6)
+| Var | Powers | Notes |
+|---|---|---|
+| `CORE_CHAT_PROVIDER` | Chat model adapter selection | Unset = chat shows a bounded "not configured" state (platform unaffected). `deterministic` = rule-based adapter, no external calls — the CI/acceptance/demo mode. `anthropic` = the real provider through the shared transport (API-key path only). `disabled` = explicit off. |
+| `CORE_CHAT_MODEL` | Model for the anthropic adapter | Defaults to `claude-sonnet-5`; only read when `CORE_CHAT_PROVIDER=anthropic`. Uses the existing `ANTHROPIC_API_KEY` — no other chat credential or endpoint exists. |
+
+See [[2H-DGTL-Chat]] and `docs/architecture/dgtl-core-phase-6.md`.
+
 ## Telephony
 `TELEPHONY_PROVIDER` (`twilio` default; `mock`/`telnyx`), `TELEPHONY_WEBHOOK_BASE_URL` (byte-exact;
 falls back to `NEXT_PUBLIC_APP_URL`), `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (also signature verify),

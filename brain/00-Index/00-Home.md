@@ -48,13 +48,15 @@ review → all tenant-scoped, permissioned, and audit-logged.*
 - [[29-Funding-Program]] — the biggest/newest subsystem.
 
 ## 🧭 Status at a glance (2026-08-14)
-- **Current priority:** review and merge DGTL Core Stage 5 — the HOME command center: `/home`
-  as a pure projection over Stages 1–4 (attention, today, approvals, pipeline, delivery, health,
-  activity, ⌘K search), grouped navigation, and the app-host root landing on HOME.
-  [[2G-Home-Command-Center]]
-- **Active branch:** `codex/home-command-center-phase-5`, created from squash-merged Stage 4
-  checkpoint `main@2fa56f9` (PR #28, remote checkpoint green). No migration; no Stage 5 merge or
-  deploy is authorized.
+- **Current priority:** review and merge DGTL Core Stage 6 — DGTL.chat: `/chat` as the first
+  conversational interface. The model interprets and proposes; Core validates, authorizes and
+  executes — static 16-tool registry, ActionProposals with explicit human confirmation revalidated
+  at execution, deterministic adapter as the CI acceptance authority. [[2H-DGTL-Chat]]
+- **Active branch:** `codex/dgtl-chat-command-layer-phase-6`, created from squash-merged Stage 5
+  checkpoint `main@879cc3e` (PR #29, remote checkpoint green). Migration 014; no Stage 6 merge,
+  deploy, or production email is authorized.
+- **Stage 5** merged via PR #29 (`main@879cc3e`): the HOME command center — `/home` projection
+  over Stages 1–4, grouped navigation, ⌘K search, app-host root landing. [[2G-Home-Command-Center]]
 - **Stage 4** merged via PR #28 (`main@2fa56f9`): the Worklog delivery bridge — approved
   idempotent handoff, read-through status, real-local-Worklog acceptance. [[2F-Worklog-Bridge]]
 - **Stage 3** merged via PR #27 (`main@33c0bde`): bounded artifact automation, immutable

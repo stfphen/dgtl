@@ -64,6 +64,18 @@ temp JSON store (`APP_STORE_PATH`) — **no live DB or provider keys needed.** B
   cross-team isolation incl. search, role-filtered quick actions, empty states, and host-routing
   regression pins. `npm run rehearse:stage5` proves the projection end-to-end on disposable PG
   plus a real local Worklog.
+- `tests/stage6-chat-command-layer.test.js` (25 tests) covers the static tool registry closure
+  (unknown ids fail closed and are audited; `shell`/`database` rejected), strict arg validation
+  (unknown keys incl. model-supplied `teamId` rejected), role-filtered advertisement AND
+  execution-time re-checks, scenarios A–J (grounded answers, entity resolution via real canonical
+  IDs, cross-domain analysis, follow-up/generation/handoff/next-action proposals producing only
+  native draft state, prompt injection inert, hostile scripted model rejected at every layer,
+  stale-proposal no-mutation, provider-failure isolation), cross-team and cross-user privacy,
+  payload-hash tamper invalidation, proposal expiry, idempotent double-confirm, thread CAS
+  concurrency, tool-loop budget exhaustion, input/rate limits, no chain-of-thought persistence,
+  and migration-014/route source assertions. `npm run rehearse:stage6` proves scenarios A–J on
+  disposable PG plus a real local Worklog using the **deterministic adapter — CI never depends on
+  a live AI provider**. `npm run validate:migrations` now rehearses 001–014.
 - `npm audit --omit=dev` reports zero vulnerabilities with lockfile overrides for patched PostCSS
   8.5.26 and Sharp 0.35.3; build/tests verify compatibility with Next 15.
 - Worklog's SQLite WAL open has bounded `SQLITE_BUSY` retry and passed three consecutive 375/375
