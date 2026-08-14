@@ -29,6 +29,7 @@ API routes are `route.js` handlers.
 | `/generation-jobs/[id]` | `app/(core)/generation-jobs/[id]/page.jsx` | Immutable context/brief, adapter identity, validation, output, sandboxed preview, and approval controls. |
 | `/artifacts` | `app/(core)/artifacts/page.jsx` | Immutable Artifact version registry. |
 | `/artifacts/[id]` | `app/(core)/artifacts/[id]/page.jsx` | Version/checksum lineage, test deployment, revision request, and exact Message attachment. |
+| `/operations/worklog` | `app/(core)/operations/worklog/page.jsx` | Worklog bridge: connector health, delivery-handoff queue, pending operations (approve/execute/cancel/reconcile/retry), linked projects/clients, stale links, exceptions. Stage 4: Company/Opportunity detail also gain Worklog panels; mutations post to `/api/core/worklog/*`, `/api/core/companies/[id]/worklog/*`, `/api/core/opportunities/[id]/worklog/*` — all session-authenticated, connector endpoint server-configured. |
 | `/branding/icon` | `app/branding/icon/route.js` | Per-tenant PWA icon. |
 | `/manifest.webmanifest` | route | PWA manifest. |
 

@@ -4,12 +4,12 @@ type: reference
 tags: [architecture, leads, tenancy]
 status: stable
 updated: 2026-08-14
-source: migrations/001-012, lib/store.js, lib/core/, lib/stage2/, lib/stage3/
+source: migrations/001-013, lib/store.js, lib/core/, lib/stage2/, lib/stage3/, lib/stage4/
 ---
 
 # Data Model
 
-Postgres schema, defined by ordered migrations (`migrations/`, latest `012`, run via `npm run migrate`).
+Postgres schema, defined by ordered migrations (`migrations/`, latest `013`, run via `npm run migrate`).
 The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 (`data/app-store.json`) used when `DATABASE_URL` is unset — local dev only.
 
@@ -87,6 +87,19 @@ The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 - Composite team foreign keys cover new Company/Opportunity/Job/Artifact relationships. Full
   worker, validation and deployment boundary: `docs/architecture/dgtl-core-phase-3.md` and
   [[2E-Artifact-Automation]].
+
+### `013_worklog_operations_phase_4.sql` — Worklog delivery bridge (2026-08-14)
+- **`integration_operations`** — generic approved consequential operations against external
+  connectors (modelled on `artifact_deployments`): connector/action, local entity, immutable
+  payload + approval-time checksum, team-unique idempotency key, requester/approver, attempts,
+  external result identity, error metadata, and an `outcome_unknown` quarantine that only
+  deterministic reconciliation can exit.
+- Extends **`external_links`** with lifecycle columns: `linked_by/at`, `last_verified_at/state`,
+  `status_snapshot` + `snapshot_at` (freshness-stamped read-through), and append-only
+  `link_history`. The existing unique key stays the relationship identity — unlink retires,
+  relink revives the same row.
+- Deliberately creates **no table for Worklog projects/tasks/time/shifts/clients** — Worklog stays
+  the only authority; see `docs/architecture/dgtl-core-phase-4.md` and [[2F-Worklog-Bridge]].
 
 ## Entity relationships (mental model)
 ```

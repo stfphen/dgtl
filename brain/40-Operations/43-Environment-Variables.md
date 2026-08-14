@@ -68,6 +68,15 @@ source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 
 See [[2E-Artifact-Automation]] and `docs/operations/dgtl-artifact-worker-runbook.md`.
 
+## DGTL Core Worklog bridge (Stage 4)
+| Var | Powers | Notes |
+|---|---|---|
+| `CORE_WORKLOG_BASE_URL` | Worklog origin for the connector | Server-only, **no default** — unset means the bridge is off; production is never an implicit target. |
+| `CORE_WORKLOG_EMAIL` / `CORE_WORKLOG_PASSWORD` | Dedicated Worklog integration account | Admin role required for project creation; Worklog revokes sessions on password change — rotate in step. Never reaches a browser. |
+| `CORE_WORKLOG_TEAM_ID` | The one Core team the connector serves | Same server-owned team binding as the Stage 3 worker; unset fails closed for every team. |
+
+See [[2F-Worklog-Bridge]] and `docs/architecture/dgtl-core-phase-4.md` (production setup section).
+
 ## Telephony
 `TELEPHONY_PROVIDER` (`twilio` default; `mock`/`telnyx`), `TELEPHONY_WEBHOOK_BASE_URL` (byte-exact;
 falls back to `NEXT_PUBLIC_APP_URL`), `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (also signature verify),

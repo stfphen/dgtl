@@ -33,6 +33,7 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
 | `npm run validate:migrations` | Rehearses migrations against disposable localhost PostgreSQL; requires the explicit isolation guard |
 | `npm run worker:core` | Runs one bounded canonical outbox worker cycle using the configured transport |
 | `npm run rehearse:stage3` | Runs the guarded Opportunity → isolated pitch → immutable versions → test deploy acceptance path |
+| `npm run rehearse:stage4` | Runs the guarded Opportunity → approved Worklog delivery handoff acceptance against a real local Worklog server on a throwaway database |
 | `npm run create-owner` | Bootstraps the first owner user + team |
 | `npm run seed:tenants` | Seeds demo tenants |
 | `npm run seed:funding-demo` | Seeds funding-program demo data |
@@ -108,6 +109,9 @@ Stage 3's bounded generation, immutable Artifact, and test-deployment contract i
 [`docs/architecture/dgtl-core-phase-3.md`](../docs/architecture/dgtl-core-phase-3.md); worker and
 staging procedures are in
 [`docs/operations/dgtl-artifact-worker-runbook.md`](../docs/operations/dgtl-artifact-worker-runbook.md).
+Stage 4's Worklog delivery bridge — approved idempotent Company/Opportunity handoff, read-through
+status, and the capability audit that shaped it — is documented in
+[`docs/architecture/dgtl-core-phase-4.md`](../docs/architecture/dgtl-core-phase-4.md).
 The safe staging procedure is documented in
 [`docs/operations/dgtl-core-staging-runbook.md`](../docs/operations/dgtl-core-staging-runbook.md).
 

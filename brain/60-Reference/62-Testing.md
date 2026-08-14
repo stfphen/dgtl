@@ -49,6 +49,14 @@ temp JSON store (`APP_STORE_PATH`) — **no live DB or provider keys needed.** B
   and worker authentication. `npm run rehearse:stage3`
   executes the real pitch template in temporary Git worktrees and test-deploys only to
   `preview.invalid`.
+- `tests/stage4-worklog-operations.test.js` (22 tests) covers connector team binding, capability
+  honesty (no client-create), explicit matching, approved idempotent handoff, payload-tamper
+  invalidation, ambiguous-match fail-closed, lost-response quarantine + deterministic
+  reconciliation, marked task handoff with duplicate-free resume, link retire/revive/repair,
+  once-only transition Activities, digest provenance pass-through, and cross-team rejection.
+  `npm run rehearse:stage4` boots a **real local Worklog server** on a throwaway SQLite database
+  and proves the whole path plus the failure catalogue over the real HTTP API — never against
+  `office.dgtl.at`. `npm run validate:migrations` now rehearses 001–013.
 - `npm audit --omit=dev` reports zero vulnerabilities with lockfile overrides for patched PostCSS
   8.5.26 and Sharp 0.35.3; build/tests verify compatibility with Next 15.
 - Worklog's SQLite WAL open has bounded `SQLITE_BUSY` retry and passed three consecutive 375/375
