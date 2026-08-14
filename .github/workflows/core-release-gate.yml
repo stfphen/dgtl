@@ -1,0 +1,136 @@
+name: DGTL Core release gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: core-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-integrity:
+    name: Repository integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reject whitespace errors in the pull-request delta
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: git diff --check "$BASE_SHA...$HEAD_SHA"
+      - name: Reject whitespace errors in the pushed commit
+        if: github.event_name != 'pull_request'
+        run: git diff --check HEAD^
+      - name: Parse tracked JSON contracts
+        run: node tools/check-json.mjs
+      - name: Validate repository links and manifests
+        run: python3 tools/check-links.py
+      - name: Validate generated Journal roster
+        run: python3 tools/build-roster.py --check
+      - name: Validate DGTL Pay compliance copy
+        run: python3 tools/check-compliance.py
+
+  platform-release:
+    name: Platform tests, build, migrations, and safe delivery
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dgtl_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d dgtl_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: platform
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/dgtl_ci
+      CORE_EMAIL_TRANSPORT: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: platform/package-lock.json
+      - name: Install locked platform dependencies
+        run: npm ci
+      - name: Reject known production dependency advisories
+        run: npm audit --omit=dev
+      - name: Rehearse 001-011 with seeded legacy fixtures and repeat execution
+        env:
+          CORE_MIGRATION_REHEARSAL_CONFIRM: isolated
+        run: npm run validate:migrations
+      - name: Apply the normal migration ledger to disposable PostgreSQL
+        run: npm run migrate
+      - name: Run Phase 1 Core domain tests explicitly
+        run: node --test tests/core-domain.test.js
+      - name: Run Phase 2 import and outreach tests explicitly
+        run: node --test tests/stage2-import-outreach.test.js
+      - name: Run release security, worker, provider, and health tests explicitly
+        run: node --test tests/core-release-gate.test.js
+      - name: Run complete deterministic platform suite
+        run: npm test
+      - name: Rehearse import through duplicate-safe test delivery
+        env:
+          STAGE2_REHEARSAL_CONFIRM: isolated
+        run: npm run rehearse:stage2
+      - name: Build production Next.js output
+        run: npm run build
+
+  affected-apps:
+    name: Existing standalone app gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run Worklog deterministic suite
+        working-directory: apps/worklog
+        run: npm test
+      - name: Run creator-intake PHP suite
+        working-directory: apps/creator-intake
+        run: php tests/run.php
+      - name: Syntax-check Worklog MCP boundary without calling production
+        run: node --check apps/worklog-mcp/server.js
+
+  release-gate:
+    name: Required DGTL Core checkpoint
+    if: always()
+    needs: [repository-integrity, platform-release, affected-apps]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every release job
+        env:
+          REPOSITORY_RESULT: ${{ needs.repository-integrity.result }}
+          PLATFORM_RESULT: ${{ needs.platform-release.result }}
+          APPS_RESULT: ${{ needs.affected-apps.result }}
+        run: |
+          test "$REPOSITORY_RESULT" = success
+          test "$PLATFORM_RESULT" = success
+          test "$APPS_RESULT" = success
+          echo "DGTL Core release checkpoint passed."

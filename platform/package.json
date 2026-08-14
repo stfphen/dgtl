@@ -13,6 +13,8 @@
     "seed:enterprise-demo": "node scripts/seed-enterprise-demo.js",
     "seed:outreach-demo": "node scripts/seed-outreach-demo.js",
     "rehearse:stage2": "node scripts/rehearse-stage2.js",
+    "validate:migrations": "node scripts/validate-core-migrations.js",
+    "worker:core": "node scripts/drain-core-outbox.js",
     "seed:tenants": "node scripts/seed-tenants.js",
     "build": "next build",
     "start": "next start -p 3000",
@@ -30,5 +32,9 @@
     "react-dom": "^19.0.0",
     "stripe": "^22.2.2",
     "twilio": "^6.0.2"
+  },
+  "overrides": {
+    "postcss": "8.5.26",
+    "sharp": "0.35.3"
   }
 }
