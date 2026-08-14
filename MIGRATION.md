@@ -67,23 +67,25 @@ two stray `.DS_Store` files, deliberately excluded.
 
 > Note: three tenant configs (`lib/tenants/polishStone.js`, `nowakStoneworks.js`,
 > `dziuraStoneTile.js`) and their `public/assets/` images were **untracked** in the origin repo
-> despite `lib/store.js` importing them. They are committed here. Without them the app does not
-> boot — worth fixing in `content-checkout-funnel` too.
+> despite `lib/store.js` importing them. They are committed and were code-reviewed on 2026-08-13.
+> The latter two are compatibility re-exports; the Polish Stone config contains no credentials but
+> still needs owner verification of its phone number, pricing, portfolio, partner, and testimonial
+> claims before publication. The retired repo remains frozen and must not be changed.
 
 **Platform tests** — `npm test` from `platform/`:
 
 | | tests | pass | fail |
 |---|---|---|---|
 | origin `content-checkout-funnel` | 356 | 350 | 6 |
-| migrated `platform/` | 356 | 351 | 5 |
+| migrated `platform/` at migration | 356 | 351 | 5 |
+| migrated `platform/` after 2026-08-13 audit fix | 356 | 356 | 0 |
 
-The 5 failures are identical pre-existing ones in both repos and are all network-dependent
-(website scraping and lead-enrichment tests that need outbound HTTP, which the build sandbox
-blocks). No failure was introduced by the migration.
+The five inherited failures stubbed `fetch` but still performed real DNS through the SSRF guard,
+so the mock was never reached. The enrichment path now accepts an injectable DNS lookup for tests;
+production still uses the real SSRF-validated resolver. The full suite is deterministic and green.
 
-**Platform build** — `npm run build` could **not** be verified here. `next/font/google` fetches
-Manrope, Geist, Bricolage Grotesque, Space Grotesk, Instrument Serif and Fraunces at build time
-and the sandbox has no outbound network. Run it on a networked machine before merging:
+**Platform build — VERIFIED 2026-08-13.** On the merged local `main`, Next 15.5.23 compiled,
+type-checked, generated all 49 static pages, collected traces, and exited 0:
 
 ```bash
 cd platform && npm ci && npm run build
@@ -95,16 +97,15 @@ use where. No live credential is committed.
 
 ## Follow-ups after merge
 
-1. Run `npm run build` on a networked machine and record the result.
+1. Add `npm run build` as required CI and consider self-hosting fonts so success does not depend on
+   Google font endpoints.
 2. Update canonical / OG / social-share URLs inside journal pages — they still point at the old
    `…/journal/creators/<slug>.html` paths. They are absolute, so local rendering is unaffected.
 3. Decide the deploy domain for `journal/` and regenerate the index from the pack manifests.
-4. Commit the three missing tenant configs back to `content-checkout-funnel`, or confirm they
-   were intentionally untracked.
+4. Replace the Polish Stone `555` phone number and verify all pricing, portfolio, partner-logo, and
+   testimonial claims with the owner before publication.
 5. Consider `lib/integrations/secEdgar.js` — its default `SEC_EDGAR_USER_AGENT` still carries an
    origin-repo contact string. Changing it is a behaviour change, so it was left alone.
-6. Once this repo is confirmed working, plan the removal of the migrated directories from
-   `content-checkout-funnel` as its own PR.
 
 ---
 

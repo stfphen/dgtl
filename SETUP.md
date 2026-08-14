@@ -18,8 +18,8 @@ npm run dev               # http://localhost:8088 · admin at /admin/login
 Verify before shipping:
 
 ```bash
-npm test                  # expect 356 tests · 5 known network-dependent failures
-npm run build             # requires outbound network (next/font fetches Google Fonts)
+npm test                  # expect 356 passed, 0 failed
+npm run build             # verified 2026-08-13; still fetches Google Fonts during build
 ```
 
 Postgres is optional for local work — with no `DATABASE_URL`, `lib/store.js` falls back to a
@@ -46,29 +46,26 @@ python3 engine/dgtl-creator-features/scripts/make-standalone.py journal/packs/<s
 `brain/00-Index/00-Home.md`. Vendored plugin bundles are gitignored — Obsidian will offer to
 reinstall them.
 
-## First push
+## Routine change
 
-The remote is empty and this branch has no commits yet.
+The remote is established. Work on a scoped branch and verify only the surfaces you changed.
 
 ```bash
-# 0. pre-flight — both must pass before you commit
+# pre-flight
 python3 tools/check-links.py          # expect: missing=0
-git status --short --branch           # confirm branch main, origin = stfphen/dgtl
+git status --short --branch
 
-# 1. stage
-git add .
+# stage only reviewed paths; never use a repo-wide add
+git add -- path/to/file path/to/other-file
 
 # 2. sanity-check BEFORE committing — nothing huge, no deps, no secrets
 git diff --cached --stat | tail -3
 git diff --cached --name-only | grep -E "node_modules|\.next/|\.env$|\.zip$" \
   && echo "STOP — cruft staged" || echo "clean"
 
-# 3. commit + push
-git commit -m "Initial DGTL monorepo: platform (Next.js app) + publishing (journal, pitches, engine, brain)"
-git push -u origin main
+# commit on the scoped branch, then open a PR
+git commit -m "type(scope): concise change"
 ```
-
-Expect a fast push — ~8 MB tracked, excluding gitignored `node_modules/` and `.next/`.
 
 ## Audit result (2026-07-25)
 
@@ -84,8 +81,8 @@ Verified clean:
   `sk_live`, `sk_test_*`, `ghp_*`, Twilio `AC*` SIDs, Resend `re_*`, AWS keys, private-key blocks.
 - **Platform parity** — byte-identical to the origin working tree across all 520 files in
   `app/ components/ lib/ migrations/ tests/ scripts/ public/`.
-- **Platform tests** — 356 tests, 351 pass: one *better* than origin (350). All 5 failures are
-  pre-existing in both repos and network-dependent.
+- **Platform tests (historical migration snapshot)** — 356 tests, 351 pass: one better than origin
+  (350). The five inherited failures were repaired on 2026-08-13; current result is 356/356.
 - **Bloat** — no committed `node_modules/`, `.next/`, `*.zip` or `.DS_Store`. No LFS required.
 
 Journal fixes merged in from the parallel build:
@@ -115,5 +112,5 @@ Journal fixes merged in from the parallel build:
   they matter, they need a deliberate home (LFS in an archive repo, or object storage) rather than
   silence. See `brain/50-Audit-Log/53-Known-Issues.md`.
 - `MIGRATION.md` records what moved, what did not, what is verified, and the open follow-ups.
-  Its first two items — the unverified `npm run build` and the three previously-untracked tenant
-  configs — are the current priority. See `CLAUDE.md`.
+  The build and the three previously-untracked tenant modules were reviewed on 2026-08-13. Current
+  release-gate and Polish Stone content risks are recorded in `CLAUDE.md` and the brain.

@@ -65,7 +65,8 @@ export async function enrichLeadContext({ lead, options = {} } = {}) {
     business: lead?.business || "",
     timeoutMs: options.timeoutMs,
     maxResponseBytes: options.maxResponseBytes,
-    maxInternalPages: options.maxInternalPages
+    maxInternalPages: options.maxInternalPages,
+    lookup: options.lookup
   });
 
   const providerResults = await Promise.all([

@@ -3,7 +3,7 @@ title: 14 · Routes Map
 type: reference
 tags: [architecture]
 status: stable
-updated: 2026-07-04
+updated: 2026-08-13
 source: app/
 ---
 
@@ -19,8 +19,18 @@ API routes are `route.js` handlers.
 | `/t/[slug]` | `app/t/[slug]/page.jsx` | Per-tenant page preview; `?preview=draft` renders the draft config. Same template-registry renderer selection + per-template `generateMetadata`. |
 | `/admin` | `app/admin/page.jsx` | The admin shell (server component importing all admin components). [[21-Admin-Shell]] |
 | `/admin/login` | `app/admin/login/page.jsx` | Login (DB-backed; redirects here if unauthenticated). |
+| `/companies` | `app/(core)/companies/page.jsx` | Authenticated canonical Company list through the hybrid Core repository. |
+| `/companies/[id]` | `app/(core)/companies/[id]/page.jsx` | Company graph: details, contacts, opportunities, research, artifacts, activity, external links. |
+| `/contacts` | `app/(core)/contacts/page.jsx` | Authenticated canonical Contact list. |
+| `/contacts/[id]` | `app/(core)/contacts/[id]/page.jsx` | Contact detail with company, opportunities, activity, and external links. |
+| `/opportunities` | `app/(core)/opportunities/page.jsx` | Authenticated canonical Opportunity list. |
+| `/opportunities/[id]` | `app/(core)/opportunities/[id]/page.jsx` | Opportunity-centered operating view: company/stakeholders, approach, research, assets/jobs, campaign/messages, activity, links. |
 | `/branding/icon` | `app/branding/icon/route.js` | Per-tenant PWA icon. |
 | `/manifest.webmanifest` | route | PWA manifest. |
+
+The `(core)` route group shares `components/core/CoreShell.jsx`; it does not alter the public URL.
+`/admin` remains reachable as the compatibility UI. `/` is deliberately still host-resolved so a
+data-model migration cannot break tenant-domain routing. See [[13-Data-Model]].
 
 ## Public API routes (UNAUTHENTICATED — security-sensitive)
 | Route | Method | Purpose | Notes |

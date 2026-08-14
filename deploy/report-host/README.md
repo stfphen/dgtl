@@ -22,6 +22,6 @@ Branded 404 at `html/404.html` catches slug typos.
 ```bash
 mkdir -p /opt/dgtl-report/site/{reports,audits}
 cd /opt/dgtl/deploy/report-host && docker compose up -d --build
-curl -H 'Host: dgtl.report' http://127.0.0.1:8091/          # placeholder
-curl -H 'Host: audit.dgtl.report' http://127.0.0.1:8091/x/  # branded 404
+curl -H 'Host: dgtl.report' http://127.0.0.1:8092/          # placeholder
+curl -H 'Host: audit.dgtl.report' http://127.0.0.1:8092/x/  # branded 404
 ```

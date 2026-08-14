@@ -6,6 +6,8 @@ import { enrichNews } from "../lib/enrichment/providers/news.js";
 import { enrichReviews } from "../lib/enrichment/providers/reviews.js";
 import { enrichTechStack } from "../lib/enrichment/providers/techStack.js";
 
+const PUBLIC_LOOKUP = async () => [{ address: "93.184.216.34", family: 4 }];
+
 function htmlResponse(html, url, contentType = "text/html; charset=utf-8") {
   return {
     ok: true,
@@ -101,7 +103,8 @@ test("enrichLeadContext returns website data and skipped provider results withou
       lead: {
         business: "Example Dental",
         websiteUrl: "https://example.com"
-      }
+      },
+      options: { lookup: PUBLIC_LOOKUP }
     });
 
     assert.equal(result.ok, true);
@@ -143,7 +146,8 @@ test("configured but unimplemented providers still skip without failing enrichme
       lead: {
         business: "Example Dental",
         websiteUrl: "https://example.com"
-      }
+      },
+      options: { lookup: PUBLIC_LOOKUP }
     });
 
     assert.equal(result.ok, true);

@@ -1,0 +1,38 @@
+{
+  "slug": "dgtl-studios-maud",
+  "title": "DGTL Studios × DGTL Records — The Room and the Machine",
+  "hub": "index.html",
+  "teaser": null,
+  "deployUrl": "https://pitch.dgtlmag.com/dgtl-studios-maud/",
+  "created": "2026-08-10",
+  "updated": "2026-08-10",
+  "audience": "A working Toronto sound engineer who owns a full professional recording, mixing and mastering chain but no room, considering a lease on the lower-level Unit B3 at 20 Maud Street from Strashin Developments.",
+  "offer": "He signs the lease and keeps the gear, the engineering and his existing clients. DGTL brings the brand identity, the website and booking system, a client pipeline out of DGTL's own production work, and DGTL Records as the registration, publishing and rights back end — paid on the work DGTL originates plus a build fee.",
+  "selfContained": true,
+  "externalRequests": ["https://fonts.googleapis.com/css2?family=Manrope"],
+  "dataSlots": [
+    { "slot": "engineer-name", "token": "[ENGINEER NAME]", "note": "The engineer this pitch is written for. 3 occurrences." },
+    { "slot": "studio-name", "token": "[STUDIO NAME]", "note": "His studio sub-brand, if he wants one. 2 occurrences." },
+    { "slot": "unit", "token": "B3", "note": "Unit number in the lower level of 20 Maud St. 6 occurrences." },
+    { "slot": "start-date", "token": "[TARGET START DATE]", "note": "Target lease commencement / doors-open date. 2 occurrences." }
+  ],
+  "pendingAssets": [],
+  "sources": [
+    "LoopNet listing 33753707 and Strashin Developments company profile",
+    "Gitalis brochure for 20 Maud St, 2 Apr 2026",
+    "Globe and Mail, 4 Jan 2026 (Archive Threads / Heated Rivalry)",
+    "blogTO, Feb 2025 (Archive Threads)",
+    "City of Toronto Music Industry Strategy 2022–2026",
+    "Ontario Creates 2025 Film & Television Production Statistics, filed 30 Mar 2026",
+    "ISED business counts, NAICS 5122, 2025",
+    "Justin Colletti, SonicScoop, 5 Feb 2017 (utilization benchmark)",
+    "Union Sound Company FAQ (Toronto day-rate band)",
+    "Private Ear Recording published 2026 rate card",
+    "Music Canada / IFPI, 18 Mar 2026",
+    "Apple Music for Artists (Spatial Audio royalty share)",
+    "Dolby published Atmos room specification and case study",
+    "Ontario Arts Council Music Recording Projects guidelines",
+    "DGTL brand-facts.md (Influence network, case studies, testimonials)"
+  ],
+  "notes": "Honesty section '§11b What We're Not Claiming' is load-bearing — do not remove it. No number on the page is a quote or a projection for this room; every figure is a published third-party benchmark or a verified DGTL fact."
+}

@@ -10,12 +10,18 @@
   /* text */
   --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
   --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  /* one step above --text: headings and figures that must lead their block */
+  --text-strong:#ffffff;
   /* accent */
   --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
   --gold-ring:rgba(240,207,80,0.15);
   /* borders */
   --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
   --border-strong:rgba(255,255,255,0.4);
+  /* the hairline between rows in a list or table — a card edge would shout */
+  --border-row:#1c1c1c;
+  /* row hover — one shade, shared by every hoverable row */
+  --surface-hover:#0f0f0f;
   /* functional */
   --success:#7BC47F; --success-tint:rgba(123,196,127,0.10);
   --warning:#E8A33D; --warning-tint:rgba(232,163,61,0.10);
@@ -25,10 +31,16 @@
   --chart-1:#F0CF50; --chart-2:#b3a06a; --chart-3:#F0F0F0;
   --chart-4:#6E9FDB; --chart-5:#7BC47F; --chart-6:#8a8a8a;
   --chart-grid:#1c1c1c;
+  /* absent data — the swatch for a thing with no colour and the nil "·" alike.
+     One value because the JS spends it on both, and text is the harder bar:
+     4.61:1 on --surface-1 clears body text, which clears a 3:1 identifier too.
+     #3a3a3a read 1.74:1 and turned an empty week grid into a blank sheet. */
+  --nil:#7a7a7a;
   /* geometry */
   --r-control:7px; --r-card:16px; --r-pill:9999px;
   /* effects */
   --shadow-card:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15);
+  --shadow-edge:rgba(0,0,0,.85);   /* cue that content scrolls under a pinned edge */
   --glass-bg:rgba(0,0,0,0.45);
   --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
 }
@@ -37,7 +49,9 @@ html{background:var(--bg)}
 body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
      background:var(--bg);-webkit-font-smoothing:antialiased}
 ::placeholder{color:var(--placeholder)}
-:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+/* The ring alone is 1.34:1 against a black surface — under the 3:1 that a focus
+   indicator has to meet. The outline carries the contrast; the ring is glow. */
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;box-shadow:0 0 0 4px var(--gold-ring)}
 ::selection{background:var(--gold);color:#000}
 
 /* --- buttons --- */
@@ -46,20 +60,25 @@ body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
      padding:15px 24px;border:1px solid transparent;cursor:pointer;
      text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
 .btn-primary{background:var(--gold);color:#000}
-.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+/* A touch browser fires :hover on tap and holds it until you tap elsewhere, so
+   a hover state on a phone strands itself on the last thing touched. Every
+   :hover in this file and in app.css is therefore written inside this query —
+   gated at the source, so there is no state left to strand and no second list
+   of overrides to keep in step. Wrapped in place to hold the cascade order. */
+@media (hover:hover) and (pointer:fine){.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}}
 .btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
 .btn-ghost{background:transparent;color:var(--text-muted);font-weight:500}
-.btn-ghost:hover{color:#fff}
+@media (hover:hover) and (pointer:fine){.btn-ghost:hover{color:#fff}}
 .btn-danger{background:transparent;border-color:rgba(229,72,77,.4);color:var(--error)}
 .btn-sm{padding:10px 18px;font-size:14px}
 .btn-icon{width:36px;height:36px;padding:0;justify-content:center;color:var(--text-dim)}
-.btn-icon:hover{background:var(--surface-2);color:#fff}
+@media (hover:hover) and (pointer:fine){.btn-icon:hover{background:var(--surface-2);color:#fff}}
 
 /* --- cards --- */
 .card{background:var(--surface-card);border:1px solid var(--border);
       border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:24px}
 .card-solid{background:var(--surface-1)}
-.card-hover:hover{border-color:#3a3a3a;transform:translateY(-2px);transition:.2s}
+@media (hover:hover) and (pointer:fine){.card-hover:hover{border-color:#3a3a3a;transform:translateY(-2px);transition:.2s}}
 .card-callout{border-left:3px solid var(--gold)}
 
 /* --- pills & badges --- */
@@ -98,7 +117,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--gold)}
           text-align:left;padding:12px 16px}
 .table td{padding:14px 16px;border-top:1px solid #1c1c1c;color:var(--text)}
 .table td.num{text-align:right;font-variant-numeric:tabular-nums}
-.table tbody tr:hover{background:#0f0f0f}
+@media (hover:hover) and (pointer:fine){.table tbody tr:hover{background:var(--surface-hover)}}
 .table-wrap{border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
 
 @media (prefers-reduced-motion: reduce){

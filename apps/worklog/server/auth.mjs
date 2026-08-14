@@ -70,8 +70,8 @@ export function currentUser(req) {
 
   const hash = sha256(token);
   const row = one(
-    `SELECT u.id, u.email, u.name, u.role, u.daily_target_minutes, u.week_start, u.active,
-            s.expires_at
+    `SELECT u.id, u.email, u.name, u.role, u.daily_target_minutes, u.billable_target_pct,
+            u.week_start, u.active, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = ?`,
     hash,
@@ -93,6 +93,7 @@ export function currentUser(req) {
     name: row.name,
     role: row.role,
     dailyTargetMinutes: row.daily_target_minutes,
+    billableTargetPct: row.billable_target_pct,
     weekStart: row.week_start,
   };
 }

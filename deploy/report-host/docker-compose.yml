@@ -13,7 +13,7 @@ services:
     # Local-only publish so you can curl the container directly on the VPS while
     # debugging. Traefik reaches it over the coolify network, not this port.
     ports:
-      - "127.0.0.1:8091:80"
+      - "127.0.0.1:8092:80"   # 8091 is taken by dgtl-journal on the VPS
     labels:
       traefik.enable: "true"
       traefik.docker.network: "coolify"

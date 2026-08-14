@@ -3,7 +3,7 @@ title: 26 · Outreach Sequence
 type: module
 tags: [module, leads]
 status: stable
-updated: 2026-07-04
+updated: 2026-08-14
 ---
 
 # Outreach Sequence (V1)
@@ -56,6 +56,31 @@ See [[13-Data-Model]].
 ## Funding outreach
 Dedicated funding sequence (intro / fit-summary / book-a-call) with funding merge fields
 (`{{businessName}}`, `{{contactName}}`, `{{recommendedFundingLane}}`). See [[29-Funding-Program]].
+
+## Canonical outbound engine (Phase 2, safe-by-default)
+`lib/stage2/outreachService.js` adds the first canonical route beside V1; it does not rewrite V1.
+Campaign cohorts require canonical Opportunity + Contact IDs. Personalization snapshots Company,
+Contact, Opportunity, approach/offer, sourced Research, and campaign instructions. Campaign and exact
+message content require owner/admin approval; material edits invalidate approval.
+
+Canonical `messages` carry durable queue/lease/retry/idempotency/dead-letter/uncertain state plus the
+exact approved sender/recipient envelope. PostgreSQL serializes claim capacity per team, then uses
+`FOR UPDATE SKIP LOCKED`; `message_delivery_attempts` is written before the provider boundary.
+Pre-attempt leases recover, but a post-attempt crash/timeout becomes manual-review
+`delivery_uncertain` and is never automatically retried.
+
+The deterministic adapter remains the default and makes no network calls. A production Resend
+adapter reuses `lib/integrations/resend.js` but requires explicit mode, enabled flag, release ID,
+release-bound authorization phrase, release-bound rate-policy approval, and API key. Rate policy is
+provider-independent. `/api/webhooks/resend` requires a raw-body Svix signature and freshness window;
+events are idempotent and update Activity/suppression or open an exception. No gate is enabled in
+committed configuration.
+
+Suppression reads both `contact_suppressions` and the legacy list. Provider events map to Activity and
+suppression; reply correlation prefers provider IDs and sends ambiguity to `/operations/exceptions`.
+No production inbound mailbox has been invented. Authenticated reply correlation and the signed
+outbound-provider event webhook remain separate boundaries. Full contract:
+`docs/architecture/dgtl-core-phase-2.md`.
 
 ## ⚠️ Do not start yet
 Real outreach sending **at volume** still needs an approved Resend domain (SPF/DKIM/DMARC). The

@@ -1,0 +1,7 @@
+import { requireCoreWrite } from "../../../../lib/permissions";
+import { getSessionTeamId, requireTenantAccess } from "../../../../lib/store";
+import { OutreachService } from "../../../../lib/stage2/outreachService";
+import { redirectTo, stage2ErrorResponse } from "../../../../lib/stage2/api";
+import { requireStage2Repository, stage2Actor } from "../../../../lib/stage2/server";
+export async function GET(request){try{const session=await requireCoreWrite();const teamId=getSessionTeamId(session);const service=new OutreachService({teamId,actor:stage2Actor(session),repository:requireStage2Repository()});return Response.json({campaigns:await service.listCampaigns()});}catch(error){return stage2ErrorResponse(error,request);}}
+export async function POST(request){try{const session=await requireCoreWrite();const teamId=getSessionTeamId(session);const form=await request.formData();const tenantId=String(form.get("tenantId")||"");if(tenantId)await requireTenantAccess(teamId,tenantId);const service=new OutreachService({teamId,actor:stage2Actor(session),repository:requireStage2Repository()});const campaign=await service.createCampaign({name:form.get("name"),tenantId,sendingIdentity:{email:String(form.get("senderEmail")||"")},personalizationConfig:{instructions:String(form.get("instructions")||"")}});return redirectTo(request,`/campaigns/${campaign.id}`,"Campaign created in draft mode.");}catch(error){return stage2ErrorResponse(error,request);}}

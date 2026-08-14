@@ -368,7 +368,7 @@ function isAbortError(error) {
   return error?.name === "AbortError" || /timed out/i.test(error?.message || "");
 }
 
-async function fetchPage(url, { timeoutMs, maxResponseBytes }) {
+async function fetchPage(url, { timeoutMs, maxResponseBytes, lookup }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -383,7 +383,7 @@ async function fetchPage(url, { timeoutMs, maxResponseBytes }) {
         },
         signal: controller.signal
       },
-      { maxRedirects: 5 }
+      { maxRedirects: 5, lookup }
     );
 
     if (!response.ok) {
@@ -497,7 +497,8 @@ export async function enrichWebsite({
   business = "",
   timeoutMs = DEFAULT_TIMEOUT_MS,
   maxResponseBytes = DEFAULT_MAX_RESPONSE_BYTES,
-  maxInternalPages = DEFAULT_MAX_INTERNAL_PAGES
+  maxInternalPages = DEFAULT_MAX_INTERNAL_PAGES,
+  lookup
 } = {}) {
   const normalizedUrl = normalizeUrl(url);
   const result = createResult({
@@ -511,7 +512,7 @@ export async function enrichWebsite({
     return result;
   }
 
-  const homepageResponse = await fetchPage(normalizedUrl, { timeoutMs, maxResponseBytes });
+  const homepageResponse = await fetchPage(normalizedUrl, { timeoutMs, maxResponseBytes, lookup });
   result.compliance.requestCount += 1;
 
   if (!homepageResponse.ok) {
@@ -545,7 +546,7 @@ export async function enrichWebsite({
   addSignals(result, homepageData, homepageSource, priorityLinks);
 
   for (const link of priorityLinks) {
-    const pageResponse = await fetchPage(link.url, { timeoutMs, maxResponseBytes });
+    const pageResponse = await fetchPage(link.url, { timeoutMs, maxResponseBytes, lookup });
     result.compliance.requestCount += 1;
 
     if (!pageResponse.ok) {

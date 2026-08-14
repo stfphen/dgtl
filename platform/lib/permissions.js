@@ -19,6 +19,8 @@ const TENANT_MANAGEMENT_ROLES = [ROLE_OWNER, ROLE_ADMIN];
 const LEAD_MANAGEMENT_ROLES = [ROLE_OWNER, ROLE_ADMIN, ROLE_SALES];
 const CONTRACTOR_MANAGEMENT_ROLES = [ROLE_OWNER, ROLE_ADMIN];
 const DASHBOARD_VIEW_ROLES = ALL_ROLES;
+const CORE_WRITE_ROLES = [ROLE_OWNER, ROLE_ADMIN, ROLE_SALES];
+const CORE_APPROVAL_ROLES = [ROLE_OWNER, ROLE_ADMIN];
 
 export class PermissionError extends Error {
   constructor(message, status = 403) {
@@ -59,6 +61,22 @@ export function canManageContractors(session) {
 
 export function canViewDashboard(session) {
   return DASHBOARD_VIEW_ROLES.includes(session?.role);
+}
+
+export function canWriteCore(session) {
+  return CORE_WRITE_ROLES.includes(session?.role);
+}
+
+export function canApproveCore(session) {
+  return CORE_APPROVAL_ROLES.includes(session?.role);
+}
+
+export async function requireCoreWrite() {
+  return requireRole(CORE_WRITE_ROLES);
+}
+
+export async function requireCoreApproval() {
+  return requireRole(CORE_APPROVAL_ROLES);
 }
 
 // Hard-restricted destructive action (call deletion). Limited to a single

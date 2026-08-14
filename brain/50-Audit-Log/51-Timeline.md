@@ -3,13 +3,71 @@ title: 51 · Project Timeline
 type: log
 tags: [audit]
 status: living
-updated: 2026-07-28
+updated: 2026-08-14
 ---
 
 # Project Timeline
 
 Chronological history, reconstructed from repo docs + git. **Append newest entries at the top.**
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
+
+## 2026-08
+- 2026-08-14 — **DGTL Core Phase 1 + 2 release checkpoint hardened and rehearsed.** Added the
+  `Required DGTL Core checkpoint` GitHub Actions gate (repository integrity, PostgreSQL 16
+  migrations, explicit Core suites, complete platform test/build, acceptance workflow, Worklog, and
+  creator-intake). Migration 011 freezes approved sender/recipient envelopes, adds worker heartbeat
+  and outbox indexes, and enforces new composite team relationships. Canonical workers now serialize
+  claim capacity per team, recover only pre-attempt leases, and quarantine all post-attempt/provider
+  ambiguity for manual review; Resend stays off by default behind release-bound multi-factor config,
+  signed Svix events, provider idempotency, and conservative rate policy. A sealed 2026-07-21
+  production-shaped dump restored into isolated PostgreSQL 16 and migrations 009–011 reconciled to
+  362 companies / 361 contacts / 362 opportunities / 357 research / 1 campaign / 9 messages with
+  zero orphans and zero cross-team rows; all deferred constraints validated and direct repeat
+  execution was stable. Concurrent acceptance workers split 1/1 deliveries and the repeat drain was
+  empty. Full platform **407/407**, Worklog **375/375**, creator intake **26/26**, build 54/54, links
+  `missing=0`, and npm audit **0 vulnerabilities** after narrow PostCSS/Sharp overrides. The first
+  GitHub run then exposed a nondeterministic Worklog SQLite WAL-startup lock; startup now skips an
+  already-WAL database and retries only `SQLITE_BUSY`, with three consecutive 375/375 stress runs.
+  Final GitHub Actions run `31771897952` passed repository integrity, standalone app gates, the full
+  platform/migration/safe-delivery job, and the aggregate required checkpoint; draft PR #26 remains
+  unmerged for human review.
+  `docs/operations/dgtl-core-release-checkpoint.md` · [[13-Data-Model]] · [[26-Outreach]]
+- 2026-08-13 — **DGTL Core Phase 1 implemented on `codex/core-domain-phase-1`.** Added the
+  canonical Company → Contact → Opportunity graph with provenance-bearing Research, canonical
+  Campaign/Message/Activity records, Artifact + GenerationJob separation, ExternalLink integration
+  references, and reversible spreadsheet-import staging in additive migration 009. Legacy leads,
+  target accounts, account campaigns, outreach drafts/queue/events, and calls remain operational
+  through deterministic compatibility projections; canonical records win on ID collision and no
+  production row is automatically merged or removed. Added authenticated routed modules for
+  `/companies`, `/contacts`, and `/opportunities` plus all three detail routes; the old `/admin` and
+  host-resolved `/` behavior remain intact. New Core tests: **10/10**; full platform suite:
+  **366 passed, 0 failed**; production build on Next 15.5.23 compiled/type-checked, generated 49/49
+  static pages, listed all six new dynamic routes, collected traces, exit 0. Architecture/import
+  contract: `docs/architecture/dgtl-core-phase-1.md`. [[13-Data-Model]] · [[14-Routes-Map]]
+- 2026-08-13 — **Full repository, branch, worktree and operating-platform audit completed.** The
+  evidence and recommended target architecture are recorded in
+  `docs/audits/2026-08-13-repository-and-platform-audit.md`. Consolidated tested local WIP into
+  scoped commits: Worklog v2 (375/375 tests), creator-intake diagnostics (26/26 tests + PHP lint),
+  DGTL Residency and Studios Maud pitches/audit, Piano Boutique's explicitly reconstructed findings
+  ledger, DGTL Neon, the local ops automation spine, and a non-breaking Next 15 lock refresh. The
+  publishing check improved from 19 to five root-absolute warnings and remains `missing=0`.
+  **Both migration gates are now clear:** final `npm run build` on merged local `main` with Next
+  15.5.23 compiled, type-checked,
+  generated 49/49 static pages, collected traces, and exited 0. Production dependency audit is down
+  from eight advisories to three high advisories; the remaining npm-proposed fix is a breaking Next
+  16 upgrade. The three formerly untracked tenant modules were reviewed: no credentials, two
+  compatibility re-exports, but Polish Stone carries a `555` phone number and unproven commercial
+  claims that require owner validation before publication. Integration then merged into local
+  `main`; 17 fully merged local branches were deleted with `git branch -d`, stale rent-worktree
+  metadata was pruned without deleting its branch, and both live worktrees were left clean after
+  their remaining files were preserved in named stashes. No remote branch, PR, deployment, or push
+  was changed.
+  - The inherited five test failures were diagnosed after the merge: tests mocked `fetch`, but the
+    SSRF guard performed real DNS before reaching the mock. `enrichWebsite`/`enrichLeadContext` now
+    accept an injected lookup used only by fixtures; production defaults are unchanged and existing
+    SSRF tests still cover the guard. Final `npm test`: **356 passed, 0 failed**; post-fix build: exit 0.
+
+- 2026-08-01 — **Creator-feature template un-rotted: new packs now validate clean without hand-editing paths.** The template still shipped pre-pack-model relative paths (`../assets/…`, `../index.html`, `../cases/…`) plus a related-card pointing at a `peter-mckinnon.html` that never existed — ~25 broken local refs in every pack built from it, each one hand-fixed after the fact. Fixed at both ends: the template is now authored at pack-hub depth (`../../_shared/…`), and `populate.py` gained `journal_depth()`/`reroot()` so a feature page one level deeper gets `../../../_shared/…` automatically. SKILL.md's path table is now true as written — the "shared CSS/JS" column is marked automatic, only the "own media" column is hand-written, and a feature-page populate example was added. Verified by building the example fields to both depths: `validate.py` → 9 ok / 1 warn (empty `og:image`, a fields-content placeholder) / **0 failures** at each, no manual path editing; `tools/check-links.py` → `checked=859 missing=0` (unchanged — it does not scan `engine/`, which is why this rotted unseen). [[53-Known-Issues]] · [[52-Decision-Log]]
 
 ## 2026-07
 - 2026-07-28 — **VPS offboard consolidation** (branch `consolidate-vps`): audited `dgtl-offboard-20260721` against the monorepo. VPS app source = `fe2d78a` (nothing newer than `platform/`); decks rig identical. Imported the VPS-only material: 18 live pitch sites into `pitches/` (live-URL slugs kept; old escott draft → `escott-brand`; escott set documented as the portal-led pattern in `pitches/_templates/PORTAL-PATTERN.md`), deploy portal source → `deploy/portal/`, prod decks override, DGTL OS → `os/` (secrets stripped; folded into `apps/dgtl-os/` on 07-28 when the skill-integration branch landed with the 07-18 standalone-product layout — wiring notes now in `apps/dgtl-os/local/README.md`). assets.dgtlgroup.io confirmed stale → retired. Data/secrets remain only in the offline bundle. See MIGRATION.md addendum.
@@ -763,3 +821,11 @@ Up: [[50-Audit-Log-MOC]]
 - 2026-08-10 — **Client reporting deploy stack built for `dgtl.report`** — a second Netlify-style deploy pair modeled on `deploy/portal` + `deploy/decks` (dgtlmag): new `deploy/report-portal/` (deploy.dgtl.report — one portal, Report/Audit destination toggle, token-auth html/zip deploy, API `/api/sites…?target=report|audit`) and `deploy/report-host/` (one nginx container, `map $host` → `dgtl.report/<slug>/` serves `/data/reports`, `audit.dgtl.report/<slug>/` serves `/data/audits`). Purpose: hosting `/dgtl-worklog-status-report` pages (reports) and `/dgtl-client-audit` pages (audits). Privacy: no hub index is ever generated — both apexes serve a baked-in branded placeholder, `robots.txt` disallows all, every response carries `X-Robots-Tag: noindex,nofollow`. Verified in sandbox: `node --check` + live server exercise (deploy/list/zip/delete/bad-token/bad-slug to both targets, no root index written) and `nginx -t` + live curl matrix (placeholder on both apexes, host separation confirmed — audit host 404s a report-only slug, branded 404, headers). Runbook §5b added to `deploy/vps/README-VPS-DEPLOY.md`; env template `report-portal.env.example` (new token, never reuse the dgtlmag one). Not yet deployed — needs DNS A records (apex, www, audit, deploy → VPS) and `docker compose up` on the box.
 
 - 2026-08-10 — Added `pitches/dgtl-residency/` via dgtl-pitch-composer: "The DGTL Residency" services-for-accommodation offer for Toronto rental operators (3/6-month dual-track exchange, $0 invoiced). Includes BLOCK-PLAN.md, sourced market stats (CMHC/Rentals.ca/Urbanation), and prospects.md dossier (14 ranked operators + decision-makers, verified-vs-pattern contacts). Registered in pitches.index.json; check-links missing=0. Screenshot verify skipped (no browser in sandbox); structural validation passed.
+  - **Went live same day (2026-08-10 evening):** DNS A records (apex/www/audit/deploy → 37.27.198.189) set at the registrar; both stacks up on the VPS from `feat/report-deploy`. Two hiccups, both resolved: (1) debug port 8091 was already bound by `dgtl-journal`, so `dgtl-report-host` sat in Created — moved to 8092 (committed); (2) the Let's Encrypt cert for the report-host router failed its first issuance while the container was down — a `--force-recreate` retriggered ACME and `dgtl.report` now serves a valid LE cert. First real deploy confirmed end-to-end: `dgtl.report/piano-boutique-status-v1/` (Piano Boutique status report via the portal). Recurring unrelated ACME error for `dgtlinfluence.com` observed in coolify-proxy logs — logged in Known Issues.
+
+- 2026-08-10 — **New sixth surface `audits/` opened, and the first pair of deliverables for the 20 Maud studio venture shipped.** Target: a working Toronto sound engineer (name not yet supplied) who owns a full recording/mixing/mastering chain but no room, considering **Unit B3, lower level, 20 Maud Street** — the unit beside Archive Threads / "20 Maud" (B1/B2) — from Strashin Developments. Deal shape as briefed: he signs the lease and keeps the gear, the engineering and his existing clients; DGTL brings brand, website + booking, client pipeline and DGTL Records as the rights back end, paid on originated work plus a build fee.
+  - `pitches/dgtl-studios-maud/index.html` (+ `pitch.json`, registered in `pitches.index.json`) — built with `dgtl-pitch-pages`. Single self-contained file, 14-section blueprint plus a **"What We're Not Claiming"** section that is load-bearing and must not be removed. Centerpiece is "Two Engines" (billable hours vs. rights). Four `data-slot`s: `engineer-name`, `studio-name`, `unit`, `start-date`. `check-links.py` → `missing=0`; structural validation passed (tag balance, all 39 base64 payloads decode); **screenshot verification skipped — no browser in sandbox.**
+  - `audits/dgtl-studios-maud/DGTL-PartnerFit-Audit-20-Maud-Studio.pdf` (25pp) + `audit.html` + `build_audit.py` — built with `dgtl-partner-fit-audit`. **23 findings across six categories, 6 Critical.** Four research lanes: Toronto studio market, the Archive Threads adjacency thesis, publishing/rights economics, and the building record. All 25 page PNGs reviewed.
+  - Three findings gate everything and each is a single phone call: **A-01** the operator has not been assessed (no name/entity/credits supplied), **B-01** the Strashin tenant roll records B3 as occupied by Alexandra Harcourt and no below-grade vacancy at 20 Maud is publicly listed at any rate, **C-01** the footfall version of the adjacency thesis is unsupported — two research passes found no case anywhere of a studio attributing bookings to a neighbouring shop, and the brand-funded in-store studio (Converse Rubber Tracks, Red Bull, House of Vans) has closed everywhere it was tried.
+
+- **2026-08-13 — DGTL Core Phase 2 implemented on `codex/import-outreach-phase-2`.** Added reviewed CSV/TSV imports into canonical Company/Contact/Opportunity/Research, canonical campaign cohorts and structured personalization, exact campaign/message approval, a durable test-only Message outbox with idempotency/retry/dead-letter state, persistent suppression, provider/reply association, Activity emission, and routed import/campaign/operations surfaces. Migration `010_import_outreach_phase_2.sql` applied after 009 on clean PostgreSQL 16 and on a seeded legacy rehearsal; direct 009/010 repeat kept counts stable (3 companies, 2 contacts, 3 opportunities, 3 research, 1 campaign, 1 message; zero orphans). Full PostgreSQL acceptance converted 2 representative researched prospects into 2 companies/contacts/opportunities + 6 research records, 1 approved campaign, 2 test-sent messages, 11 activities, and 2 attempts; second drain returned zero. Full gate: **387/387 tests** and production build **54/54 routes**. No production DB, deployment, push, or external email.

@@ -3,7 +3,7 @@ title: 41 · Deployment Runbook (Hetzner VPS)
 type: runbook
 tags: [ops]
 status: stable
-updated: 2026-08-01
+updated: 2026-08-14
 source: DEPLOY_HOSTINGER.md, PRE_DEPLOY_CHECKLIST.md, RESUME_HERE.md
 ---
 
@@ -21,6 +21,12 @@ private Postgres container, published through Coolify's `coolify` network.
 1. `npm test` green. 2. `npm run build` succeeds locally. 3. DNS for `@`/`www` → `37.27.198.189`.
 4. VPS `/opt/content-checkout-funnel/.env` has **real** secrets (diff before overwriting; never clobber).
 5. Fresh Postgres dump exists (`scripts/backup-db.sh`). 6. Post-deploy `curl -I https://dgtlmag.com/` → **200**.
+
+For DGTL Core migrations 009–011, production is not the first target. Follow
+`docs/operations/dgtl-core-staging-runbook.md`: restore a fresh production backup into isolated
+PostgreSQL, reconcile/validate team constraints, deploy a separate staging app/database/volume with
+`CORE_EMAIL_TRANSPORT=test`, run the server-side worker, and exercise the signed webhook fixture.
+Production transport requires a separate release authorization and reviewed rate policy.
 
 > ⚠️ **Deploy from a branch that contains the Funding Survey** — `main` historically did not. Merge it first or deploy the feature branch, or the survey/CTA/subdomains won't be in the build.
 

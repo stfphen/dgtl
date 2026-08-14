@@ -1,7 +1,8 @@
 /**
  * DGTL Worklog — demo team.
  *
- *   npm run demo
+ *   npm run demo            (after `npm run seed`)
+ *   npm run demo -- --force  into a workspace that is already being worked in
  *
  * Creates (or resets) a fixed roster of three accounts that all share ONE
  * easy-to-type password, and back-fills each with plausible hours and tasks so
@@ -14,7 +15,7 @@
  */
 
 import { all, one, run, tx } from '../server/db.mjs';
-import { addDays, localDate, nowISO } from '../server/config.mjs';
+import { addDays, guardWorkspace, localDate, nowISO } from '../server/config.mjs';
 import { hashPassword } from '../server/auth.mjs';
 
 const PASSWORD = 'dgtl-demo-2026';
@@ -56,6 +57,37 @@ if (!all('SELECT id FROM projects LIMIT 1').length) {
   console.error('✗ No projects yet. Run `npm run seed` first, then `npm run demo`.');
   process.exit(1);
 }
+
+/* Which database, and is it one to write three weeks of invented hours into?
+   "Already populated" cannot be the test here the way it is for seed — demo
+   REQUIRES a seeded workspace, so a gate that fired on the documented
+   `seed && demo` would fire every single time, and a gate that always fires is
+   one people alias away. What it must never meet is a workspace somebody is
+   actually working in, which shows in three places seed never writes:
+   accounts that are not on this roster, the hours those people logged, and any
+   sign the clock or the attendance strip has been used at all. A workspace
+   holding only what `npm run seed` made has nothing real in it to lose. */
+const roster = ROSTER.map((p) => p.email);
+const marks = `(${roster.map(() => '?').join(',')})`;
+const outsiders = all(`SELECT name, email FROM users WHERE lower(email) NOT IN ${marks}`, ...roster);
+const theirHours = one(`
+  SELECT COUNT(*) AS n FROM time_entries e JOIN users u ON u.id = e.user_id
+   WHERE lower(u.email) NOT IN ${marks}`, ...roster).n;
+const timed = one("SELECT COUNT(*) AS n FROM time_entries WHERE source <> 'manual'").n;
+const spells = one('SELECT COUNT(*) AS n FROM shifts').n;
+
+guardWorkspace('demo', [
+  outsiders.length ? `${outsiders.length} ${outsiders.length === 1 ? 'account is' : 'accounts are'} `
+    + `not on the demo roster (${outsiders.slice(0, 3).map((u) => u.email).join(', ')}`
+    + `${outsiders.length > 3 ? ', …' : ''})` : null,
+  theirHours ? `${theirHours} time entries belong to those people` : null,
+  timed ? `${timed} ${timed === 1 ? 'stretch was' : 'stretches were'} put there by the timer, `
+    + 'so somebody has really worked in this one' : null,
+  spells ? `${spells} ${spells === 1 ? 'spell' : 'spells'} of attendance ${spells === 1 ? 'is' : 'are'} `
+    + 'recorded in it' : null,
+].filter(Boolean), {
+  force: process.argv.includes('--force') || process.env.WORKLOG_FORCE === '1',
+});
 
 const now = nowISO();
 const today = localDate();

@@ -746,24 +746,29 @@ test("Resend success and failure responses preserve provider shape", async () =>
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.RESEND_API_KEY;
   process.env.RESEND_API_KEY = "resend-test-key";
+  let requestOptions;
 
   try {
-    globalThis.fetch = async () => ({
+    globalThis.fetch = async (_url, options) => {
+      requestOptions = options;
+      return ({
       ok: true,
       status: 200,
       async json() {
         return { id: "msg_123" };
       }
-    });
+    }); };
     const success = await sendResendEmail({
       from: "sales@example.com",
       to: "lead@example.com",
       subject: "Test",
-      text: "Hello"
+      text: "Hello",
+      idempotencyKey: "core-message-123"
     });
     assert.equal(success.ok, true);
     assert.equal(success.provider, "resend");
     assert.equal(success.data.id, "msg_123");
+    assert.equal(requestOptions.headers["Idempotency-Key"], "core-message-123");
 
     globalThis.fetch = async () => ({
       ok: false,
