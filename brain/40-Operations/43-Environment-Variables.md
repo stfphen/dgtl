@@ -3,7 +3,7 @@ title: 43 · Environment Variables
 type: reference
 tags: [ops]
 status: stable
-updated: 2026-06-27
+updated: 2026-08-14
 source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 ---
 
@@ -55,6 +55,18 @@ source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 - `OUTREACH_DRY_RUN=true` — forces the **mock** email provider for ALL sends (records `sent` + events + a `dryrun_*` id, no real email). Opt-in only; also settable per-campaign via `testMode`. Never auto in prod. `lib/integrations/{emailProvider,mockEmailProvider}.js`.
 - `OUTREACH_CRON_TOKEN` — bearer token the scheduled-send drain requires. Host cron: `POST /api/cron/outreach/drain` with `Authorization: Bearer $OUTREACH_CRON_TOKEN` (constant-time check). See [[41-Deployment-Runbook]].
 - `UNSUBSCRIBE_SECRET` — HMAC key for signed one-click unsubscribe links; falls back to `SESSION_SECRET`. `lib/outreach/unsubscribe.js`. [[26-Outreach]]
+
+## DGTL Core Artifact worker (Stage 3)
+| Var | Powers | Notes |
+|---|---|---|
+| `CORE_GENERATION_WORKER_TOKEN` | Service bearer authentication | Server-only; never expose to browser code. |
+| `CORE_GENERATION_WORKER_TEAM_ID` | Worker team scope | Authoritative; request input cannot override it. |
+| `CORE_GENERATION_WORKER_ID` | Stable worker actor | Used in leases and Activity. |
+| `CORE_ARTIFACT_PREVIEW_ROOT` | Shared local/staging HTML preview root | Fixed-root hashed filenames; authenticated reads only. Defaults to OS temp for local rehearsal. |
+| `DGTL_SOURCE_COMMIT` | Deployed skill/source baseline | Snapshotted on GenerationJob. |
+| `CORE_ARTIFACT_PRODUCTION_DEPLOY_AUTHORIZED` | Reserved future release gate | Does **not** enable deployment alone; production adapters remain disabled in code. |
+
+See [[2E-Artifact-Automation]] and `docs/operations/dgtl-artifact-worker-runbook.md`.
 
 ## Telephony
 `TELEPHONY_PROVIDER` (`twilio` default; `mock`/`telnyx`), `TELEPHONY_WEBHOOK_BASE_URL` (byte-exact;

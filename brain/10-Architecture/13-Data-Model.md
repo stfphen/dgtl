@@ -4,12 +4,12 @@ type: reference
 tags: [architecture, leads, tenancy]
 status: stable
 updated: 2026-08-14
-source: migrations/001-011, lib/store.js, lib/core/, lib/stage2/
+source: migrations/001-012, lib/store.js, lib/core/, lib/stage2/, lib/stage3/
 ---
 
 # Data Model
 
-Postgres schema, defined by ordered migrations (`migrations/`, latest `011`, run via `npm run migrate`).
+Postgres schema, defined by ordered migrations (`migrations/`, latest `012`, run via `npm run migrate`).
 The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 (`data/app-store.json`) used when `DATABASE_URL` is unset — local dev only.
 
@@ -74,6 +74,20 @@ The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
   explicit release step.
 - Production-shaped validation and recovery evidence: `docs/operations/dgtl-core-release-checkpoint.md`.
 
+### `012_artifact_automation_phase_3.sql` — controlled sales-asset automation (2026-08-14)
+- **`artifact_families`** reserves one team-scoped kind/slug lineage; revisions create new immutable
+  Artifact versions instead of replacing prior output.
+- Extends **`generation_jobs`** with adapter/skill/source identity, immutable context/brief inputs,
+  idempotency, claim/lease/heartbeat fields, validation/output/checksum, revision and cancellation data.
+- Extends **`artifacts`** with family, previous version, numeric version, source commit/checksum,
+  manifest, validation, and approval actor metadata.
+- **`artifact_deployments`** separates deployment approval/claim/result from generation and
+  quarantines unknown outcomes. **`message_artifacts`** snapshots the exact Artifact version, URL,
+  and checksum attached to a Message.
+- Composite team foreign keys cover new Company/Opportunity/Job/Artifact relationships. Full
+  worker, validation and deployment boundary: `docs/architecture/dgtl-core-phase-3.md` and
+  [[2E-Artifact-Automation]].
+
 ## Entity relationships (mental model)
 ```
 team ─┬─ users (via team_memberships, with role + telephony fields)
@@ -82,7 +96,7 @@ team ─┬─ users (via team_memberships, with role + telephony fields)
       │             ├─ opportunities ─┬─ research_records
       │             │                 ├─ campaigns ── messages
       │             │                 ├─ activities
-      │             │                 ├─ artifacts ← generation_jobs
+      │             │                 ├─ artifact_families ── immutable artifacts ← generation_jobs
       │             │                 └─ external_links
       │             └─ research_records / external_links
       ├─ leads (compatibility) ─┬─ calls ── call_events
@@ -93,6 +107,7 @@ team ─┬─ users (via team_memberships, with role + telephony fields)
       ├─ prospecting_batches
       ├─ import_batches ── import_rows / import_row_reviews
       ├─ contact_suppressions / inbound_replies / operation_exceptions
+      ├─ artifact_deployments / message_artifacts
       └─ outreach_templates / legacy campaigns / suppression_list
 sessions ── users        audit_logs ── users
 ```

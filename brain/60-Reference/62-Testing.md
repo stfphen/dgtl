@@ -13,8 +13,8 @@ source: tests/, package.json
 `npm test` → `node --test tests/*.test.js` (Node's built-in test runner). Tests run against an isolated
 temp JSON store (`APP_STORE_PATH`) — **no live DB or provider keys needed.** Build gate: `npm run build`.
 
-> Current release-checkpoint pass (2026-08-14): **407/407**. Production Next 15.5.23 build compiled,
-> checked types/lint, generated 54/54 static pages, and exited 0.
+> Phase 1+2 merged checkpoint: **407/407** and 54/54 pages. Stage 3 adds sixteen focused tests and
+> three routed pages. Final local Stage 3 gate: **423/423** and 57/57 pages.
 
 ## Test files (26) by subsystem
 | Area | Files |
@@ -37,12 +37,18 @@ temp JSON store (`APP_STORE_PATH`) — **no live DB or provider keys needed.** B
 ## DGTL Core release gate
 - `.github/workflows/core-release-gate.yml` produces the branch-protection-ready
   `Required DGTL Core checkpoint` result.
-- `npm run validate:migrations` creates/drops a disposable localhost database, applies 001–011,
-  seeds legacy fixtures, repeats 009–011, and attacks a cross-team constraint.
+- `npm run validate:migrations` creates/drops a disposable localhost database, applies 001–012,
+  seeds legacy fixtures, repeats 009–012, and attacks both legacy and Artifact cross-team constraints.
 - `npm run rehearse:stage2` drives a representative researched CSV through canonical import,
   campaign, approval, concurrent test workers, provider event, and Activity with no external send.
 - `tests/core-domain.test.js`, `tests/stage2-import-outreach.test.js`, and
   `tests/core-release-gate.test.js` are also invoked explicitly in CI before the full suite.
+- `tests/stage3-artifact-automation.test.js` covers adapter/path security, immutable context and
+  versions, approval, revisions, worker leases/failures, deployment idempotency/unknown outcomes,
+  exact Message attachment, independent changed-path discovery, symlink rejection, team isolation,
+  and worker authentication. `npm run rehearse:stage3`
+  executes the real pitch template in temporary Git worktrees and test-deploys only to
+  `preview.invalid`.
 - `npm audit --omit=dev` reports zero vulnerabilities with lockfile overrides for patched PostCSS
   8.5.26 and Sharp 0.35.3; build/tests verify compatibility with Next 15.
 - Worklog's SQLite WAL open has bounded `SQLITE_BUSY` retry and passed three consecutive 375/375

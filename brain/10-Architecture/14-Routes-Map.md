@@ -3,7 +3,7 @@ title: 14 · Routes Map
 type: reference
 tags: [architecture]
 status: stable
-updated: 2026-08-13
+updated: 2026-08-14
 source: app/
 ---
 
@@ -25,6 +25,10 @@ API routes are `route.js` handlers.
 | `/contacts/[id]` | `app/(core)/contacts/[id]/page.jsx` | Contact detail with company, opportunities, activity, and external links. |
 | `/opportunities` | `app/(core)/opportunities/page.jsx` | Authenticated canonical Opportunity list. |
 | `/opportunities/[id]` | `app/(core)/opportunities/[id]/page.jsx` | Opportunity-centered operating view: company/stakeholders, approach, research, assets/jobs, campaign/messages, activity, links. |
+| `/generation-jobs` | `app/(core)/generation-jobs/page.jsx` | Team-scoped GenerationJob queue and adapter status. |
+| `/generation-jobs/[id]` | `app/(core)/generation-jobs/[id]/page.jsx` | Immutable context/brief, adapter identity, validation, output, sandboxed preview, and approval controls. |
+| `/artifacts` | `app/(core)/artifacts/page.jsx` | Immutable Artifact version registry. |
+| `/artifacts/[id]` | `app/(core)/artifacts/[id]/page.jsx` | Version/checksum lineage, test deployment, revision request, and exact Message attachment. |
 | `/branding/icon` | `app/branding/icon/route.js` | Per-tenant PWA icon. |
 | `/manifest.webmanifest` | route | PWA manifest. |
 
@@ -62,5 +66,13 @@ data-model migration cannot break tenant-domain routing. See [[13-Data-Model]].
 | `recording`, `recordings/[callId]`, `transcription`, `dial` | mixed | Recording proxy + transcription. |
 
 See [[28-Telephony]] for the full telephony flow.
+
+## Artifact worker API (`/api/core/generation-*`)
+- Authenticated operator routes create/approve briefs and Artifacts, request revisions/test
+  deployments, and attach exact Artifact versions to Messages.
+- Bearer-service routes claim/heartbeat/result/fail GenerationJobs and claim/result deployment jobs.
+  Team and worker identity come from server configuration; request JSON cannot override them.
+- No route imports shell/process execution or deployment credentials. The separately operated worker
+  uses the bounded contract in [[2E-Artifact-Automation]].
 
 Up: [[10-Architecture-MOC]]

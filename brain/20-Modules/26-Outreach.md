@@ -82,6 +82,11 @@ No production inbound mailbox has been invented. Authenticated reply correlation
 outbound-provider event webhook remain separate boundaries. Full contract:
 `docs/architecture/dgtl-core-phase-2.md`.
 
+Phase 3 adds `message_artifacts`: an operator may attach one approved, deployed Artifact version to a
+canonical Message. The link snapshots Artifact ID, version, URL and checksum. Attachment is a material
+message change, so the service returns the Message to draft and clears prior approval. Later Artifact
+revisions never retarget historical Messages. See [[2E-Artifact-Automation]].
+
 ## ⚠️ Do not start yet
 Real outreach sending **at volume** still needs an approved Resend domain (SPF/DKIM/DMARC). The
 suppression/unsubscribe path is now signed + scoped (07-04), removing that blocker. [[34-Do-Not-Start-Yet]]
