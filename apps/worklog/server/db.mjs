@@ -18,7 +18,20 @@ export const db = new DatabaseSync(DB_PATH);
 // a second process opening the same database at the same moment — seed and the
 // server starting together — hit SQLITE_BUSY with nothing to wait on.
 db.exec('PRAGMA busy_timeout = 5000');
-db.exec('PRAGMA journal_mode = WAL');
+const waitArray = new Int32Array(new SharedArrayBuffer(4));
+const currentJournalMode = db.prepare('PRAGMA journal_mode').get()?.journal_mode;
+if (String(currentJournalMode).toLowerCase() !== 'wal') {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      db.exec('PRAGMA journal_mode = WAL');
+      break;
+    } catch (error) {
+      const locked = error?.errcode === 5 || /database is locked/i.test(String(error?.message));
+      if (!locked || attempt >= 50) throw error;
+      Atomics.wait(waitArray, 0, 0, 100);
+    }
+  }
+}
 db.exec('PRAGMA foreign_keys = ON');
 db.exec(fs.readFileSync(path.join(APP_DIR, 'schema.sql'), 'utf8'));
 
