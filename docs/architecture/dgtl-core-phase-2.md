@@ -1,8 +1,8 @@
 # DGTL Core Phase 2: import and outbound architecture
 
 **Status:** implemented on `codex/import-outreach-phase-2`  
-**Date:** 2026-08-13  
-**Scope:** staged prospect imports, canonical campaign cohorts, immutable message approval, test-only durable outbox, provider/reply association, and exception operations
+**Date:** 2026-08-14
+**Scope:** staged prospect imports, canonical campaign cohorts, immutable message approval, durable outbox, fail-closed provider/reply boundaries, and exception operations
 
 ## Implemented revenue path
 
@@ -43,12 +43,12 @@ New browser/API writes require an authenticated session. `team_id` always comes 
 | apply/reverse import | owner, admin | one database transaction |
 | create campaign/cohort/drafts | owner, admin, sales | `OutreachService`; canonical relationship validation |
 | approve campaign/message, queue, retry, suppress, resolve exception | owner, admin | exact server-side state transition |
-| outbox drain in this phase | owner, admin | server process; hard-locked to test transport |
+| interactive outbox drain | owner, admin | server process; deterministic test transport only |
 | provider event/reply fixture association | owner, admin | authenticated fixture API; not presented as a provider webhook |
 
-Application-level authorization protects every new write path. Migration 010 adds `team_id` to `opportunity_contacts` and composite company/contact/opportunity constraints for new relationship writes. PostgreSQL RLS is not enabled; adopting RLS is a later defense-in-depth change and must include existing platform tables rather than covering only Stage 2.
+Application-level authorization protects every new write path. Migration 010 adds `team_id` to `opportunity_contacts`; migration 011 extends composite team-aware constraints across the exposed Company, Contact, Opportunity, Campaign, Message, import, event, suppression, reply, and Activity relationships. The constraints are `NOT VALID`, so new rows are protected immediately and historical validation can be rehearsed without holding the deployment migration open. PostgreSQL RLS is not enabled; adopting RLS is a later defense-in-depth change and must include existing platform tables rather than covering only Stage 2.
 
-Failures are fail-closed. Canonical writes require `DATABASE_URL` and migrations 009/010. An import apply uses a transaction; one invalid selected relationship rolls the whole batch back. No client can select a company/contact from another team because the selected IDs are resolved through team-scoped Core reads before use.
+Failures are fail-closed. Canonical writes require `DATABASE_URL` and migrations 009–011. An import apply uses a transaction; one invalid selected relationship rolls the whole batch back. No client can select a company/contact from another team because the selected IDs are resolved through team-scoped Core reads before use.
 
 ## Staged importer
 
@@ -109,21 +109,23 @@ The personalization contract snapshots:
 
 Rendering supports a deliberately small deterministic token surface. AI generation is not given generalized write authority.
 
-Campaign lifecycle is `draft → review → approved`; cohort or rendered-message changes invalidate campaign approval. Message lifecycle is `draft → approved → queued → sent` with suppression/failure/dead-letter branches. Approval stores exact subject, body, SHA-256 content hash, actor, and time. Editing rendered content after approval clears the approval snapshot and returns the message to draft.
+Campaign lifecycle is `draft → review → approved`; cohort or rendered-message changes invalidate campaign approval. Message lifecycle is `draft → approved → queued → sent` with paused, review-required, suppression, uncertain-outcome, failure, and dead-letter branches. Approval stores exact sender, recipient, subject, body, SHA-256 envelope/content hash, actor, and time. Editing rendered content invalidates approval. A contact email or message envelope change after approval is held for review before delivery.
 
 ## Durable outbox and safety
 
-Canonical `messages` now carry idempotency key, queue state, schedule/retry times, attempt count, bounded maximum attempts, lease owner/time, provider ID, failure/dead-letter state, and approved content. Workers claim bounded due batches using `FOR UPDATE SKIP LOCKED`; a compare-and-set finalization prevents a stale worker from changing a message it no longer owns. `message_delivery_attempts` is append-only attempt history.
+Canonical `messages` now carry idempotency key, queue state, schedule/retry times, attempt count, bounded maximum attempts, lease owner/time, provider ID, failure/dead-letter/uncertain state, and the approved envelope/content. Workers serialize claim-capacity calculation per team with a transaction-scoped PostgreSQL advisory lock, then claim bounded due batches using `FOR UPDATE SKIP LOCKED`; finalization compares both queue state and lease owner so a stale worker cannot change a message it no longer owns. `message_delivery_attempts` records the attempt before the provider call and preserves the exact provider outcome afterward.
 
-Retries use bounded exponential backoff. Exhaustion creates a dead-letter state and an `operation_exceptions` record. An explicit retry adds one attempt; it does not start an unbounded loop.
+Retries use bounded exponential backoff. Exhaustion creates a dead-letter state and an `operation_exceptions` record. A lease that expires before an attempt begins is safely recoverable; a lease/provider timeout after delivery begins becomes `delivery_uncertain`, opens an exception, and is never automatically retried. An explicit retry adds one attempt; it does not start an unbounded loop.
 
-The Stage 2 worker rejects every transport whose name is not `test`. The deterministic test adapter makes no network calls and de-duplicates by idempotency key. There is no environment switch in this change that enables production commercial sending. A future production adapter requires a separately reviewed change: provider credentials, verified identity, rate/domain policy, webhook authentication, observability, and explicit owner authorization.
+The deterministic test adapter remains the default and makes no network calls. The existing Resend integration is available only through a fail-closed production adapter requiring five coordinated release/configuration gates, a configured API key, and reviewed rate policy. The Resend request carries the canonical idempotency key. Network/timeout ambiguity is quarantined rather than retried. No production gate is enabled by this branch and no commercial email was sent.
+
+Provider-independent rate policy enforces team, sending-account, recipient-domain, batch, worker-concurrency, and bounded retry-backoff concepts. Defaults are deliberately conservative for test/staging; production values require a release-specific approval value.
 
 ## Suppression, events, and replies
 
-`contact_suppressions` is the canonical durable suppression registry. Queue eligibility reads both it and the legacy `outreach_suppression_list`, so unsubscribe/hard-bounce/manual blocks survive future imports. An imported matching contact is marked suppressed, and every send re-checks suppression before queueing. Provider bounce, complaint, and rejection events create canonical suppression where applicable.
+`contact_suppressions` is the canonical durable suppression registry. Queue eligibility reads both it and the legacy `outreach_suppression_list`, so unsubscribe/hard-bounce/manual blocks survive future imports. An imported matching contact is marked suppressed, and every worker re-checks suppression immediately before delivery. Provider bounce, complaint, and rejection events create canonical suppression where applicable.
 
-`provider_events` de-duplicates provider event IDs and associates by a team-owned Message/provider message ID. Only troubleshooting metadata and payload references are retained; full sensitive provider payloads are not copied by default. Supported events emit canonical Activity.
+`provider_events` de-duplicates provider event IDs and associates by a team-owned Message/provider message ID. `/api/webhooks/resend` verifies the raw Svix-signed body, rejects stale/replayed signatures, derives the team from server-owned configuration, updates canonical delivery state, emits Activity, and applies suppression where appropriate. Unmatched signed events are retained as review exceptions. Full sensitive payloads are not copied by default.
 
 The current platform has no deterministic production inbound-email webhook. Phase 2 therefore implements and tests association logic without inventing a mailbox: provider `In-Reply-To` wins; one unique sent message for the normalized sender is a fallback; ambiguity becomes `review_required` plus an exception. `/api/core/replies/associate` is an authenticated fixture/adapter boundary, not a public production webhook.
 
@@ -138,7 +140,7 @@ The current platform has no deterministic production inbound-email webhook. Phas
 | `outreach_queue` | unchanged legacy delivery infrastructure; canonical Stage 2 uses Message outbox columns, avoiding blind dual-write |
 | `outreach_suppression_list` | read as a compatibility suppression source; canonical Stage 2 adds `contact_suppressions` |
 | `outreach_events` | legacy projection remains; new provider/workflow events emit canonical Activity directly |
-| Resend provider seam | untouched; canonical acceptance worker cannot select it |
+| Resend provider seam | reused through the canonical adapter; production remains disabled behind release-specific gates |
 
 Canonical records win where the same stable ID exists. Phase 2 intentionally does not create two editable copies of imported prospects or campaign message state.
 
@@ -152,17 +154,15 @@ The Phase 1 Company/Opportunity pages already read canonical Activity, Campaign,
 
 ## Migration and recovery expectations
 
-Migration 010 is additive and follows 009. It contains no table drop or data delete. Apply to a backed-up staging database first, reconcile legacy/canonical counts, exercise one import and test campaign, then back up again before production. Migration files are ledgered by `schema_migrations`; they are not re-run by `npm run migrate` once recorded. Individual DDL uses `IF NOT EXISTS` or guarded constraints where practical.
+Migrations 010 and 011 are additive and follow 009. They contain no table drop or data delete. Apply to a backed-up staging database first, reconcile legacy/canonical counts, validate deferred team constraints, exercise one import and test campaign, then back up again before production. Migration files are ledgered by `schema_migrations`; they are not re-run by `npm run migrate` once recorded. Individual DDL uses `IF NOT EXISTS` or guarded constraints where practical.
 
 Rollback of application code is safe because legacy routes/tables are untouched. Database rollback is forward-repair: leave additive tables/columns in place, restore the pre-migration snapshot only for a severe migration failure, and never drop Stage 2 tables after users have created lineage-bearing data.
 
 ## Phase 3 handoff
 
-1. Rehearse 009/010 on a production-shaped PostgreSQL snapshot and validate the `NOT VALID` team constraints before later validation.
+1. Create an authorized, isolated staging target and run this branch there with test transport only.
 2. Add native `.xlsx` ingestion after dependency/security review and streaming large-file storage.
 3. Finish conflict-aware field restoration for approved merges and expose before/after diff selection in the import UI.
-4. Add signed Resend/provider webhook adapters, then production transport behind an explicit feature flag and operational approval—not an environment typo.
-5. Add account/domain rate policies and a scheduled worker deployment with lease recovery/monitoring.
-6. Connect deterministic inbound reply ingestion to the implemented correlation boundary.
-7. Migrate selected legacy outreach cohorts to canonical IDs and retire each legacy write path only after reconciliation.
-8. Add PostgreSQL RLS as a platform-wide defense-in-depth project, not a Stage 2-only patch.
+4. Connect a real inbound mailbox/receiving webhook to the implemented deterministic reply-correlation boundary.
+5. Migrate the legacy outreach cohort/send path to canonical Company/Contact/Opportunity/Message IDs first, then retire each legacy write path only after reconciliation.
+6. Add PostgreSQL RLS as platform-wide defense in depth, not a Stage 2-only patch.

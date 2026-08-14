@@ -30,6 +30,8 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
 | `npm run build` / `npm start` | Production build / serve on port 3000 |
 | `npm test` | `node --test tests/*.test.js` |
 | `npm run migrate` | Runs the SQL migrations in order |
+| `npm run validate:migrations` | Rehearses migrations against disposable localhost PostgreSQL; requires the explicit isolation guard |
+| `npm run worker:core` | Runs one bounded canonical outbox worker cycle using the configured transport |
 | `npm run create-owner` | Bootstraps the first owner user + team |
 | `npm run seed:tenants` | Seeds demo tenants |
 | `npm run seed:funding-demo` | Seeds funding-program demo data |
@@ -51,6 +53,7 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
   exact campaign/message approval.
 - `/operations/outbox`, `/operations/exceptions` — durable test-delivery state and
   the human exception desk. The legacy admin remains available while workflows migrate.
+- `/api/core/health` — authenticated, team-scoped worker/outbox/import/exception health.
 
 The admin shell has eight tabs: **pipeline**, **funding**, **prospecting**,
 **accounts**, **outreach**, **calls**, **tenants**, **team**. Its styling lives in
@@ -91,11 +94,14 @@ Run in order by `npm run migrate`; each file is idempotent.
 | `008_outreach_drip.sql` | Drip sequences and scheduled sends on outreach campaigns/queue |
 | `009_core_domain.sql` | Additive DGTL Core graph, artifact/job/external-link registry, safe legacy backfill, and reversible import staging |
 | `010_import_outreach_phase_2.sql` | Reviewed imports, canonical campaign cohorts, immutable message approvals, durable outbox, suppression, provider/reply association, and exception operations |
+| `011_core_release_gate.sql` | Approved delivery envelopes, uncertain-outcome quarantine, worker heartbeats, indexes, and composite team-integrity constraints |
 
 The Core architecture, legacy mapping, and spreadsheet-import contract are documented
 in [`docs/architecture/dgtl-core-phase-1.md`](../docs/architecture/dgtl-core-phase-1.md).
 Stage 2's working revenue workflow and safety boundaries are documented in
 [`docs/architecture/dgtl-core-phase-2.md`](../docs/architecture/dgtl-core-phase-2.md).
+The safe staging procedure is documented in
+[`docs/operations/dgtl-core-staging-runbook.md`](../docs/operations/dgtl-core-staging-runbook.md).
 
 ## Configuration
 
