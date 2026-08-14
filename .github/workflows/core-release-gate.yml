@@ -94,6 +94,8 @@ jobs:
         run: node --test tests/core-release-gate.test.js
       - name: Run Stage 3 artifact automation tests explicitly
         run: node --test tests/stage3-artifact-automation.test.js
+      - name: Run Stage 4 Worklog bridge tests explicitly
+        run: node --test tests/stage4-worklog-operations.test.js
       - name: Run complete deterministic platform suite
         run: npm test
       - name: Rehearse import through duplicate-safe test delivery
@@ -104,6 +106,10 @@ jobs:
         env:
           STAGE3_REHEARSAL_CONFIRM: isolated
         run: npm run rehearse:stage3
+      - name: Rehearse delivery handoff against a real local Worklog instance
+        env:
+          STAGE4_REHEARSAL_CONFIRM: isolated
+        run: npm run rehearse:stage4
       - name: Build production Next.js output
         run: npm run build
 
