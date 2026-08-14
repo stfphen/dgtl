@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ContactRound, LayoutDashboard, LogOut, Target } from "lucide-react";
+import { Building2, ContactRound, Import, LayoutDashboard, LogOut, Mail, Siren, Target } from "lucide-react";
 
 const navigation = [
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/contacts", label: "Contacts", icon: ContactRound },
-  { href: "/opportunities", label: "Opportunities", icon: Target }
+  { href: "/opportunities", label: "Opportunities", icon: Target },
+  { href: "/imports", label: "Imports", icon: Import },
+  { href: "/campaigns", label: "Campaigns", icon: Mail },
+  { href: "/operations/outbox", label: "Operations", icon: Siren }
 ];
 
 function initials(value) {
