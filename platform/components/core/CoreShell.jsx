@@ -2,18 +2,36 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ContactRound, Import, LayoutDashboard, ListChecks, LogOut, Mail, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
+import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
 
+// Grouped navigation. Groups render as label rows inside ONE .core-nav grid so
+// the mobile bottom bar stays a single horizontal strip (labels hide <=820px).
 const navigation = [
-  { href: "/companies", label: "Companies", icon: Building2 },
-  { href: "/contacts", label: "Contacts", icon: ContactRound },
-  { href: "/opportunities", label: "Opportunities", icon: Target },
-  { href: "/imports", label: "Imports", icon: Import },
-  { href: "/campaigns", label: "Campaigns", icon: Mail },
-  { href: "/generation-jobs", label: "Generation", icon: Sparkles },
-  { href: "/artifacts", label: "Artifacts", icon: PackageOpen },
-  { href: "/operations/worklog", label: "Worklog", icon: ListChecks },
-  { href: "/operations/outbox", label: "Operations", icon: Siren }
+  { label: "", items: [{ href: "/home", label: "Home", icon: Home, mobile: true }] },
+  {
+    label: "Grow",
+    items: [
+      { href: "/companies", label: "Companies", icon: Building2, mobile: true },
+      { href: "/contacts", label: "Contacts", icon: ContactRound, mobile: false },
+      { href: "/opportunities", label: "Opportunities", icon: Target, mobile: true },
+      { href: "/imports", label: "Imports", icon: Import, mobile: false },
+      { href: "/campaigns", label: "Campaigns", icon: Mail, mobile: true },
+    ],
+  },
+  {
+    label: "Create",
+    items: [
+      { href: "/generation-jobs", label: "Generation", icon: Sparkles, mobile: false },
+      { href: "/artifacts", label: "Artifacts", icon: PackageOpen, mobile: false },
+    ],
+  },
+  {
+    label: "Operate",
+    items: [
+      { href: "/operations/worklog", label: "Worklog", icon: ListChecks, mobile: true },
+      { href: "/operations/outbox", label: "Operations", icon: Siren, mobile: true },
+    ],
+  },
 ];
 
 function initials(value) {
@@ -28,24 +46,29 @@ function initials(value) {
 
 export default function CoreShell({ user, children }) {
   const pathname = usePathname();
+  const renderItem = ({ href, label, icon: Icon, mobile }) => {
+    const active = pathname === href || pathname.startsWith(`${href}/`);
+    return (
+      <Link key={href} href={href} className={`core-nav__item${active ? " is-active" : ""}${mobile ? "" : " is-desktop-only"}`} aria-current={active ? "page" : undefined}>
+        <Icon size={18} strokeWidth={2} aria-hidden />
+        <span>{label}</span>
+      </Link>
+    );
+  };
   return (
     <div className="v2-admin-shell core-shell" data-theme="dark">
       <aside className="core-sidebar">
-        <Link className="core-brand" href="/companies" aria-label="DGTL Core">
+        <Link className="core-brand" href="/home" aria-label="DGTL Home">
           <span className="core-brand__mark">DGTL</span>
           <span className="core-brand__product">Core</span>
         </Link>
-        <p className="core-nav-label">Commercial graph</p>
         <nav className="core-nav" aria-label="Core navigation">
-          {navigation.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <Link key={href} href={href} className={`core-nav__item${active ? " is-active" : ""}`} aria-current={active ? "page" : undefined}>
-                <Icon size={18} strokeWidth={2} aria-hidden />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
+          {navigation.map((group) => (
+            <div className="core-nav__group" key={group.label || "home"}>
+              {group.label ? <p className="core-nav-label">{group.label}</p> : null}
+              {group.items.map(renderItem)}
+            </div>
+          ))}
         </nav>
         <div className="core-sidebar__spacer" />
         <Link className="core-nav__item core-nav__legacy" href="/admin">
