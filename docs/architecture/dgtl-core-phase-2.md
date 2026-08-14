@@ -1,6 +1,6 @@
 # DGTL Core Phase 2: import and outbound architecture
 
-**Status:** implemented on `codex/import-outreach-phase-2`  
+**Status:** implemented on `codex/import-outreach-phase-2`
 **Date:** 2026-08-14
 **Scope:** staged prospect imports, canonical campaign cohorts, immutable message approval, durable outbox, fail-closed provider/reply boundaries, and exception operations
 
