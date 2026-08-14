@@ -8,9 +8,11 @@ Scope: release stabilization only; no production deployment, database change, DN
 
 ## Decision status
 
-The local release gate is green. The merge decision remains conditional until the branch is pushed,
-the draft pull request exists, and its GitHub Actions checkpoint completes. Production promotion is a
-separate decision after an isolated staging deployment with test transport.
+The local and GitHub release gates are green. The branch is preserved remotely and draft pull
+request #26 targets `main`. GitHub Actions run `31771897952` completed all four jobs successfully,
+including the aggregate `Required DGTL Core checkpoint`. This checkpoint is safe to merge after
+human review of the broad branch delta. Production promotion remains a separate decision after an
+isolated staging deployment with test transport.
 
 ## CI checkpoint
 
@@ -159,8 +161,7 @@ independent delivery engines longer than necessary is the largest duplication ri
 
 ## Remaining release actions
 
-1. Push the checkpoint and let the draft PR's GitHub Actions run to completion.
-2. Configure `Required DGTL Core checkpoint` as a required status check on `main`.
-3. Review the broad branch delta against the older remote `main`; do not mix unrelated open PRs.
-4. Create the isolated staging target and repeat with a fresh production backup.
-5. Keep production transport disabled until a separately authorized send release and reviewed limits.
+1. Configure `Required DGTL Core checkpoint` as a required status check on `main`.
+2. Review the broad branch delta against the older remote `main`; do not mix unrelated open PRs.
+3. Create the isolated staging target and repeat with a fresh production backup.
+4. Keep production transport disabled until a separately authorized send release and reviewed limits.
