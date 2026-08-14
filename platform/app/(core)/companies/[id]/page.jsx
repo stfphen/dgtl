@@ -10,20 +10,35 @@ import {
   Status
 } from "../../../../components/core/CoreUi";
 import { getCorePageContext } from "../../../../lib/core/server";
+import { getStage4PageContext } from "../../../../lib/stage4/server";
+import { CompanyWorklogSection } from "../../../../components/core/WorklogPanels";
 
 export const dynamic = "force-dynamic";
 
-export default async function CompanyDetailPage({ params }) {
+export default async function CompanyDetailPage({ params, searchParams }) {
   const { id } = await params;
+  const query = await searchParams;
   const { core } = await getCorePageContext();
+  const { worklog } = await getStage4PageContext();
   const graph = await core.getCompanyGraph(decodeURIComponent(id));
   if (!graph) notFound();
   const { company, contacts = [], opportunities = [], research = [], assets = [], activities = [], externalLinks = [] } = graph;
 
+  let worklogLink = null; let worklogMatch = null; let worklogMatchError = "";
+  if (worklog) {
+    worklogLink = await worklog.linkedLinkFor("company", company.id, "client").catch(() => null);
+    if (!worklogLink && query?.worklog === "find") {
+      try { worklogMatch = await worklog.matchCompanyClients(company.id); }
+      catch (error) { worklogMatchError = error?.message || "Worklog is unavailable."; }
+    }
+  }
+
   return (
     <div className="core-page">
       <PageHeader eyebrow="Company" title={company.displayName} description={company.researchSummary || "Canonical organization record and its connected commercial activity."} backHref="/companies" backLabel="Companies" />
+      {query?.notice ? <p className="core-notice">{query.notice}</p> : null}
       <div className="core-grid">
+        {worklog ? <CompanyWorklogSection companyId={company.id} link={worklogLink} match={worklogMatch} matchError={worklogMatchError} findHref={`/companies/${encodeURIComponent(company.id)}?worklog=find`} /> : null}
         <Section title="Company details">
           <DefinitionGrid items={[
             { label: "Legal name", value: company.legalName },

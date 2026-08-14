@@ -111,7 +111,7 @@ html .core-shell a { color: inherit; text-decoration: none; }
   html .core-shell { display: block; padding-bottom: 66px; }
   .core-sidebar { position: fixed; inset: auto 0 0; z-index: 50; width: 100%; height: 66px; display: block; padding: 7px 10px max(7px, env(safe-area-inset-bottom)); border: 0; border-top: 1px solid var(--core-line); }
   .core-brand, .core-nav-label, .core-sidebar__spacer, .core-nav__legacy, .core-user { display: none; }
-  .core-nav { display: grid; grid-template-columns: repeat(8, minmax(68px, 1fr)); overflow-x: auto; }
+  .core-nav { display: grid; grid-template-columns: repeat(9, minmax(68px, 1fr)); overflow-x: auto; }
   .core-sidebar { overflow-x: auto; }
   .core-nav__item { flex-direction: column; justify-content: center; gap: 3px; min-height: 50px; padding: 0 4px; font-size: 9px; }
   .core-nav__item.is-active { box-shadow: inset 0 2px 0 var(--core-accent); }
@@ -128,3 +128,8 @@ html .core-shell a { color: inherit; text-decoration: none; }
 .core-code { overflow: auto; max-height: 520px; margin: 12px 0 0; padding: 14px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-bg); color: var(--core-muted); font: 10px/1.6 ui-monospace, monospace; white-space: pre-wrap; }
 .core-check-list { display: grid; gap: 8px; padding-top: 12px; }
 .core-check-list label { display: flex; align-items: flex-start; gap: 8px; color: var(--core-muted); font-size: 11px; line-height: 1.45; }
+
+/* Stage 4: Worklog bridge */
+.core-worklog-freshness { display: block; color: var(--core-muted); font-size: 12px; margin-top: 4px; }
+.core-card details > summary { cursor: pointer; color: var(--core-muted); font-size: 13px; margin: 4px 0; }
+.core-card details[open] > summary { margin-bottom: 8px; }

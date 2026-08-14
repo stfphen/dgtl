@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, ContactRound, Import, LayoutDashboard, LogOut, Mail, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
+import { Building2, ContactRound, Import, LayoutDashboard, ListChecks, LogOut, Mail, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
 
 const navigation = [
   { href: "/companies", label: "Companies", icon: Building2 },
@@ -12,6 +12,7 @@ const navigation = [
   { href: "/campaigns", label: "Campaigns", icon: Mail },
   { href: "/generation-jobs", label: "Generation", icon: Sparkles },
   { href: "/artifacts", label: "Artifacts", icon: PackageOpen },
+  { href: "/operations/worklog", label: "Worklog", icon: ListChecks },
   { href: "/operations/outbox", label: "Operations", icon: Siren }
 ];
 
