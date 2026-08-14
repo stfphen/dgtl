@@ -2,23 +2,41 @@ import { notFound } from "next/navigation";
 import { DateText, DefinitionGrid, EmptyState, ExternalLinkList, PageHeader, RecordLink, Section, Status } from "../../../../components/core/CoreUi";
 import { getCorePageContext } from "../../../../lib/core/server";
 import { getStage3PageContext } from "../../../../lib/stage3/server";
+import { getStage4PageContext } from "../../../../lib/stage4/server";
+import { OpportunityWorklogSection } from "../../../../components/core/WorklogPanels";
 
 export const dynamic = "force-dynamic";
 
-export default async function OpportunityDetailPage({ params }) {
+export default async function OpportunityDetailPage({ params, searchParams }) {
   const { id } = await params;
+  const query = await searchParams;
   const { core } = await getCorePageContext();
   const { automation } = await getStage3PageContext();
+  const { worklog } = await getStage4PageContext();
   const graph = await core.getOpportunityGraph(decodeURIComponent(id));
   if (!graph) notFound();
   const {
     opportunity, company, contacts = [], research = [], assets = [], campaigns = [],
     messages = [], activities = [], externalLinks = [], generationJobs = []
   } = graph;
+
+  let worklogView = null; let worklogPreview = null; let worklogMatch = null; let worklogMatchError = "";
+  if (worklog) {
+    worklogView = await worklog.opportunityDeliveryView(opportunity.id).catch(() => null);
+    if (worklogView && !worklogView.link) {
+      worklogPreview = await worklog.previewProjectHandoff(opportunity.id).catch(() => null);
+      if (query?.worklog === "find") {
+        try { worklogMatch = await worklog.matchOpportunityProjects(opportunity.id); }
+        catch (error) { worklogMatchError = error?.message || "Worklog is unavailable."; }
+      }
+    }
+  }
   return (
     <div className="core-page">
       <PageHeader eyebrow="Opportunity" title={opportunity.name} description={opportunity.approachAngle || "Operational center for this sales approach."} backHref="/opportunities" backLabel="Opportunities" />
+      {query?.notice ? <p className="core-notice">{query.notice}</p> : null}
       <div className="core-grid">
+        {worklog && worklogView ? <OpportunityWorklogSection opportunityId={opportunity.id} view={worklogView} preview={worklogPreview} match={worklogMatch} matchError={worklogMatchError} findHref={`/opportunities/${encodeURIComponent(opportunity.id)}?worklog=find`} assets={assets} /> : null}
         <Section title="Generate sales asset" description="Review this exact context before an authorized agent can claim the job." className="is-wide">
           {automation ? <form className="core-form" action="/api/core/generation-jobs" method="post">
             <input type="hidden" name="opportunityId" value={opportunity.id} />

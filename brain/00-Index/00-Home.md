@@ -48,12 +48,15 @@ review → all tenant-scoped, permissioned, and audit-logged.*
 - [[29-Funding-Program]] — the biggest/newest subsystem.
 
 ## 🧭 Status at a glance (2026-08-14)
-- **Current priority:** finish and review DGTL Core Phase 3 locally: Opportunity → bounded skill job →
-  immutable Artifact → test deployment → exact Message attachment. Production worker, deployment,
-  live database and commercial email remain disabled. [[2E-Artifact-Automation]]
-- **Active branch:** `codex/artifact-automation-phase-3`, created from merged Phase 1+2 checkpoint
-  `main@4076f44` (PR #26). Migration 012 and the routed generation/Artifact workflow are under final
-  verification; no Stage 3 merge or deploy is authorized.
+- **Current priority:** review and merge DGTL Core Stage 4 — the Worklog delivery bridge:
+  Company↔Worklog Client, Opportunity↔Worklog Project, approved idempotent task handoff, and
+  read-through delivery status. Worklog remains the only execution authority; production Worklog
+  and the integration account remain deliberately unconfigured. [[2F-Worklog-Bridge]]
+- **Active branch:** `claude/dgtl-core-stage-4-95myaw`, created from merged Stage 3 checkpoint
+  `main@33c0bde` (PR #27). Migration 013, the Worklog connector/operations, and the real-local-
+  Worklog acceptance rehearsal are implemented; no Stage 4 merge or deploy is authorized.
+- **Stage 3** merged via PR #27 (`main@33c0bde`): bounded artifact automation, immutable
+  versions, sandboxed preview, test deployment, exact Message attachment. [[2E-Artifact-Automation]]
 - **`main`:** Phase 1+2 Core checkpoint merged. Company/Contact/Opportunity, staged import,
   Campaign/Message, durable outbox and the aggregate CI gate are canonical; production promotion
   still requires current-snapshot and isolated-staging rehearsal.

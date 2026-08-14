@@ -299,3 +299,14 @@ link checker intentionally does not scan templates under `engine/`.
   prevented.
 - **Application authorization is primary; PostgreSQL RLS is absent.** Composite team checks were added where practical, but RLS should be designed platform-wide rather than applied only to Stage 2.
 - **Import review UI exposes JSON mapping and candidate decisions, not a polished visual mapper/diff.** The workflow is complete and auditable; drag/drop mapping, per-field merge diffs, bulk decisions, and native large-sheet pagination remain Phase 3 ergonomics.
+- **Stage 4 Worklog bridge has no production configuration.** The dedicated integration account on
+  `office.dgtl.at`, `CORE_WORKLOG_*` env, and the team binding are deliberately unset; acceptance ran
+  only against a local throwaway Worklog. Follow the production-setup section of
+  `docs/architecture/dgtl-core-phase-4.md` after review — and remember Worklog revokes sessions on
+  password change, so credential rotation must update the env in step.
+- **Worklog is pull-only: no webhooks, events, or `updated_since` filters.** Stage 4 read-through is
+  explicit-refresh with cached snapshots; observed-transition Activities (archived, task completed)
+  only fire on refresh. A future event feed would need Worklog-side work; no fake cursor was invented.
+- **Worklog client ids are not durable.** Worklog prunes a client when its last project detaches and
+  re-derives clients from project codes on restart; Company↔Client links verify by fresh lookup and
+  surface `missing` for explicit repair rather than silently re-pointing.
