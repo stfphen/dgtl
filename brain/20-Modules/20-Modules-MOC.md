@@ -40,6 +40,7 @@ inbound ┘                                   │        ├─► OUTREACH (hum
 | [[2D-Portfolio-Media]] | Portfolio / references & media library | **Proposed.** Per-tenant portfolio section + reusable media library + AI-assisted selection + hero/media editor. |
 | [[2E-Artifact-Automation]] | Sales-asset automation | Opportunity → bounded skill job → validated immutable Artifact → exact Message attachment. |
 | [[2F-Worklog-Bridge]] | Worklog delivery bridge | Company↔Client, Opportunity↔Project, approved idempotent task handoff, read-through status; Worklog stays execution authority. |
+| [[2G-Home-Command-Center]] | HOME command center | `/home` projection over Stages 1–4: attention, today, approvals, pipeline, delivery, health, activity, ⌘K search. |
 
 
 Up: [[00-Home]]

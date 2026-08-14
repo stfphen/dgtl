@@ -57,6 +57,13 @@ temp JSON store (`APP_STORE_PATH`) — **no live DB or provider keys needed.** B
   `npm run rehearse:stage4` boots a **real local Worklog server** on a throwaway SQLite database
   and proves the whole path plus the failure catalogue over the real HTTP API — never against
   `office.dgtl.at`. `npm run validate:migrations` now rehearses 001–013.
+- `tests/stage5-home-command-center.test.js` (17 tests) covers HOME snapshot composition,
+  deterministic attention ordering, projection semantics (resolutions make items disappear),
+  approval/pipeline aggregation with known-vs-unknown values, snapshot-fresh delivery, health
+  states (disabled-intentionally ≠ failure), per-section degradation under hung/failing sources,
+  cross-team isolation incl. search, role-filtered quick actions, empty states, and host-routing
+  regression pins. `npm run rehearse:stage5` proves the projection end-to-end on disposable PG
+  plus a real local Worklog.
 - `npm audit --omit=dev` reports zero vulnerabilities with lockfile overrides for patched PostCSS
   8.5.26 and Sharp 0.35.3; build/tests verify compatibility with Next 15.
 - Worklog's SQLite WAL open has bounded `SQLITE_BUSY` retry and passed three consecutive 375/375

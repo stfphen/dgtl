@@ -34,6 +34,7 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
 | `npm run worker:core` | Runs one bounded canonical outbox worker cycle using the configured transport |
 | `npm run rehearse:stage3` | Runs the guarded Opportunity → isolated pitch → immutable versions → test deploy acceptance path |
 | `npm run rehearse:stage4` | Runs the guarded Opportunity → approved Worklog delivery handoff acceptance against a real local Worklog server on a throwaway database |
+| `npm run rehearse:stage5` | Proves HOME is a projection over canonical state on disposable PostgreSQL plus a real local Worklog |
 | `npm run create-owner` | Bootstraps the first owner user + team |
 | `npm run seed:tenants` | Seeds demo tenants |
 | `npm run seed:funding-demo` | Seeds funding-program demo data |
@@ -45,6 +46,9 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
 - `/` — host-resolved tenant site (the tenant matched to the request's domain)
 - `/t/[slug]` — the same tenant surface addressed by slug (checkout, lead capture,
   funding survey), rendered by the template the tenant selects
+- `/home` — the Stage 5 HOME command center: attention, today, approvals, pipeline,
+  delivery, health, recent activity, and the ⌘K search palette. Unclaimed app hosts land
+  here from `/`.
 - `/admin/login` — DGTL-branded sign-in
 - `/admin` — the tabbed admin shell
 - `/companies`, `/contacts`, `/opportunities` — the routed DGTL Core commercial
@@ -53,8 +57,9 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
   review, approval, and compensating reversal.
 - `/campaigns` — canonical opportunity/contact cohorts, personalized drafts, and
   exact campaign/message approval.
-- `/operations/outbox`, `/operations/exceptions` — durable test-delivery state and
-  the human exception desk. The legacy admin remains available while workflows migrate.
+- `/operations/outbox`, `/operations/exceptions`, `/operations/worklog` — durable
+  test-delivery state, the human exception desk, and the Worklog delivery bridge.
+  The legacy admin remains available while workflows migrate.
 - `/generation-jobs`, `/artifacts` — immutable generation context, bounded agent jobs,
   validation/review, artifact versions, test deployment, and exact Message attachments.
 - `/api/core/health` — authenticated, team-scoped worker/outbox/import/exception health.
@@ -100,6 +105,7 @@ Run in order by `npm run migrate`; each file is idempotent.
 | `010_import_outreach_phase_2.sql` | Reviewed imports, canonical campaign cohorts, immutable message approvals, durable outbox, suppression, provider/reply association, and exception operations |
 | `011_core_release_gate.sql` | Approved delivery envelopes, uncertain-outcome quarantine, worker heartbeats, indexes, and composite team-integrity constraints |
 | `012_artifact_automation_phase_3.sql` | Artifact families and immutable versions, bounded job leases, deployment attempts, and exact Message–Artifact relationships |
+| `013_worklog_operations_phase_4.sql` | Generic approved integration operations (idempotent, quarantine-aware) and external-link lifecycle/snapshot columns; no Worklog data copies |
 
 The Core architecture, legacy mapping, and spreadsheet-import contract are documented
 in [`docs/architecture/dgtl-core-phase-1.md`](../docs/architecture/dgtl-core-phase-1.md).
@@ -112,6 +118,8 @@ staging procedures are in
 Stage 4's Worklog delivery bridge — approved idempotent Company/Opportunity handoff, read-through
 status, and the capability audit that shaped it — is documented in
 [`docs/architecture/dgtl-core-phase-4.md`](../docs/architecture/dgtl-core-phase-4.md).
+Stage 5's HOME command center — the attention model, search, routing decision, and Stage 6 seam —
+is documented in [`docs/architecture/dgtl-core-phase-5.md`](../docs/architecture/dgtl-core-phase-5.md).
 The safe staging procedure is documented in
 [`docs/operations/dgtl-core-staging-runbook.md`](../docs/operations/dgtl-core-staging-runbook.md).
 

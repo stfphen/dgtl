@@ -310,3 +310,9 @@ link checker intentionally does not scan templates under `engine/`.
 - **Worklog client ids are not durable.** Worklog prunes a client when its last project detaches and
   re-derives clients from project codes on restart; Company↔Client links verify by fresh lookup and
   surface `missing` for explicit repair rather than silently re-pointing.
+- **HOME shows canonical-only data.** Legacy leads that only exist as compatibility projections
+  (never backfilled) appear on entity list pages but not in HOME's pipeline counts; the gap closes
+  as dual-write/backfill retires the legacy paths. Documented in `docs/architecture/dgtl-core-phase-5.md`.
+- **`x-forwarded-host` is trusted for root host resolution (pre-existing).** A spoofed header
+  matching a claimed tenant domain renders that tenant's funnel on the app host. Unchanged by
+  Stage 5 (flagged during the routing audit); a host allow-list is a future hardening item.
