@@ -4,12 +4,12 @@ type: reference
 tags: [architecture, leads, tenancy]
 status: stable
 updated: 2026-08-13
-source: migrations/001-009, lib/store.js, lib/core/
+source: migrations/001-010, lib/store.js, lib/core/, lib/stage2/
 ---
 
 # Data Model
 
-Postgres schema, defined by ordered migrations (`migrations/`, latest `009`, run via `npm run migrate`).
+Postgres schema, defined by ordered migrations (`migrations/`, latest `010`, run via `npm run migrate`).
 The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 (`data/app-store.json`) used when `DATABASE_URL` is unset — local dev only.
 
@@ -54,6 +54,15 @@ The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
 - Safe deterministic backfill from `leads`, `target_accounts`, `account_campaigns`, `outreach_campaigns`, `outreach_queue`, and `draft_emails`; no legacy delete, merge, or rename. `lib/core/` merges canonical rows with live compatibility projections so post-migration legacy writes stay visible during dual-write rollout.
 - Full contract and retirement map: `docs/architecture/dgtl-core-phase-1.md`.
 
+### `010_import_outreach_phase_2.sql` — reviewed import + canonical outbound (2026-08-13)
+- Extends `import_batches`/`import_rows` with file/type/count/review state and adds append-only `import_row_reviews`.
+- **`campaign_members`** binds campaigns to canonical Opportunity + Contact IDs; campaign approval, audience, sequence, sending identity, personalization, and metrics stay on `campaigns`.
+- Extends `messages` into a durable outbox: approved subject/body/hash, idempotency key, schedule/retry/lease/attempt/dead-letter fields, and provider metadata. **`message_delivery_attempts`** is append-only attempt history.
+- **`contact_suppressions`** is the canonical suppression registry; Stage 2 also reads legacy `outreach_suppression_list`, so re-import cannot reactivate an unsubscribed/bounced address.
+- **`provider_events`**, **`inbound_replies`**, and **`operation_exceptions`** retain provider correlation, review-required replies, and exception-desk resolution.
+- `opportunity_contacts.team_id` is backfilled and protected by composite team FKs; new runtime writes always supply it. It remains nullable so the 009→010 pair can be safely re-run and re-backfill old relationship rows.
+- Full workflow, compatibility choices, authorization, rollback, and production-send boundary: `docs/architecture/dgtl-core-phase-2.md`.
+
 ## Entity relationships (mental model)
 ```
 team ─┬─ users (via team_memberships, with role + telephony fields)
@@ -71,7 +80,9 @@ team ─┬─ users (via team_memberships, with role + telephony fields)
       │         └─ tasks
       ├─ contractors
       ├─ prospecting_batches
-      └─ outreach_templates / campaigns / suppression_list
+      ├─ import_batches ── import_rows / import_row_reviews
+      ├─ contact_suppressions / inbound_replies / operation_exceptions
+      └─ outreach_templates / legacy campaigns / suppression_list
 sessions ── users        audit_logs ── users
 ```
 

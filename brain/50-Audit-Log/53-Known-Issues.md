@@ -276,3 +276,12 @@ link checker intentionally does not scan templates under `engine/`.
 - **Journal index canonicals still point at `pitch.dgtlmedia.io`** while pack.json canonicalUrls now say `dgtlinfluence.com` — the blanket canonical rewrite remains its own PR per the 2026-08-01 decision.
 
 - **dgtlinfluence.com ACME challenge failing repeatedly** (seen 2026-08-10 in `coolify-proxy` logs, every ~10 min: "Cannot retrieve the ACME challenge for dgtlinfluence.com"). The journal host may be serving on Traefik's fallback/self-signed cert or an expiring one. Unrelated to the dgtl.report stack. Check the journal router's cert and whether dgtlinfluence.com DNS actually points at this VPS.
+
+## DGTL Core Phase 2 follow-ups (2026-08-13)
+
+- **Production migration still requires a production-shaped snapshot rehearsal.** Clean PostgreSQL 16 and synthetic legacy backfill rehearsals passed, including direct repeat execution, but no production data/schema statistics were available. Validate the `NOT VALID` team constraints and reconcile actual legacy counts before production.
+- **Native XLSX is not parsed.** `/imports` accepts CSV/TSV (8 MB, 10,000 rows). Add a reviewed streaming workbook parser before operators upload `.xlsx` directly.
+- **Merge reversal is conservative.** Batch-created records compensate safely; restoring explicitly merged fields from `before_state` after concurrent edits needs a field-level conflict UI.
+- **No production canonical email adapter or inbound webhook exists.** This is deliberate. Add signed provider webhooks, delivery/rate observability, lease recovery, account/domain caps, and an explicit production enablement gate before commercial use.
+- **Application authorization is primary; PostgreSQL RLS is absent.** Composite team checks were added where practical, but RLS should be designed platform-wide rather than applied only to Stage 2.
+- **Import review UI exposes JSON mapping and candidate decisions, not a polished visual mapper/diff.** The workflow is complete and auditable; drag/drop mapping, per-field merge diffs, bulk decisions, and native large-sheet pagination remain Phase 3 ergonomics.

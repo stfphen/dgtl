@@ -3,7 +3,7 @@ title: 26 · Outreach Sequence
 type: module
 tags: [module, leads]
 status: stable
-updated: 2026-07-04
+updated: 2026-08-13
 ---
 
 # Outreach Sequence (V1)
@@ -56,6 +56,22 @@ See [[13-Data-Model]].
 ## Funding outreach
 Dedicated funding sequence (intro / fit-summary / book-a-call) with funding merge fields
 (`{{businessName}}`, `{{contactName}}`, `{{recommendedFundingLane}}`). See [[29-Funding-Program]].
+
+## Canonical outbound engine (Phase 2, test-only)
+`lib/stage2/outreachService.js` adds the first canonical route beside V1; it does not rewrite V1.
+Campaign cohorts require canonical Opportunity + Contact IDs. Personalization snapshots Company,
+Contact, Opportunity, approach/offer, sourced Research, and campaign instructions. Campaign and exact
+message content require owner/admin approval; material edits invalidate approval.
+
+Canonical `messages` carry durable queue/lease/retry/idempotency/dead-letter state. The PostgreSQL
+worker claims with `FOR UPDATE SKIP LOCKED`; `message_delivery_attempts` records every attempt. The
+engineering worker rejects any transport not named `test`, and the deterministic adapter makes no
+network calls. There is deliberately no production-send flag in this phase.
+
+Suppression reads both `contact_suppressions` and the legacy list. Provider events map to Activity and
+suppression; reply correlation prefers provider IDs and sends ambiguity to `/operations/exceptions`.
+No production inbound mailbox/webhook has been invented. Full contract:
+`docs/architecture/dgtl-core-phase-2.md`.
 
 ## ⚠️ Do not start yet
 Real outreach sending **at volume** still needs an approved Resend domain (SPF/DKIM/DMARC). The
