@@ -102,8 +102,16 @@ try {
   catch (error) { blocked = error.code === "23503" && String(error.constraint).includes("contacts_company_team_fkey"); }
   assert.equal(blocked, true, "database must reject a new cross-team contact/company relationship");
 
+  let stage3Blocked = false;
+  try {
+    await client.query("insert into artifact_families (id,team_id,company_id,opportunity_id,kind,slug) values ('artifact_family_attack','team_attacker','company_lead_lead_fixture_1','opportunity_lead_lead_fixture_1','pitch','cross-team-attack')");
+  } catch (error) {
+    stage3Blocked = error.code === "23503" && String(error.constraint).includes("artifact_families_company_id_team_id_fkey");
+  }
+  assert.equal(stage3Blocked, true, "database must reject a new cross-team Artifact family relationship");
+
   const notValidated = (await client.query("select conname from pg_constraint where conname like '%_team_fkey' and not convalidated order by conname")).rows.map((row) => row.conname);
-  console.log(JSON.stringify({ isolated: true, database: rehearsalDatabase, migrations: files, before, after, repeated, crossTeamInsertBlocked: blocked, deferredConstraintValidation: notValidated }, null, 2));
+  console.log(JSON.stringify({ isolated: true, database: rehearsalDatabase, migrations: files, before, after, repeated, crossTeamInsertBlocked: blocked, stage3CrossTeamInsertBlocked: stage3Blocked, deferredConstraintValidation: notValidated }, null, 2));
 } finally {
   if (client) await client.end().catch(() => {});
   if (adminConnected) {

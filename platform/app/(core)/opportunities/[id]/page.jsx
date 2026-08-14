@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
 import { DateText, DefinitionGrid, EmptyState, ExternalLinkList, PageHeader, RecordLink, Section, Status } from "../../../../components/core/CoreUi";
 import { getCorePageContext } from "../../../../lib/core/server";
+import { getStage3PageContext } from "../../../../lib/stage3/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function OpportunityDetailPage({ params }) {
   const { id } = await params;
   const { core } = await getCorePageContext();
+  const { automation } = await getStage3PageContext();
   const graph = await core.getOpportunityGraph(decodeURIComponent(id));
   if (!graph) notFound();
   const {
@@ -17,6 +19,17 @@ export default async function OpportunityDetailPage({ params }) {
     <div className="core-page">
       <PageHeader eyebrow="Opportunity" title={opportunity.name} description={opportunity.approachAngle || "Operational center for this sales approach."} backHref="/opportunities" backLabel="Opportunities" />
       <div className="core-grid">
+        <Section title="Generate sales asset" description="Review this exact context before an authorized agent can claim the job." className="is-wide">
+          {automation ? <form className="core-form" action="/api/core/generation-jobs" method="post">
+            <input type="hidden" name="opportunityId" value={opportunity.id} />
+            <div className="core-form__row"><label>Asset type<select name="artifactKind"><option value="pitch">Pitch</option></select></label><label>Workflow<select name="adapterId"><option value="pitch.pages">DGTL Pitch Pages</option><option value="pitch.composer">DGTL Pitch Composer</option></select></label></div>
+            <div className="core-form__row"><label>Slug<input name="slug" required placeholder="company-offer" pattern="[a-z0-9][a-z0-9-]{0,60}" /></label><label>Target contact<select name="targetContactId">{contacts.map(contact=><option key={contact.id} value={contact.id}>{contact.fullName||contact.email}</option>)}</select></label></div>
+            <label>Selected research<div className="core-check-list">{research.length?research.map(record=><label key={record.id}><input type="checkbox" name="researchId" value={record.id} defaultChecked/><span>{record.content} · {record.verificationStatus}</span></label>):<span>No research available.</span>}</div></label>
+            <label>Optional instructions<textarea name="instructions" placeholder="Audience nuance or exclusions. These remain strategy, not verified fact." /></label>
+            <label>Intended CTA<input name="intendedCta" placeholder="Book a discovery call" /></label>
+            <button className="core-button is-primary" type="submit">Create brief for review</button>
+          </form> : <EmptyState>DATABASE_URL and migration 012 are required to request generation.</EmptyState>}
+        </Section>
         <Section title="Approach">
           <DefinitionGrid items={[
             { label: "Stage", value: <Status value={opportunity.stage} /> },
@@ -40,10 +53,10 @@ export default async function OpportunityDetailPage({ params }) {
           {research.length ? <div className="core-stack">{research.map((record) => <div className="core-record-link" key={record.id}><span><strong>{record.signalCategory || record.sourceType}</strong><small>{record.content}</small></span><span className="core-record-link__right"><Status value={record.verificationStatus} /><DateText value={record.capturedAt} /></span></div>)}</div> : <EmptyState>No provenance-bearing research recorded.</EmptyState>}
         </Section>
         <Section title="Assets" description="Registry entries; pitch/audit/report systems remain independently deployable." count={assets.length}>
-          {assets.length ? <div className="core-stack">{assets.map((asset) => <div className="core-record-link" key={asset.id}><span><strong>{asset.kind} · {asset.slug || asset.id}</strong><small>{asset.deploymentUrl || asset.sourcePath || "Not deployed"}</small></span><Status value={asset.status} /></div>)}</div> : <EmptyState>No artifacts registered.</EmptyState>}
+          {assets.length ? <div className="core-stack">{assets.map((asset) => <RecordLink key={asset.id} href={`/artifacts/${asset.id}`} title={`${asset.kind} · ${asset.slug || asset.id} v${asset.versionNumber||asset.version}`} meta={asset.deploymentUrl || asset.sourcePath || "Not deployed"} status={asset.status} />)}</div> : <EmptyState>No artifacts registered.</EmptyState>}
         </Section>
         <Section title="Generation jobs" count={generationJobs.length}>
-          {generationJobs.length ? <div className="core-stack">{generationJobs.map((job) => <div className="core-record-link" key={job.id}><span><strong>{job.requestedSkill || job.requestedTool}</strong><small>{job.id}</small></span><Status value={job.status} /></div>)}</div> : <EmptyState>No generation jobs requested.</EmptyState>}
+          {generationJobs.length ? <div className="core-stack">{generationJobs.map((job) => <RecordLink key={job.id} href={`/generation-jobs/${job.id}`} title={job.requestedSkill || job.requestedTool} meta={job.id} status={job.status} />)}</div> : <EmptyState>No generation jobs requested.</EmptyState>}
         </Section>
         <Section title="Campaigns and messages" count={campaigns.length + messages.length}>
           {campaigns.map((campaign) => <div className="core-record-link" key={campaign.id}><span><strong>{campaign.name}</strong><small>{campaign.kind}</small></span><Status value={campaign.status} /></div>)}

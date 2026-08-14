@@ -18,7 +18,10 @@ export const CORE_ID_PREFIXES = Object.freeze({
   providerEvent: "provider_event",
   suppression: "suppression",
   operationException: "operation_exception",
-  inboundReply: "inbound_reply"
+  inboundReply: "inbound_reply",
+  artifactFamily: "artifact_family",
+  artifactDeployment: "artifact_deployment",
+  messageArtifact: "message_artifact"
 });
 
 export function createCoreId(entityType, randomUUID = crypto.randomUUID) {

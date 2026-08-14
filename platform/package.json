@@ -13,6 +13,7 @@
     "seed:enterprise-demo": "node scripts/seed-enterprise-demo.js",
     "seed:outreach-demo": "node scripts/seed-outreach-demo.js",
     "rehearse:stage2": "node scripts/rehearse-stage2.js",
+    "rehearse:stage3": "node scripts/rehearse-stage3.js",
     "validate:migrations": "node scripts/validate-core-migrations.js",
     "worker:core": "node scripts/drain-core-outbox.js",
     "seed:tenants": "node scripts/seed-tenants.js",
