@@ -45,6 +45,8 @@ temp JSON store (`APP_STORE_PATH`) — **no live DB or provider keys needed.** B
   `tests/core-release-gate.test.js` are also invoked explicitly in CI before the full suite.
 - `npm audit --omit=dev` reports zero vulnerabilities with lockfile overrides for patched PostCSS
   8.5.26 and Sharp 0.35.3; build/tests verify compatibility with Next 15.
+- Worklog's SQLite WAL open has bounded `SQLITE_BUSY` retry and passed three consecutive 375/375
+  startup stress runs after the first GitHub gate exposed the race.
 
 ## Gaps
 - No separate `lint` script (Next build performs the current lint/type gate). [[53-Known-Issues]]

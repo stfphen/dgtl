@@ -38,8 +38,9 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
   not the SSRF guard's preceding DNS lookup. The lookup is now injectable through the enrichment
   path, tests use a fixed public address, production continues to resolve and validate real DNS, and
   the complete suite passes 356/356.
-- **Worklog v2 passes 375/375 tests but is not production-migration verified.** Back up the live
-  database, dry-run schema migration and restore against a production-shaped copy, then extend
+- **Worklog v2 passes 375/375 tests but is not production-migration verified.** The CI-discovered
+  WAL initialization race now has bounded `SQLITE_BUSY` retry (three consecutive 375/375 stress
+  runs). Back up the live database, dry-run schema migration and restore against a production-shaped copy, then extend
   `apps/worklog-mcp` for the new client, shift, reconciliation, and digest endpoints before deploy.
 - **Five root-absolute pitch links remain**, all in `pitches/hotels/index.html`, pointing to a
   nonexistent `/full/` target. Fourteen other invalid teaser links were repaired. Choose the actual

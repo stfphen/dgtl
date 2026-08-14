@@ -25,7 +25,9 @@ Dates are from doc timestamps / commit themes; treat older "status" claims as po
   zero orphans and zero cross-team rows; all deferred constraints validated and direct repeat
   execution was stable. Concurrent acceptance workers split 1/1 deliveries and the repeat drain was
   empty. Full platform **407/407**, Worklog **375/375**, creator intake **26/26**, build 54/54, links
-  `missing=0`, and npm audit **0 vulnerabilities** after narrow PostCSS/Sharp overrides.
+  `missing=0`, and npm audit **0 vulnerabilities** after narrow PostCSS/Sharp overrides. The first
+  GitHub run then exposed a nondeterministic Worklog SQLite WAL-startup lock; startup now skips an
+  already-WAL database and retries only `SQLITE_BUSY`, with three consecutive 375/375 stress runs.
   `docs/operations/dgtl-core-release-checkpoint.md` · [[13-Data-Model]] · [[26-Outreach]]
 - 2026-08-13 — **DGTL Core Phase 1 implemented on `codex/core-domain-phase-1`.** Added the
   canonical Company → Contact → Opportunity graph with provenance-bearing Research, canonical
