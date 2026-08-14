@@ -294,9 +294,9 @@ export class PostgresCoreRepository {
     );
     for (const contactId of record.contactIds || []) {
       await this.db.query(
-        `insert into opportunity_contacts (opportunity_id, contact_id, role, is_primary)
-         values ($1,$2,$3,$4) on conflict do nothing`,
-        [record.id, contactId, contactId === record.primaryContactId ? "primary" : "stakeholder", contactId === record.primaryContactId]
+        `insert into opportunity_contacts (opportunity_id, contact_id, role, is_primary, team_id)
+         values ($1,$2,$3,$4,$5) on conflict do nothing`,
+        [record.id, contactId, contactId === record.primaryContactId ? "primary" : "stakeholder", contactId === record.primaryContactId, record.teamId]
       );
     }
     return mapRow(result.rows[0]);

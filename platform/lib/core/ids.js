@@ -12,7 +12,13 @@ export const CORE_ID_PREFIXES = Object.freeze({
   externalLink: "external_link",
   generationJob: "generation_job",
   importBatch: "import_batch",
-  importRow: "import_row"
+  importRow: "import_row",
+  campaignMember: "campaign_member",
+  deliveryAttempt: "delivery_attempt",
+  providerEvent: "provider_event",
+  suppression: "suppression",
+  operationException: "operation_exception",
+  inboundReply: "inbound_reply"
 });
 
 export function createCoreId(entityType, randomUUID = crypto.randomUUID) {
