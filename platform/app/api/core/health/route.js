@@ -16,6 +16,9 @@ export async function GET(request) {
     const transport = productionTransportStatus();
     return Response.json({
       ...health,
+      // Non-sensitive release identity for support/rollback verification;
+      // set CORE_RELEASE_SHA to the deployed Git SHA at deploy time.
+      release: process.env.CORE_RELEASE_SHA || "",
       providerAdapterMode: transport.mode,
       productionTransportEnabled: transport.production && transport.authorized,
       productionSafetyGates: {

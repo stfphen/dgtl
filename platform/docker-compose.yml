@@ -60,6 +60,21 @@ services:
       OWNER_NAME: ${OWNER_NAME:-}
       TEAM_NAME: ${TEAM_NAME:-}
       TEAM_SLUG: ${TEAM_SLUG:-}
+      # --- Stage 3 generation worker authentication (web side verifies the token;
+      #     the worker itself runs as a separate process, never in this container) ---
+      CORE_GENERATION_WORKER_TOKEN: ${CORE_GENERATION_WORKER_TOKEN:-}
+      CORE_GENERATION_WORKER_TEAM_ID: ${CORE_GENERATION_WORKER_TEAM_ID:-}
+      CORE_GENERATION_WORKER_ID: ${CORE_GENERATION_WORKER_ID:-}
+      # --- Stage 4 Worklog bridge (unset = bridge off; never defaults to production) ---
+      CORE_WORKLOG_BASE_URL: ${CORE_WORKLOG_BASE_URL:-}
+      CORE_WORKLOG_EMAIL: ${CORE_WORKLOG_EMAIL:-}
+      CORE_WORKLOG_PASSWORD: ${CORE_WORKLOG_PASSWORD:-}
+      CORE_WORKLOG_TEAM_ID: ${CORE_WORKLOG_TEAM_ID:-}
+      # --- Stage 6 DGTL.chat provider (unset = chat shows a bounded unavailable state) ---
+      CORE_CHAT_PROVIDER: ${CORE_CHAT_PROVIDER:-}
+      CORE_CHAT_MODEL: ${CORE_CHAT_MODEL:-}
+      # --- Release identity shown by the authenticated health endpoint ---
+      CORE_RELEASE_SHA: ${CORE_RELEASE_SHA:-}
     depends_on:
       - content-funnel-postgres
     volumes:
@@ -82,6 +97,26 @@ services:
       traefik.http.routers.dgtlmag-http.middlewares: "dgtlmag-redirect"
       traefik.http.middlewares.dgtlmag-redirect.redirectscheme.scheme: "https"
       traefik.http.services.dgtlmag.loadbalancer.server.port: "3000"
+      # dgtl.chat — the authenticated DGTL OS internal-alpha host. Same container:
+      # the root page host-resolves, no tenant claims dgtl.chat, so it lands on
+      # /home (login-gated). DNS cutover happens separately; this router is inert
+      # until dgtl.chat points at this VPS.
+      traefik.http.routers.dgtlchat.rule: "Host(`dgtl.chat`)"
+      traefik.http.routers.dgtlchat.entrypoints: "https"
+      traefik.http.routers.dgtlchat.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtlchat.service: "dgtlmag"
+      traefik.http.routers.dgtlchat-http.rule: "Host(`dgtl.chat`)"
+      traefik.http.routers.dgtlchat-http.entrypoints: "http"
+      traefik.http.routers.dgtlchat-http.middlewares: "dgtlmag-redirect"
+      traefik.http.routers.dgtlchat-http.service: "dgtlmag"
+    healthcheck:
+      # The login page is the cheapest unauthenticated route that proves the
+      # Next server is up without touching business data.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/admin/login"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   content-funnel-postgres:
     image: postgres:17-alpine

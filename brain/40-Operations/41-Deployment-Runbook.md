@@ -9,6 +9,11 @@ source: DEPLOY_HOSTINGER.md, PRE_DEPLOY_CHECKLIST.md, RESUME_HERE.md
 
 # Deployment Runbook — Hetzner VPS
 
+> **dgtl.chat internal alpha (Stage 6.5):** the promotion of merged Stages 1–6 to
+> `https://dgtl.chat` (same container, new Traefik router, migrations 009–014 on production) has
+> its own gate-ordered runbook: `docs/operations/dgtl-chat-internal-alpha-runbook.md`. Follow that
+> for the alpha; this note remains the general dgtlmag.com deploy loop.
+
 > **Host changed 2026-07-21.** Target is now **`37.27.198.189`** (Hetzner, host `DGTLapps`), and the
 > edge is **Coolify** — stacks attach to the `coolify` network, not `traefik-public`. The Hostinger
 > box `[retired-vps]` is gone. For a from-scratch rebuild follow `deploy/vps/README-VPS-DEPLOY.md`;

@@ -48,13 +48,14 @@ review → all tenant-scoped, permissioned, and audit-logged.*
 - [[29-Funding-Program]] — the biggest/newest subsystem.
 
 ## 🧭 Status at a glance (2026-08-14)
-- **Current priority:** review and merge DGTL Core Stage 6 — DGTL.chat: `/chat` as the first
-  conversational interface. The model interprets and proposes; Core validates, authorizes and
-  executes — static 16-tool registry, ActionProposals with explicit human confirmation revalidated
-  at execution, deterministic adapter as the CI acceptance authority. [[2H-DGTL-Chat]]
-- **Active branch:** `codex/dgtl-chat-command-layer-phase-6`, created from squash-merged Stage 5
-  checkpoint `main@879cc3e` (PR #29, remote checkpoint green). Migration 014; no Stage 6 merge,
-  deploy, or production email is authorized.
+- **Current priority:** Stage 6.5 — promote merged Stages 1–6 to the `https://dgtl.chat`
+  internal alpha. Readiness work is on `ops/dgtl-chat-internal-alpha`; the gate-ordered runbook
+  is `docs/operations/dgtl-chat-internal-alpha-runbook.md`. Blocked on external steps only
+  (VPS fresh backup + restore rehearsal + deploy, registrar A record, Worklog integration
+  account, provider-key decision). Production email stays disabled.
+- **Stage 6** merged via PR #30 (`main@239587e`): DGTL.chat — the model proposes, Core
+  validates/authorizes/executes; 16-tool registry, ActionProposals with revalidated human
+  confirmation, deterministic CI adapter. [[2H-DGTL-Chat]]
 - **Stage 5** merged via PR #29 (`main@879cc3e`): the HOME command center — `/home` projection
   over Stages 1–4, grouped navigation, ⌘K search, app-host root landing. [[2G-Home-Command-Center]]
 - **Stage 4** merged via PR #28 (`main@2fa56f9`): the Worklog delivery bridge — approved
