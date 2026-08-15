@@ -323,10 +323,16 @@ link checker intentionally does not scan templates under `engine/`.
   `chat:turn:{team}:{user}`). Correct on the current single-instance deploy; a multi-instance
   deployment needs a shared (e.g. Redis) backend before the 10-turns/min bound is real. Same
   caveat as the existing login limiter — now with one more consumer.
-- **`apps/dgtl-os/api/worker.js` is an open-CORS keyed Anthropic proxy** (flagged during the
-  Stage 6 AI-surface audit, left untouched — it is demo prior art, not part of Core). If that
-  worker is ever deployed as-is, any origin can spend the configured API key. Add origin
-  allow-listing and auth before any real deployment of DGTL OS.
+- ✅ **`apps/dgtl-os` AI proxies hardened 08-15 (Stage 6.5):** both `api/worker.js` (Cloudflare)
+  and `api/api/llm.js` (Vercel) now **deny every origin unless `ALLOWED_ORIGINS` is configured**
+  — the open-CORS default is gone and an unconfigured deploy refuses to spend the key. Remaining
+  manual step: whether an old copy is live on the Cloudflare account cannot be verified from the
+  repo (`wrangler deployments list --name dgtl-os-llm` / dashboard); delete or redeploy the
+  hardened version if found. Core `/chat` never routes through these proxies.
+- **Production still runs `main@32c9f73` (2026-07-04) — pre-Core.** Promoting to the Stage 6
+  release applies migrations 009–014 to the production database; the fresh-backup + isolated
+  restore rehearsal in `docs/operations/dgtl-chat-internal-alpha-runbook.md` is a hard gate
+  before that happens.
 - **No real-provider smoke test has run in CI or this environment** (`ANTHROPIC_API_KEY` absent by
   design). The deterministic adapter is the acceptance authority; run the optional
   `CORE_CHAT_PROVIDER=anthropic` smoke locally once before enabling the provider in any deployed

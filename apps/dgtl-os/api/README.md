@@ -62,9 +62,14 @@ in the browser (localStorage). Check status any time with `config`, verify with
 
 ## Notes
 
-- **CORS**: both files default to `Access-Control-Allow-Origin: *` so you can test
-  fast. In production change `ALLOW_ORIGIN` to your real origin
-  (e.g. `https://terminal.dgtlmedia.io`).
+- **CORS**: both files now **deny every origin by default**. Set the
+  `ALLOWED_ORIGINS` environment variable (comma-separated, e.g.
+  `https://terminal.dgtlmedia.io`) on the worker/function before use — for the
+  Cloudflare worker: `wrangler secret put ALLOWED_ORIGINS`. An unconfigured
+  deploy refuses requests instead of spending the API key for arbitrary sites.
+  For local testing allowlist your local origin explicitly (e.g.
+  `http://localhost:8080`). This proxy is legacy DGTL OS demo infrastructure;
+  the DGTL Core platform's `/chat` never routes through it.
 - **Model**: defaults to a fast, low-cost model. Swap the `MODEL` value for a larger
   one when you want deeper research answers.
 - **Streaming**: this proxy returns the full completion; the terminal animates it

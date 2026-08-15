@@ -100,6 +100,8 @@ jobs:
         run: node --test tests/stage5-home-command-center.test.js
       - name: Run Stage 6 DGTL.chat command-layer tests explicitly
         run: node --test tests/stage6-chat-command-layer.test.js
+      - name: Run Stage 6.5 internal-alpha deployment guarantees explicitly
+        run: node --test tests/stage6-5-internal-alpha.test.js
       - name: Run complete deterministic platform suite
         run: npm test
       - name: Rehearse import through duplicate-safe test delivery
@@ -141,6 +143,8 @@ jobs:
         run: php tests/run.php
       - name: Syntax-check Worklog MCP boundary without calling production
         run: node --check apps/worklog-mcp/server.js
+      - name: Syntax-check legacy DGTL OS AI proxies (origin-allowlisted, never in the Core trust path)
+        run: node --check apps/dgtl-os/api/worker.js && node --check apps/dgtl-os/api/api/llm.js
 
   release-gate:
     name: Required DGTL Core checkpoint
