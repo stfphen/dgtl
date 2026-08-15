@@ -98,6 +98,8 @@ jobs:
         run: node --test tests/stage4-worklog-operations.test.js
       - name: Run Stage 5 HOME command-center tests explicitly
         run: node --test tests/stage5-home-command-center.test.js
+      - name: Run Stage 6 DGTL.chat command-layer tests explicitly
+        run: node --test tests/stage6-chat-command-layer.test.js
       - name: Run complete deterministic platform suite
         run: npm test
       - name: Rehearse import through duplicate-safe test delivery
@@ -116,6 +118,10 @@ jobs:
         env:
           STAGE5_REHEARSAL_CONFIRM: isolated
         run: npm run rehearse:stage5
+      - name: Rehearse DGTL.chat with the deterministic model adapter (no AI provider)
+        env:
+          STAGE6_REHEARSAL_CONFIRM: isolated
+        run: npm run rehearse:stage6
       - name: Build production Next.js output
         run: npm run build
 

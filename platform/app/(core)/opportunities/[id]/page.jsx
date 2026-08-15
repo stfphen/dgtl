@@ -34,6 +34,7 @@ export default async function OpportunityDetailPage({ params, searchParams }) {
   return (
     <div className="core-page">
       <PageHeader eyebrow="Opportunity" title={opportunity.name} description={opportunity.approachAngle || "Operational center for this sales approach."} backHref="/opportunities" backLabel="Opportunities" />
+      <p className="core-home-note"><a href={`/chat?q=${encodeURIComponent(`What's the status of ${opportunity.name}?`)}`}>Ask DGTL about this →</a></p>
       {query?.notice ? <p className="core-notice">{query.notice}</p> : null}
       <div className="core-grid">
         {worklog && worklogView ? <OpportunityWorklogSection opportunityId={opportunity.id} view={worklogView} preview={worklogPreview} match={worklogMatch} matchError={worklogMatchError} findHref={`/opportunities/${encodeURIComponent(opportunity.id)}?worklog=find`} assets={assets} /> : null}

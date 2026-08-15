@@ -316,3 +316,21 @@ link checker intentionally does not scan templates under `engine/`.
 - **`x-forwarded-host` is trusted for root host resolution (pre-existing).** A spoofed header
   matching a claimed tenant domain renders that tenant's funnel on the app host. Unchanged by
   Stage 5 (flagged during the routing audit); a host allow-list is a future hardening item.
+
+## DGTL.chat (Stage 6) follow-ups (2026-08-14)
+
+- **The chat rate limiter is in-process** (`lib/rateLimit.js`, fixed-window, keyed
+  `chat:turn:{team}:{user}`). Correct on the current single-instance deploy; a multi-instance
+  deployment needs a shared (e.g. Redis) backend before the 10-turns/min bound is real. Same
+  caveat as the existing login limiter — now with one more consumer.
+- **`apps/dgtl-os/api/worker.js` is an open-CORS keyed Anthropic proxy** (flagged during the
+  Stage 6 AI-surface audit, left untouched — it is demo prior art, not part of Core). If that
+  worker is ever deployed as-is, any origin can spend the configured API key. Add origin
+  allow-listing and auth before any real deployment of DGTL OS.
+- **No real-provider smoke test has run in CI or this environment** (`ANTHROPIC_API_KEY` absent by
+  design). The deterministic adapter is the acceptance authority; run the optional
+  `CORE_CHAT_PROVIDER=anthropic` smoke locally once before enabling the provider in any deployed
+  environment.
+- **Proposal expiry is passive.** Expired proposals are refused at confirmation and shown as
+  expired, but no background job transitions `proposed → expired`; listing queries treat
+  past-expiry proposals as inert. A sweeper is only needed if proposal lists ever grow noisy.
