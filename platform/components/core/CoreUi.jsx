@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Inbox } from "lucide-react";
+import { statusTone } from "../../lib/core/statusTone";
 
 export function PageHeader({ eyebrow = "DGTL Core", title, description, backHref, backLabel = "Back" }) {
   return (
@@ -28,12 +29,20 @@ export function Section({ title, description, count, children, className = "" })
   );
 }
 
-export function EmptyState({ children = "Nothing recorded yet." }) {
-  return <p className="core-empty">{children}</p>;
+export function EmptyState({ children = "Nothing recorded yet.", hint }) {
+  return (
+    <div className="core-empty">
+      <span className="core-empty__icon" aria-hidden><Inbox size={20} strokeWidth={1.75} /></span>
+      <p>{children}</p>
+      {hint ? <small>{hint}</small> : null}
+    </div>
+  );
 }
 
+// Tone comes from the value itself so a failure reads red and a healthy state
+// reads green. Gold is not a status colour — see lib/core/statusTone.js.
 export function Status({ value }) {
-  return <span className="core-status">{String(value || "unknown").replaceAll("_", " ")}</span>;
+  return <span className={`core-status is-${statusTone(value)}`}>{String(value || "unknown").replaceAll("_", " ")}</span>;
 }
 
 export function DefinitionGrid({ items }) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { statusTone } from "../../lib/core/statusTone";
 
 /**
  * DGTL.chat surface. All orchestration lives server-side in AssistantService;
@@ -29,7 +30,7 @@ function ProposalCard({ proposal, busy, onConfirm, onReject }) {
     <div className={`chat-proposal is-${proposal.status}`}>
       <div className="chat-proposal__head">
         <strong>{CONFIRM_LABELS[proposal.actionId] || proposal.actionId}</strong>
-        <span className="core-status">{proposal.status.replaceAll("_", " ")}</span>
+        <span className={`core-status is-${statusTone(proposal.status)}`}>{proposal.status.replaceAll("_", " ")}</span>
       </div>
       <p className="chat-proposal__impact">{proposal.impactSummary}</p>
       {open ? <p className="chat-proposal__notice">Nothing has happened yet — this is a proposal awaiting your explicit confirmation.</p> : null}
@@ -41,7 +42,7 @@ function ProposalCard({ proposal, busy, onConfirm, onReject }) {
       {open ? (
         <div className="chat-proposal__actions">
           <button className="core-button is-primary" disabled={busy} onClick={() => onConfirm(proposal.id)}>{CONFIRM_LABELS[proposal.actionId] || "Confirm"}</button>
-          <button className="core-button" disabled={busy} onClick={() => onReject(proposal.id)}>Reject</button>
+          <button className="core-button is-danger" disabled={busy} onClick={() => onReject(proposal.id)}>Reject</button>
         </div>
       ) : null}
     </div>
@@ -140,7 +141,7 @@ export default function ChatSurface({ health, initialThreads = [], initialQuery 
   return (
     <div className="chat-shell">
       <aside className="chat-threads">
-        <button className="core-button is-primary" disabled={busy || unavailable} onClick={() => { setActiveId(""); setMessages([]); setProposals([]); }}>New thread</button>
+        <button className="core-button" disabled={busy || unavailable} onClick={() => { setActiveId(""); setMessages([]); setProposals([]); }}>New thread</button>
         <div className="chat-threads__list">
           {threads.map((thread) => (
             <button key={thread.id} className={`chat-threads__item${thread.id === activeId ? " is-active" : ""}`} onClick={() => setActiveId(thread.id)}>
