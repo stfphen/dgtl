@@ -148,6 +148,16 @@ test("the Core surface names itself and never host-resolves its icon", async () 
   // inherits it, so changing it would rename their browser tabs.
   const root = await read("app", "layout.jsx");
   assert.match(root, /title: "Content Day"/, "changing the root title is a separate, tenant-facing change");
+
+  // ...which is why /admin/login names ITSELF rather than the root being changed
+  // to suit it. A DGTL sign-in page showing a tenant's brand in the tab is the
+  // bug; renaming the shared root would have been a worse one.
+  const adminLayout = await read("app", "admin", "layout.jsx");
+  assert.match(adminLayout, /template: "%s · DGTL"/, "the admin shell names itself instead of the root being changed");
+
+  // absolute, so the shell's template does not turn this into "DGTL Login · DGTL".
+  const login = await read("app", "admin", "login", "page.jsx");
+  assert.match(login, /title: \{ absolute: "DGTL Login" \}/, "the login page opts out of the admin title template");
 });
 
 test("the DGTL wordmark is one component with no brand literal in it", async () => {

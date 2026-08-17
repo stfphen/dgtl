@@ -1,4 +1,9 @@
 import DgtlWordmark from "../../../components/brand/DgtlWordmark";
+
+// absolute, not a plain string: the admin layout above sets a "%s · DGTL"
+// template, and "DGTL Login · DGTL" reads as a mistake. absolute opts out of it.
+export const metadata = { title: { absolute: "DGTL Login" } };
+
 export default async function LoginPage({ searchParams }) {
   const params = await searchParams;
   const error = params?.error;
