@@ -13,14 +13,30 @@ html .v2-admin-shell,
 html .admin-login {
   --font-sans: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-family: var(--font-sans);
-  --blue: #F0CF50;            /* admin accent -> gold; cascades to every derived token */
-  --blue-dark: #cbab35;
-  --on-blue: #000;
+
+  /* The DGTL accent, under its real name. #F0CF50 is declared exactly once in
+     this file — everything else references --gold, so there is one place to
+     change it and no literal to drift. */
+  --gold: #F0CF50;
+  --gold-dark: #cbab35;
+  --on-gold: #000;
+  --gold-tan: #b3a06a;
+  --gold-tint: rgba(240, 207, 80, 0.08);
+  --gold-ring: rgba(240, 207, 80, 0.15);
+
+  /* Legacy names kept as aliases. styles.css defines --blue/--blue-dark/--on-blue
+     and dozens of derived rules across the admin and core stylesheets still read
+     them; this scope has always repointed them to gold. Aliasing rather than
+     renaming keeps every computed value byte-identical while new code can say
+     what it means. Prefer --gold in anything you write. */
+  --blue: var(--gold);
+  --blue-dark: var(--gold-dark);
+  --on-blue: var(--on-gold);
+
   --info: #6E9FDB;
   --success: #7BC47F;
   --warn: #E8A33D;
   --danger: #E5484D;
-  --gold-tint: rgba(240, 207, 80, 0.08);
   --shadow-card: 0 6px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.15);
   --fp-radius-button: 7px;
   --radius: 16px;
@@ -28,7 +44,13 @@ html .admin-login {
   --radius-lg: 16px;
 }
 html .v2-admin-shell ::selection,
-html .admin-login ::selection { background: #F0CF50; color: #000; }
+html .admin-login ::selection { background: var(--gold); color: var(--on-gold); }
+
+/* The bolt in the DGTL wordmark (components/brand/DgtlWordmark.jsx). The letters
+   take currentColor from whatever they sit in; the bolt is always the accent, so
+   it is set here rather than hardcoded in the component. */
+html .v2-admin-shell .dgtl-logo__bolt,
+html .admin-login .dgtl-logo__bolt { fill: var(--gold); }
 
 /* ---------------- Dark surface ladder (the DGTL identity) ---------------- */
 html .v2-admin-shell[data-theme="dark"] {
@@ -537,12 +559,11 @@ html .admin-login .admin-form input {
 }
 html .admin-login .admin-form input::placeholder { color: #6a6a6a; }
 html .admin-login .admin-form input:focus-visible {
-  outline: none; border-color: #F0CF50; box-shadow: 0 0 0 3px rgba(240, 207, 80, 0.15);
+  outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-ring);
 }
 html .admin-login .admin-form .button--primary {
-  background: #F0CF50; color: #000; border: none; border-radius: 7px;
+  background: var(--gold); color: var(--on-gold); border: none; border-radius: 7px;
   padding: 12px 18px; font-weight: 700; font-size: 14px; margin-top: 4px; width: 100%;
   display: inline-flex; align-items: center; justify-content: center;
 }
 html .admin-login .admin-error { color: #E5484D; font-size: 13px; margin-top: 4px; }
-html .admin-login ::selection { background: #F0CF50; color: #000; }

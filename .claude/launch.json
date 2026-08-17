@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "platform",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "platform", "run", "dev"],
+      "port": 8088
+    },
+    {
       "name": "creator-intake",
       "runtimeExecutable": "php",
       "runtimeArgs": ["-S", "localhost:8080", "-t", "apps/creator-intake/site"],

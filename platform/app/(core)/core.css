@@ -1,5 +1,10 @@
 html .core-shell {
-  --core-accent: var(--blue);
+  /* --gold / --on-gold come from app/admin/dgtl-admin.css, which this element is
+     in scope for (CoreShell carries .v2-admin-shell alongside .core-shell). The
+     accent was already gold here, via the legacy --blue alias — this just names
+     it honestly. Same computed value. */
+  --core-accent: var(--gold);
+  --core-on-accent: var(--on-gold);
   --core-bg: var(--bg);
   --core-surface: var(--surface);
   --core-surface-raised: var(--surface-2);
@@ -27,8 +32,10 @@ html .core-shell a { color: inherit; text-decoration: none; }
   border-right: 1px solid var(--core-line);
 }
 
-.core-brand { display: flex; align-items: baseline; gap: 8px; padding: 4px 10px 24px; }
-.core-brand__mark { color: var(--core-text); font-size: 19px; font-weight: 800; letter-spacing: -0.04em; }
+/* align-items: center, not baseline — baseline was right when the mark was the
+   text "DGTL"; an SVG has no baseline to align the "Core" label against. */
+.core-brand { display: flex; align-items: center; gap: 9px; padding: 4px 10px 24px; }
+.core-brand__logo { flex: 0 0 auto; height: 20px; width: auto; color: var(--core-text); }
 .core-brand__product { color: var(--core-accent); font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
 .core-nav-label, .core-eyebrow { color: var(--core-muted); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; }
 .core-nav-label { padding: 0 10px 7px; }
@@ -39,7 +46,7 @@ html .core-shell a { color: inherit; text-decoration: none; }
 .core-nav__legacy { margin-top: 6px; }
 .core-sidebar__spacer { flex: 1; }
 .core-user { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 9px; padding: 12px 6px 0; border-top: 1px solid var(--core-line); }
-.core-user__avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--core-accent); color: var(--on-blue); font-size: 11px; font-weight: 800; }
+.core-user__avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--core-accent); color: var(--core-on-accent); font-size: 11px; font-weight: 800; }
 .core-user__meta { display: grid; min-width: 0; }
 .core-user__name { overflow: hidden; color: var(--core-text); font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .core-user__role { color: var(--core-muted); font-size: 10px; text-transform: capitalize; }
@@ -58,7 +65,7 @@ html .core-shell a { color: inherit; text-decoration: none; }
 .core-button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-surface-raised); color: var(--core-text); font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; }
 .core-button:hover { border-color: var(--core-accent); color: var(--core-accent); }
 .core-button:disabled { opacity: .45; cursor: not-allowed; }
-.core-button.is-primary { border-color: var(--core-accent); background: var(--core-accent); color: var(--on-blue); }
+.core-button.is-primary { border-color: var(--core-accent); background: var(--core-accent); color: var(--core-on-accent); }
 .core-form { display: grid; gap: 15px; }
 .core-form label { display: grid; gap: 6px; color: var(--core-muted); font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
 .core-form input, .core-form select, .core-form textarea { width: 100%; min-height: 40px; padding: 10px 12px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-bg); color: var(--core-text); font: inherit; font-size: 12px; }

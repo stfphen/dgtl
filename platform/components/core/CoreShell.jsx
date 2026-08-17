@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, MessageCircle, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
+import DgtlWordmark from "../brand/DgtlWordmark";
 
 // Grouped navigation. Groups render as label rows inside ONE .core-nav grid so
 // the mobile bottom bar stays a single horizontal strip (labels hide <=820px).
@@ -62,7 +63,7 @@ export default function CoreShell({ user, children }) {
     <div className="v2-admin-shell core-shell" data-theme="dark">
       <aside className="core-sidebar">
         <Link className="core-brand" href="/home" aria-label="DGTL Home">
-          <span className="core-brand__mark">DGTL</span>
+          <DgtlWordmark className="core-brand__logo" />
           <span className="core-brand__product">Core</span>
         </Link>
         <nav className="core-nav" aria-label="Core navigation">
