@@ -59,6 +59,7 @@ test("auth redirects are host-preserving — never pinned to PUBLIC_APP_URL", as
   }
   const login = await readFile(path.join(root, "platform", "app", "api", "admin", "login", "route.js"), "utf8");
   assert.match(login, /Location: location/, "login redirects via relative Location");
+  assert.match(login, /relative\("\/home"\)/, "successful login lands on HOME, the OS command center");
   const permissions = await readFile(path.join(root, "platform", "lib", "permissions.js"), "utf8");
   assert.match(permissions, /Location: "\/admin\/login"/, "auth bounce is a relative Location");
 });

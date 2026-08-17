@@ -32,7 +32,9 @@ export async function POST(request) {
     return relative("/admin/login?error=1");
   }
 
-  const response = relative("/admin");
+  // Successful login lands on HOME — the OS command center — on whichever
+  // host the user signed in from. The legacy admin shell stays one click away.
+  const response = relative("/home");
   const cookie = adminCookie(session.token);
   response.cookies.set(cookie.name, cookie.value, cookie.options);
   return response;
