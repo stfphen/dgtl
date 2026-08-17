@@ -8,38 +8,12 @@
    Manrope is loaded by app/admin/layout.jsx (next/font -> --font-manrope).
    ========================================================================== */
 
-/* ---------------- Tokens (both themes) ---------------- */
-html .v2-admin-shell,
-html .admin-login {
-  --font-sans: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  font-family: var(--font-sans);
-  --blue: #F0CF50;            /* admin accent -> gold; cascades to every derived token */
-  --blue-dark: #cbab35;
-  --on-blue: #000;
-  --info: #6E9FDB;
-  --success: #7BC47F;
-  --warn: #E8A33D;
-  --danger: #E5484D;
-  --gold-tint: rgba(240, 207, 80, 0.08);
-  --shadow-card: 0 6px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.15);
-  --fp-radius-button: 7px;
-  --radius: 16px;
-  --radius-sm: 7px;
-  --radius-lg: 16px;
-}
-html .v2-admin-shell ::selection,
-html .admin-login ::selection { background: #F0CF50; color: #000; }
-
-/* ---------------- Dark surface ladder (the DGTL identity) ---------------- */
-html .v2-admin-shell[data-theme="dark"] {
-  --white: #0a0a0a; --soft: #000000; --soft-2: #111111;
-  --black: #F0F0F0; --near-black: #e6e6e6; --muted: #8a8a8a;
-  --line: #2a2a2a; --border: #2a2a2a;
-  --bg: #000000; --surface: #0a0a0a; --surface-2: #111111; --surface-3: #1a1a1a;
-  --fg: #F0F0F0; --fg-muted: #8a8a8a;
-  --glass-dark: rgba(0, 0, 0, 0.5);
-}
-html .v2-admin-shell[data-theme="light"] { --line: #e6e2d6; --border: #e6e2d6; }
+/* ---------------- Tokens ----------------
+   MOVED. Every brand token (palette, radii, shadows, the dark ladder, the
+   Manrope font stack, and the legacy aliases the rules below depend on) now
+   lives in the one canonical file: platform/app/dgtl-tokens.css, imported by
+   this route's layout before this sheet. Add or change brand values there —
+   never here, and never as a literal in a rule below. */
 
 /* ---------------- Generic primitives (used across all tabs) ---------------- */
 html .v2-admin-shell .button {
