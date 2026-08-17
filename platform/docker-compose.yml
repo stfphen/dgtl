@@ -1,6 +1,13 @@
 services:
   content-funnel:
-    build: .
+    build:
+      # Repo-root context so the image can include the ONE shared Worklog
+      # client (apps/worklog/client) that lib/stage4 imports across the
+      # monorepo. The root .dockerignore keeps the context lean. Compose still
+      # runs from platform/, so the project name, .env, and the ./uploads
+      # bind mount are unchanged.
+      context: ..
+      dockerfile: platform/Dockerfile
     container_name: content-checkout-funnel
     restart: unless-stopped
     environment:
