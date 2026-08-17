@@ -39,8 +39,8 @@ Expiry/renewal as read 2026-08-02 — **verify after fixing auto-renewals.**
 | dgtlneon.com | — | 2026-10-02 | OFF | Unrouted | Decide keep/lapse before Oct. |
 | dgtlai.io | — | — | on | Unrouted | Role TBD. |
 | dgtlmedia.io | 5 · Retiring | — | — | Dead history (all `*.dgtlmedia.io` URLs retired) | Sunset. |
-| dgtl.ltd | 0 · Corporate umbrella | — | on | New, in ~96h registration/move lock | Placeholder → `sites/dgtl-ltd/` |
-| dgtl.chat | 2 · Platform | — | on | New, locked | Placeholder → `sites/dgtl-chat/` |
+| dgtl.ltd | 0 · Corporate umbrella | — | on | Apex stays the corporate placeholder. **`os.dgtl.ltd` → VPS is the DGTL OS canonical host** (routed in `platform/docker-compose.yml`; cutover runbook `docs/operations/os-dgtl-ltd-migration-runbook.md`) | Apex: placeholder → `sites/dgtl-ltd/`. Subdomain `os.` : the app. |
+| dgtl.chat | 2 · Platform | — | on | **LIVE — DGTL OS internal alpha** on the VPS; stays as the OS/assistant entry point after the os.dgtl.ltd cutover | No placeholder site; the domain serves the app. |
 | dgtl.wiki | 3 · Publishing | — | on | New, locked | Placeholder → `sites/dgtl-wiki/` |
 | dgtl.gallery | 3 · Publishing | — | on | New, locked | Placeholder → `sites/dgtl-gallery/` |
 | dgtl.pics | 3 · Publishing | — | on | New, locked | Placeholder → `sites/dgtl-pics/` |

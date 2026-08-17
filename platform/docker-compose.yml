@@ -16,7 +16,9 @@ services:
       # network IP and Traefik gets a 502. Must be 0.0.0.0. See GO_LIVE_PLAN.md.
       HOSTNAME: "0.0.0.0"
       DATABASE_URL: "postgres://${POSTGRES_USER:?Set POSTGRES_USER in .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@content-funnel-postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}"
-      PUBLIC_APP_URL: https://dgtlmag.com
+      # Overridable (it was a hardcoded literal, so the VPS .env silently could
+      # not change the app's canonical identity). Default keeps today's value.
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://dgtlmag.com}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM: ${RESEND_FROM:-}
       # --- Outreach batch sending ---
@@ -116,6 +118,19 @@ services:
       traefik.http.routers.dgtlchat-http.entrypoints: "http"
       traefik.http.routers.dgtlchat-http.middlewares: "dgtlmag-redirect"
       traefik.http.routers.dgtlchat-http.service: "dgtlmag"
+      # os.dgtl.ltd — the app's future canonical host. Same container and same
+      # service; the root page host-resolves and no tenant claims it, so it
+      # lands on /home (login-gated). Inert until DNS points os.dgtl.ltd here.
+      # The dgtl.ltd APEX is deliberately not routed — it stays free for the
+      # corporate placeholder site (sites/_briefs/dgtl-ltd.md).
+      traefik.http.routers.dgtlltd.rule: "Host(`os.dgtl.ltd`)"
+      traefik.http.routers.dgtlltd.entrypoints: "https"
+      traefik.http.routers.dgtlltd.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtlltd.service: "dgtlmag"
+      traefik.http.routers.dgtlltd-http.rule: "Host(`os.dgtl.ltd`)"
+      traefik.http.routers.dgtlltd-http.entrypoints: "http"
+      traefik.http.routers.dgtlltd-http.middlewares: "dgtlmag-redirect"
+      traefik.http.routers.dgtlltd-http.service: "dgtlmag"
     healthcheck:
       # The login page is the cheapest unauthenticated route that proves the
       # Next server is up without touching business data.
