@@ -301,7 +301,19 @@ test("HOME page and palette ship no credentials and no consequential natural-lan
   assert.doesNotMatch(homePage, /CORE_WORKLOG_(PASSWORD|EMAIL)|RESEND_API_KEY/, "no secrets in the page");
   const palette = await readFile(path.join(root, "platform", "components", "core", "CommandPalette.jsx"), "utf8");
   assert.match(palette, /api\/core\/search/, "palette uses the server search API");
-  assert.match(palette, /go\(`\/chat\?q=\$\{encodeURIComponent\(query\.trim\(\)\)\}`\)/, "the Stage 6 Ask DGTL row only navigates to /chat with the query");
+  // The action row navigates to /chat carrying only the typed query — it never
+  // runs anything itself. Since Stage 6b it has two destinations: a query that
+  // parses as a deterministic terminal command opens the terminal
+  // (mode=terminal) so it runs with no model turn; anything else keeps the
+  // original Ask DGTL behaviour. Both are plain navigations carrying only the
+  // query, which is what this assertion is actually protecting.
+  const chatUrls = palette.match(/`\/chat\?[^`]*`/g) || [];
+  assert.ok(chatUrls.length >= 1, "the Stage 6 action row targets /chat");
+  assert.match(palette, /go\(isTerminalCommand|go\(`\/chat/, "the action row navigates rather than acting");
+  for (const url of chatUrls) {
+    assert.match(url, /q=\$\{encodeURIComponent\(query\.trim\(\)\)\}/, `${url} must carry only the typed query`);
+    assert.match(url, /^`\/chat\?(mode=terminal&)?q=[^`]*`$/, `${url} must be a plain /chat URL with no extra parameters`);
+  }
   assert.doesNotMatch(palette, /api\/core\/chat\/threads|confirm|proposal|execute/i, "the palette itself never runs a conversational turn or a consequential action");
   const route = await readFile(path.join(root, "platform", "app", "api", "core", "search", "route.js"), "utf8");
   assert.match(route, /requireSession/, "search requires an authenticated session");

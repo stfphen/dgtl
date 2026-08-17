@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { parseCommand } from "./terminal/commandGrammar";
 
 /**
  * Global search / command entry (⌘K / Ctrl+K). Stage 5 scope: navigation and
@@ -20,6 +21,13 @@ export default function CommandPalette() {
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
   const router = useRouter();
+
+  // If what you typed parses as a deterministic terminal command, the palette's
+  // one action row offers to RUN it rather than to ask about it — `home` should
+  // not cost a model turn just because it was typed into ⌘K. Anything the
+  // grammar does not recognise keeps the existing Ask DGTL behaviour, so a
+  // typo can never be reinterpreted as a command.
+  const isTerminalCommand = ["read", "local"].includes(parseCommand(query.trim()).kind);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -96,11 +104,13 @@ export default function CommandPalette() {
                   role="option"
                   aria-selected={false}
                   className="core-cmdk__result core-cmdk__ask"
-                  onClick={() => go(`/chat?q=${encodeURIComponent(query.trim())}`)}
+                  onClick={() => go(isTerminalCommand
+                    ? `/chat?mode=terminal&q=${encodeURIComponent(query.trim())}`
+                    : `/chat?q=${encodeURIComponent(query.trim())}`)}
                 >
-                  <span className="core-cmdk__kind">Ask DGTL</span>
+                  <span className="core-cmdk__kind">{isTerminalCommand ? "Run" : "Ask DGTL"}</span>
                   <span className="core-cmdk__title">{query.trim()}</span>
-                  <span className="core-cmdk__subtitle">Open in DGTL.chat</span>
+                  <span className="core-cmdk__subtitle">{isTerminalCommand ? "Run in the DGTL.chat terminal — no model, no cost" : "Open in DGTL.chat"}</span>
                 </button>
               ) : null}
               {loading ? <p className="core-cmdk__hint">Searching…</p> : null}
