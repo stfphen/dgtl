@@ -80,7 +80,7 @@ S = secret.
 | Variable | Class | Alpha value policy |
 |---|---|---|
 | `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | R,S | existing production values, unchanged |
-| `PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_URL` | R | stay `https://dgtlmag.com` (funnel/unsubscribe identity; dgtl.chat needs no separate value) |
+| `PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_URL` | R | `https://dgtlmag.com` at the time of this runbook. **Superseded:** these move to `https://os.dgtl.ltd` — see `os-dgtl-ltd-migration-runbook.md`, which keeps dgtlmag.com serving `/api/*` so already-sent unsubscribe links survive. |
 | `OWNER_EMAIL` / `OWNER_NAME` / `TEAM_NAME` / `TEAM_SLUG` | R | existing; `TEAM_SLUG=default` (owner joins `team_default`) |
 | `CORE_EMAIL_TRANSPORT` | R | `test` — **production email disabled intentionally** |
 | `CORE_PRODUCTION_SEND_ENABLED` | R | `false`; and leave `CORE_PRODUCTION_SEND_RELEASE_ID`, `CORE_PRODUCTION_SEND_AUTHORIZATION`, `CORE_RATE_POLICY_APPROVED` empty (I) — all four gates must stay closed |

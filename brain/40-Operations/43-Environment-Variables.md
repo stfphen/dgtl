@@ -22,7 +22,7 @@ source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 | `TEAM_SLUG` | Owner's team | **MUST be `default`** so owner sees built-in tenants + funnel leads. [[15-Multi-Tenancy]] |
 | `OWNER_PASSWORD` | One-time owner seed | Passed inline to `create-owner`; never written to `.env`. |
 | `SESSION_SECRET` | Session signing | ⚠️ Referenced in docs but **not actually read by code yet** (security L2). |
-| `PUBLIC_APP_URL` / `NEXT_PUBLIC_APP_URL` | App origin | `https://dgtlmag.com`. |
+| `PUBLIC_APP_URL` / `NEXT_PUBLIC_APP_URL` | App origin for OUTBOUND links | `https://dgtlmag.com`, moving to `https://os.dgtl.ltd`. See the App host section below — never use these for in-app redirects. |
 
 ## AI (pick one path)
 | Var | Powers | Notes |
@@ -84,6 +84,16 @@ See [[2F-Worklog-Bridge]] and `docs/architecture/dgtl-core-phase-4.md` (producti
 | `CORE_CHAT_MODEL` | Model for the anthropic adapter | Defaults to `claude-sonnet-5`; only read when `CORE_CHAT_PROVIDER=anthropic`. Uses the existing `ANTHROPIC_API_KEY` — no other chat credential or endpoint exists. |
 
 See [[2H-DGTL-Chat]] and `docs/architecture/dgtl-core-phase-6.md`.
+
+## App host / canonical identity
+
+`PUBLIC_APP_URL` and `NEXT_PUBLIC_APP_URL` are the app's identity for links that
+**leave the process** — unsubscribe URLs baked into sent email, Stripe return
+URLs, the telephony webhook fallback. They must never decide where a request
+redirects *within* the app: several hosts share one deployment and the session
+cookie is host-scoped, so an absolute redirect logs the operator out. Use
+`lib/http/redirects.js` for that. Migration to `os.dgtl.ltd`:
+`docs/operations/os-dgtl-ltd-migration-runbook.md`.
 
 ## Telephony
 `TELEPHONY_PROVIDER` (`twilio` default; `mock`/`telnyx`), `TELEPHONY_WEBHOOK_BASE_URL` (byte-exact;
