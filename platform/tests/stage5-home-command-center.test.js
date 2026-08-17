@@ -299,6 +299,11 @@ test("HOME page and palette ship no credentials and no consequential natural-lan
   const homePage = await readFile(path.join(root, "platform", "app", "(core)", "home", "page.jsx"), "utf8");
   assert.match(homePage, /getStage5PageContext/, "HOME uses the authenticated core context");
   assert.doesNotMatch(homePage, /CORE_WORKLOG_(PASSWORD|EMAIL)|RESEND_API_KEY/, "no secrets in the page");
+  // The palette mounts in the shell, not on HOME, so Cmd+K works on every Core
+  // route rather than only the dashboard.
+  const shell = await readFile(path.join(root, "platform", "components", "core", "CoreShell.jsx"), "utf8");
+  assert.match(shell, /<CommandPalette \/>/, "the palette mounts in the Core shell");
+  assert.doesNotMatch(homePage, /<CommandPalette \/>/, "HOME no longer owns the palette");
   const palette = await readFile(path.join(root, "platform", "components", "core", "CommandPalette.jsx"), "utf8");
   assert.match(palette, /api\/core\/search/, "palette uses the server search API");
   assert.match(palette, /go\(`\/chat\?q=\$\{encodeURIComponent\(query\.trim\(\)\)\}`\)/, "the Stage 6 Ask DGTL row only navigates to /chat with the query");

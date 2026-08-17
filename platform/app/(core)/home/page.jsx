@@ -1,5 +1,4 @@
 import { DateText, EmptyState, PageHeader, Section, Status } from "../../../components/core/CoreUi";
-import CommandPalette from "../../../components/core/CommandPalette";
 import { getStage5PageContext } from "../../../lib/stage5/server";
 
 export const dynamic = "force-dynamic";
@@ -208,7 +207,6 @@ export default async function HomePage() {
     <div className="core-page core-home">
       <div className="core-home-header">
         <PageHeader eyebrow="DGTL" title={`Welcome back${firstName ? `, ${firstName}` : ""}`} description={attentionCount === null ? "Some sections are degraded — showing what is available." : attentionCount === 0 ? "All clear. Nothing needs your attention." : `${attentionCount} item${attentionCount === 1 ? "" : "s"} need${attentionCount === 1 ? "s" : ""} your attention.`} />
-        <CommandPalette />
       </div>
       <div className="core-grid">
         <Section title="Needs attention" description="Derived live from canonical state; items disappear when the source is resolved." count={attentionCount ?? undefined} className="is-wide">
