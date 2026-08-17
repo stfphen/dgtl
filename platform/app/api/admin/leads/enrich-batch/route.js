@@ -4,6 +4,7 @@ import { buildBatchEnrichmentNotice, selectLeadsForBatchEnrichment } from "../..
 import { buildLeadEnrichmentUpdate } from "../../../../../lib/enrichment/lead.js";
 import { enrichWebsite } from "../../../../../lib/enrichment/website.js";
 import { getSessionTeamId, listLeads, updateLeadResearch } from "../../../../../lib/store";
+import { redirectToUrl, sameHostUrl } from "../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -14,7 +15,7 @@ export async function POST(request) {
   }
 
   const teamId = getSessionTeamId(session);
-  const redirectUrl = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
+  const redirectUrl = sameHostUrl("/admin");
   const form = await request.formData();
   const tenantId = String(form.get("tenantId") || "");
   const limit = String(form.get("limit") || "");
@@ -59,5 +60,5 @@ export async function POST(request) {
       failed
     })
   );
-  return NextResponse.redirect(redirectUrl, 303);
+  return redirectToUrl(redirectUrl);
 }

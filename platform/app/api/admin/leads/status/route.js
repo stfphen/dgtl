@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { logAudit } from "../../../../../lib/audit";
 import { permissionDeniedResponse, requireRole } from "../../../../../lib/permissions";
 import { getSessionTeamId, updateLeadStatus } from "../../../../../lib/store";
+import { redirectToUrl, sameHostUrl } from "../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -16,12 +17,12 @@ export async function POST(request) {
   const leadId = String(form.get("leadId"));
   const status = String(form.get("status"));
 
-  const redirectUrl = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
+  const redirectUrl = sameHostUrl("/admin");
   try {
     await updateLeadStatus(leadId, status, { teamId });
   } catch (error) {
     redirectUrl.searchParams.set("notice", error?.message || "Could not update lead status.");
-    return NextResponse.redirect(redirectUrl, 303);
+    return redirectToUrl(redirectUrl);
   }
 
   await logAudit({
@@ -31,5 +32,5 @@ export async function POST(request) {
     targetId: leadId,
     metadata: { teamId, status }
   });
-  return NextResponse.redirect(redirectUrl, 303);
+  return redirectToUrl(redirectUrl);
 }
