@@ -18,11 +18,16 @@ const TONES = {
     "resolved", "passed", "ready", "connected", "opened", "replied", "booked"
   ],
   warning: [
-    "overdue", "due today", "pending", "stale", "degraded", "unverified",
-    "outcome_unknown", "quarantined", "awaiting_review", "needs_review",
-    "warning", "paused", "throttled", "retrying", "unconfigured", "partial"
+    "overdue", "due today", "due_today", "pending", "stale", "degraded",
+    "unverified", "outcome_unknown", "quarantined", "awaiting_review",
+    "needs_review", "warning", "paused", "throttled", "retrying",
+    "unconfigured", "partial",
+    // HOME attention severities — an item that needs a human today should not
+    // read the same as one that is merely upcoming.
+    "action_required"
   ],
   error: [
+    "critical",
     "failed", "failure", "error", "broken", "missing", "rejected", "expired",
     "validation_failed", "dead_letter", "bounced", "unreachable", "cancelled",
     "canceled", "lost", "disqualified", "suppressed", "opted_out", "unavailable",
@@ -31,7 +36,7 @@ const TONES = {
   info: [
     "draft", "proposed", "queued", "claimed", "running", "in_progress",
     "scheduled", "new", "not_queued", "idle", "waiting", "open", "review",
-    "unclaimed", "disabled"
+    "unclaimed", "disabled", "informational"
   ]
 };
 
