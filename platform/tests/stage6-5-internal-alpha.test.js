@@ -46,6 +46,24 @@ test("baseline security headers ship globally without a rushed CSP", async () =>
   assert.doesNotMatch(config, /key: "Content-Security-Policy"/, "CSP is a deliberate route-aware follow-up, not a global rush job");
 });
 
+test("auth redirects are host-preserving — never pinned to PUBLIC_APP_URL", async () => {
+  const files = [
+    ["app/api/admin/login/route.js"],
+    ["app/api/admin/logout/route.js"],
+    ["lib/permissions.js"],
+    ["lib/stage2/api.js"],
+  ];
+  for (const [rel] of files) {
+    const source = await readFile(path.join(root, "platform", rel), "utf8");
+    assert.doesNotMatch(source, /redirect\(new URL\([^)]*PUBLIC_APP_URL/, `${rel}: a redirect built from PUBLIC_APP_URL strands a dgtl.chat login on dgtlmag.com without its host-scoped cookie`);
+  }
+  const login = await readFile(path.join(root, "platform", "app", "api", "admin", "login", "route.js"), "utf8");
+  assert.match(login, /Location: location/, "login redirects via relative Location");
+  assert.match(login, /relative\("\/home"\)/, "successful login lands on HOME, the OS command center");
+  const permissions = await readFile(path.join(root, "platform", "lib", "permissions.js"), "utf8");
+  assert.match(permissions, /Location: "\/admin\/login"/, "auth bounce is a relative Location");
+});
+
 test("legacy DGTL OS AI proxies deny unknown origins instead of shipping wildcard CORS", async () => {
   const worker = await readFile(path.join(root, "apps", "dgtl-os", "api", "worker.js"), "utf8");
   const vercel = await readFile(path.join(root, "apps", "dgtl-os", "api", "api", "llm.js"), "utf8");

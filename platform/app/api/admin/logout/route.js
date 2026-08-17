@@ -4,7 +4,9 @@ import { ADMIN_COOKIE_NAME, clearAdminCookie, deleteAdminSession } from "../../.
 export async function POST(request) {
   await deleteAdminSession(request.cookies.get(ADMIN_COOKIE_NAME)?.value);
 
-  const response = NextResponse.redirect(new URL("/admin/login", process.env.PUBLIC_APP_URL || request.url), 303);
+  // Relative Location: stay on the host the user logged out from (the app
+  // serves dgtl.chat and dgtlmag.com; the session cookie is host-scoped).
+  const response = new NextResponse(null, { status: 303, headers: { Location: "/admin/login" } });
   const cookie = clearAdminCookie();
   response.cookies.set(cookie.name, cookie.value, cookie.options);
   return response;

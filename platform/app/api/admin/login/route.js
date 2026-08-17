@@ -4,16 +4,21 @@ import { clientIpFromRequest, consumeRateLimit } from "../../../../lib/rateLimit
 
 const LOGIN_RATE_LIMIT = { limit: 10, windowMs: 60000 };
 
+// All redirects here use a RELATIVE Location so the browser stays on whichever
+// host it logged in from — this app serves dgtl.chat (the OS) and dgtlmag.com
+// from one deployment, and the session cookie is host-scoped. Redirecting to
+// PUBLIC_APP_URL would strand a dgtl.chat login on dgtlmag.com without its
+// cookie.
+const relative = (location, init = {}) =>
+  new NextResponse(null, { status: 303, ...init, headers: { Location: location, ...(init.headers || {}) } });
+
 export async function POST(request) {
   // Throttle login attempts per client IP to blunt brute-force / credential
   // stuffing against the (deliberately slow) bcrypt verify.
   const ip = clientIpFromRequest(request);
   const rate = consumeRateLimit(`login:${ip}`, LOGIN_RATE_LIMIT);
   if (!rate.allowed) {
-    const tooMany = NextResponse.redirect(
-      new URL("/admin/login?error=rate_limited", process.env.PUBLIC_APP_URL || request.url),
-      303
-    );
+    const tooMany = relative("/admin/login?error=rate_limited");
     tooMany.headers.set("Retry-After", String(rate.retryAfterSeconds));
     return tooMany;
   }
@@ -24,10 +29,12 @@ export async function POST(request) {
 
   const session = await createAdminSession(email, password);
   if (!session) {
-    return NextResponse.redirect(new URL("/admin/login?error=1", process.env.PUBLIC_APP_URL || request.url), 303);
+    return relative("/admin/login?error=1");
   }
 
-  const response = NextResponse.redirect(new URL("/admin", process.env.PUBLIC_APP_URL || request.url), 303);
+  // Successful login lands on HOME — the OS command center — on whichever
+  // host the user signed in from. The legacy admin shell stays one click away.
+  const response = relative("/home");
   const cookie = adminCookie(session.token);
   response.cookies.set(cookie.name, cookie.value, cookie.options);
   return response;
