@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import CommandPalette from "./CommandPalette";
 import { usePathname } from "next/navigation";
 import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, MessageCircle, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
 
@@ -73,6 +74,10 @@ export default function CoreShell({ user, children }) {
           </svg>
           <span className="core-brand__product">Core</span>
         </Link>
+        {/* Mounted in the shell, not on one page: the palette carries its own
+            window keydown listener, so this is what makes Cmd/Ctrl+K work on
+            every Core route rather than only on HOME. */}
+        <CommandPalette />
         <nav className="core-nav" aria-label="Core navigation">
           {navigation.map((group) => (
             <div className="core-nav__group" key={group.label || "home"}>
