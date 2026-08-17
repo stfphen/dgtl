@@ -9,7 +9,7 @@ export function stage2ErrorResponse(error, request) {
 }
 
 export function redirectTo(request, pathname, notice = "") {
-  const url = new URL(pathname, process.env.PUBLIC_APP_URL || request.url);
-  if (notice) url.searchParams.set("notice", notice);
-  return Response.redirect(url, 303);
+  // Relative Location — host-preserving across dgtl.chat and dgtlmag.com.
+  const target = notice ? `${pathname}${pathname.includes("?") ? "&" : "?"}notice=${encodeURIComponent(notice)}` : pathname;
+  return new Response(null, { status: 303, headers: { Location: target } });
 }

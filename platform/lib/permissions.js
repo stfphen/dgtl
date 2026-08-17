@@ -112,7 +112,11 @@ export function permissionDeniedResponse(error, request) {
     if (prefersJsonResponse(request)) {
       return Response.json({ error: error.message || "Authentication required." }, { status: 401 });
     }
-    return Response.redirect(new URL("/admin/login", process.env.PUBLIC_APP_URL || request.url), 303);
+    // Relative Location keeps the browser on the origin it is already using —
+    // this app serves more than one host (dgtl.chat + dgtlmag.com), so an
+    // auth bounce must never jump domains. PUBLIC_APP_URL remains the
+    // canonical identity for outbound links (emails), not request redirects.
+    return new Response(null, { status: 303, headers: { Location: "/admin/login" } });
   }
 
   return Response.json({ error: error.message || "Forbidden." }, { status: 403 });
