@@ -1,11 +1,29 @@
+/* ==========================================================================
+   DGTL Core OS surface. Brand values come from app/dgtl-tokens.css — never
+   hardcode one here; alias it below and reference the alias.
+
+   Emphasis hierarchy this sheet follows (from the brand kit): one gold moment
+   per view region, then big white type, then muted supporting text, then
+   near-invisible structure. Gold marks the primary action, the active nav
+   item, counts, and the assistant's proposal — nothing else. States use the
+   functional palette, so a failure never reads as a brand moment.
+   ========================================================================== */
 html .core-shell {
-  --core-accent: var(--blue);
+  --core-accent: var(--gold);
   --core-bg: var(--bg);
   --core-surface: var(--surface);
   --core-surface-raised: var(--surface-2);
+  --core-card: var(--surface-card);
   --core-line: var(--border);
-  --core-text: var(--fg);
-  --core-muted: var(--fg-muted);
+  --core-hairline: var(--row-line);
+  --core-row-hover: var(--row-hover);
+  --core-text: var(--text-primary);
+  /* Three text levels, not two. --core-muted carries reading copy (#D0D0D0);
+     --core-dim is for labels and metadata only (#8a8a8a is ~3.5:1 on black —
+     fine for a caption, not for a sentence). */
+  --core-muted: var(--text-secondary);
+  --core-dim: var(--text-dim);
+  --core-eyebrow: var(--gold-tan);
   min-height: 100svh;
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
@@ -14,6 +32,15 @@ html .core-shell {
   font-family: var(--font-sans);
 }
 html .core-shell a { color: inherit; text-decoration: none; }
+
+/* The universal focus ring (kit): gold border + 3px gold halo, one rule for
+   every interactive element. Core previously had no :focus-visible styling at
+   all — this is an accessibility fix as much as a brand one. */
+html .core-shell :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
+}
 
 .core-sidebar {
   position: sticky;
@@ -27,89 +54,140 @@ html .core-shell a { color: inherit; text-decoration: none; }
   border-right: 1px solid var(--core-line);
 }
 
-.core-brand { display: flex; align-items: baseline; gap: 8px; padding: 4px 10px 24px; }
-.core-brand__mark { color: var(--core-text); font-size: 19px; font-weight: 800; letter-spacing: -0.04em; }
-.core-brand__product { color: var(--core-accent); font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
-.core-nav-label, .core-eyebrow { color: var(--core-muted); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; }
-.core-nav-label { padding: 0 10px 7px; }
+.core-brand { display: flex; align-items: center; gap: 9px; padding: 4px 10px 24px; }
+.core-brand svg { width: auto; height: 24px; color: var(--core-text); }
+.core-brand__product { color: var(--core-accent); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+.core-nav-label { color: var(--core-dim); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 0 10px 7px; }
+.core-eyebrow { color: var(--core-eyebrow); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
 .core-nav { display: grid; gap: 4px; }
-.core-nav__item { display: flex; align-items: center; gap: 11px; min-height: 42px; padding: 0 11px; border-radius: var(--radius-sm); color: var(--core-muted); font-size: 13px; font-weight: 600; }
-.core-nav__item:hover, .core-nav__item.is-active { background: var(--core-surface-raised); color: var(--core-text); }
-.core-nav__item.is-active { box-shadow: inset 2px 0 0 var(--core-accent); }
+.core-nav__item { display: flex; align-items: center; gap: 11px; min-height: 40px; padding: 0 12px; border-radius: var(--r-control); color: var(--core-muted); font-size: 14px; font-weight: 500; }
+.core-nav__item:hover { background: var(--core-surface-raised); color: var(--core-text); }
+/* Active nav is the kit recipe: gold tint fill, gold text, 2px gold rail. */
+.core-nav__item.is-active { background: var(--gold-tint); color: var(--core-accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--core-accent); }
 .core-nav__legacy { margin-top: 6px; }
 .core-sidebar__spacer { flex: 1; }
-.core-user { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 9px; padding: 12px 6px 0; border-top: 1px solid var(--core-line); }
-.core-user__avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--core-accent); color: var(--on-blue); font-size: 11px; font-weight: 800; }
+.core-user { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; align-items: center; gap: 9px; padding: 12px 6px 0; border-top: 1px solid var(--core-line); }
+/* Avatar per kit: dark chip with gold initials, not a solid gold disc — a
+   filled gold circle in the sidebar competes with the primary action. */
+.core-user__avatar { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--core-line); border-radius: var(--r-pill); background: var(--surface-3); color: var(--core-accent); font-size: 12px; font-weight: 700; }
 .core-user__meta { display: grid; min-width: 0; }
-.core-user__name { overflow: hidden; color: var(--core-text); font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.core-user__role { color: var(--core-muted); font-size: 10px; text-transform: capitalize; }
-.core-icon-button { width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--core-muted); cursor: pointer; }
+.core-user__name { overflow: hidden; color: var(--core-text); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.core-user__role { color: var(--core-dim); font-size: 11px; text-transform: capitalize; }
+.core-icon-button { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: var(--r-control); background: transparent; color: var(--core-dim); cursor: pointer; }
 .core-icon-button:hover { background: var(--core-surface-raised); color: var(--core-text); }
 
 .core-main { min-width: 0; padding: 44px clamp(20px, 4vw, 64px) 80px; }
 .core-page { width: min(1180px, 100%); margin: 0 auto; }
 .core-page-header { margin-bottom: 28px; }
-.core-page-header h1 { margin: 7px 0 0; color: var(--core-text); font-size: clamp(28px, 4vw, 42px); font-weight: 750; letter-spacing: -0.04em; line-height: 1.05; }
+/* App scale, not marketing scale: the kit puts panel/page titles at 20-24px
+   and reserves clamp(40px,6vw,70px) for hero display type. */
+.core-page-header h1 { margin: 7px 0 0; color: var(--core-text); font-size: clamp(24px, 3vw, 32px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
 .core-page-header__description { max-width: 720px; margin: 10px 0 0; color: var(--core-muted); font-size: 14px; line-height: 1.65; }
-.core-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px; color: var(--core-muted) !important; font-size: 12px; font-weight: 700; }
+.core-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px; color: var(--core-muted) !important; font-size: 13px; font-weight: 500; }
 .core-back:hover { color: var(--core-text) !important; }
 .core-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.core-search { width: min(400px, 100%); height: 40px; padding: 0 13px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-surface); color: var(--core-text); }
-.core-button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-surface-raised); color: var(--core-text); font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; }
-.core-button:hover { border-color: var(--core-accent); color: var(--core-accent); }
+.core-search { width: min(400px, 100%); height: 40px; padding: 0 14px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface); color: var(--core-text); font-size: 14px; }
+.core-search::placeholder { color: var(--placeholder); }
+
+/* Buttons. Base is the kit's secondary (outlined); .is-primary is the ONE gold
+   action per region. Hover must not turn every button gold — that was the
+   single biggest source of gold flood in this app. */
+.core-button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: var(--r-control); background: transparent; color: var(--core-text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: filter .15s, transform .15s, background-color .15s, border-color .15s; }
+.core-button:hover { background: var(--core-surface-raised); border-color: var(--border-hover); color: var(--core-text); }
 .core-button:disabled { opacity: .45; cursor: not-allowed; }
 .core-button.is-primary { border-color: var(--core-accent); background: var(--core-accent); color: var(--on-blue); }
+.core-button.is-primary:hover { background: var(--core-accent); border-color: var(--core-accent); filter: brightness(1.06); transform: translateY(-1px); }
+.core-button.is-ghost { border-color: transparent; color: var(--core-muted); font-weight: 500; }
+.core-button.is-ghost:hover { border-color: transparent; color: var(--core-text); }
+.core-button.is-danger { border-color: rgba(229, 72, 77, 0.4); background: transparent; color: var(--error); }
+.core-button.is-danger:hover { background: var(--error-tint); border-color: var(--error); color: var(--error); }
+
 .core-form { display: grid; gap: 15px; }
-.core-form label { display: grid; gap: 6px; color: var(--core-muted); font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
-.core-form input, .core-form select, .core-form textarea { width: 100%; min-height: 40px; padding: 10px 12px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-bg); color: var(--core-text); font: inherit; font-size: 12px; }
+.core-form label { display: grid; gap: 6px; color: var(--core-muted); font-size: 12px; font-weight: 600; }
+.core-form input, .core-form select, .core-form textarea { width: 100%; min-height: 42px; padding: 12px 16px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface); color: var(--core-text); font: inherit; font-size: 14px; }
+.core-form input::placeholder, .core-form textarea::placeholder { color: var(--placeholder); }
 .core-form textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .core-form__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .core-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.core-notice { margin: 0 0 16px; padding: 11px 13px; border: 1px solid var(--core-line); border-left: 3px solid var(--core-accent); border-radius: var(--radius-sm); color: var(--core-muted); font-size: 11px; }
-.core-summary { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 10px; margin-bottom: 16px; }
-.core-summary > div { padding: 13px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-surface); }
-.core-summary strong { display: block; color: var(--core-text); font-size: 20px; }
-.core-summary small { color: var(--core-muted); font-size: 9px; font-weight: 700; text-transform: uppercase; }
-.core-json { max-width: 460px; overflow: hidden; color: var(--core-muted); font-family: ui-monospace, monospace; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.core-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+
+/* Notices are informational by default — a gold rail on every banner spends
+   the accent on routine confirmations. Tone modifiers carry real state. */
+.core-notice { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--core-line); border-left: 3px solid var(--info); border-radius: var(--r-control); background: var(--info-tint); color: var(--core-muted); font-size: 13px; }
+.core-notice.is-success { border-left-color: var(--success); background: var(--success-tint); }
+.core-notice.is-warning { border-left-color: var(--warning); background: var(--warning-tint); }
+.core-notice.is-error { border-left-color: var(--error); background: var(--error-tint); }
+
+/* KPI row (kit metric card): big tabular number, small dim label. The first
+   tile carries the gold — THE number of the screen. */
+.core-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.core-summary > div { padding: 18px 20px; border: 1px solid var(--core-line); border-radius: var(--r-card); background: var(--core-card); box-shadow: var(--shadow-card); }
+.core-summary strong { display: block; color: var(--core-text); font-size: 30px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.core-summary > div:first-child strong { color: var(--core-accent); }
+.core-summary small { color: var(--core-dim); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.core-json { max-width: 460px; overflow: hidden; padding: 6px 10px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface); color: var(--core-muted); font-family: ui-monospace, monospace; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.core-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; }
 .core-grid > .core-card { grid-column: span 6; }
 .core-grid > .core-card.is-wide { grid-column: 1 / -1; }
-.core-card { overflow: hidden; border: 1px solid var(--core-line); border-radius: var(--radius); background: var(--core-surface); }
-.core-card__header { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; border-bottom: 1px solid var(--core-line); }
-.core-card__header h2 { margin: 0; color: var(--core-text); font-size: 14px; font-weight: 750; }
-.core-card__header p { margin: 4px 0 0; color: var(--core-muted); font-size: 11px; }
-.core-card__body { padding: 6px 18px 18px; }
-.core-count { min-width: 26px; padding: 3px 8px; border-radius: 999px; background: var(--gold-tint); color: var(--core-accent); font-size: 11px; font-weight: 800; text-align: center; }
-.core-empty { margin: 0; padding: 18px 0 7px; color: var(--core-muted); font-size: 12px; }
+.core-card { overflow: hidden; border: 1px solid var(--core-line); border-radius: var(--r-card); background: var(--core-card); box-shadow: var(--shadow-card); }
+.core-card__header { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--core-line); background: var(--core-surface-raised); }
+.core-card__header h2 { margin: 0; color: var(--core-text); font-size: 16px; font-weight: 700; }
+.core-card__header p { margin: 4px 0 0; color: var(--core-dim); font-size: 12px; }
+.core-card__body { padding: 18px 20px 20px; }
+.core-count { min-width: 26px; padding: 3px 9px; border-radius: var(--r-pill); background: var(--gold-tint); color: var(--core-accent); font-size: 11px; font-weight: 800; text-align: center; }
+
+/* Empty state (kit): a mark, a white line, a muted sub — not a dim sentence. */
+.core-empty { display: grid; justify-items: center; gap: 6px; margin: 0; padding: 28px 0 22px; text-align: center; }
+.core-empty__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--gold-tint); color: var(--core-accent); }
+.core-empty p { margin: 0; color: var(--core-text); font-size: 15px; font-weight: 700; }
+.core-empty small { color: var(--core-dim); font-size: 13px; font-weight: 400; }
+
 .core-stack { display: grid; }
-.core-record-link { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 58px; padding: 11px 0; border-bottom: 1px solid var(--core-line); }
+.core-record-link { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 58px; padding: 12px 10px; border-bottom: 1px solid var(--core-hairline); border-radius: var(--r-control); }
 .core-record-link:last-child { border-bottom: 0; }
-.core-record-link:hover strong { color: var(--core-accent); }
+/* Row hover is a surface change; the gold is spent only on the affordance. */
+.core-record-link:hover { background: var(--core-row-hover); }
+.core-record-link:hover .core-record-link__right { color: var(--core-accent); }
 .core-record-link > span:first-child { display: grid; gap: 3px; min-width: 0; }
-.core-record-link strong { overflow: hidden; color: var(--core-text); font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.core-record-link small { overflow: hidden; color: var(--core-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-.core-record-link__right { display: flex; align-items: center; gap: 9px; color: var(--core-muted); }
-.core-status { display: inline-flex; width: fit-content; padding: 4px 8px; border-radius: 999px; background: var(--gold-tint); color: var(--core-accent); font-size: 9px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+.core-record-link strong { overflow: hidden; color: var(--core-text); font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.core-record-link small { overflow: hidden; color: var(--core-dim); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.core-record-link__right { display: flex; align-items: center; gap: 9px; color: var(--core-dim); }
+
+/* Status pills carry the functional palette. Gold is NOT a status colour —
+   every value rendered gold made failures look like brand moments. */
+.core-status { display: inline-flex; width: fit-content; padding: 3px 10px; border-radius: var(--r-pill); background: var(--surface-3); color: var(--core-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.core-status.is-success { background: var(--success-tint); color: var(--success); }
+.core-status.is-warning { background: var(--warning-tint); color: var(--warning); }
+.core-status.is-error { background: var(--error-tint); color: var(--error); }
+.core-status.is-info { background: var(--info-tint); color: var(--info); }
+.core-status.is-accent { background: var(--gold-tint); color: var(--core-accent); }
+
 .core-definition-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 0; }
-.core-definition-grid > div { min-width: 0; padding: 15px 0; border-bottom: 1px solid var(--core-line); }
+.core-definition-grid > div { min-width: 0; padding: 15px 0; border-bottom: 1px solid var(--core-hairline); }
 .core-definition-grid > div:nth-last-child(-n+2) { border-bottom: 0; }
 .core-definition-grid > div.is-wide { grid-column: 1 / -1; }
-.core-definition-grid dt { margin-bottom: 5px; color: var(--core-muted); font-size: 9px; font-weight: 800; letter-spacing: 0.11em; text-transform: uppercase; }
-.core-definition-grid dd { margin: 0; overflow-wrap: anywhere; color: var(--core-text); font-size: 12px; line-height: 1.55; }
-.core-table-wrap { overflow-x: auto; border: 1px solid var(--core-line); border-radius: var(--radius); background: var(--core-surface); }
+.core-definition-grid dt { margin-bottom: 5px; color: var(--core-dim); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.core-definition-grid dd { margin: 0; overflow-wrap: anywhere; color: var(--core-text); font-size: 14px; line-height: 1.55; }
+
+/* Data table (kit): panel wrapper, #111 header row, hairline body rows,
+   primary-text cells, tabular numerics. */
+.core-table-wrap { overflow-x: auto; border: 1px solid var(--core-line); border-radius: var(--r-card); background: var(--core-card); }
 .core-table { width: 100%; border-collapse: collapse; }
-.core-table th { padding: 12px 16px; border-bottom: 1px solid var(--core-line); color: var(--core-muted); font-size: 9px; font-weight: 800; letter-spacing: 0.11em; text-align: left; text-transform: uppercase; }
-.core-table td { padding: 15px 16px; border-bottom: 1px solid var(--core-line); color: var(--core-muted); font-size: 11px; vertical-align: middle; }
+.core-table th { padding: 12px 16px; border-bottom: 1px solid var(--core-line); background: var(--core-surface-raised); color: var(--core-dim); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-align: left; text-transform: uppercase; }
+.core-table td { padding: 14px 16px; border-bottom: 1px solid var(--core-hairline); color: var(--core-text); font-size: 13px; vertical-align: middle; }
+.core-table tbody tr:hover { background: var(--core-row-hover); }
 .core-table tr:last-child td { border-bottom: 0; }
-.core-table a { color: var(--core-text); font-size: 12px; font-weight: 700; }
-.core-table a:hover { color: var(--core-accent); }
+.core-table a { color: var(--core-text); font-size: 14px; font-weight: 700; }
+.core-table a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .core-table__primary { display: grid; gap: 3px; }
-.core-table__primary small { color: var(--core-muted); font-size: 10px; font-weight: 500; }
-.core-prose { padding-top: 14px; color: var(--core-muted); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.core-table__primary small { color: var(--core-dim); font-size: 12px; font-weight: 500; }
+.core-table__num { text-align: right; font-variant-numeric: tabular-nums; }
+.core-prose { padding-top: 14px; color: var(--core-muted); font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
 
 @media (max-width: 820px) {
   html .core-shell { display: block; padding-bottom: 66px; }
-  .core-sidebar { position: fixed; inset: auto 0 0; z-index: 50; width: 100%; height: 66px; display: block; padding: 7px 10px max(7px, env(safe-area-inset-bottom)); border: 0; border-top: 1px solid var(--core-line); }
+  /* Fixed bottom nav is the one bar in Core, so it gets the kit's glass. */
+  .core-sidebar { position: fixed; inset: auto 0 0; z-index: 50; width: 100%; height: 66px; display: block; padding: 7px 10px max(7px, env(safe-area-inset-bottom)); border: 0; border-top: 1px solid var(--border-subtle); background: var(--glass-bg); backdrop-filter: var(--glass-filter); -webkit-backdrop-filter: var(--glass-filter); }
   .core-brand, .core-nav-label, .core-sidebar__spacer, .core-nav__legacy, .core-user { display: none; }
   /* Mobile shows a compact primary set: groups flatten into one strip and
      desktop-only destinations hide (still reachable via search/deep links). */
@@ -121,24 +199,28 @@ html .core-shell a { color: inherit; text-decoration: none; }
   .core-cmdk { width: calc(100vw - 24px); }
   .core-home-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .core-home-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .core-nav__item { flex-direction: column; justify-content: center; gap: 3px; min-height: 50px; padding: 0 4px; font-size: 9px; }
+  .core-nav__item { flex-direction: column; justify-content: center; gap: 3px; min-height: 50px; padding: 0 4px; font-size: 10px; font-weight: 600; }
   .core-nav__item.is-active { box-shadow: inset 0 2px 0 var(--core-accent); }
   .core-main { padding: 28px 15px 48px; }
+  .core-grid { gap: 16px; }
   .core-grid > .core-card { grid-column: 1 / -1; }
   .core-definition-grid { grid-template-columns: 1fr; }
-  .core-definition-grid > div, .core-definition-grid > div:nth-last-child(-n+2) { border-bottom: 1px solid var(--core-line); }
+  .core-definition-grid > div, .core-definition-grid > div:nth-last-child(-n+2) { border-bottom: 1px solid var(--core-hairline); }
   .core-definition-grid > div:last-child { border-bottom: 0; }
   .core-table th:nth-child(n+4), .core-table td:nth-child(n+4) { display: none; }
   .core-form__row { grid-template-columns: 1fr; }
 }
 
-.core-preview { width: 100%; min-height: 520px; margin-top: 12px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: #fff; }
-.core-code { overflow: auto; max-height: 520px; margin: 12px 0 0; padding: 14px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-bg); color: var(--core-muted); font: 10px/1.6 ui-monospace, monospace; white-space: pre-wrap; }
+/* White ground is deliberate: this iframe renders a generated client artifact,
+   which must be judged on its own background, not the OS's. */
+.core-preview { width: 100%; min-height: 520px; margin-top: 12px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: #fff; }
+.core-code { overflow: auto; max-height: 520px; margin: 12px 0 0; padding: 14px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface); color: var(--core-muted); font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; }
 .core-check-list { display: grid; gap: 8px; padding-top: 12px; }
-.core-check-list label { display: flex; align-items: flex-start; gap: 8px; color: var(--core-muted); font-size: 11px; line-height: 1.45; }
+.core-check-list label { display: flex; align-items: flex-start; gap: 8px; color: var(--core-muted); font-size: 13px; line-height: 1.45; }
+.core-check-list input { accent-color: var(--gold); }
 
 /* Stage 4: Worklog bridge */
-.core-worklog-freshness { display: block; color: var(--core-muted); font-size: 12px; margin-top: 4px; }
+.core-worklog-freshness { display: block; color: var(--core-dim); font-size: 12px; margin-top: 4px; }
 .core-card details > summary { cursor: pointer; color: var(--core-muted); font-size: 13px; margin: 4px 0; }
 .core-card details[open] > summary { margin-bottom: 8px; }
 
@@ -149,67 +231,86 @@ html .core-shell a { color: inherit; text-decoration: none; }
 .core-home-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .core-home-header .core-page-header { margin-bottom: 0; }
 .core-attention strong { display: block; }
-.core-home-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }
-.core-home-stat { display: grid; gap: 2px; padding: 12px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-surface-raised); color: var(--core-text); text-decoration: none; }
-.core-home-stat strong { font-size: 20px; line-height: 1.1; }
-.core-home-stat span { color: var(--core-muted); font-size: 11px; }
-.core-home-stat.is-alert { border-color: color-mix(in srgb, var(--core-accent) 55%, var(--core-line)); box-shadow: inset 2px 0 0 var(--core-accent); }
-.core-home-stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-.core-home-stage { display: grid; gap: 2px; padding: 12px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-surface-raised); color: var(--core-text); text-decoration: none; }
-.core-home-stage strong { font-size: 18px; }
-.core-home-stage span { text-transform: capitalize; color: var(--core-muted); font-size: 11px; }
-.core-home-stage small { color: var(--core-muted); font-size: 10px; }
-.core-cmdk-trigger { display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-surface-raised); color: var(--core-muted); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
-.core-cmdk-trigger kbd { padding: 1px 5px; border: 1px solid var(--core-line); border-radius: 4px; font-size: 10px; color: var(--core-muted); }
-.core-cmdk-overlay { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-start; justify-content: center; padding: 12vh 12px 12px; background: rgba(0, 0, 0, 0.55); }
-.core-cmdk { width: 560px; max-width: 100%; border: 1px solid var(--core-line); border-radius: var(--radius); background: var(--core-surface); box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5); overflow: hidden; }
-.core-cmdk__input { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--core-line); color: var(--core-muted); }
-.core-cmdk__input input { flex: 1; border: 0; background: none; color: var(--core-text); font: inherit; font-size: 14px; outline: none; }
-.core-cmdk__input kbd { padding: 1px 5px; border: 1px solid var(--core-line); border-radius: 4px; font-size: 10px; }
+.core-home-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 10px; }
+.core-home-stat { display: grid; gap: 2px; padding: 14px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface-raised); color: var(--core-text); text-decoration: none; transition: border-color .2s, transform .2s; }
+.core-home-stat:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+.core-home-stat strong { font-size: 22px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.core-home-stat span { color: var(--core-dim); font-size: 12px; }
+/* An alert is a warning state, not a brand moment — it must not take the gold. */
+.core-home-stat.is-alert { border-color: rgba(232, 163, 61, 0.4); box-shadow: inset 2px 0 0 var(--warning); }
+.core-home-stat.is-alert strong { color: var(--warning); }
+.core-home-stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.core-home-stage { display: grid; gap: 2px; padding: 14px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface-raised); color: var(--core-text); text-decoration: none; transition: border-color .2s, transform .2s; }
+.core-home-stage:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+.core-home-stage strong { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.core-home-stage span { text-transform: capitalize; color: var(--core-muted); font-size: 12px; }
+.core-home-stage small { color: var(--core-dim); font-size: 11px; }
+.core-cmdk-trigger { display: inline-flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface); color: var(--placeholder); font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.core-cmdk-trigger:hover { border-color: var(--border-hover); color: var(--core-muted); }
+.core-cmdk-trigger kbd { padding: 1px 5px; border: 1px solid var(--core-line); border-radius: 4px; background: var(--core-surface-raised); font-size: 11px; color: var(--core-dim); }
+.core-cmdk-overlay { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-start; justify-content: center; padding: 12vh 12px 12px; background: var(--overlay); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.core-cmdk { width: 560px; max-width: 100%; border: 1px solid var(--core-line); border-radius: var(--r-card); background: var(--core-surface); box-shadow: var(--shadow-lg); overflow: hidden; }
+.core-cmdk__input { display: flex; align-items: center; gap: 10px; padding: 13px 15px; border-bottom: 1px solid var(--core-line); color: var(--core-dim); }
+.core-cmdk__input input { flex: 1; border: 0; background: none; color: var(--core-text); font: inherit; font-size: 15px; outline: none; }
+.core-cmdk__input input::placeholder { color: var(--placeholder); }
+.core-cmdk__input kbd { padding: 1px 5px; border: 1px solid var(--core-line); border-radius: 4px; font-size: 11px; }
 .core-cmdk__results { max-height: 46vh; overflow-y: auto; padding: 6px; }
-.core-cmdk__hint { margin: 0; padding: 14px 10px; color: var(--core-muted); font-size: 12px; }
-.core-cmdk__result { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--core-text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
-.core-cmdk__result.is-active { background: var(--core-surface-raised); }
-.core-cmdk__kind { flex-shrink: 0; min-width: 84px; color: var(--core-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.core-cmdk__hint { margin: 0; padding: 14px 10px; color: var(--core-dim); font-size: 13px; }
+.core-cmdk__result { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 1px solid transparent; border-radius: var(--r-control); background: none; color: var(--core-text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.core-cmdk__result.is-active { background: var(--gold-tint); }
+/* "Ask DGTL" is the palette's primary affordance — it had no rule at all and
+   rendered as an anonymous result row. */
+.core-cmdk__ask { margin-bottom: 6px; background: var(--gold-tint); border-color: rgba(240, 207, 80, 0.25); }
+.core-cmdk__ask .core-cmdk__kind { color: var(--core-accent); font-weight: 700; }
+.core-cmdk__kind { flex-shrink: 0; min-width: 84px; color: var(--core-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
 .core-cmdk__title { font-weight: 600; }
-.core-cmdk__subtitle { overflow: hidden; color: var(--core-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-.core-home-note { margin: 6px 0 0; color: var(--core-muted); font-size: 12px; line-height: 1.6; }
-.core-home-note a { color: var(--core-text); font-weight: 700; }
-.core-home-note a:hover { color: var(--core-accent); }
+.core-cmdk__subtitle { overflow: hidden; color: var(--core-dim); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.core-home-note { margin: 6px 0 0; color: var(--core-muted); font-size: 13px; line-height: 1.6; }
+.core-home-note a { color: var(--core-text); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Stage 6: DGTL.chat */
 .core-chat-page { display: flex; flex-direction: column; min-height: calc(100svh - 180px); }
 .chat-shell { flex: 1; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 16px; min-height: 60svh; }
-.chat-threads { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--core-line); border-radius: var(--radius); background: var(--core-surface); }
+.chat-threads { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--core-line); border-radius: var(--r-card); background: var(--core-card); }
 .chat-threads__list { display: grid; gap: 4px; overflow-y: auto; }
-.chat-threads__item { padding: 9px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--core-muted); font: inherit; font-size: 12px; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chat-threads__item:hover, .chat-threads__item.is-active { background: var(--core-surface-raised); color: var(--core-text); }
-.chat-main { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--core-line); border-radius: var(--radius); background: var(--core-surface); }
+.chat-threads__item { padding: 10px; border: 0; border-radius: var(--r-control); background: none; color: var(--core-muted); font: inherit; font-size: 13px; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-threads__item:hover { background: var(--core-surface-raised); color: var(--core-text); }
+/* Selected thread speaks the same language as the active nav item. */
+.chat-threads__item.is-active { background: var(--gold-tint); color: var(--core-accent); font-weight: 600; }
+.chat-main { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--core-line); border-radius: var(--r-card); background: var(--core-card); }
 .chat-log { flex: 1; overflow-y: auto; display: grid; gap: 14px; align-content: start; padding: 18px; }
-.chat-empty, .chat-unavailable { margin: 12px; padding: 16px; border: 1px dashed var(--core-line); border-radius: var(--radius-sm); color: var(--core-muted); font-size: 13px; line-height: 1.6; }
-.chat-unavailable { border-style: solid; border-left: 3px solid var(--core-accent); }
+.chat-empty, .chat-unavailable { margin: 12px; padding: 16px; border: 1px dashed var(--core-line); border-radius: var(--r-control); color: var(--core-muted); font-size: 14px; line-height: 1.6; }
+/* A degraded provider is a warning, not a brand moment. */
+.chat-unavailable { border-style: solid; border-left: 3px solid var(--warning); background: var(--warning-tint); }
 .chat-message { display: grid; gap: 4px; max-width: 85%; }
 .chat-message.is-user { justify-self: end; text-align: right; }
-.chat-message.is-notice { justify-self: center; max-width: 95%; padding: 8px 12px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); color: var(--core-muted); font-size: 11px; }
+.chat-message.is-notice { justify-self: center; max-width: 95%; padding: 9px 13px; border: 1px solid var(--core-line); border-radius: var(--r-control); color: var(--core-muted); font-size: 12px; }
 .chat-message.is-notice p { margin: 0; }
-.chat-message__author { color: var(--core-muted); font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-.chat-message__body { display: grid; gap: 6px; padding: 10px 13px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-surface-raised); color: var(--core-text); font-size: 13px; line-height: 1.55; text-align: left; }
+.chat-message__author { color: var(--core-dim); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.chat-message.is-user .chat-message__author { color: var(--core-eyebrow); }
+.chat-message__body { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface-raised); color: var(--core-text); font-size: 14px; line-height: 1.6; text-align: left; }
 .chat-message__body p { margin: 0; }
 .chat-message.is-user .chat-message__body { background: var(--core-bg); }
-.chat-message__tools { margin: 0; color: var(--core-muted); font-size: 10px; }
+.chat-message__tools { margin: 0; color: var(--core-dim); font-size: 11px; }
 .chat-message__refs { display: flex; flex-wrap: wrap; gap: 6px; }
-.chat-ref { padding: 3px 9px; border: 1px solid var(--core-line); border-radius: 999px; color: var(--core-muted) !important; font-size: 10px; font-weight: 700; }
-.chat-ref:hover { border-color: var(--core-accent); color: var(--core-accent) !important; }
-.chat-proposal { display: grid; gap: 8px; margin-top: 4px; max-width: 85%; padding: 13px 15px; border: 1px solid color-mix(in srgb, var(--core-accent) 45%, var(--core-line)); border-radius: var(--radius-sm); background: var(--core-surface-raised); }
+.chat-ref { padding: 3px 10px; border: 1px solid var(--core-line); border-radius: var(--r-pill); color: var(--core-muted) !important; font-size: 11px; font-weight: 700; }
+.chat-ref:hover { border-color: var(--border-strong); color: var(--core-text) !important; }
+/* The proposal card keeps the gold: it is genuinely the primary attention
+   object on the screen and the only thing that can change state. */
+.chat-proposal { display: grid; gap: 8px; margin-top: 4px; max-width: 85%; padding: 14px 16px; border: 1px solid var(--accent-line); border-radius: var(--r-control); background: var(--core-surface-raised); }
 .chat-proposal.is-executed { border-color: var(--core-line); }
-.chat-proposal__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--core-text); font-size: 13px; }
-.chat-proposal__impact { margin: 0; color: var(--core-muted); font-size: 12px; line-height: 1.55; }
-.chat-proposal__notice { margin: 0; color: var(--core-muted); font-size: 11px; font-style: italic; }
-.chat-proposal__notice a { color: var(--core-text); font-weight: 700; }
+.chat-proposal.is-rejected { border-color: var(--core-line); opacity: .7; }
+.chat-proposal.is-stale, .chat-proposal.is-expired { border-color: rgba(232, 163, 61, 0.45); }
+.chat-proposal.is-failed { border-color: rgba(229, 72, 77, 0.45); }
+.chat-proposal__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--core-text); font-size: 14px; font-weight: 700; }
+.chat-proposal__impact { margin: 0; color: var(--core-muted); font-size: 13px; line-height: 1.55; }
+.chat-proposal__notice { margin: 0; color: var(--core-dim); font-size: 12px; font-style: italic; }
+.chat-proposal__notice a { color: var(--core-text); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .chat-proposal__actions { display: flex; gap: 8px; }
-.chat-hint { margin: 0; color: var(--core-muted); font-size: 11px; }
+.chat-hint { margin: 0; color: var(--core-dim); font-size: 12px; }
 .chat-composer { display: flex; gap: 10px; padding: 13px; border-top: 1px solid var(--core-line); }
-.chat-composer input { flex: 1; min-height: 42px; padding: 0 13px; border: 1px solid var(--core-line); border-radius: var(--radius-sm); background: var(--core-bg); color: var(--core-text); font: inherit; font-size: 13px; }
+.chat-composer input { flex: 1; min-height: 42px; padding: 0 14px; border: 1px solid var(--core-line); border-radius: var(--r-control); background: var(--core-surface); color: var(--core-text); font: inherit; font-size: 14px; }
+.chat-composer input::placeholder { color: var(--placeholder); }
 
 @media (max-width: 820px) {
   .chat-shell { grid-template-columns: 1fr; }

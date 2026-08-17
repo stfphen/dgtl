@@ -1,0 +1,152 @@
+/* ==========================================================================
+   DGTL brand tokens — THE canonical source of truth for every authenticated
+   surface (Core OS, the legacy admin shell, and the login screen).
+
+   Mirrors the DGTL brand kit (dgtlgroup.io, July 2026) so a future kit sync is
+   a readable diff. Values are copied verbatim; do not "improve" them here.
+
+   Imported first by app/(core)/layout.jsx and app/admin/layout.jsx.
+   Public tenant funnels never carry these classes, so they are untouched — and
+   this file deliberately never edits :root in styles.css, which the funnels
+   share.
+
+   Two things to know before editing:
+
+   1. SPECIFICITY, NOT IMPORT ORDER. Every selector here carries the `html `
+      prefix (0,2,1) so it beats the command-center palette at
+      styles.css:3591 (0,2,0) regardless of how Next chunks the stylesheets.
+
+   2. CUSTOM PROPERTIES SUBSTITUTE ON THE ELEMENT, NOT WHERE THEY ARE WRITTEN.
+      A `color-mix()` token declared in the losing block still resolves against
+      the WINNING --surface/--blue, because both blocks match the same element.
+      So the color-mix set in styles.css is already brand-correct and is NOT
+      duplicated here. What genuinely needed fixing, and is fixed below:
+        - tokens declared only at :root (--brand, --font-display) bake the
+          light/blue value there and inherit down — they are re-declared;
+        - values that were tuned for a blue accent and read wrong in gold
+          (--accent-fg, --focus-glow, --glow) — replaced with flat brand values;
+        - palette-agnostic literals that predate the kit (--card-shadow,
+          --glass-dark).
+   ========================================================================== */
+
+html .v2-admin-shell,
+html .admin-login,
+html .core-shell {
+  /* ---------- brand primitives ---------- */
+  --gold: #F0CF50;
+  --gold-strong: #cbab35;
+  --gold-tint: rgba(240, 207, 80, 0.08);
+  --gold-ring: rgba(240, 207, 80, 0.15);
+  --gold-tan: #b3a06a;
+
+  --text-primary: #F0F0F0;
+  --text-secondary: #D0D0D0;
+  --text-dim: #8a8a8a;
+  --text-ghost: #5a5a56;
+  --placeholder: #6a6a6a;
+
+  --surface-card: rgba(0, 0, 0, 0.45);
+  --row-line: #1c1c1c;
+  --row-hover: #0f0f0f;
+  --border-hover: #3a3a3a;
+
+  --success: #7BC47F; --success-tint: rgba(123, 196, 127, 0.10);
+  --warning: #E8A33D; --warning-tint: rgba(232, 163, 61, 0.10);
+  --error:   #E5484D; --error-tint:   rgba(229, 72, 77, 0.10);
+  --info:    #6E9FDB; --info-tint:    rgba(110, 159, 219, 0.10);
+
+  --chart-1: #F0CF50; --chart-2: #b3a06a; --chart-3: #F0F0F0;
+  --chart-4: #6E9FDB; --chart-5: #7BC47F; --chart-6: #8a8a8a;
+  --chart-grid: #1c1c1c;
+
+  --r-control: 7px;
+  --r-card: 16px;
+  --r-pill: 9999px;
+  --shadow-card: 0 6px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.15);
+  --glass-bg: rgba(0, 0, 0, 0.45);
+  --glass-filter: blur(8px) saturate(1.8);
+
+  /* ---------- legacy aliases ----------
+     ~200 existing .v2-admin-shell rules reference these names. Aliasing (rather
+     than renaming call sites) keeps this a skin change, not a rewrite. */
+  --blue: var(--gold);
+  --blue-dark: var(--gold-strong);
+  --on-blue: #000;
+  /* --brand/--brand-strong are declared ONLY at :root, where they bake the
+     legacy #0071e3 and inherit down — currently rendering as literal blue in
+     the tenant-builder selection states. Re-declared here so they are gold. */
+  --brand: var(--gold);
+  --brand-strong: var(--gold-strong);
+  --danger: var(--error);
+  --warn: var(--warning);
+  --radius: var(--r-card);
+  --radius-sm: var(--r-control);
+  --radius-lg: var(--r-card);
+  --fp-radius-button: var(--r-control);
+
+  --font-sans: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Also :root-baked — without this the admin's big KPI numbers render in
+     Geist while everything around them is Manrope. */
+  --font-display: var(--font-sans);
+  font-family: var(--font-sans);
+}
+
+html .v2-admin-shell ::selection,
+html .admin-login ::selection,
+html .core-shell ::selection { background: var(--gold); color: #000; }
+
+/* ---------- the dark ladder (the DGTL identity) ---------- */
+html .v2-admin-shell[data-theme="dark"],
+html .admin-login[data-theme="dark"],
+html .core-shell {
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --surface-2: #111111;
+  --surface-3: #1a1a1a;
+  --fg: var(--text-primary);
+  --fg-secondary: var(--text-secondary);
+  --fg-muted: var(--text-dim);
+  --line: #2a2a2a;
+  --border: #2a2a2a;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  /* kit value 0.4; the command-center default was 0.24, which left secondary
+     button outlines and panel borders too faint to read on true black. */
+  --border-strong: rgba(255, 255, 255, 0.4);
+
+  /* legacy primitive names still referenced across styles.css */
+  --white: #0a0a0a;
+  --soft: #000000;
+  --soft-2: #111111;
+  --black: var(--text-primary);
+  --near-black: #e6e6e6;
+  --muted: var(--text-dim);
+
+  /* ---------- derived tokens: flat brand values ----------
+     Only the ones that were blue-tuned or predate the kit. The color-mix set
+     in styles.css already resolves against this ladder (see header note). */
+  --accent-fg: var(--gold);
+  --accent-tint: var(--gold-tint);
+  --accent-line: rgba(240, 207, 80, 0.45);
+  --ring: var(--gold);
+  --focus-glow: 0 0 0 3px var(--gold-ring);
+  /* NOT `none`: --glow is substituted into a comma-separated box-shadow list
+     (styles.css:4759). A keyword there makes the whole declaration invalid at
+     computed-value time, which resolves to unset rather than the previous
+     value. A fully transparent shadow is the safe "off". */
+  --glow: 0 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-brand: 0 0 0 0 rgba(0, 0, 0, 0);
+  --card-grad: var(--surface-card);
+  --card-shadow: var(--shadow-card);
+  --card-shadow-hi: 0 10px 12px rgba(0, 0, 0, 0.35), 0 0 28px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: var(--shadow-card);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.45), 0 0 40px rgba(0, 0, 0, 0.25);
+  --glass-dark: var(--glass-bg);
+  --overlay: rgba(0, 0, 0, 0.7);
+  --bg-tint: radial-gradient(1100px 560px at 50% -12%, rgba(240, 207, 80, 0.05), transparent 62%);
+}
+
+/* Light theme keeps working: everything above is dark-scoped, and the light
+   command-center defaults in styles.css remain the fallback. The brand has one
+   mode; retiring the toggle is a product decision, not a restyle one. */
+html .v2-admin-shell[data-theme="light"] { --line: #e6e2d6; --border: #e6e2d6; }

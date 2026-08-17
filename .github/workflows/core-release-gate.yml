@@ -102,6 +102,8 @@ jobs:
         run: node --test tests/stage6-chat-command-layer.test.js
       - name: Run Stage 6.5 internal-alpha deployment guarantees explicitly
         run: node --test tests/stage6-5-internal-alpha.test.js
+      - name: Run DGTL brand-token contract tests explicitly
+        run: node --test tests/brand-tokens.test.js
       - name: Run complete deterministic platform suite
         run: npm test
       - name: Rehearse import through duplicate-safe test delivery
