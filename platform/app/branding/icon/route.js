@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { getTenantForHost } from "../../../lib/store.js";
+import { getTenantClaimingHost } from "../../../lib/store.js";
 import { parseAppIcon } from "../../../lib/branding/appIcon.js";
+import { DGTL_HOUSE_APPLE_TOUCH_ICON } from "../../../lib/branding/appManifest.js";
 
 // GET /branding/icon — serves the home-screen / PWA icon for the tenant that
-// owns the current host. Falls back to the bundled /icon.svg when the tenant
-// has not set a custom icon. Referenced by the dynamic manifest and the
-// apple-touch-icon <link> in app/layout.jsx.
+// explicitly claims the current host. Falls back to the DGTL house icon when
+// the tenant has not set a custom one, or when no tenant claims the host at all.
+// Referenced by the dynamic manifest and the apple-touch-icon <link>.
+//
+// getTenantClaimingHost, NOT getTenantForHost: an unclaimed host must not
+// inherit some other tenant's icon. See lib/branding/appManifest.js.
 export async function GET(request) {
   let appIcon = "";
   try {
     const headerList = await headers();
     const host = headerList.get("x-forwarded-host") || headerList.get("host") || "";
-    const tenant = await getTenantForHost(host);
+    const tenant = await getTenantClaimingHost(host);
     appIcon = tenant?.brand?.appIcon || "";
   } catch {
     appIcon = "";
@@ -39,5 +43,5 @@ export async function GET(request) {
   // No custom icon — fall back to the DGTL house apple-touch icon. Must be a
   // raster PNG: iOS ignores SVG apple-touch icons, so the old /icon.svg fallback
   // produced no home-screen icon on iPhone/iPad.
-  return NextResponse.redirect(new URL("/assets/brand/icons/apple-touch-icon.png", request.url), 307);
+  return NextResponse.redirect(new URL(DGTL_HOUSE_APPLE_TOUCH_ICON, request.url), 307);
 }

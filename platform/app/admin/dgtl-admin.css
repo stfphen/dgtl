@@ -15,6 +15,13 @@
    this route's layout before this sheet. Add or change brand values there —
    never here, and never as a literal in a rule below. */
 
+/* The bolt in the DGTL wordmark (components/brand/DgtlWordmark.jsx). The letters
+   take currentColor from whatever they sit in; the bolt is always the accent, so
+   it is set here rather than hardcoded in the component — the token, never the
+   literal. Covers Core too: CoreShell's root carries .v2-admin-shell. */
+html .v2-admin-shell .dgtl-logo__bolt,
+html .admin-login .dgtl-logo__bolt { fill: var(--gold); }
+
 /* ---------------- Generic primitives (used across all tabs) ---------------- */
 html .v2-admin-shell .button {
   min-height: 0;

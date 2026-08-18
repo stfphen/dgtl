@@ -18,6 +18,17 @@ test("dgtl.chat is not claimed by any built-in tenant, so it lands on the authen
   assert.equal(await getTenantClaimingHost("os.dgtl.ltd"), null, "os.dgtl.ltd must stay an app host — the canonical OS domain");
   const page = await readFile(path.join(root, "platform", "app", "page.jsx"), "utf8");
   assert.match(page, /if \(!tenant\) redirect\("\/home"\)/, "unclaimed hosts land on HOME (login-gated)");
+
+  // The assertions above used to stand alone, and that was the gap: they pinned
+  // the invariant on getTenantClaimingHost while /manifest.webmanifest and
+  // /branding/icon called getTenantForHost, whose fallback handed an unclaimed
+  // host an arbitrary active tenant. dgtl.chat therefore installed to the home
+  // screen branded "DMTV". Every host-resolving route must use the no-fallback
+  // resolver. Full coverage in tests/app-identity.test.js.
+  for (const route of [["manifest.webmanifest", "route.js"], ["branding", "icon", "route.js"]]) {
+    const source = await readFile(path.join(root, "platform", "app", ...route), "utf8");
+    assert.match(source, /getTenantClaimingHost/, `app/${route.join("/")} must resolve the host with no tenant fallback`);
+  }
 });
 
 test("compose passes the Stage 4/6 env contracts through and routes dgtl.chat on the same container", async () => {

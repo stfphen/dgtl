@@ -2,6 +2,7 @@ import { createCoreId } from "../core/ids.js";
 import { consumeRateLimit } from "../rateLimit.js";
 import { ASSISTANT_POLICY_VERSION, buildSystemPolicy } from "./policy.js";
 import { TOOL_INDEX, hashPayload, requireTool, toolsForActor, validateToolArgs } from "./toolRegistry.js";
+import { summarizeToolResult } from "./summarizeToolResult.js";
 import { ArtifactAutomationService } from "../stage3/service.js";
 
 /**
@@ -25,6 +26,12 @@ export const TURN_LIMITS = Object.freeze({
   turnTimeoutMs: 60_000,
   turnsPerMinute: 10,
   proposalTtlMs: 24 * 3600_000,
+  // Terminal read commands get their own, much larger budget. They are
+  // deterministic and cost nothing to run, so throttling them at the model's
+  // 10/min would make the terminal feel broken for no benefit — and a separate
+  // bucket means typing `home` repeatedly can never exhaust the allowance for
+  // an actual model turn.
+  readCommandsPerMinute: 60,
 });
 
 const iso = (value = new Date()) => new Date(value).toISOString();
@@ -208,6 +215,97 @@ export class AssistantService {
       await this.repository.updateAssistantThread(thread.id, this.teamId, { status: "idle", activeTurnId: "", updatedAt: this.at() }, ["running"]).catch(() => {});
       throw error;
     }
+  }
+
+  // ------------------------------------------------------- read command
+  //
+  // The DGTL.chat terminal's deterministic path: the user types `home` or
+  // `opp #2`, the client names the tool, and it runs with NO model involved.
+  //
+  // This is a strict SUBSET of what handleTurn can already reach, and the gate
+  // below is what makes that true. It cannot:
+  //   - reach a prepare tool, so it can never create an ActionProposal
+  //   - reach a tool the actor's role does not advertise (requireTool)
+  //   - pass an argument the tool does not declare, including teamId
+  //     (validateToolArgs rejects unknown keys)
+  //   - name a tool that is not in the registry (fails closed, and is audited)
+  //
+  // Team always comes from the session, never the request body. Every call
+  // writes the same assistant_tool_runs audit row a model tool call writes.
+  async runReadCommand({ threadId, toolId, args = {} }) {
+    const id = String(toolId || "").trim();
+    if (!id) fail("toolId is required.", 400);
+
+    const thread = await this.#requireOwnThread(threadId);
+
+    // requireTool fails closed on an unknown id AND on a tool this role may not
+    // see, so an unadvertised tool cannot be invoked by name.
+    const tool = requireTool(id, this.actor, { worklogConfigured: this.#worklogConfigured() });
+
+    // The hard boundary. Everything above this line the model could also do;
+    // this line is what stops the route becoming a second way to act.
+    if (tool.classification !== "read") {
+      fail(`${id} is not a read command. Consequential actions must go through a chat turn so they become a proposal you confirm.`, 400, "command_not_readable");
+    }
+
+    const rate = this.rateLimiter(`chat:command:${this.teamId}:${this.actor.id}`, {
+      limit: this.limits.readCommandsPerMinute, windowMs: 60_000, now: Number(new Date(this.now())),
+    });
+    if (!rate.allowed) fail(`Command rate limit reached; retry in ${rate.retryAfterSeconds}s.`, 429, "rate_limited");
+
+    const validated = validateToolArgs(tool, args);
+    const turnId = this.idFactory("assistantTurn");
+    const runId = this.idFactory("assistantToolRun");
+    const startedAt = this.at();
+
+    let data = {};
+    let sourceRefs = [];
+    let status = "completed";
+    let error = "";
+    try {
+      const outcome = await tool.execute(this.#toolContext(), validated);
+      data = outcome.data || {};
+      sourceRefs = outcome.sourceRefs || [];
+    } catch (executionError) {
+      status = "rejected";
+      error = clamp(executionError?.message || "Command failed.", 300);
+    }
+
+    await this.repository.createAssistantToolRun({
+      id: runId, teamId: this.teamId, threadId: thread.id, turnId,
+      toolId: id.slice(0, 80), classification: "read",
+      arguments: status === "completed" ? validated : {}, targetRefs: sourceRefs,
+      status, error, startedAt, completedAt: this.at(), createdAt: startedAt,
+    });
+
+    if (status !== "completed") fail(error || "Command failed.", 400, "command_failed");
+
+    const summary = summarizeToolResult(id, data);
+    const toolSummary = [{ toolId: id.slice(0, 80), status }];
+    const at = this.at();
+
+    // Persisted so switching to the bubble-chat view — or reloading — still
+    // shows what the command printed. The user message is the raw command line;
+    // the output is a system_notice, NOT role "assistant", because no model
+    // spoke. That distinction is worth keeping honest in the transcript.
+    await this.repository.createAssistantMessage({
+      id: this.idFactory("assistantMessage"), teamId: this.teamId, threadId: thread.id, turnId,
+      role: "user", content: clamp(`> ${id}`, 200), sourceRefs: [], toolSummary: [], providerMetadata: {},
+      policyVersion: ASSISTANT_POLICY_VERSION, status: "completed", createdAt: startedAt,
+    });
+    const message = await this.repository.createAssistantMessage({
+      id: this.idFactory("assistantMessage"), teamId: this.teamId, threadId: thread.id, turnId,
+      role: "system_notice", content: clamp(summary, 8000), sourceRefs, toolSummary,
+      providerMetadata: { provider: "command", model: "", noticeKind: "command", toolId: id },
+      policyVersion: ASSISTANT_POLICY_VERSION, status: "completed", createdAt: at,
+    });
+    await this.repository.updateAssistantThread(thread.id, this.teamId, {
+      lastMessageAt: at, title: thread.title || clamp(id, 80), updatedAt: at,
+    }).catch(() => {});
+
+    // `data` is returned live for the terminal's rich panel but is never stored;
+    // only the text summary above is persisted.
+    return { turnId, toolId: id, data, sourceRefs, toolSummary, message, summary };
   }
 
   async #persistProposal(threadId, turnId, draft) {
