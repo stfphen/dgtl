@@ -2,16 +2,22 @@ import { manrope } from "../../lib/fonts";
 import "../dgtl-tokens.css";
 import "./dgtl-admin.css";
 
-// The admin shell is DGTL's own surface, not a tenant funnel, so it names itself
-// rather than inheriting the root layout's tenant-facing "Content Day" title —
-// the same reasoning the (core) layout applies to /home and /chat. The root title
-// is deliberately left alone: every funnel-template tenant inherits it, so
-// renaming it would rename their public browser tabs (tests/app-identity.test.js).
-//
-// This layout also covers /admin/login, which sets title.absolute to opt OUT of
-// the template below — "DGTL Login · DGTL" would be silly.
+// The admin shell is a DGTL-owned surface. Repo-wide browser identity requires
+// every DGTL web app title to begin with "DGTL --"; nested admin pages append
+// their local title after the application name.
 export const metadata = {
-  title: { default: "DGTL", template: "%s · DGTL" },
+  title: {
+    default: "DGTL -- Admin",
+    template: "DGTL -- Admin | %s",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "DGTL -- Admin",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: "/assets/brand/icons/apple-touch-icon.png",
+  },
 };
 
 // display:contents so this wrapper contributes no box of its own — it exists
