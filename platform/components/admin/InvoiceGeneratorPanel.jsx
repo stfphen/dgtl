@@ -54,8 +54,12 @@ export default function InvoiceGeneratorPanel() {
   return (
     <section className="admin-panel invoice-generator">
       <div className="pipeline-header">
-        <div><p className="eyebrow">DGTL Finance</p><h2>Invoice Generator</h2><p>Create a client-ready PDF without leaving Core.</p></div>
-        <span className="status-pill"><FileText size={14} /> PDF</span>
+        <div><p className="eyebrow">DGTL Finance</p><h2>Invoice Generator</h2><p>Create a client-ready, DGTL-branded PDF without leaving Core.</p></div>
+        <span className="status-pill"><FileText size={14} /> DGTL PDF</span>
+      </div>
+
+      <div className="admin-notice">
+        <span className="admin-notice__text">DGTL branding is applied automatically to every PDF: invoice-safe wordmark, DGTL Group issuer, CAD, 13% tax, and standard notes/terms. Invoice details remain editable below.</span>
       </div>
 
       <div className="outreach-admin-grid">
@@ -103,7 +107,7 @@ export default function InvoiceGeneratorPanel() {
       </section>
 
       {error ? <div className="admin-notice" role="alert"><span className="admin-notice__text">{error}</span></div> : null}
-      <div className="pipeline-header"><p>PDF generation is handled server-side; the API credential never reaches the browser.</p><button className="button button--primary" type="button" disabled={busy || !form.to || !items.some((item) => item.name)} onClick={generate}><Download size={17} /> {busy ? "Generating…" : "Generate PDF"}</button></div>
+      <div className="pipeline-header"><p>Branding and PDF generation are enforced server-side; the API credential never reaches the browser.</p><button className="button button--primary" type="button" disabled={busy || !form.to || !items.some((item) => item.name)} onClick={generate}><Download size={17} /> {busy ? "Generating…" : "Generate PDF"}</button></div>
     </section>
   );
 }
