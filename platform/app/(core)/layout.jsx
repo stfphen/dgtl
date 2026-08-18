@@ -5,21 +5,23 @@ import "../dgtl-tokens.css";
 import "../admin/dgtl-admin.css";
 import "./core.css";
 
-// Core is DGTL's own app, not a tenant funnel — so it names itself rather than
-// inheriting the root layout's tenant-facing "Content Day" title.
+// Core is DGTL's own app, not a tenant funnel. Every DGTL-owned web surface
+// starts its browser title with the repo-wide "DGTL --" identity prefix.
+// Child pages stay inside the same identity via the title template below.
 //
-// appleWebApp.title emits <meta name="apple-mobile-web-app-title">, which the
-// platform did not have anywhere. Without it iOS falls back to the manifest's
-// short_name for the home-screen label. icons.apple points at the STATIC house
-// PNG rather than /branding/icon, so no host resolution runs on this surface at
-// all — structurally immune to a tenant's icon reaching a DGTL install.
+// appleWebApp.title emits <meta name="apple-mobile-web-app-title">. The static
+// house PNG is intentional: iOS home-screen icons must use the raster DGTL asset
+// rather than the SVG browser favicon or a tenant-resolved branding route.
 export const metadata = {
-  title: { default: "DGTL.chat", template: "%s · DGTL.chat" },
+  title: {
+    default: "DGTL -- Core",
+    template: "DGTL -- Core | %s",
+  },
   description: "The DGTL operating command center.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "DGTL.chat",
+    title: "DGTL -- Core",
     statusBarStyle: "black-translucent",
   },
   icons: {
@@ -49,11 +51,6 @@ export const viewport = {
 export default async function CoreLayout({ children }) {
   const { session } = await getCorePageContext();
   return (
-    // display:contents wrapper carries --font-manrope to the Core shell, the
-    // same way the admin layout does. Before this, Core resolved Manrope only
-    // because the ROOT layout happens to put the variable on <html> with
-    // preload:false — the OS's primary typeface arrived by coincidence and was
-    // never preloaded on its own routes.
     <div className={manrope.variable} style={{ display: "contents" }}>
       <CoreShell user={{ ...session.user, email: session.email, role: session.role }}>
         {children}
