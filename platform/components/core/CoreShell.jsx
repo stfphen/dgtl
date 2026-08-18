@@ -3,7 +3,7 @@
 import Link from "next/link";
 import CommandPalette from "./CommandPalette";
 import { usePathname } from "next/navigation";
-import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, MessageCircle, PackageOpen, Siren, Sparkles, Target } from "lucide-react";
+import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, MessageCircle, PackageOpen, ReceiptText, Siren, Sparkles, Target } from "lucide-react";
 import DgtlWordmark from "../brand/DgtlWordmark";
 
 // Grouped navigation. Groups render as label rows inside ONE .core-nav grid so
@@ -35,6 +35,7 @@ const navigation = [
     items: [
       { href: "/operations/worklog", label: "Worklog", icon: ListChecks, mobile: true },
       { href: "/operations/outbox", label: "Operations", icon: Siren, mobile: true },
+      { href: "/invoices", label: "Invoices", icon: ReceiptText, mobile: false },
     ],
   },
 ];
