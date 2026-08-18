@@ -12,6 +12,7 @@ import {
   Building2,
   UsersRound,
   Briefcase,
+  ReceiptText,
   LogOut,
   Sun,
   Moon,
@@ -30,6 +31,7 @@ const navItems = [
   { id: "accounts", label: "Accounts", icon: <Briefcase {...ICON_PROPS} /> },
   { id: "outreach", label: "Outreach", icon: <Mail {...ICON_PROPS} /> },
   { id: "calls", label: "Calls", icon: <Phone {...ICON_PROPS} /> },
+  { id: "invoices", label: "Invoices", icon: <ReceiptText {...ICON_PROPS} />, href: "/admin/invoices" },
   { id: "tenants", label: "Tenants", icon: <Building2 {...ICON_PROPS} /> },
   { id: "team", label: "Team", icon: <UsersRound {...ICON_PROPS} /> },
 ];
@@ -87,9 +89,9 @@ function ThemeToggle({ theme, onToggle }) {
 export function AdminTabbedShell({ notice, children, visibleTabs, navCounts = {}, user = null }) {
   const visibleNavItems = useMemo(() => {
     if (!visibleTabs?.length) return navItems;
-    return navItems.filter((item) => visibleTabs.includes(item.id));
+    return navItems.filter((item) => item.href || visibleTabs.includes(item.id));
   }, [visibleTabs]);
-  const [activeTab, setActiveTab] = useState(visibleNavItems[0]?.id || "pipeline");
+  const [activeTab, setActiveTab] = useState(visibleNavItems.find((item) => !item.href)?.id || "pipeline");
   const [moreOpen, setMoreOpen] = useState(false);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
   const [theme, toggleTheme] = useAdminTheme();
@@ -100,7 +102,7 @@ export function AdminTabbedShell({ notice, children, visibleTabs, navCounts = {}
     setNoticeDismissed(false);
   }, [notice]);
   const activeItem = useMemo(
-    () => visibleNavItems.find((item) => item.id === activeTab) || visibleNavItems[0] || navItems[0],
+    () => visibleNavItems.find((item) => item.id === activeTab) || visibleNavItems.find((item) => !item.href) || navItems[0],
     [activeTab, visibleNavItems]
   );
 
@@ -111,7 +113,7 @@ export function AdminTabbedShell({ notice, children, visibleTabs, navCounts = {}
   const primaryCount = hasOverflow ? 4 : visibleNavItems.length;
   const primaryItems = visibleNavItems.slice(0, primaryCount);
   const overflowItems = visibleNavItems.slice(primaryCount);
-  const activeInOverflow = overflowItems.some((item) => item.id === activeTab);
+  const activeInOverflow = overflowItems.some((item) => !item.href && item.id === activeTab);
 
   const selectTab = (id) => {
     setActiveTab(id);
@@ -133,11 +135,23 @@ export function AdminTabbedShell({ notice, children, visibleTabs, navCounts = {}
 
   const renderNavButton = (item) => {
     const count = navCounts?.[item.id];
+    const className = `v2-nav-item ${!item.href && activeTab === item.id ? "is-active" : ""}`;
+
+    if (item.href) {
+      return (
+        <a key={item.id} className={className} href={item.href}>
+          {item.icon}
+          <span>{item.label}</span>
+          {count ? <span className="v2-nav-count">{count}</span> : null}
+        </a>
+      );
+    }
+
     return (
       <button
         key={item.id}
         type="button"
-        className={`v2-nav-item ${activeTab === item.id ? "is-active" : ""}`}
+        className={className}
         aria-current={activeTab === item.id ? "page" : undefined}
         aria-controls={`admin-tab-${item.id}`}
         onClick={() => selectTab(item.id)}
