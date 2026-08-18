@@ -5,21 +5,15 @@ import "../dgtl-tokens.css";
 import "../admin/dgtl-admin.css";
 import "./core.css";
 
-// Core is DGTL's own app, not a tenant funnel — so it names itself rather than
-// inheriting the root layout's tenant-facing "Content Day" title.
-//
-// appleWebApp.title emits <meta name="apple-mobile-web-app-title">, which the
-// platform did not have anywhere. Without it iOS falls back to the manifest's
-// short_name for the home-screen label. icons.apple points at the STATIC house
-// PNG rather than /branding/icon, so no host resolution runs on this surface at
-// all — structurally immune to a tenant's icon reaching a DGTL install.
+// Core is DGTL's own app, not a tenant funnel. Every DGTL-owned web surface
+// starts its browser title with the repo-wide "DGTL --" identity prefix.
 export const metadata = {
-  title: { default: "DGTL.chat", template: "%s · DGTL.chat" },
+  title: { default: "DGTL -- Core", template: "DGTL -- Core | %s" },
   description: "The DGTL operating command center.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "DGTL.chat",
+    title: "DGTL -- Core",
     statusBarStyle: "black-translucent",
   },
   icons: {
@@ -32,11 +26,6 @@ export const metadata = {
   },
 };
 
-// In Next 15 themeColor belongs on viewport, not metadata. width/initialScale/
-// viewportFit are restated verbatim from the root layout rather than left to be
-// inherited: a nested viewport export replaces the parent's, and dropping
-// viewportFit:"cover" would silently break every env(safe-area-inset-*) rule in
-// the admin/core CSS around the Dynamic Island and home indicator.
 export const viewport = {
   width: "device-width",
   initialScale: 1,
@@ -44,16 +33,9 @@ export const viewport = {
   themeColor: "#000000",
 };
 
-// display:contents so this wrapper contributes no box of its own — it exists
-// only to carry --font-manrope, which inherits down to the core shell.
 export default async function CoreLayout({ children }) {
   const { session } = await getCorePageContext();
   return (
-    // display:contents wrapper carries --font-manrope to the Core shell, the
-    // same way the admin layout does. Before this, Core resolved Manrope only
-    // because the ROOT layout happens to put the variable on <html> with
-    // preload:false — the OS's primary typeface arrived by coincidence and was
-    // never preloaded on its own routes.
     <div className={manrope.variable} style={{ display: "contents" }}>
       <CoreShell user={{ ...session.user, email: session.email, role: session.role }}>
         {children}
