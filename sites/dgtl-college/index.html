@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DGTL College — Education from DGTL Group</title>
+<meta name="description" content="A commercial line of DGTL Group in build — education, on its own identity. An education property from DGTL Group is being built at this address.">
+<link rel="canonical" href="https://dgtl.college/">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DGTL College">
+<meta property="og:title" content="DGTL College — Education from DGTL Group">
+<meta property="og:description" content="A commercial line of DGTL Group in build — education, on its own identity.">
+<meta property="og:url" content="https://dgtl.college/">
+<link rel="icon" type="image/svg+xml" href="assets/spark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebSite","@id":"https://dgtl.college/#website",
+  "url":"https://dgtl.college/","name":"DGTL College",
+  "publisher":{"@id":"https://dgtlgroup.io/#organization"}},
+ {"@type":"Organization","@id":"https://dgtlgroup.io/#organization",
+  "name":"DGTL Group","url":"https://dgtlgroup.io/",
+  "sameAs":["https://dgtlinfluence.com/"]}]}
+</script>
+<style>
+/* ==========================================================================
+   DGTL Group — brand tokens + base components (dgtlgroup.io, July 2026)
+   ========================================================================== */
+:root{
+  /* surfaces */
+  --bg:#000000; --surface-1:#0a0a0a; --surface-2:#111111;
+  --surface-card:rgba(0,0,0,0.45);
+  /* text */
+  --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
+  --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  /* accent */
+  --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
+  --gold-ring:rgba(240,207,80,0.15);
+  /* borders */
+  --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.4);
+  /* functional */
+  --success:#7BC47F; --success-tint:rgba(123,196,127,0.10);
+  --warning:#E8A33D; --warning-tint:rgba(232,163,61,0.10);
+  --error:#E5484D;   --error-tint:rgba(229,72,77,0.10);
+  --info:#6E9FDB;    --info-tint:rgba(110,159,219,0.10);
+  /* geometry */
+  --r-control:7px; --r-card:16px; --r-pill:9999px;
+  /* effects */
+  --shadow-card:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15);
+  --glass-bg:rgba(0,0,0,0.45);
+  --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
+     background:var(--bg);-webkit-font-smoothing:antialiased;min-height:100vh;
+     display:flex;flex-direction:column}
+::placeholder{color:var(--placeholder)}
+:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+::selection{background:var(--gold);color:#000}
+
+/* --- buttons --- */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);
+     font-weight:700;font-size:16px;border-radius:var(--r-control);
+     padding:15px 24px;border:1px solid transparent;cursor:pointer;
+     text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
+.btn-sm{padding:10px 18px;font-size:14px}
+
+/* --- type helpers --- */
+.h-display{font-size:clamp(40px,6vw,70px);font-weight:700;letter-spacing:-1.4px;
+           line-height:1.1;color:#fff}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan)}
+.gold{color:var(--gold)}
+.muted{color:var(--text-muted)} .dim{color:var(--text-dim)}
+
+/* --- glassy bar --- */
+.glass-bar{background:var(--glass-bg);backdrop-filter:blur(8px) saturate(1.8);
+           -webkit-backdrop-filter:blur(8px) saturate(1.8);
+           border-bottom:1px solid var(--border-subtle)}
+
+/* --- page layout --- */
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--gold);color:#000;
+           padding:10px 16px;font-weight:700;border-radius:0 0 var(--r-control) 0;z-index:20}
+.skip-link:focus{left:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;width:100%}
+
+.nav{position:sticky;top:0;z-index:10}
+.nav-inner{max-width:1120px;margin:0 auto;padding:16px 24px;display:flex;
+           align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none}
+.wordmark{height:26px;width:auto;display:block}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.15em;
+        color:var(--gold-tan);border-left:1px solid var(--border);padding-left:12px;
+        white-space:nowrap}
+.nav a.plain{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500}
+.nav a.plain:hover{color:#fff}
+
+.hero{position:relative;overflow:hidden;padding:120px 0 100px;flex:1;
+      display:flex;align-items:center}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 30% 20%, rgba(240,207,80,0.06), transparent 70%)}
+.spark-bg{position:absolute;right:-8%;top:50%;width:min(560px,70vw);
+          transform:translateY(-50%) rotate(18deg);opacity:.05;pointer-events:none}
+.hero-inner{position:relative}
+.hero h1{max-width:760px;margin:16px 0 20px}
+.hero .support{font-size:19px;line-height:1.6;max-width:560px;color:var(--text-muted)}
+.hero .cta-row{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap}
+
+.teaser{border-top:1px solid var(--border);padding:72px 0;text-align:center}
+.teaser .line{font-size:clamp(20px,2.6vw,28px);font-weight:700;color:var(--text-ghost);
+              letter-spacing:-0.4px;max-width:720px;margin:0 auto}
+.teaser .line .gold{color:var(--gold)}
+.teaser .net{margin-top:14px;font-size:14px;color:var(--text-dim)}
+.teaser .net a{color:var(--text-muted);text-decoration:underline;
+               text-underline-offset:3px;text-decoration-color:var(--border-strong)}
+.teaser .net a:hover{color:var(--gold)}
+.teaser .cta{margin-top:28px}
+
+.footer{border-top:1px solid var(--border);padding:28px 0}
+.footer .wrap{display:flex;align-items:center;justify-content:space-between;
+              gap:16px;flex-wrap:wrap}
+.footer p{font-size:13px;color:var(--text-dim)}
+.footer nav{display:flex;gap:20px;flex-wrap:wrap}
+.footer a{font-size:13px;color:var(--text-dim);text-decoration:none}
+.footer a:hover{color:var(--text)}
+
+.reveal{opacity:0;transform:translateY(14px);
+        transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:600px){
+  .hero{padding:80px 0 64px}
+  .kicker{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav glass-bar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html" aria-label="DGTL College — home">
+      <img class="wordmark" src="assets/logo-white-gold.svg" alt="DGTL" width="70" height="26">
+      <span class="kicker">DGTL College</span>
+    </a>
+    <nav aria-label="Site">
+      <a class="plain" href="https://dgtlgroup.io/">dgtlgroup.io</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <img class="spark-bg" src="assets/spark.svg" alt="" aria-hidden="true">
+    <div class="wrap hero-inner">
+      <p class="eyebrow reveal">A DGTL Group property · Education</p>
+      <h1 class="h-display reveal">Learn the <span class="gold">machine</span>.</h1>
+      <p class="support reveal">An education property from DGTL Group is being built
+        at this address. Details when it opens.</p>
+      <div class="cta-row reveal">
+        <a class="btn btn-primary" href="mailto:hello@dgtlgroup.io">Ask about early access →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="teaser" aria-label="Coming soon">
+    <div class="wrap">
+      <p class="line reveal">Teaching what the network practices — <span class="gold">coming</span>.</p>
+      <p class="net reveal">DGTL runs a working creator network.
+        <a href="https://join.dgtlinfluence.com/">See it in motion →</a></p>
+      <div class="cta reveal">
+        <a class="btn btn-secondary btn-sm" href="mailto:hello@dgtlgroup.io">hello@dgtlgroup.io</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>© 2026 DGTL Group · Toronto</p>
+    <nav aria-label="DGTL properties">
+      <a href="https://dgtlgroup.io/">dgtlgroup.io</a>
+      <a href="https://dgtlinfluence.com/">dgtlinfluence.com</a>
+      <a href="https://join.dgtlinfluence.com/">join.dgtlinfluence.com</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)||
+     window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    els.forEach(function(el){el.classList.add('in')});return;
+  }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+    });
+  },{threshold:0.15});
+  els.forEach(function(el){io.observe(el)});
+})();
+</script>
+</body>
+</html>
