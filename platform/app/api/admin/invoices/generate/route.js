@@ -2,6 +2,31 @@ import { NextResponse } from "next/server";
 import { getAdminSession } from "../../../../../lib/auth";
 
 const INVOICE_API_URL = "https://invoice-generator.com";
+const DGTL_INVOICE_DEFAULTS = Object.freeze({
+  logo: "https://os.dgtl.ltd/assets/brand/dgtl-logo-invoice.svg",
+  from: "DGTL Group\nToronto, Ontario, Canada",
+  currency: "CAD",
+  tax: 13,
+  header: "INVOICE",
+  notes: "Thank you for your business.",
+  terms: "Payment due by the due date shown above.",
+});
+
+function withDgtlDefaults(payload) {
+  const clean = payload && typeof payload === "object" ? payload : {};
+  return {
+    ...DGTL_INVOICE_DEFAULTS,
+    ...clean,
+    // Branding is intentionally canonical so every DGTL-generated PDF carries
+    // the approved invoice-safe wordmark even if a browser omits the field.
+    logo: DGTL_INVOICE_DEFAULTS.logo,
+    from: clean.from || DGTL_INVOICE_DEFAULTS.from,
+    currency: clean.currency || DGTL_INVOICE_DEFAULTS.currency,
+    header: clean.header || DGTL_INVOICE_DEFAULTS.header,
+    notes: clean.notes ?? DGTL_INVOICE_DEFAULTS.notes,
+    terms: clean.terms ?? DGTL_INVOICE_DEFAULTS.terms,
+  };
+}
 
 export async function POST(request) {
   const session = await getAdminSession();
@@ -14,7 +39,7 @@ export async function POST(request) {
 
   let payload;
   try {
-    payload = await request.json();
+    payload = withDgtlDefaults(await request.json());
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
