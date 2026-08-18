@@ -3,7 +3,7 @@ import { getAdminSession } from "../../../../../lib/auth";
 
 const INVOICE_API_URL = "https://invoice-generator.com";
 const DGTL_INVOICE_DEFAULTS = Object.freeze({
-  logo: "https://os.dgtl.ltd/assets/brand/dgtl-logo-invoice.svg",
+  logo: "https://os.dgtl.ltd/assets/brand/dgtl-logo-invoice.png",
   from: "DGTL Group\nToronto, Ontario, Canada",
   currency: "CAD",
   tax: 13,
