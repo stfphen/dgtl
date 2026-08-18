@@ -44,6 +44,8 @@ services:
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
       HUNTER_API_KEY: ${HUNTER_API_KEY:-}
       APOLLO_API_KEY: ${APOLLO_API_KEY:-}
+      # Server-only Invoice Generator bearer credential.
+      INVOICE_GENERATOR_API_KEY: ${INVOICE_GENERATOR_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       # --- Call transcription (Deepgram primary, OpenAI Whisper fallback) ---
