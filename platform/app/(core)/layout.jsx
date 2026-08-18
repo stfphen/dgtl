@@ -1,22 +1,9 @@
-import { Manrope } from "next/font/google";
 import CoreShell from "../../components/core/CoreShell";
 import { getCorePageContext } from "../../lib/core/server";
+import { manrope } from "../../lib/fonts";
+import "../dgtl-tokens.css";
 import "../admin/dgtl-admin.css";
 import "./core.css";
-
-// DGTL brand typeface for the Core surface. Same contract as the admin layout:
-// a --font-manrope variable that dgtl-admin.css repoints --font-sans to, scoped
-// under .v2-admin-shell (which CoreShell carries). Core previously borrowed the
-// root layout's instance; owning one here keeps the two surfaces symmetrical and
-// keeps Manrope off the public tenant funnels. preload:false — the funnels never
-// mount under this layout.
-const manrope = Manrope({
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-manrope",
-  preload: false,
-});
 
 // Core is DGTL's own app, not a tenant funnel — so it names itself rather than
 // inheriting the root layout's tenant-facing "Content Day" title.
@@ -62,6 +49,11 @@ export const viewport = {
 export default async function CoreLayout({ children }) {
   const { session } = await getCorePageContext();
   return (
+    // display:contents wrapper carries --font-manrope to the Core shell, the
+    // same way the admin layout does. Before this, Core resolved Manrope only
+    // because the ROOT layout happens to put the variable on <html> with
+    // preload:false — the OS's primary typeface arrived by coincidence and was
+    // never preloaded on its own routes.
     <div className={manrope.variable} style={{ display: "contents" }}>
       <CoreShell user={{ ...session.user, email: session.email, role: session.role }}>
         {children}

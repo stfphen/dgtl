@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { parseCommand } from "./terminal/commandGrammar";
+import { statusTone } from "../../lib/core/statusTone";
 
 /**
  * Global search / command entry (⌘K / Ctrl+K). Stage 5 scope: navigation and
@@ -129,7 +130,7 @@ export default function CommandPalette() {
                   <span className="core-cmdk__kind">{result.kind.replaceAll("_", " ")}</span>
                   <span className="core-cmdk__title">{result.title}</span>
                   {result.subtitle ? <span className="core-cmdk__subtitle">{result.subtitle}</span> : null}
-                  {result.status ? <span className="core-status">{String(result.status).replaceAll("_", " ")}</span> : null}
+                  {result.status ? <span className={`core-status is-${statusTone(result.status)}`}>{String(result.status).replaceAll("_", " ")}</span> : null}
                 </button>
               ))}
             </div>

@@ -57,7 +57,9 @@ export default function ChatWorkspace({ health, initialThreads = [], initialQuer
   return (
     <div className="chat-shell">
       <aside className="chat-threads">
-        <button className="core-button is-primary" disabled={session.busy} onClick={session.newThread}>New thread</button>
+        {/* Plain, not is-primary: #34 rations gold to the primary action, and on this
+            screen that is Send / Confirm, not "New thread". */}
+        <button className="core-button" disabled={session.busy} onClick={session.newThread}>New thread</button>
         <div className="chat-threads__list">
           {session.threads.map((thread) => (
             <button

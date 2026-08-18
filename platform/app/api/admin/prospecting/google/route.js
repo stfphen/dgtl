@@ -13,6 +13,7 @@ import {
   requireTenantAccess,
   updateLeadResearch
 } from "../../../../../lib/store";
+import { redirectToUrl, sameHostUrl } from "../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -72,7 +73,7 @@ export async function POST(request) {
     }
   }
 
-  const url = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
+  const url = sameHostUrl("/admin");
   if (!result.ok) url.searchParams.set("notice", result.reason);
   if (result.ok) {
     url.searchParams.set(
@@ -83,5 +84,5 @@ export async function POST(request) {
       })
     );
   }
-  return NextResponse.redirect(url, 303);
+  return redirectToUrl(url);
 }

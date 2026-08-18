@@ -8,60 +8,19 @@
    Manrope is loaded by app/admin/layout.jsx (next/font -> --font-manrope).
    ========================================================================== */
 
-/* ---------------- Tokens (both themes) ---------------- */
-html .v2-admin-shell,
-html .admin-login {
-  --font-sans: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  font-family: var(--font-sans);
-
-  /* The DGTL accent, under its real name. #F0CF50 is declared exactly once in
-     this file — everything else references --gold, so there is one place to
-     change it and no literal to drift. */
-  --gold: #F0CF50;
-  --gold-dark: #cbab35;
-  --on-gold: #000;
-  --gold-tan: #b3a06a;
-  --gold-tint: rgba(240, 207, 80, 0.08);
-  --gold-ring: rgba(240, 207, 80, 0.15);
-
-  /* Legacy names kept as aliases. styles.css defines --blue/--blue-dark/--on-blue
-     and dozens of derived rules across the admin and core stylesheets still read
-     them; this scope has always repointed them to gold. Aliasing rather than
-     renaming keeps every computed value byte-identical while new code can say
-     what it means. Prefer --gold in anything you write. */
-  --blue: var(--gold);
-  --blue-dark: var(--gold-dark);
-  --on-blue: var(--on-gold);
-
-  --info: #6E9FDB;
-  --success: #7BC47F;
-  --warn: #E8A33D;
-  --danger: #E5484D;
-  --shadow-card: 0 6px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.15);
-  --fp-radius-button: 7px;
-  --radius: 16px;
-  --radius-sm: 7px;
-  --radius-lg: 16px;
-}
-html .v2-admin-shell ::selection,
-html .admin-login ::selection { background: var(--gold); color: var(--on-gold); }
+/* ---------------- Tokens ----------------
+   MOVED. Every brand token (palette, radii, shadows, the dark ladder, the
+   Manrope font stack, and the legacy aliases the rules below depend on) now
+   lives in the one canonical file: platform/app/dgtl-tokens.css, imported by
+   this route's layout before this sheet. Add or change brand values there —
+   never here, and never as a literal in a rule below. */
 
 /* The bolt in the DGTL wordmark (components/brand/DgtlWordmark.jsx). The letters
    take currentColor from whatever they sit in; the bolt is always the accent, so
-   it is set here rather than hardcoded in the component. */
+   it is set here rather than hardcoded in the component — the token, never the
+   literal. Covers Core too: CoreShell's root carries .v2-admin-shell. */
 html .v2-admin-shell .dgtl-logo__bolt,
 html .admin-login .dgtl-logo__bolt { fill: var(--gold); }
-
-/* ---------------- Dark surface ladder (the DGTL identity) ---------------- */
-html .v2-admin-shell[data-theme="dark"] {
-  --white: #0a0a0a; --soft: #000000; --soft-2: #111111;
-  --black: #F0F0F0; --near-black: #e6e6e6; --muted: #8a8a8a;
-  --line: #2a2a2a; --border: #2a2a2a;
-  --bg: #000000; --surface: #0a0a0a; --surface-2: #111111; --surface-3: #1a1a1a;
-  --fg: #F0F0F0; --fg-muted: #8a8a8a;
-  --glass-dark: rgba(0, 0, 0, 0.5);
-}
-html .v2-admin-shell[data-theme="light"] { --line: #e6e2d6; --border: #e6e2d6; }
 
 /* ---------------- Generic primitives (used across all tabs) ---------------- */
 html .v2-admin-shell .button {
@@ -89,7 +48,7 @@ html .v2-admin-shell textarea {
   color: var(--fg);
   font-size: 13px;
 }
-html .v2-admin-shell input::placeholder { color: #6a6a6a; }
+html .v2-admin-shell input::placeholder { color: var(--placeholder); }
 
 /* Status badges (pipeline stages, counts). */
 html .v2-admin-shell .status-pill {
@@ -101,17 +60,39 @@ html .v2-admin-shell .status-pill {
   padding: 3px 10px;
   border-radius: 9999px;
   white-space: nowrap;
-  background: var(--gold-tint);
-  color: var(--blue);
+  background: var(--surface-3);
+  color: var(--text-secondary);
 }
 html .v2-admin-shell .status-pill--won,
 html .v2-admin-shell .status-pill--booked {
-  background: rgba(123, 196, 127, 0.12); color: var(--success);
+  background: var(--success-tint); color: var(--success);
 }
 html .v2-admin-shell .status-pill--lost,
 html .v2-admin-shell .status-pill--disqualified {
-  background: rgba(229, 72, 77, 0.12); color: var(--danger);
+  background: var(--error-tint); color: var(--error);
 }
+html .v2-admin-shell .status-pill--pending,
+html .v2-admin-shell .status-pill--overdue { background: var(--warning-tint); color: var(--warning); }
+html .v2-admin-shell .status-pill--new,
+html .v2-admin-shell .status-pill--queued { background: var(--info-tint); color: var(--info); }
+
+/* The universal focus ring, matching Core. The command-center default was a
+   3px outline plus a 20px bloom tuned for a blue accent; in gold it read as a
+   halo rather than a ring. */
+html .v2-admin-shell :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: var(--focus-glow);
+}
+
+/* Generalize the table skin beyond .calls-table so every admin table reads the
+   same way: hairline rows, hover surface, dim uppercase headings. */
+html .v2-admin-shell table th {
+  background: var(--surface-2); color: var(--text-dim);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+}
+html .v2-admin-shell table td { border-bottom: 1px solid var(--row-line); }
+html .v2-admin-shell[data-theme="dark"] table tbody tr:hover { background: var(--row-hover); }
 
 /* ==========================================================================
    SHELL — matched to the POC frame
@@ -197,7 +178,7 @@ html .v2-admin-shell .v2-nav-count { display: none; }
   html .v2-admin-shell .v2-nav-item {
     display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
     gap: 12px; width: 100%; height: auto; min-height: 0; padding: 10px 12px;
-    border-radius: var(--radius-sm); color: #D0D0D0; font-weight: 500; font-size: 14px;
+    border-radius: var(--radius-sm); color: var(--text-secondary); font-weight: 500; font-size: 14px;
     position: relative;
   }
   html .v2-admin-shell .v2-nav-item svg { width: 20px; height: 20px; opacity: 1; }
@@ -255,7 +236,7 @@ html .v2-admin-shell .v2-metric-pill {
   background: rgba(0, 0, 0, 0.45); border: 1px solid var(--border);
   box-shadow: var(--shadow-card); transition: border-color 0.2s, transform 0.2s;
 }
-html .v2-admin-shell .v2-metric-pill:hover { border-color: #3a3a3a; transform: translateY(-2px); }
+html .v2-admin-shell .v2-metric-pill:hover { border-color: var(--border-hover); transform: translateY(-2px); }
 html .v2-admin-shell .v2-metric-count {
   font-family: var(--font-sans); font-size: 34px; font-weight: 800; line-height: 1;
   font-variant-numeric: tabular-nums; color: #fff; margin: 0;
@@ -286,7 +267,7 @@ html .v2-admin-shell .outreach-list-row {
   padding: 12px; border-radius: 10px;
 }
 html .v2-admin-shell .outreach-list-row:hover { background: var(--surface-2); }
-html .v2-admin-shell .outreach-list-row + .outreach-list-row { border-top: 1px solid #1c1c1c; }
+html .v2-admin-shell .outreach-list-row + .outreach-list-row { border-top: 1px solid var(--row-line); }
 html .v2-admin-shell .outreach-list-row strong { font-weight: 600; color: var(--fg); }
 html .v2-admin-shell .outreach-list-row span { font-size: 12px; color: var(--fg-muted); }
 
@@ -307,12 +288,12 @@ html .v2-admin-shell .lead-control-list {
   border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
 }
 html .v2-admin-shell .lead-card {
-  border: 0; border-top: 1px solid #1c1c1c; border-radius: 0; background: transparent;
+  border: 0; border-top: 1px solid var(--row-line); border-radius: 0; background: transparent;
 }
 html .v2-admin-shell .lead-control-list > .lead-card:first-child { border-top: 0; }
 html .v2-admin-shell .lead-card summary { padding: 13px 16px; }
-html .v2-admin-shell .lead-card summary:hover { background: #0f0f0f; }
-html .v2-admin-shell .lead-card[open] summary { background: #0f0f0f; }
+html .v2-admin-shell .lead-card summary:hover { background: var(--row-hover); }
+html .v2-admin-shell .lead-card[open] summary { background: var(--row-hover); }
 html .v2-admin-shell .lead-score {
   background: transparent; color: var(--blue); font-weight: 800; font-variant-numeric: tabular-nums;
 }
@@ -326,7 +307,7 @@ html .v2-admin-shell .outreach-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
   transition: border-color 0.2s, transform 0.2s;
 }
-html .v2-admin-shell .outreach-card:hover { border-color: #3a3a3a; transform: translateY(-2px); }
+html .v2-admin-shell .outreach-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
 html .v2-admin-shell .admin-grid .outreach-card:first-child { border-left: 3px solid var(--blue); }
 html .v2-admin-shell .outreach-card h3 { font-size: 16px; font-weight: 700; color: #fff; }
 html .v2-admin-shell .outreach-card strong { color: var(--blue); font-weight: 800; }
@@ -394,7 +375,7 @@ html .v2-admin-shell .admin-form > label,
 html .v2-admin-shell .admin-form__label,
 html .v2-admin-shell .outreach-builder__form label,
 html .v2-admin-shell .batch-builder__form label {
-  display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: #c9c9c9;
+  display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);
 }
 html .v2-admin-shell .admin-form input,
 html .v2-admin-shell .admin-form select,
@@ -436,7 +417,7 @@ html .v2-admin-shell .outreach-metrics span {
 html .v2-admin-shell .outreach-metrics p { color: var(--fg-muted); font-size: 12px; }
 html .v2-admin-shell .outreach-lead-row,
 html .v2-admin-shell .outreach-queue-row {
-  border-bottom: 1px solid #1c1c1c; padding: 12px 6px;
+  border-bottom: 1px solid var(--row-line); padding: 12px 6px;
 }
 html .v2-admin-shell .outreach-lead-row small,
 html .v2-admin-shell .outreach-queue-row small,
@@ -470,7 +451,7 @@ html .v2-admin-shell .media-picker__dropzone { border: 2px dashed var(--border);
 html .v2-admin-shell .media-picker__dropzone:hover { border-color: var(--blue); color: var(--fg); }
 
 /* ---- Cross-cutting: toast stays light-on-dark even inside the shell ---- */
-html .v2-admin-shell .toast { color: #F0F0F0; background: #111; border: 1px solid var(--border); }
+html .v2-admin-shell .toast { color: var(--text-primary); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
 
 /* ---- Calls tab: dial pad (keys were var(--soft) = #000 in dark → invisible) ---- */
 html .v2-admin-shell .dialpad__panel {
@@ -493,8 +474,8 @@ html .v2-admin-shell .calls-table th {
   background: var(--surface-2); color: var(--fg-muted); font-size: 11px;
   text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; padding: 10px;
 }
-html .v2-admin-shell .calls-table td { border-bottom: 1px solid #1c1c1c; padding: 11px 10px; color: var(--fg); }
-html .v2-admin-shell[data-theme="dark"] .calls-table tbody tr:hover { background: #0f0f0f; }
+html .v2-admin-shell .calls-table td { border-bottom: 1px solid var(--row-line); padding: 11px 10px; color: var(--fg); }
+html .v2-admin-shell[data-theme="dark"] .calls-table tbody tr:hover { background: var(--row-hover); }
 html .v2-admin-shell .calls-table__danger,
 html .v2-admin-shell .calls-table__delete {
   color: var(--danger); background: transparent;
@@ -517,7 +498,7 @@ html .v2-admin-shell .preview-card span,
 html .v2-admin-shell .preview-card small { color: var(--fg-muted); }
 
 /* ---- Accounts tab: enrichment/research groups ---- */
-html .v2-admin-shell .research-group { border-top: 1px solid #1c1c1c; padding-top: 10px; margin-top: 10px; }
+html .v2-admin-shell .research-group { border-top: 1px solid var(--row-line); padding-top: 10px; margin-top: 10px; }
 html .v2-admin-shell .research-group strong { color: var(--fg); }
 
 /* ==========================================================================
@@ -528,42 +509,52 @@ html .admin-login {
   min-height: 100svh; display: flex; align-items: center; justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(1100px 560px at 50% -12%, rgba(240, 207, 80, 0.06), transparent 62%),
+    radial-gradient(1100px 560px at 50% -12%, var(--gold-tint), transparent 62%),
     radial-gradient(900px 500px at 0% 100%, rgba(255, 255, 255, 0.02), transparent 55%),
     #000;
 }
 html .admin-login .admin-login__panel {
   width: 100%; max-width: 400px;
-  background: rgba(0, 0, 0, 0.45); border: 1px solid #2a2a2a; border-radius: 16px;
-  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.15);
+  background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
   padding: 32px; text-align: left;
 }
 html .admin-login .admin-login__brand {
   display: flex; justify-content: center; margin: 8px 0 28px;
 }
-html .admin-login .admin-login__brand svg { height: 34px; width: auto; color: #F0F0F0; }
+html .admin-login .admin-login__brand svg { height: 34px; width: auto; color: var(--text-primary); }
 html .admin-login .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 html .admin-login .admin-loading__text {
-  color: #8a8a8a; font-size: 13px; text-align: center; margin: 0;
+  color: var(--text-dim); font-size: 13px; text-align: center; margin: 0;
 }
 html .admin-login .admin-form { display: flex; flex-direction: column; gap: 14px; }
 html .admin-login .admin-form label {
-  display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: #D0D0D0;
+  display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary);
 }
 html .admin-login .admin-form input {
-  background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 7px;
-  padding: 12px 14px; color: #F0F0F0; font-size: 14px; width: 100%;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-control);
+  padding: 12px 16px; color: var(--text-primary); font-size: 14px; width: 100%;
 }
-html .admin-login .admin-form input::placeholder { color: #6a6a6a; }
+html .admin-login .admin-form input::placeholder { color: var(--placeholder); }
 html .admin-login .admin-form input:focus-visible {
-  outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-ring);
+  outline: none; border-color: var(--gold); box-shadow: var(--focus-glow);
 }
 html .admin-login .admin-form .button--primary {
-  background: var(--gold); color: var(--on-gold); border: none; border-radius: 7px;
+  background: var(--gold); color: var(--on-blue); border: none; border-radius: var(--r-control);
   padding: 12px 18px; font-weight: 700; font-size: 14px; margin-top: 4px; width: 100%;
   display: inline-flex; align-items: center; justify-content: center;
 }
-html .admin-login .admin-error { color: #E5484D; font-size: 13px; margin-top: 4px; }
+html .admin-login .admin-error { color: var(--error); font-size: 13px; margin-top: 4px; }
+
+
+/* ---------------- Gold rationing on the legacy KPI row ----------------
+   The command-center design gave every metric pill a gold gradient hairline
+   and every label a glowing gold dot (styles.css:4780, :4811). Nine of each in
+   one row spends the accent on decoration, which the brand kit rations to the
+   primary action and key numbers — the first pill's figure already carries it. */
+html .v2-admin-shell .admin-metrics .v2-metric-pill::after { content: none; }
+html .v2-admin-shell .admin-metrics .v2-metric-label::before { display: none; }
+html .v2-admin-shell .admin-metrics .v2-metric-label { padding-left: 0; }

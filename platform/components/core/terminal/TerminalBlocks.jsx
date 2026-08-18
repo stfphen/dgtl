@@ -146,7 +146,7 @@ export function TerminalProposal({ proposal, busy, onConfirm, onReject }) {
       {open ? (
         <div className="term-actions">
           <button className="core-button is-primary" disabled={busy} onClick={() => onConfirm(proposal.id)}>{CONFIRM_LABELS[proposal.actionId] || "Confirm"}</button>
-          <button className="core-button" disabled={busy} onClick={() => onReject(proposal.id)}>Reject</button>
+          <button className="core-button is-danger" disabled={busy} onClick={() => onReject(proposal.id)}>Reject</button>
         </div>
       ) : null}
     </Panel>

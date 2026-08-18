@@ -3,6 +3,7 @@ import { logAudit } from "../../../../../lib/audit";
 import { permissionDeniedResponse, requireRole } from "../../../../../lib/permissions";
 import { lookupHunterDomain } from "../../../../../lib/integrations/hunter";
 import { createLead, getSessionTeamId, requireTenantAccess } from "../../../../../lib/store";
+import { redirectToUrl, sameHostUrl } from "../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -23,10 +24,10 @@ export async function POST(request) {
   }
   const result = await lookupHunterDomain(domain);
 
-  const url = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
+  const url = sameHostUrl("/admin");
   if (!result.ok) {
     url.searchParams.set("notice", result.reason);
-    return NextResponse.redirect(url, 303);
+    return redirectToUrl(url);
   }
 
   for (const contact of result.contacts) {
@@ -60,5 +61,5 @@ export async function POST(request) {
   }
 
   url.searchParams.set("notice", `Imported ${result.contacts.length} Hunter contacts for ${domain}.`);
-  return NextResponse.redirect(url, 303);
+  return redirectToUrl(url);
 }

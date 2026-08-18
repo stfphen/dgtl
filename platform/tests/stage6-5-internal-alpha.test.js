@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -15,6 +15,7 @@ test("dgtl.chat is not claimed by any built-in tenant, so it lands on the authen
   const { getTenantClaimingHost } = await import("../lib/store.js");
   assert.equal(await getTenantClaimingHost("dgtl.chat"), null, "dgtl.chat must stay an app host — an active tenant claiming it would serve a public funnel on the OS domain");
   assert.equal(await getTenantClaimingHost("www.dgtl.chat"), null, "www.dgtl.chat must not be tenant-claimed either");
+  assert.equal(await getTenantClaimingHost("os.dgtl.ltd"), null, "os.dgtl.ltd must stay an app host — the canonical OS domain");
   const page = await readFile(path.join(root, "platform", "app", "page.jsx"), "utf8");
   assert.match(page, /if \(!tenant\) redirect\("\/home"\)/, "unclaimed hosts land on HOME (login-gated)");
 
@@ -36,6 +37,8 @@ test("compose passes the Stage 4/6 env contracts through and routes dgtl.chat on
     assert.match(compose, new RegExp(`${name}: \\$\\{${name}:-\\}`), `${name} is passed through from .env, never hardcoded`);
   }
   assert.match(compose, /Host\(`dgtl\.chat`\)/, "Traefik routes dgtl.chat");
+  assert.match(compose, /Host\(`os\.dgtl\.ltd`\)/, "Traefik routes os.dgtl.ltd");
+  assert.match(compose, /PUBLIC_APP_URL: \$\{PUBLIC_APP_URL:-/, "PUBLIC_APP_URL must be overridable from .env, not a hardcoded literal");
   assert.match(compose, /traefik\.http\.routers\.dgtlchat\.tls\.certresolver: "letsencrypt"/, "dgtl.chat gets a Let's Encrypt certificate");
   assert.match(compose, /traefik\.http\.routers\.dgtlchat-http\.middlewares: "dgtlmag-redirect"/, "plain HTTP on dgtl.chat redirects to HTTPS");
   assert.doesNotMatch(compose, /CORE_WORKLOG_PASSWORD: (?!\$\{)/, "no literal Worklog password in compose");
@@ -63,10 +66,31 @@ test("auth redirects are host-preserving — never pinned to PUBLIC_APP_URL", as
     ["app/api/admin/logout/route.js"],
     ["lib/permissions.js"],
     ["lib/stage2/api.js"],
+    ["lib/stage3/api.js"],
+    ["lib/stage4/api.js"],
   ];
   for (const [rel] of files) {
     const source = await readFile(path.join(root, "platform", rel), "utf8");
     assert.doesNotMatch(source, /redirect\(new URL\([^)]*PUBLIC_APP_URL/, `${rel}: a redirect built from PUBLIC_APP_URL strands a dgtl.chat login on dgtlmag.com without its host-scoped cookie`);
+  }
+  // The whole admin form family, not just auth: the app serves several hosts
+  // from one deployment and the session cookie is host-scoped, so ANY redirect
+  // built from PUBLIC_APP_URL drops an operator on a host where they are not
+  // logged in. PUBLIC_APP_URL is for links that leave the process.
+  const adminDir = path.join(root, "platform", "app", "api", "admin");
+  const routes = [];
+  const walk = async (dir) => {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else if (entry.name === "route.js") routes.push(full);
+    }
+  };
+  await walk(adminDir);
+  assert.ok(routes.length >= 20, "expected the admin route family to be present");
+  for (const file of routes) {
+    const source = await readFile(file, "utf8");
+    assert.doesNotMatch(source, /new URL\([^)]*process\.env\.PUBLIC_APP_URL/, `${path.relative(root, file)} builds a redirect target from PUBLIC_APP_URL`);
   }
   const login = await readFile(path.join(root, "platform", "app", "api", "admin", "login", "route.js"), "utf8");
   assert.match(login, /Location: location/, "login redirects via relative Location");

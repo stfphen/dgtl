@@ -118,7 +118,10 @@ test("the unsafe host resolver is gone and cannot be called again", async () => 
 });
 
 test("the manifest's colours stay pinned to the brand stylesheet", async () => {
-  const css = await read("app", "admin", "dgtl-admin.css");
+  // The token layer moved in #34: every brand value now lives in the one
+  // canonical app/dgtl-tokens.css rather than in the admin sheet. The assertion
+  // is unchanged in intent — it just follows the source.
+  const css = await read("app", "dgtl-tokens.css");
 
   // A JSON manifest cannot reference a CSS custom property, so the two colours
   // are duplicated. This asserts the duplicate still matches its source.

@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import { permissionDeniedResponse, requireRole } from "../../../../../../lib/permissions";
 import { getSessionTeamId } from "../../../../../../lib/store";
 import { sendApprovedItems } from "../../../../../../lib/outreach/sendQueue";
+import { redirectSameHost } from "../../../../../../lib/http/redirects";
 
 function redirectAdmin(request, notice) {
-  const url = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
-  if (notice) url.searchParams.set("notice", notice);
-  return NextResponse.redirect(url, 303);
+  return redirectSameHost("/admin", notice);
 }
 
 export async function POST(request) {
