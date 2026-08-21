@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DGTL Report — client reporting from DGTL Group</title>
+<meta name="description" content="The future home of DGTL client reporting — monthly progress reports and quarterly reviews for retained clients, in one place. A DGTL Group property.">
+<link rel="canonical" href="https://dgtl.report/">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DGTL Report">
+<meta property="og:title" content="DGTL Report — client reporting from DGTL Group">
+<meta property="og:description" content="Monthly progress reports and quarterly reviews for retained DGTL clients, in one place.">
+<meta property="og:url" content="https://dgtl.report/">
+<link rel="icon" href="assets/spark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebSite","@id":"https://dgtl.report/#website",
+  "url":"https://dgtl.report/","name":"DGTL Report",
+  "publisher":{"@id":"https://dgtlgroup.io/#organization"}},
+ {"@type":"Organization","@id":"https://dgtlgroup.io/#organization",
+  "name":"DGTL Group","url":"https://dgtlgroup.io/",
+  "sameAs":["https://dgtlinfluence.com/"]}]}
+</script>
+<style>
+/* ===== DGTL brand tokens (engine/dgtl-brand-kit/assets/dgtl-tokens.css, inlined) ===== */
+:root{
+  --bg:#000000; --surface-1:#0a0a0a; --surface-2:#111111;
+  --surface-card:rgba(0,0,0,0.45);
+  --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
+  --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
+  --gold-ring:rgba(240,207,80,0.15);
+  --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.4);
+  --r-control:7px; --r-card:16px; --r-pill:9999px;
+  --shadow-card:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15);
+  --glass-bg:rgba(0,0,0,0.45);
+  --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
+     background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden;
+     min-height:100vh;display:flex;flex-direction:column}
+::selection{background:var(--gold);color:#000}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gold-ring), 0 0 0 1px var(--gold);border-radius:4px}
+
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);
+     font-weight:700;font-size:16px;border-radius:var(--r-control);
+     padding:15px 24px;border:1px solid transparent;cursor:pointer;
+     text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-primary:focus-visible{border-radius:var(--r-control)}
+.card{background:var(--surface-card);border:1px solid var(--border);
+      border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:24px}
+.card-callout{border-left:3px solid var(--gold)}
+.h-display{font-size:clamp(40px,6vw,70px);font-weight:700;letter-spacing:-1.4px;
+           line-height:1.08;color:#fff}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;
+         color:var(--gold-tan);font-weight:600}
+.gold{color:var(--gold)}
+.glass-bar{background:var(--glass-bg);backdrop-filter:blur(8px) saturate(1.8);
+           -webkit-backdrop-filter:blur(8px) saturate(1.8);
+           border-bottom:1px solid var(--border-subtle)}
+
+/* ===== page ===== */
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;width:100%}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--gold);color:#000;
+           font-weight:700;padding:10px 16px;border-radius:0 0 var(--r-control) 0;z-index:60}
+.skip-link:focus{left:0}
+
+.nav{position:sticky;top:0;z-index:50}
+.nav-inner{max-width:1120px;margin:0 auto;padding:14px 24px;display:flex;
+           align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none}
+.wordmark{height:26px;width:auto;display:block}
+.kicker{font-size:12px;text-transform:uppercase;letter-spacing:.14em;
+        color:var(--text-dim);font-weight:600;border-left:1px solid var(--border);
+        padding-left:12px;white-space:nowrap}
+.nav-out{font-size:14px;font-weight:600;color:var(--text-muted);text-decoration:none;
+         transition:color .15s;white-space:nowrap}
+.nav-out:hover{color:#fff}
+
+.hero{position:relative;overflow:hidden;padding:120px 0 96px;flex:1;
+      display:flex;align-items:center}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 62% 52% at 28% 22%, rgba(240,207,80,0.07), transparent 68%)}
+.spark-bg{position:absolute;top:-12%;right:-8%;width:min(560px,70vw);opacity:.05;
+          transform:rotate(18deg);pointer-events:none;user-select:none}
+.hero-inner{position:relative}
+.hero h1{max-width:760px;margin:18px 0 22px}
+.hero .support{color:var(--text-muted);font-size:18px;line-height:1.65;max-width:600px}
+.hero .cta-row{margin-top:36px}
+
+.band{padding:0 0 96px}
+.band .card{max-width:720px;padding:28px 32px}
+.band p{color:var(--text-muted);line-height:1.65}
+.band .contact{display:inline-block;margin-top:14px;font-weight:700;color:var(--gold);
+               text-decoration:none}
+.band .contact:hover{text-decoration:underline}
+
+.footer{border-top:1px solid var(--border);padding:28px 0}
+.footer-inner{max-width:1120px;margin:0 auto;padding:0 24px;display:flex;
+              align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.footer p{font-size:13px;color:var(--text-dim)}
+.footer nav{display:flex;gap:20px;flex-wrap:wrap}
+.footer nav a{font-size:13px;color:var(--text-dim);text-decoration:none;transition:color .15s}
+.footer nav a:hover{color:var(--text-muted)}
+
+.reveal{opacity:0;transform:translateY(14px);
+        transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:640px){
+  .hero{padding:84px 0 72px}
+  .band{padding-bottom:72px}
+  .kicker{letter-spacing:.1em}
+  .footer-inner{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav glass-bar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="https://dgtl.report/" aria-label="DGTL Report — home">
+      <img class="wordmark" src="assets/logo-white-gold.svg" alt="DGTL" width="70" height="26">
+      <span class="kicker">DGTL Report</span>
+    </a>
+    <nav aria-label="Site">
+      <a class="nav-out" href="https://dgtlgroup.io/">dgtlgroup.io &rarr;</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-title">
+    <img class="spark-bg" src="assets/spark.svg" alt="" aria-hidden="true">
+    <div class="wrap hero-inner">
+      <p class="eyebrow reveal">Client Reporting &middot; A DGTL Group Property</p>
+      <h1 id="hero-title" class="h-display reveal">The numbers, <span class="gold">in writing.</span></h1>
+      <p class="support reveal">The future home of DGTL client reporting: monthly progress
+        and quarterly reviews, in one place. Until it opens, reports arrive from your
+        account lead.</p>
+      <div class="cta-row reveal">
+        <a class="btn btn-primary" href="mailto:hello@dgtlgroup.io">Contact DGTL &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" aria-label="For current clients">
+    <div class="wrap">
+      <div class="card card-callout reveal">
+        <p class="eyebrow" style="margin-bottom:10px">For current clients</p>
+        <p>A DGTL client expecting a report? It comes directly from your account
+           lead until this portal opens.</p>
+        <a class="contact" href="mailto:hello@dgtlgroup.io">hello@dgtlgroup.io &rarr;</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p>&copy; 2026 DGTL Group &middot; Toronto</p>
+    <nav aria-label="DGTL properties">
+      <a href="https://dgtlgroup.io/">dgtlgroup.io</a>
+      <a href="https://dgtlinfluence.com/">dgtlinfluence.com</a>
+      <a href="https://join.dgtlinfluence.com/">join.dgtlinfluence.com</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)||
+     matchMedia('(prefers-reduced-motion: reduce)').matches){
+    els.forEach(function(e){e.classList.add('in')});return;
+  }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}
+    });
+  },{threshold:.15});
+  els.forEach(function(e,i){e.style.transitionDelay=(i*70)+'ms';io.observe(e);});
+})();
+</script>
+</body>
+</html>
