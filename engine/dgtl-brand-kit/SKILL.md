@@ -57,7 +57,7 @@ Run `scripts/verify-screenshots.mjs` (chromium at `/opt/pw-browsers/chromium`) f
 
 ### 6. Deliver
 
-Present the files. For deployable pages, offer a Netlify zip (`index.html` + `_headers` with `X-Content-Type-Options: nosniff`; zip root must contain index.html directly).
+Present the files. For deployable pages, offer a project zip (`index.html` + `_headers` with `X-Content-Type-Options: nosniff`; zip root must contain index.html directly) — publish it through the DGTL portal at **deploy.dgtl.ltd**, not Netlify. DGTL stopped using Netlify in July 2026.
 
 ## Non-negotiables
 

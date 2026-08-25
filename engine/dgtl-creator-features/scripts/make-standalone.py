@@ -2,10 +2,10 @@
 """
 make-standalone.py — bake a Journal/pitch page into a single self-contained .html.
 
-This is the DGTL **deploy artifact**: the VPS portal at deploy.dgtlmedia.io hosts one
-self-contained HTML per slug at pitch.dgtlmedia.io/<slug>, so the file must carry its own
+This is the DGTL **deploy artifact**: the VPS portal at deploy.dgtl.ltd hosts one
+self-contained HTML per slug at pitch.dgtl.ltd/<slug>, so the file must carry its own
 styles, scripts and images (no sibling folders), and its cross-page links must be ABSOLUTE
-pitch.dgtlmedia.io URLs so the pages index and connect to each other.
+pitch.dgtl.ltd URLs so the pages index and connect to each other.
 
 What it does:
 - Inlines <link rel="stylesheet">, <script src>, favicons and every local <img>/asset as
@@ -13,7 +13,7 @@ What it does:
   system sans offline.)
 - With --page-url, rewrites every local *.html cross-link to an absolute URL, resolved against
   the page's live URL — turning relative nav/related/"See the Full Pitch" links into the real
-  pitch.dgtlmedia.io links that make the build graph connect.
+  pitch.dgtl.ltd links that make the build graph connect.
 
 Usage:
   # preview-ready (assets inlined, links left relative)

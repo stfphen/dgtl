@@ -1,0 +1,35 @@
+services:
+  dgtl-publish-host:
+    build: .
+    image: dgtl-publish-host
+    container_name: dgtl-publish-host
+    restart: unless-stopped
+    volumes:
+      # Same dirs deploy/publish-portal writes into — read-only here.
+      - /opt/dgtl-publish/site/pitch-ltd:/data/pitch-ltd:ro
+      - /opt/dgtl-publish/site/gallery:/data/gallery:ro
+      - /opt/dgtl-publish/site/pics:/data/pics:ro
+      - /opt/dgtl-publish/site/mov:/data/mov:ro
+    networks:
+      - coolify
+    # Local-only publish so you can curl the container directly on the VPS while
+    # debugging. Traefik reaches it over the coolify network, not this port.
+    # 8091 = dgtl-journal, 8092 = dgtl-report-host.
+    ports:
+      - "127.0.0.1:8093:80"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "coolify"
+      traefik.http.routers.dgtl-publish-host.rule: "Host(`pitch.dgtl.ltd`) || Host(`shoots.dgtl.gallery`) || Host(`sets.dgtl.pics`) || Host(`watch.dgtl.mov`)"
+      traefik.http.routers.dgtl-publish-host.entrypoints: "https"
+      traefik.http.routers.dgtl-publish-host.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtl-publish-host-http.rule: "Host(`pitch.dgtl.ltd`) || Host(`shoots.dgtl.gallery`) || Host(`sets.dgtl.pics`) || Host(`watch.dgtl.mov`)"
+      traefik.http.routers.dgtl-publish-host-http.entrypoints: "http"
+      traefik.http.routers.dgtl-publish-host-http.middlewares: "publish-host-redirect"
+      traefik.http.middlewares.publish-host-redirect.redirectscheme.scheme: "https"
+      traefik.http.services.dgtl-publish-host.loadbalancer.server.port: "80"
+
+networks:
+  # Coolify's proxy network (external). The coolify-proxy Traefik routes to us via labels.
+  coolify:
+    external: true

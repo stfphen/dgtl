@@ -3,7 +3,7 @@ title: 51 · Project Timeline
 type: log
 tags: [audit]
 status: living
-updated: 2026-08-14
+updated: 2026-08-25
 ---
 
 # Project Timeline
@@ -12,6 +12,16 @@ Chronological history, reconstructed from repo docs + git. **Append newest entri
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
 
 ## 2026-08
+- 2026-08-25 — **The two deploy portals merged into one: `deploy.dgtl.ltd`.** `deploy/publish-portal/`
+  replaces `deploy/portal` (deploy.dgtlmag.com) and `deploy/report-portal` (deploy.dgtl.report).
+  Destinations are now data (`targets.json`), not code: `pitch-ltd`, `pitch-mag`, `report`, `audit`,
+  `gallery`, `pics`, `mov` — seven, on one shared `DEPLOY_TOKEN` instead of two. `deploy/publish-host/`
+  is a new nginx container serving `pitch.dgtl.ltd`, `shoots.dgtl.gallery`, `sets.dgtl.pics` and
+  `watch.dgtl.mov`; `decks` and `report-host` keep serving what they already serve. Diagnosed the
+  long-standing "audit token doesn't work" complaint on the way in: the report stack **was** live all
+  along (`/health` 200, clean `bad token` on a wrong value) — the problem was two tokens and no record
+  of which was which, which one token removes. Pitch skills in `engine/` repointed off the dead
+  `deploy.dgtlmedia.io` onto `deploy.dgtl.ltd`.
 - 2026-08-14 — **DGTL Core Phase 3 implemented locally from merged PR #26.** Added additive
   migration 012, bounded generation/deployment registries, immutable Opportunity context and
   Artifact version chains, scoped service-worker APIs, isolated Git-worktree pitch generation,

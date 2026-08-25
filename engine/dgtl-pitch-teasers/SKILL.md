@@ -54,7 +54,7 @@ The primary action is **"See the Full Pitch →"**, linking to the full pitch as
 plain relative link, because the teaser and the full pitch live in the **same folder**
 (`pitches/<slug>/teaser.html` and `pitches/<slug>/index.html`). See `references/repo-output.md`.
 
-> **Do not** write `/full/`, `/index.html`, or an absolute `https://pitch.dgtlmedia.io/<slug>` URL
+> **Do not** write `/full/`, `/index.html`, or an absolute `https://pitch.dgtl.ltd/<slug>` URL
 > here. Root-absolute links only resolve when served from a domain root, so they break locally *and*
 > under the `/<slug>/` deploy scheme — this is exactly how the DMTV × Bose teaser's "See the Full
 > Pitch" button silently broke. `tools/check-links.py` reports them as `root_absolute`.
@@ -79,7 +79,7 @@ Write the teaser to **`pitches/<slug>/teaser.html`** — the same folder as the 
 Full contract in `references/repo-output.md`.
 
 Then deliver: flatten the teaser to a **single self-contained HTML** (inline CSS/JS/images) for
-upload to **deploy.dgtlmedia.io**. Present the teaser HTML and the screenshots, and say which slug
+upload to **deploy.dgtl.ltd**. Present the teaser HTML and the screenshots, and say which slug
 the pair deploys under — visitors land on `…/<slug>/teaser.html` and click through to
 `…/<slug>/index.html`, so the interest signal is a pageview on the hub within the same slug.
 
