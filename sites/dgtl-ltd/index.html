@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DGTL Group — One group. Every surface of digital.</title>
+<meta name="description" content="dgtl.ltd is the corporate umbrella of DGTL Group — who DGTL is and everything it owns: the agency, the platform, the publishing arm and the products underneath one roof.">
+<link rel="canonical" href="https://dgtl.ltd/">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://dgtl.ltd/">
+<meta property="og:site_name" content="DGTL Group">
+<meta property="og:title" content="DGTL Group — One group. Every surface of digital.">
+<meta property="og:description" content="The corporate umbrella of DGTL Group — the agency, the platform, the publishing arm and the products underneath one roof.">
+<link rel="icon" type="image/svg+xml" href="assets/spark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebSite","@id":"https://dgtl.ltd/#website",
+  "url":"https://dgtl.ltd/","name":"DGTL Group",
+  "publisher":{"@id":"https://dgtlgroup.io/#organization"}},
+ {"@type":"Organization","@id":"https://dgtlgroup.io/#organization",
+  "name":"DGTL Group","url":"https://dgtlgroup.io/",
+  "sameAs":["https://dgtlinfluence.com/"]}]}
+</script>
+<style>
+/* ==========================================================================
+   DGTL Group — brand tokens + base components (dgtlgroup.io, July 2026)
+   ========================================================================== */
+:root{
+  /* surfaces */
+  --bg:#000000; --surface-1:#0a0a0a; --surface-2:#111111;
+  --surface-card:rgba(0,0,0,0.45);
+  /* text */
+  --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
+  --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  /* accent */
+  --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
+  --gold-ring:rgba(240,207,80,0.15);
+  /* borders */
+  --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.4);
+  /* geometry */
+  --r-control:7px; --r-card:16px; --r-pill:9999px;
+  /* effects */
+  --shadow-card:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15);
+  --glass-bg:rgba(0,0,0,0.45);
+  --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
+     background:var(--bg);-webkit-font-smoothing:antialiased}
+::placeholder{color:var(--placeholder)}
+:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+::selection{background:var(--gold);color:#000}
+
+/* --- buttons --- */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);
+     font-weight:700;font-size:16px;border-radius:var(--r-control);
+     padding:15px 24px;border:1px solid transparent;cursor:pointer;
+     text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
+.btn-secondary:hover{border-color:#fff}
+
+/* --- cards --- */
+.card{background:var(--surface-card);border:1px solid var(--border);
+      border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:24px}
+.card-solid{background:var(--surface-1)}
+.card-hover:hover{border-color:#3a3a3a;transform:translateY(-2px);transition:.2s}
+
+/* --- type helpers --- */
+.h-display{font-size:clamp(40px,6vw,70px);font-weight:700;letter-spacing:-1.4px;
+           line-height:1.1;color:#fff}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan)}
+.gold{color:var(--gold)}
+.muted{color:var(--text-muted)} .dim{color:var(--text-dim)}
+
+/* --- glassy bar --- */
+.glass-bar{background:var(--glass-bg);backdrop-filter:blur(8px) saturate(1.8);
+           -webkit-backdrop-filter:blur(8px) saturate(1.8);
+           border-bottom:1px solid var(--border-subtle)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+/* --- page --- */
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--gold);color:#000;
+           padding:10px 16px;font-weight:700;border-radius:0 0 var(--r-control) 0;z-index:20}
+.skip-link:focus{left:0}
+
+.nav{position:sticky;top:0;z-index:10}
+.nav-inner{max-width:1120px;margin:0 auto;padding:14px 24px;display:flex;
+           align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none}
+.nav-brand img{height:26px;width:auto;display:block}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan);
+        border-left:1px solid var(--border);padding-left:12px}
+.nav a.plain{color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500}
+.nav a.plain:hover{color:#fff}
+
+.hero{position:relative;overflow:hidden;padding:120px 0 96px}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 70% 20%, rgba(240,207,80,0.06), transparent 70%)}
+.spark-bg{position:absolute;top:-120px;right:-100px;width:560px;opacity:.05;
+          transform:rotate(18deg);pointer-events:none}
+.hero .wrap{position:relative}
+.hero h1{max-width:760px;margin:16px 0 20px}
+.hero .support{font-size:19px;line-height:1.6;max-width:620px;color:var(--text-muted)}
+.cta-row{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap}
+
+.properties{padding:24px 0 72px}
+.prop-grid{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.prop-grid a{display:block;height:100%;text-decoration:none;color:var(--text)}
+.prop-grid .card{height:100%}
+.prop-grid h3{font-size:20px;font-weight:700;color:#fff;margin:0 0 6px}
+.prop-grid .domain{font-size:12px;color:var(--gold-tan);letter-spacing:.06em;margin-bottom:14px}
+.prop-grid p.role{font-size:14px;color:var(--text-dim);line-height:1.55}
+.prop-grid .go{display:inline-block;margin-top:16px;font-size:14px;font-weight:700;color:var(--gold)}
+
+.statband{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
+          border-top:1px solid var(--border);margin-top:56px;padding-top:40px}
+.statband .n{font-size:clamp(32px,4vw,48px);font-weight:800;color:var(--gold);
+             font-variant-numeric:tabular-nums;line-height:1.1}
+.statband .l{font-size:12px;text-transform:uppercase;letter-spacing:.12em;
+             color:var(--text-dim);margin-top:6px}
+
+footer{border-top:1px solid var(--border-subtle);padding:32px 0 48px}
+.foot-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+footer p{font-size:13px;color:var(--text-dim)}
+.foot-links{display:flex;gap:20px;flex-wrap:wrap}
+.foot-links a{font-size:13px;color:var(--text-dim);text-decoration:none}
+.foot-links a:hover{color:var(--text)}
+
+@media (max-width:860px){
+  .prop-grid{grid-template-columns:1fr}
+  .statband{grid-template-columns:repeat(2,1fr)}
+  .hero{padding:88px 0 64px}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav glass-bar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html" aria-label="DGTL Group — home">
+      <img src="assets/logo-white-gold.svg" alt="DGTL" width="70" height="26">
+      <span class="kicker">DGTL Group</span>
+    </a>
+    <nav aria-label="Site">
+      <a class="plain" href="https://dgtlgroup.io/">dgtlgroup.io</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <img class="spark-bg" src="assets/spark.svg" alt="" aria-hidden="true">
+    <div class="wrap">
+      <p class="eyebrow">The corporate umbrella</p>
+      <h1 class="h-display">One group. Every surface of <span class="gold">digital</span>.</h1>
+      <p class="support">The holding page for DGTL Group: the agency, the platform, the
+        publishing arm and the products underneath one roof.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://dgtlgroup.io/">Visit the agency →</a>
+        <a class="btn btn-secondary" href="mailto:hello@dgtlgroup.io">Contact →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="properties" aria-labelledby="properties-heading">
+    <div class="wrap">
+      <h2 id="properties-heading" class="eyebrow" style="margin-bottom:24px">Live properties</h2>
+      <ul class="prop-grid">
+        <li>
+          <a href="https://dgtlgroup.io/">
+            <div class="card card-solid card-hover">
+              <h3>The agency</h3>
+              <p class="domain">dgtlgroup.io</p>
+              <p class="role">Creative, campaigns and growth — the flagship.</p>
+              <span class="go">View Work →</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="https://dgtlinfluence.com/">
+            <div class="card card-solid card-hover">
+              <h3>The Journal</h3>
+              <p class="domain">dgtlinfluence.com</p>
+              <p class="role">The publishing arm — the DGTL Influence Journal.</p>
+              <span class="go">Read →</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="https://join.dgtlinfluence.com/">
+            <div class="card card-solid card-hover">
+              <h3>The creator network</h3>
+              <p class="domain">join.dgtlinfluence.com</p>
+              <p class="role">The roster behind the Journal — applications open.</p>
+              <span class="go">Apply →</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <div class="statband" role="list" aria-label="Network numbers">
+        <div role="listitem"><p class="n">80+</p><p class="l">Vetted creators</p></div>
+        <div role="listitem"><p class="n">350M+</p><p class="l">Combined reach</p></div>
+        <div role="listitem"><p class="n">5B+</p><p class="l">Impressions</p></div>
+        <div role="listitem"><p class="n">60+</p><p class="l">Campaigns delivered</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-inner">
+    <p>© 2026 DGTL Group · Toronto</p>
+    <nav class="foot-links" aria-label="DGTL properties">
+      <a href="https://dgtlgroup.io/">dgtlgroup.io</a>
+      <a href="https://dgtlinfluence.com/">dgtlinfluence.com</a>
+      <a href="https://join.dgtlinfluence.com/">join.dgtlinfluence.com</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>
