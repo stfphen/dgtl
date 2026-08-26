@@ -287,9 +287,13 @@ link checker intentionally does not scan templates under `engine/`.
   a password published in this repo — publish or delete rights on all seven destinations for anyone
   who read the template. Caught because the token was rejected in the browser (a saved-token red
   herring) and the container's env was checked. **Fixed in code:** the portal now refuses to boot on
-  an unset, placeholder, or under-24-character token and logs which. **Still to do:** confirm no
-  unexpected slugs were published while it was open — list every destination and compare against
-  what you expect. [[52-Decision-Log]] · [[44-Secrets-And-Rotation]]
+  an unset, placeholder, or under-24-character token and logs which. **Exposure audited and clean:**
+  the newest content anywhere across all seven destinations is `pitch-mag/dgtl-web-development-portfolio`
+  at `2026-08-25T22:09:58Z`, ~80 minutes *before* the portal container could have existed (its code was
+  committed at 23:31Z), so nothing was written through the open portal. Caveat: a listing cannot detect
+  a deletion — counts match history (34 pitch slugs from the 07-31 seed, one report page, one audit
+  page), which is inference, not proof; `deploy/vps/seed-pitches.sh` can diff the pitch host against
+  `pitches/` if certainty is wanted. Token rotated. [[52-Decision-Log]] · [[44-Secrets-And-Rotation]]
 
 - ✅ **RESOLVED (2026-08-25): "the dgtl.report/audit deploy token doesn't work."** Probed before
   rebuilding anything: `deploy.dgtl.report/health` returns 200, `dgtl.report/` and
