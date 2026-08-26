@@ -115,6 +115,7 @@ cd /opt/dgtl && deploy/vps/seed-pitches.sh /opt/dgtl /opt/dgtl-decks/site/pitch
 cd /opt/dgtl/deploy/decks        && docker compose up -d --build
 cd /opt/dgtl/deploy/report-host  && docker compose up -d --build
 cd /opt/dgtl/deploy/publish-host && docker compose up -d --build
+docker ps --format '{{.Names}}\t{{.Status}}' | grep publish-host   # MUST be Up — see note below
 
 # retire the old portals BEFORE starting the new one — they own Traefik routers on
 # deploy.dgtlmag.com and deploy.dgtl.report, which publish-portal reclaims for its 301s
@@ -131,6 +132,13 @@ docker exec dgtl-publish sh -c 'printf "%s" "$DEPLOY_TOKEN" | wc -c'   # expect 
 curl -sS https://deploy.dgtl.ltd/health                # {"ok":true,"targets":7}
 curl -sS https://deploy.dgtl.report/health             # same app on the legacy hostname
 ```
+
+**Confirm `dgtl-publish-host` actually started.** The portal boots without it — it only needs the
+content dirs — so a host container that failed to start (a port clash on its local debug mapping is
+the likely cause; override with `PUBLISH_HOST_PORT=<free>`) presents as a fully healthy deploy until
+a page is requested, when Traefik finds no router for the hostname and serves its default
+self-signed cert. Trust `docker ps`, not a curl to the debug port: that port may be answered by
+whichever container actually holds it.
 
 Only `pitch.dgtlmag.com` publishes a hub index of its slugs. Every other destination is
 private-by-URL: apex placeholder baked into the nginx image, `robots.txt` disallow-all,

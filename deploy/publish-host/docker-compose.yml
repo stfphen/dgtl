@@ -12,11 +12,19 @@ services:
       - /opt/dgtl-publish/site/mov:/data/mov:ro
     networks:
       - coolify
-    # Local-only publish so you can curl the container directly on the VPS while
-    # debugging. Traefik reaches it over the coolify network, not this port.
-    # 8091 = dgtl-journal, 8092 = dgtl-report-host.
+    # Local-only debug port so you can curl this container directly on the VPS.
+    # Traefik reaches it over the coolify network, NOT this port — nothing in
+    # production depends on it, so change it freely on a conflict:
+    #   PUBLISH_HOST_PORT=8096 docker compose up -d
+    # (or set it in .env beside this file).
+    #
+    # Do not hardcode a number here on the assumption that it is free. It was
+    # 8093, which dgtl-clipvault already held; the container then failed to start
+    # while curl against 8093 answered 200 from clipvault — a debug port that
+    # reports healthy for a container that is not running is worse than none.
+    # Check before you pick: ss -ltnp | grep <port>
     ports:
-      - "127.0.0.1:8093:80"
+      - "127.0.0.1:${PUBLISH_HOST_PORT:-8096}:80"
     labels:
       traefik.enable: "true"
       traefik.docker.network: "coolify"
