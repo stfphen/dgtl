@@ -87,6 +87,24 @@ DEPLOY_TOKEN=test PORT=8099 TARGETS_FILE=/tmp/targets.local.json node server.js
 
 Zero npm dependencies — Node stdlib only. `brand.js` holds the inlined DGTL marks.
 
+## The token
+
+One `DEPLOY_TOKEN` for every destination, set in `.env` beside `docker-compose.yml`.
+The portal **refuses to boot** if it is unset, a known placeholder (`CHANGE_ME` and
+friends), or under 24 characters — `docker logs dgtl-publish` says which. Compose's
+`${DEPLOY_TOKEN:?...}` only proves the variable is *set*, so without this check the
+container starts happily on the template's published `CHANGE_ME` and the portal is
+open to anyone who has read the repo.
+
+`--force-recreate` on redeploy: a plain `up -d` sees no image or config change and can
+leave the old container running with the old environment.
+
+To check what the running container actually has, without printing the secret:
+
+```bash
+docker exec dgtl-publish sh -c 'printf "%s" "$DEPLOY_TOKEN" | wc -c; printf "%s" "$DEPLOY_TOKEN" | md5sum'
+```
+
 ## Cutover (VPS)
 
 Order matters: the old containers own Traefik routers on the hostnames being reclaimed.
@@ -104,8 +122,10 @@ docker rm -f dgtl-deploy dgtl-report-deploy
 # 4. the portal, with one freshly minted token
 cd /opt/dgtl/deploy/publish-portal
 cp /opt/dgtl/deploy/vps/env-templates/publish-portal.env.example .env
-openssl rand -hex 32   # paste into .env as DEPLOY_TOKEN
-docker compose up -d --build
+openssl rand -hex 32   # paste into .env as DEPLOY_TOKEN — the template ships CHANGE_ME
+                       # and the portal refuses to start on it (see below)
+docker compose up -d --build --force-recreate
+docker exec dgtl-publish sh -c 'printf "%s" "$DEPLOY_TOKEN" | wc -c'   # expect 64
 
 # 5. verify
 curl -s https://deploy.dgtl.ltd/health

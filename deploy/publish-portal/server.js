@@ -20,7 +20,18 @@ const http = require('http'), fs = require('fs'), path = require('path'), zlib =
 const { LOGO, SPARK } = require('./brand.js');
 
 const PORT = process.env.PORT || 80;
-const TOKEN = process.env.DEPLOY_TOKEN || '';
+
+// Refuse to boot on a placeholder or trivially weak token. `${DEPLOY_TOKEN:?...}` in
+// compose only proves the variable is SET — it happily starts with the template's
+// literal CHANGE_ME, which is published in this repo. That failure is invisible: the
+// container is healthy, /health is green, and the portal is simply open to anyone who
+// has read env-templates/publish-portal.env.example. Fail loudly at boot instead.
+const TOKEN = (process.env.DEPLOY_TOKEN || '').trim();
+const PLACEHOLDERS = new Set(['change_me', 'changeme', 'replace_me', 'your_token_here', 'token', 'test', 'secret']);
+if (!TOKEN) { console.error('FATAL: DEPLOY_TOKEN is not set. Mint one: openssl rand -hex 32'); process.exit(1); }
+if (PLACEHOLDERS.has(TOKEN.toLowerCase())) { console.error('FATAL: DEPLOY_TOKEN is still the placeholder value ' + JSON.stringify(TOKEN) + '. Mint a real one: openssl rand -hex 32'); process.exit(1); }
+if (TOKEN.length < 24) { console.error('FATAL: DEPLOY_TOKEN is only ' + TOKEN.length + ' characters. Use at least 24 — mint one: openssl rand -hex 32'); process.exit(1); }
+if (TOKEN !== (process.env.DEPLOY_TOKEN || '')) console.log('note: trimmed whitespace from DEPLOY_TOKEN');
 const MAX = 12e6, MZIP = +(process.env.MAX_ZIP_BYTES || 150e6);
 const SLUG = /^[a-z0-9][a-z0-9-]{0,60}$/;
 const REGISTRY = process.env.TARGETS_FILE || path.join(__dirname, 'targets.json');

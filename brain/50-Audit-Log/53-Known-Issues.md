@@ -280,6 +280,17 @@ link checker intentionally does not scan templates under `engine/`.
 - **OG image for join.dgtlinfluence.com not produced** (`assets/img/og-join.jpg` referenced in plan, page currently ships without an og:image).
 - **Journal index canonicals still point at `pitch.dgtlmedia.io`** while pack.json canonicalUrls now say `dgtlinfluence.com` — the blanket canonical rewrite remains its own PR per the 2026-08-01 decision.
 
+- 🔴 **RESOLVED-BUT-ROTATE (2026-08-25): the publish portal went live with `DEPLOY_TOKEN=CHANGE_ME`.**
+  The cutover copied `env-templates/publish-portal.env.example` to `.env` and never replaced the
+  placeholder. Compose's `${DEPLOY_TOKEN:?…}` only proves the variable is *set*, so the container
+  started clean, `/health` was green, and `deploy.dgtl.ltd` was reachable on the public internet with
+  a password published in this repo — publish or delete rights on all seven destinations for anyone
+  who read the template. Caught because the token was rejected in the browser (a saved-token red
+  herring) and the container's env was checked. **Fixed in code:** the portal now refuses to boot on
+  an unset, placeholder, or under-24-character token and logs which. **Still to do:** confirm no
+  unexpected slugs were published while it was open — list every destination and compare against
+  what you expect. [[52-Decision-Log]] · [[44-Secrets-And-Rotation]]
+
 - ✅ **RESOLVED (2026-08-25): "the dgtl.report/audit deploy token doesn't work."** Probed before
   rebuilding anything: `deploy.dgtl.report/health` returns 200, `dgtl.report/` and
   `audit.dgtl.report/` both serve, and a wrong token gets a clean `{"error":"bad token"}` — the

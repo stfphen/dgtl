@@ -123,8 +123,10 @@ docker rm -f dgtl-deploy dgtl-report-deploy || true
 # the portal — mint ONE fresh token, retire both old ones
 cd /opt/dgtl/deploy/publish-portal
 cp ../vps/env-templates/publish-portal.env.example .env
-openssl rand -hex 32     # paste as DEPLOY_TOKEN in .env
-docker compose up -d --build
+openssl rand -hex 32     # paste as DEPLOY_TOKEN in .env — the template ships CHANGE_ME,
+                         # and the portal refuses to boot on it (docker logs says so)
+docker compose up -d --build --force-recreate
+docker exec dgtl-publish sh -c 'printf "%s" "$DEPLOY_TOKEN" | wc -c'   # expect 64
 
 curl -sS https://deploy.dgtl.ltd/health                # {"ok":true,"targets":7}
 curl -sS https://deploy.dgtl.report/health             # same app on the legacy hostname
