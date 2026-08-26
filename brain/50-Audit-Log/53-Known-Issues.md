@@ -3,7 +3,7 @@ title: 53 · Known Issues, Risks & Tech Debt
 type: log
 tags: [audit, security]
 status: living
-updated: 2026-08-14
+updated: 2026-08-25
 source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, status docs
 ---
 
@@ -279,6 +279,25 @@ link checker intentionally does not scan templates under `engine/`.
 - **Roster launches with 6 creators** (Casper still `draft`); brief wants 10–15 before launch — 4–9 more packs are content work via the dgtl-creator-features skill, not code.
 - **OG image for join.dgtlinfluence.com not produced** (`assets/img/og-join.jpg` referenced in plan, page currently ships without an og:image).
 - **Journal index canonicals still point at `pitch.dgtlmedia.io`** while pack.json canonicalUrls now say `dgtlinfluence.com` — the blanket canonical rewrite remains its own PR per the 2026-08-01 decision.
+
+- ✅ **RESOLVED (2026-08-25): "the dgtl.report/audit deploy token doesn't work."** Probed before
+  rebuilding anything: `deploy.dgtl.report/health` returns 200, `dgtl.report/` and
+  `audit.dgtl.report/` both serve, and a wrong token gets a clean `{"error":"bad token"}` — the
+  stack was live and the auth path was fine. The real fault was operational: two portals carrying
+  two deliberately-different `DEPLOY_TOKEN`s, with the live values recorded only in the
+  `dgtl-offboard-20260721` bundle. The unified portal uses **one** token for every destination.
+  [[52-Decision-Log]]
+
+- **OPEN — dgtlmag.com expires 2026-08-28 with auto-renew OFF, and this is now load-bearing (CRITICAL).**
+  Already tracked in [[65-Domain-Fleet]], repeated here because the 2026-08-25 portal merge decided to
+  keep `pitch.dgtlmag.com` serving rather than migrate its slugs, so every pitch link already sent to a
+  client dies with the domain — as does `deploy.dgtlmag.com`. Renew multi-year.
+
+- **OPEN — the two skills that publish to `dgtl.report` still name the old portal hostname (LOW).**
+  `dgtl-client-audit` and `dgtl-worklog-status-report` POST to `deploy.dgtl.report`. That keeps working
+  (the new container answers on all three hostnames with the same single token), but the canonical name
+  is `deploy.dgtl.ltd`. Neither skill has a source copy in `engine/` — they exist only in the installed
+  skills directory outside this repo, so repointing them is a manual edit there.
 
 - **dgtlinfluence.com ACME challenge failing repeatedly** (seen 2026-08-10 in `coolify-proxy` logs, every ~10 min: "Cannot retrieve the ACME challenge for dgtlinfluence.com"). The journal host may be serving on Traefik's fallback/self-signed cert or an expiring one. Unrelated to the dgtl.report stack. Check the journal router's cert and whether dgtlinfluence.com DNS actually points at this VPS.
 

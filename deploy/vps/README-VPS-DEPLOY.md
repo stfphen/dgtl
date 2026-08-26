@@ -20,11 +20,20 @@ Point A records at the VPS IP:
 | `dgtlmag.com`, `www.dgtlmag.com` | platform — root goes to /admin; tenant funnels at /t/[slug] |
 | `funding.dgtlmag.com` | funded-growth tenant (built-in host routing) |
 | `pitch.dgtlmag.com` | decks (pitch sites) |
-| `deploy.dgtlmag.com` | deploy portal |
+| `deploy.dgtlmag.com` | the deploy portal, legacy hostname — same container as `deploy.dgtl.ltd` |
 | `dgtl.report`, `www.dgtl.report` | client status reports (report-host) — apex is a placeholder, reports at `/<slug>/` |
 | `audit.dgtl.report` | client audit pages (same report-host container) |
-| `deploy.dgtl.report` | report deploy portal (report-portal) |
+| `deploy.dgtl.report` | the deploy portal, legacy hostname — same container as `deploy.dgtl.ltd` |
+| `deploy.dgtl.ltd` | **the deploy portal** — one portal, every destination (publish-portal) |
+| `pitch.dgtl.ltd` | corporate pitches (publish-host) — the replacement for `pitch.dgtlmag.com` |
+| `shoots.dgtl.gallery` | shoot galleries (publish-host) |
+| `sets.dgtl.pics` | photo sets (publish-host) |
+| `watch.dgtl.mov` | video pages (publish-host) |
 | `terminal.dgtlmag.com` | DGTL OS |
+
+The three creative hosts are **subdomains, not apexes**: `dgtl.gallery` and `dgtl.pics` serve their
+own placeholder sites on Hostinger (`2.57.91.91`) and `dgtl.mov` serves a live site on this VPS —
+repointing those apexes would take three live sites down.
 
 `sites/polishstone` is **not** seeded to the pitch host: it uses root-absolute links and its own
 sitemap/robots — it wants a domain root (the client's own domain, or `polishstone.dgtlmag.com`
@@ -86,29 +95,45 @@ docker exec -it content-funnel-postgres psql -U content_funnel -d content_funnel
 
 Review the `select` output and strip `localhost`/`app.dgtlmedia.io` entries from any other row.
 
-## 5 · Decks + portal (pitch hosting)
+## 5 · Publishing stacks (one portal, every destination)
+
+**One portal at `deploy.dgtl.ltd`, one `DEPLOY_TOKEN`.** It writes into the content dirs of
+three nginx host containers; each host mounts only its own dirs read-only. The old
+`deploy.dgtlmag.com` and `deploy.dgtl.report` portals are retired; the new container answers on
+all three hostnames (not a 301 — a 301 downgrades POST to GET and would break skills that post
+to the old host). Their *content* hosts (`decks`, `report-host`) stay up. Destinations live in
+`deploy/publish-portal/targets.json`; see `deploy/publish-portal/README.md`.
 
 ```bash
-mkdir -p /opt/dgtl-decks/site/pitch                        # the served dir both stacks mount
+# content dirs — the portal mounts all of these rw, each host mounts its own ro
+mkdir -p /opt/dgtl-decks/site/pitch                    # pitch.dgtlmag.com   (public hub index)
+mkdir -p /opt/dgtl-report/site/{reports,audits}        # dgtl.report, audit.dgtl.report
+mkdir -p /opt/dgtl-publish/site/{pitch-ltd,gallery,pics,mov}   # the dgtl.ltd / creative hosts
+
+# host containers (content only — no token, no write access)
 cd /opt/dgtl && deploy/vps/seed-pitches.sh /opt/dgtl /opt/dgtl-decks/site/pitch
-cd deploy/decks   && docker compose up -d --build          # override file mounts /opt/dgtl-decks/site/pitch
-cd ../portal      && cp ../vps/env-templates/portal.env.example .env  # fresh DEPLOY_TOKEN
+cd /opt/dgtl/deploy/decks        && docker compose up -d --build
+cd /opt/dgtl/deploy/report-host  && docker compose up -d --build
+cd /opt/dgtl/deploy/publish-host && docker compose up -d --build
+
+# retire the old portals BEFORE starting the new one — they own Traefik routers on
+# deploy.dgtlmag.com and deploy.dgtl.report, which publish-portal reclaims for its 301s
+docker rm -f dgtl-deploy dgtl-report-deploy || true
+
+# the portal — mint ONE fresh token, retire both old ones
+cd /opt/dgtl/deploy/publish-portal
+cp ../vps/env-templates/publish-portal.env.example .env
+openssl rand -hex 32     # paste as DEPLOY_TOKEN in .env
 docker compose up -d --build
-curl -X POST https://deploy.dgtlmag.com/api/reindex -H "x-deploy-token: $DEPLOY_TOKEN"  # builds hub index
+
+curl -sS https://deploy.dgtl.ltd/health                # {"ok":true,"targets":7}
+curl -sS https://deploy.dgtl.report/health             # same app on the legacy hostname
 ```
 
-## 5b · Report host + portal (dgtl.report client reporting)
-
-Same pattern as §5, second domain. No seeding and **no reindex step** — the apex placeholder is
-baked into the nginx image and client slugs are never listed (private-by-URL).
-
-```bash
-mkdir -p /opt/dgtl-report/site/{reports,audits}            # served dirs both stacks mount
-cd /opt/dgtl/deploy/report-host   && docker compose up -d --build
-cd ../report-portal && cp ../vps/env-templates/report-portal.env.example .env  # NEW token — never reuse the dgtlmag one
-docker compose up -d --build
-curl -sS https://deploy.dgtl.report/health                 # {"ok":true}
-```
+Only `pitch.dgtlmag.com` publishes a hub index of its slugs. Every other destination is
+private-by-URL: apex placeholder baked into the nginx image, `robots.txt` disallow-all,
+`X-Robots-Tag: noindex, nofollow` (decision 2026-08-10). The portal regenerates the hub
+automatically on write and delete, so there is no separate reindex step.
 
 ## 6 · DGTL OS (+ pgvector)
 
@@ -126,10 +151,13 @@ docker compose exec dgtl-os node knowledge/ingest.mjs
 ## 7 · Smoke checklist
 
 - `https://app.dgtlmedia.io` renders; `/admin` login works (`node scripts/create-owner.js` if needed); one tenant funnel `/t/<slug>` renders; leads table non-empty (restored).
-- `https://pitch.dgtlmedia.io/` hub lists seeded sites; spot-open `escott/`, `the-climb/`, `gold/`.
-- Portal: zip-deploy a `hello` test slug, then delete it via the portal UI.
-- Report host: `https://dgtl.report/` and `https://audit.dgtl.report/` show the placeholder (no
-  slug listing); deploy a `hello` slug to each target from `deploy.dgtl.report`, open both, delete both.
+- `https://pitch.dgtlmag.com/` hub lists seeded sites; spot-open `escott/`, `the-climb/`, `gold/`.
+- Portal: `https://deploy.dgtl.ltd/` lists all seven destinations after the token is entered;
+  zip-deploy a `hello` slug to `pitch-ltd` and to `audit`, open both, delete both.
+- `https://deploy.dgtl.report/health` and `https://deploy.dgtlmag.com/health` answer from the
+  same container as `deploy.dgtl.ltd`, with the same single token.
+- `https://dgtl.report/`, `https://audit.dgtl.report/` and `https://pitch.dgtl.ltd/` show the
+  placeholder (no slug listing) and return `X-Robots-Tag: noindex, nofollow`.
 - `https://terminal.dgtlmedia.io` behind basic-auth; `/api/status` shows engine + `rag:true`; one RAG query answers with brain content.
 - Outreach: keep `OUTREACH_DRY_RUN=true` until Resend DNS (SPF/DKIM on dgtlmag.com) re-verified; then one real test send to yourself.
 - Stripe/Twilio webhooks: re-point endpoint URLs in their dashboards to the new host; test one webhook each.
@@ -138,7 +166,8 @@ docker compose exec dgtl-os node knowledge/ingest.mjs
 
 1. Rotate: Resend, Google Places (also update its IP restriction to the new VPS IP), Hunter,
    Apollo (all four appeared in old session logs), OS basic-auth password (old hash was public),
-   `DEPLOY_TOKEN`, `OUTREACH_CRON_TOKEN`, `UNSUBSCRIBE_SECRET`.
+   `DEPLOY_TOKEN` (now a single token for every publish destination — the two old portal tokens
+   are retired), `OUTREACH_CRON_TOKEN`, `UNSUBSCRIBE_SECRET`.
 2. Old VPS is dead but its `env/` values live in the bundle — treat every un-rotated key as burned.
 3. Snapshot the VPS once §7 passes; then update `brain/` (timeline + 64-External-Services: mark
    re-host done, M2 build verified, new IP).

@@ -1,6 +1,6 @@
 ---
 name: dgtl-pitch-pages
-description: Build production-ready DGTL Group pitch/offer landing pages that visually match dgtlgroup.io 1:1 — black + gold (#F0CF50) Manrope design system, real client-logo marquee, conversion copy grounded in verified DGTL case studies, multi-agent build orchestration, screenshot verification, and single-file deploy to the DGTL portal (deploy.dgtlmedia.io → pitch.dgtlmedia.io). Use this skill whenever the user asks for a landing page, pitch page, offer page, sales page, service one-pager, or client-tailored proposal page for DGTL / dgtlgroup.io — for ANY service offering (web design, custom software, influencer campaigns, brand activations, DTC ecommerce scaling, content, paid media, or a new offer), whether "general" or tailored to a specific prospect. Also use it when the user says things like "make another one of those pitch landing pages", "make a page for [offer/client]", or references the DTC scaling / influencer activation / web-software pages.
+description: Build production-ready DGTL Group pitch/offer landing pages that visually match dgtlgroup.io 1:1 — black + gold (#F0CF50) Manrope design system, real client-logo marquee, conversion copy grounded in verified DGTL case studies, multi-agent build orchestration, screenshot verification, and single-file deploy to the DGTL portal (deploy.dgtl.ltd → pitch.dgtl.ltd). Use this skill whenever the user asks for a landing page, pitch page, offer page, sales page, service one-pager, or client-tailored proposal page for DGTL / dgtlgroup.io — for ANY service offering (web design, custom software, influencer campaigns, brand activations, DTC ecommerce scaling, content, paid media, or a new offer), whether "general" or tailored to a specific prospect. Also use it when the user says things like "make another one of those pitch landing pages", "make a page for [offer/client]", or references the DTC scaling / influencer activation / web-software pages.
 ---
 
 # DGTL Pitch Landing Pages
@@ -107,7 +107,7 @@ beside it, the slug registered in `pitches/pitches.index.json`, and `python3 too
 reporting `missing=0`.
 
 Then deliver: send the HTML, and tell the user the slug it deploys under. Flatten to a **single
-self-contained HTML** (inline all CSS/JS/images) for upload to **deploy.dgtlmedia.io**, which indexes
+self-contained HTML** (inline all CSS/JS/images) for upload to **deploy.dgtl.ltd**, which indexes
 it and serves it at that slug. See *DGTL deploy* in `references/page-blueprint.md`.
 
 Links inside the pitch folder (to its teaser, its own media) stay **relative** — see *Linking* below.
@@ -119,7 +119,7 @@ Only links to a *different* pitch or an external page are absolute.
   The teaser is **not** a separate slug.
 - **Linking:** relative inside the folder (`teaser.html`, `media/x.jpg`). Never root-absolute
   (`/full/`) — that only resolves at a domain root and has broken a live teaser before. Absolute
-  `https://pitch.dgtlmedia.io/<other-slug>/` only when pointing at a *different* pitch.
+  `https://pitch.dgtl.ltd/<other-slug>/` only when pointing at a *different* pitch.
 - **Manifest + register:** write `pitch.json`, add the slug to `pitches/pitches.index.json`.
 - **Declare gaps:** missing photos go in `pendingAssets`, never left as broken `src`s.
 - **Tailored to a named prospect?** Clone the matching `pitches/_templates/` offer page and replace by

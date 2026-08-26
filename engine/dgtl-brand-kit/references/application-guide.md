@@ -72,4 +72,4 @@ assert bad == 0
 ```
 
 ## Delivery
-Single-file builds: present the HTML. Deployable pages: also offer a Netlify zip — folder with `index.html` + `_headers` containing `/*\n  X-Content-Type-Options: nosniff`, zipped so index.html is at the zip root; deploys via drag onto app.netlify.com/drop.
+Single-file builds: present the HTML. Deployable pages: also offer a project zip — folder with `index.html` + `_headers` containing `/*\n  X-Content-Type-Options: nosniff`, zipped so index.html is at the zip root. Deploy by dropping it on the DGTL portal at **deploy.dgtl.ltd** and picking a destination (`pitch-ltd` for pitch/offer pages). DGTL does not use Netlify.

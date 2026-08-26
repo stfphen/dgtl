@@ -58,9 +58,9 @@ A new page ranks faster when the site points at it:
 Dense, relevant internal linking spreads authority and helps everything rank — it's the highest-leverage,
 fully-in-your-control SEO move.
 
-> **DGTL hosting note.** Pages are published one-per-slug on **pitch.dgtlmedia.io** via
-> **deploy.dgtlmedia.io** (not Netlify). Because each page is its own slug, all cross-page links must be
-> **absolute** `https://pitch.dgtlmedia.io/<slug>` URLs — relative paths won't connect across slugs.
+> **DGTL hosting note.** Pages are published one-per-slug on **pitch.dgtl.ltd** via
+> **deploy.dgtl.ltd** (not Netlify). Because each page is its own slug, all cross-page links must be
+> **absolute** `https://pitch.dgtl.ltd/<slug>` URLs — relative paths won't connect across slugs.
 > `scripts/make-standalone.py --page-url …` inlines assets and absolutises these links for the deploy file.
 
 ## 5. Outbound links + the two-way backlink network
