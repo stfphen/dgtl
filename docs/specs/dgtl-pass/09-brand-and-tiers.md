@@ -22,16 +22,16 @@ can't drift):
 
 | Kit rule | On passes |
 |---|---|
-| Black surfaces everywhere: `#000` → `#0a0a0a` → `#111`, elevation by `#2a2a2a` border + shadow | Emails, pass page, scanner and admin all sit on the ladder. **Every Wallet card's background is on the ladder too** (`#111` Day, `#0a0a0a` Monthly/Yearly, `#000` VIP). No coloured cards, no grey panels |
-| Gold `#F0CF50` is an accent: the primary action, THE number, active state, brand marks, **one gold moment per view** | Email: the primary button. Pass page: the VIP chip. Scanner: "Start scanning →" and the VIP band. Admin: active nav, active tab underline, the headline KPI, "Issue pass →" |
+| Black surfaces everywhere: `#000` → `#0a0a0a` → `#111`, elevation by `#2a2a2a` border + shadow | Emails, pass page, scanner and admin all sit on the ladder. **The pass card itself is a deep tier tint** (navy, deep copper, slate, black), dark enough that white text reads at ≥ 11:1 (tested), so it stays inside "dark surfaces" while each tier is its own colour |
+| Gold `#F0CF50` is an accent: the primary action, THE number, active state, **brand marks**, one gold moment per view | **The gold DGTL spark is the brand mark on every pass** (Wallet art, email card, pass page). The only gold *control* in a view is the primary button. Gold as a tier colour (face glow, labels, band) is VIP-only. Admin: active nav, active tab, the headline KPI, "Issue pass →" |
 | Kickers/eyebrows `#b3a06a` gold-tan, 11–12 px, uppercase, `0.15em` | Every eyebrow and section label, in every email and UI |
 | Text ladder `#F0F0F0` → `#D0D0D0` → `#8a8a8a` | Headline → body → labels/meta, everywhere |
 | Manrope everywhere (400–800) | Email `<link>` + `Manrope, -apple-system, 'Segoe UI', Helvetica, Arial` fallback; web surfaces via `next/font` in the platform |
 | Radii: controls 7 px, cards 16 px, pills 9999 px, nothing else | Enforced by test: the email renderer may emit only those (plus their corner-split forms) |
 | Primary button: gold, black text 700, 7 px, trailing `→` | Every pass email CTA ("Open my pass →", "Accept my VIP pass →"), every primary button in the UI |
 | Functional colors `#7BC47F` / `#E8A33D` / `#E5484D` / `#6E9FDB`, tint + text | Status badges in admin and the pass page. **Scanner verdicts fill the screen in them** (with black text): the one place the kit's tint rule is bent, because a dark door needs an answer at arm's length |
-| Atmosphere: the spark bolt at low opacity, vignettes, glassy bars | Pass page and scanner: spark watermark in the tier material + glass top bar. Wallet: the spark as strip/thumbnail art. Email: none (the kit says identity by ratio, not effects) |
-| Logo: `logo-white-gold.svg` | Web: the SVG. Email + Wallet: [`assets/dgtl-wordmark@4x.png`](assets/dgtl-wordmark@4x.png), rasterized from the kit SVG (`#F0CF50` and `#FFFFFF` verified exact). It spells the name, so `logoIncludesName: true` removes Wallet's duplicate `logoText` |
+| Atmosphere: the spark bolt at low opacity, vignettes, glassy bars | The pass art: a giant tier-colour spark watermark behind the crisp gold spark. Pass page + scanner: spark watermark + glass top bar. Email: the art strip PNG only (no CSS effects) |
+| Logo: `logo-white-gold.svg` | Web: the SVG. Email + Wallet: [`assets/dgtl-wordmark@4x.png`](assets/dgtl-wordmark@4x.png), rasterized from the kit SVG (`#F0CF50` and `#FFFFFF` verified exact). With `walletLogoText: "PASS"` it forms the **DGTL⚡ PASS lockup** on every card. `logoIncludesName` stops a second "DGTL" |
 | Arrows after CTAs | In the copy defaults, and `withArrow()` adds one if an override forgets |
 | `platform/` spells gold `--blue` | Platform components use `var(--blue)`, never `var(--gold)` (it doesn't exist there). See the kit's `repo-surfaces.md` |
 | Never hardcode a brand value | Renderers resolve every color from `resolveBrandKit` → `DGTL_TOKENS`, drift-tested against **all three** token files (kit `dgtl-tokens.css`, `journal/_shared/dgtl-editorial.css`, and the platform alias layer in `dgtl-admin.css`) |
@@ -61,41 +61,56 @@ DGTL_TOKENS (mirrors the kit; brand.test.js fails on drift from any of the three
   to stay identical) **and** `platform/app/admin/dgtl-admin.css`. Then make `tiers.js`
   `TIER_MATERIALS` mirror them with the same drift test. Gold is already `--gold` / `--blue`.
 
-## The tier ladder: Steel → Bronze → Silver → Gold
+## The pass card: brand constants + tier colour
 
-The ladder is material-coded because everyone reads it instantly. How it lives inside the kit:
+Revised 2026-10-01 after review ("the passes don't look DGTL"). Every pass is now a **branded card
+system**, built the way premium membership cards are: the brand is constant and the colour says the
+tier.
 
-1. **The pass carries the material, the button carries the brand.** Tier color appears on the pass
-   itself: the Wallet labels and artwork, and the email pass-card band, chip, material label and
-   callout rail. The primary action is always the brand accent, so a DGTL day pass still has a
-   gold button. That is the kit's one gold moment, on every tier.
-2. **Gold is the material of VIP only.** No lower tier's pass is gold. In Wallet that means gold
-   labels and a gold spark strip on pure black: the black card.
-3. **Same black, different metal.** In a Wallet stack every card is near-black, and the label
-   color (steel, bronze, silver, gold) identifies the tier at a glance (see the stack in
-   `previews/wallet.html`).
+| Brand constants (every pass, every tier) | Tier variables (one per pass type) |
+|---|---|
+| The **DGTL⚡ PASS lockup**: the wordmark at full Wallet logo size + `walletLogoText` "PASS" | The **card face**: a deep tint of the tier hue (Wallet `backgroundColor`, email and pass-page card) |
+| The **gold DGTL spark** as the hero mark, crisp, right side of the art | The **art field**: the tier hue glowing in from the right behind the spark |
+| White Manrope values, `0.15em` uppercase labels, gold primary button | The **accent**: labels, card band, chip, giant spark watermark, base hairline |
+| The same art PNG in Wallet, the email and the pass page | Wallet style: eventTicket (Day) or storeCard (memberships, VIP) |
 
-| Tier | Material | Accent (labels, band, art) | Wallet background | Wallet text | Wallet style | Artwork |
+| Tier | Hue | Accent | Face | Field | Wallet style | Strip |
 |---|---|---|---|---|---|---|
-| Day | Steel | `#A9B4C2` | `#111111` (`--surface-2`) | `#F0F0F0` | eventTicket | strip 375×98: steel spark watermark + hairline |
-| Monthly | Bronze | `#D29666` | `#0a0a0a` (`--surface-1`) | `#F0F0F0` | generic | thumbnail 90×90: bronze spark |
-| Yearly | Silver | `#DCE1E8` | `#0a0a0a` (`--surface-1`) | `#F0F0F0` | generic | thumbnail 90×90: silver spark |
-| VIP Lifetime | Gold | `#F0CF50` (`--gold`) | `#000000` (`--bg`) | `#F0F0F0` | storeCard | strip 375×144: gold spark at full strength + glow |
+| Day | Steel blue | `#8DB4E8` | `#13294A` | `#2A5A99` | eventTicket | 375×98 |
+| Monthly | Bronze / copper | `#E0A170` | `#3A1F0C` | `#9A521D` | storeCard | 375×144 |
+| Yearly | Silver / platinum | `#DCE1E8` | `#2A3039` | `#76818F` | storeCard | 375×144 |
+| VIP Lifetime | Gold on black | `#F0CF50` (`--gold`) | `#000000` (`--bg`) | `#1A1403` + gold spotlight | storeCard | 375×144 |
 
-Contrast is enforced by test: Wallet text ≥ 4.5:1, labels ≥ 3:1, and every accent ≥ 4.5:1 as
-text on the email surface. `useBrandAccent: true` swaps the tier material for the tenant's brand
-color and drops the material label (a blue pass is never called "Bronze").
+Enforced by test ([`reference/tiers.test.js`](reference/tiers.test.js),
+[`walletArt.test.js`](reference/walletArt.test.js),
+[`email/email.test.js`](reference/email/email.test.js)):
+- **Separation:** every pair of tiers differs by ≥ 25 (faces) and ≥ 50 (accents) in RGB distance.
+- **Darkness:** white text on every face ≥ 7:1 (actual: 11–21:1), and labels on their own face ≥ 4.5:1.
+- **Brand constants:** every tier's art carries the gold spark, every email pass card carries the
+  wordmark and the PASS lockup, and Wallet gets `logoText: "PASS"`.
+- **White-label safety:** a tenant's brand mark is its own accent. No DGTL gold reaches another
+  tenant's pass.
+
+Why Steel moved from grey to blue: grey Steel and grey Silver were too close to tell apart in a
+Wallet stack. Steel blue / copper / platinum / black-and-gold are four different hues.
+Memberships moved from `generic` to `storeCard` so their strip can carry the branded art. Roadmap
+R4 (holder photo) moves them back to `generic` + thumbnail when photos ship.
+
+`useBrandAccent: true` derives the whole palette (face, field, accent) from the tenant's brand
+colour and drops the material label (a blue pass is never called "Bronze").
 
 ## Email creative direction
 
 One layout system, built to the kit's email guidance: table-based, solid black, inline styles,
-bulletproof gold button, hosted wordmark PNG, no effects. Per tier, what changes is **material,
-warmth of voice, alignment and ceremony**:
+bulletproof gold button, hosted wordmark PNG, no effects. The centre of every email is **the pass
+card**, drawn exactly as it appears in Wallet (tier face, DGTL⚡ PASS lockup, the tier art strip PNG,
+tier labels, QR). Per tier, what changes is **colour, warmth of voice, alignment and ceremony**:
 
 | | Day | Monthly | Yearly | VIP Lifetime | VIP Onboarding |
 |---|---|---|---|---|---|
 | Job | Get them through the door tonight | Make Wallet the habit | Welcome them for the year | Make it feel owned | Make them feel *chosen* |
 | Layout | left-aligned, QR-first | left, Wallet-first | left, Wallet-first | centered, muted-gold frame | centered, frame, offer card |
+| Pass card | steel-blue face + art | copper face + art | platinum face + art | black card, gold art | black card preview (no QR) |
 | Hero line | "You're in, {firstName}." | "A month of access starts now." | "Your year starts today." | "Access that doesn't expire." | "The list is short. You're on it." |
 | QR in email | yes, dominant | yes | yes | yes | **no, a preview card instead** |
 | Primary button | gold "Open my pass →" | gold | gold | gold "Open my VIP pass →" | gold "Accept my VIP pass →" |

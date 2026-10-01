@@ -46,6 +46,7 @@ test("with no tenant overrides the kit is DGTL black + gold, Manrope", () => {
   assert.match(kit.fontStack, /^Manrope/);
   assert.match(kit.fontCssUrl, /Manrope:wght@400;500;600;700;800/);
   assert.equal(kit.logoIncludesName, false);
+  assert.equal(kit.walletLogoText, "");
 });
 
 test("tenant brand feeds the kit; malformed colors fall back instead of breaking", () => {

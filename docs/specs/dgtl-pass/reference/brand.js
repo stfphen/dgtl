@@ -161,6 +161,10 @@ export function resolveBrandKit(tenant = {}) {
     // True when the logo artwork already spells the name (the DGTL wordmark
     // does), so Wallet must not repeat it as logoText.
     logoIncludesName: Boolean(kit.logoIncludesName),
+    // Text Wallet sets beside the logo. For DGTL's own passes "PASS", which makes
+    // the "DGTL⚡ PASS" product lockup. Empty = none (or logoText when the logo
+    // doesn't spell the name).
+    walletLogoText: String(kit.walletLogoText || "").slice(0, 20),
     colors: { ...colors, kicker: ensureContrast(colors.kicker, colors.surface, 4.5), accent, onAccent: readableForeground(accent) },
     fontStack: kit.fontStack || DEFAULT_FONT_STACK,
     fontCssUrl: kit.fontCssUrl === "" ? "" : kit.fontCssUrl || DEFAULT_FONT_CSS_URL,

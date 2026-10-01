@@ -116,9 +116,11 @@ export function buildPassJson({ pass, passType, holder, brandKit, design, validi
     }
   };
 
-  // A wordmark logo (the DGTL one) already spells the name; repeating it as
-  // logoText would print "DGTL DGTL" across the top of the card.
-  if (!brandKit.logoIncludesName) json.logoText = brandKit.logoText;
+  // The lockup beside the logo. A wordmark logo (the DGTL one) already spells
+  // the name, so it gets walletLogoText ("PASS" → "DGTL⚡ PASS") or nothing,
+  // never a second "DGTL".
+  if (brandKit.walletLogoText) json.logoText = brandKit.walletLogoText;
+  else if (!brandKit.logoIncludesName) json.logoText = brandKit.logoText;
   if (pass.validUntil) json.expirationDate = new Date(pass.validUntil).toISOString().replace(/\.\d{3}Z$/, "Z");
   if (style === "eventTicket") json.relevantDate = new Date(pass.validFrom).toISOString().replace(/\.\d{3}Z$/, "Z");
   if (pass.status === "revoked") json.voided = true;

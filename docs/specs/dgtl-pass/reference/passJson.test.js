@@ -37,7 +37,7 @@ function build(presetId, passOverrides = {}, walletOverrides = {}) {
 }
 
 test("each tier renders in its Wallet style with identity fields set", () => {
-  const expected = { day_single: "eventTicket", day: "eventTicket", monthly: "generic", yearly: "generic", vip_lifetime: "storeCard" };
+  const expected = { day_single: "eventTicket", day: "eventTicket", monthly: "storeCard", yearly: "storeCard", vip_lifetime: "storeCard" };
   for (const [presetId, style] of Object.entries(expected)) {
     const json = build(presetId);
     assert.equal(json.formatVersion, 1);
@@ -82,6 +82,13 @@ test("a wordmark logo suppresses logoText so the name isn't printed twice", () =
     validity: { lifetime: true, untilShort: "Never", from: "x", fromDate: "x" }, links, wallet, issuedLabel: "x"
   });
   assert.equal(json.logoText, undefined);
+  const lockupKit = resolveBrandKit({ passes: { brandKit: { logoIncludesName: true, walletLogoText: "PASS" } } });
+  const lockup = buildPassJson({
+    pass: { id: "p", status: "active", validFrom: "2026-10-03T04:00:00Z", validUntil: null, shortCode: "K7M2QX9P" },
+    passType, holder: { name: "A" }, brandKit: lockupKit, design: resolvePassDesign(passType, lockupKit),
+    validity: { lifetime: true, untilShort: "Never", from: "x", fromDate: "x" }, links, wallet, issuedLabel: "x"
+  });
+  assert.equal(lockup.logoText, "PASS", "the DGTL⚡ PASS lockup");
 });
 
 test("pass.json carries the holder's name but no contact details", () => {

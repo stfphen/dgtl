@@ -22,11 +22,11 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveBrandKit } from "../brand.js";
-import { TIER_PRESETS, TIER_MATERIALS, resolvePassDesign } from "../tiers.js";
+import { TIER_PALETTE, TIER_PRESETS, TIER_MATERIALS, resolvePassDesign } from "../tiers.js";
 import { computeValidityWindow, describeValidity } from "../validity.js";
 import { RESULT_META } from "../verify.js";
 import { buildPassJson } from "../passJson.js";
-import { iconSvg, sparkFromSvg, stripSvg, thumbnailSvg } from "../walletArt.js";
+import { cardArtSvg, iconSvg, sparkFromSvg, stripSvg, thumbnailSvg } from "../walletArt.js";
 import { formatShortCode } from "../credentials.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -56,7 +56,7 @@ async function qrSvg(text) {
 }
 const QR = await qrSvg("https://pass.example.com/p/0123456789ABCDEFGHJKMNPQRS");
 
-const kit = resolveBrandKit({ brand: { name: "DGTL", logoText: "DGTL" }, passes: { brandKit: { logoIncludesName: true, legal: { supportEmail: "help@example.com", termsUrl: "https://example.com/terms" } } } });
+const kit = resolveBrandKit({ brand: { name: "DGTL", logoText: "DGTL" }, passes: { brandKit: { logoIncludesName: true, walletLogoText: "PASS", legal: { supportEmail: "help@example.com", termsUrl: "https://example.com/terms" } } } });
 const TZ = "America/Toronto";
 
 function sample(presetId, holderName, startDate, shortCode, extra = {}) {
@@ -67,6 +67,12 @@ function sample(presetId, holderName, startDate, shortCode, extra = {}) {
   const design = resolvePassDesign(passType, kit);
   const validity = describeValidity(pass, { timeZone: TZ });
   return { preset, passType, pass, design, validity, holder: { name: holderName } };
+}
+
+const artUrl = (design, opts) => svgUrl(cardArtSvg(design, spark, opts));
+const cardVars = (d) => `--face:${d.face};--line:${d.faceLine};--acc:${d.accentOnFace}`;
+function brandRow(d, tierLabel) {
+  return `<div class="pc-top"><img src="${LOGO}" alt="DGTL"><span class="pc-lock">${esc(kit.walletLogoText)}</span><span class="pc-tier">${esc(tierLabel)}</span></div>`;
 }
 
 const SAMPLES = [
@@ -108,6 +114,20 @@ figcaption b{color:var(--text-muted);font-weight:600}
 .watermark{position:absolute;width:520px;right:-170px;top:110px;opacity:.05;transform:rotate(-12deg);pointer-events:none}
 .vignette{position:absolute;inset:0;background:radial-gradient(120% 55% at 50% 0%,rgba(255,255,255,.035),transparent 60%);pointer-events:none}
 .chip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border-radius:var(--r-pill);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:5px 10px;color:var(--tier);background:color-mix(in srgb,var(--tier) 12%,transparent)}
+/* the branded DGTL pass card: brand constants + tier variables */
+.pcard{border-radius:var(--r-card);background:var(--face);border:1px solid var(--line);overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.55)}
+.pc-top{display:flex;align-items:center;gap:8px;padding:14px 16px 12px}
+.pc-top img{height:20px;width:auto}
+.pc-lock{font-size:12px;font-weight:800;letter-spacing:.22em;color:var(--text)}
+.pc-tier{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--acc)}
+.pc-art{display:block;width:100%;height:auto}
+.pc-body{padding:16px 18px 18px;display:grid;gap:12px}
+.pc-l{display:block;font-size:10.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--acc)}
+.pc-v{display:block;font-size:14px;font-weight:600;color:var(--text);margin-top:2px}
+.pc-name{display:block;font-size:24px;font-weight:800;letter-spacing:-.4px;color:var(--text);margin-top:2px}
+.pc-fields{display:flex;justify-content:space-between;gap:12px}
+.pc-fields > div:last-child{text-align:right}
+.pcard.void{filter:saturate(.35);opacity:.7}
 @media (max-width:480px){.wrap{padding:40px 16px 72px;gap:44px}.phone{border-radius:28px}}
 ${css}
 </style></head>
@@ -135,7 +155,9 @@ ${body}
 const WALLET_CSS = `
 .wcard{width:330px;max-width:100%;border-radius:var(--r-card);background:var(--wbg);color:var(--wfg);overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.07);display:flex;flex-direction:column}
 .w-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 16px 12px}
-.w-logo{height:24px;width:auto;margin-top:2px}
+.w-logo{height:24px;width:auto}
+.w-brand{display:flex;align-items:center;gap:8px;margin-top:2px}
+.w-lock{font-size:12px;font-weight:800;letter-spacing:.22em;color:var(--wfg)}
 .w-f{display:grid;gap:2px;min-width:0}
 .w-l{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--wlb)}
 .w-v{font-size:14px;font-weight:600;line-height:1.25;color:var(--wfg)}
@@ -150,9 +172,8 @@ const WALLET_CSS = `
 .w-barcode{margin:18px auto 18px;background:#fff;border-radius:7px;padding:10px 10px 6px;display:grid;justify-items:center;gap:4px;width:146px}
 .w-barcode svg{width:126px;height:126px;display:block}
 .w-alt{font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:10px;letter-spacing:.18em;color:#000}
-.stack{display:grid;justify-items:start}
-.stack .wcard{margin-top:-382px}
-.stack .wcard:first-child{margin-top:0}
+.stack{position:relative;width:330px;max-width:100%;height:calc(4 * 66px + 560px)}
+.stack .wcard{position:absolute;left:0;top:calc(var(--i) * 66px)}
 .spec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px}
 .spec-card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-card);padding:20px;display:grid;gap:12px;align-content:start}
 .spec-card h3{font-size:15px;font-weight:700}
@@ -179,14 +200,14 @@ function walletCard(s) {
   const style = s.design.wallet.style;
   const body = json[style];
   const vars = `--wbg:${s.design.wallet.background};--wfg:${s.design.wallet.foreground};--wlb:${s.design.wallet.label}`;
-  const header = `<div class="w-top"><img class="w-logo" src="${LOGO}" alt="DGTL">${walletFields(body.headerFields, "w-f w-hdr")}</div>`;
+  const header = `<div class="w-top"><div class="w-brand"><img class="w-logo" src="${LOGO}" alt="DGTL">${json.logoText ? `<span class="w-lock">${esc(json.logoText)}</span>` : ""}</div>${walletFields(body.headerFields, "w-f w-hdr")}</div>`;
   let middle;
   if (style === "generic") {
-    const thumb = svgUrl(thumbnailSvg({ spark, background: s.design.wallet.background, material: s.design.wallet.label, scale: 2 }));
+    const thumb = svgUrl(thumbnailSvg({ spark, face: s.design.face, accent: s.design.accent, mark: s.design.brandMark, scale: 2 }));
     middle = `<div class="w-prow"><div class="w-primary">${walletFields(body.primaryFields, "w-f")}</div><img class="w-thumb" src="${thumb}" alt=""></div>`;
   } else {
     const h = style === "eventTicket" ? 98 : 144;
-    const strip = svgUrl(stripSvg({ spark, height: h, background: s.design.wallet.background, material: s.design.wallet.label, vip: s.design.isVip, scale: 2 }));
+    const strip = svgUrl(stripSvg({ spark, height: h, face: s.design.face, field: s.design.field, accent: s.design.accent, mark: s.design.brandMark, vip: s.design.isVip, scale: 2 }));
     middle = `<div class="w-strip" style="background-image:url('${strip}');aspect-ratio:375/${h}"><div class="w-primary">${walletFields(body.primaryFields, "w-f")}</div></div>`;
   }
   const card = `<div class="wcard" style="${vars}">${header}${middle}${walletFields(body.secondaryFields)}${walletFields(body.auxiliaryFields)}<div class="w-barcode">${QR}<span class="w-alt">${esc(json.barcodes[0].altText)}</span></div></div>`;
@@ -196,29 +217,30 @@ function walletCard(s) {
 function walletPage() {
   const cards = SAMPLES.map((s) => ({ s, ...walletCard(s) }));
   const figures = cards
-    .map(({ s, card }) => `<figure>${card}<figcaption><b>${esc(s.preset.name)} · ${esc(s.preset.material)}</b><br>${esc(s.design.wallet.style)} · background <span class="mono">${esc(s.design.wallet.background)}</span> · labels + art <span class="mono">${esc(s.design.wallet.label)}</span><br>${esc(s.design.wallet.art)} art: the kit spark in the tier material</figcaption></figure>`)
+    .map(({ s, card }) => `<figure>${card}<figcaption><b>${esc(s.preset.name)} · ${esc(s.preset.material)}</b><br>${esc(s.design.wallet.style)} · face <span class="mono">${esc(s.design.face)}</span> · field <span class="mono">${esc(s.design.field)}</span> · accent <span class="mono">${esc(s.design.accent)}</span><br>Brand constants: DGTL⚡ PASS lockup, gold spark. Tier: face, field, labels, watermark</figcaption></figure>`)
     .join("");
   const vip = cards.find(({ s }) => s.design.isVip);
   const back = vip.json[vip.s.design.wallet.style].backFields.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.value)}</dd></div>`).join("");
   const specImg = (svg) => svgUrl(svg);
+  const art = (p) => ({ face: p.face, field: p.field, accent: p.accent, mark: TIER_PALETTE.gold.accent });
   const specs = [
-    ["icon.png · 29 × 29 pt · required", specImg(iconSvg({ spark, material: TIER_MATERIALS.gold, scale: 4 })), "The kit spark on black. Lock screen, Mail and notifications."],
-    ["logo.png · ≤ 160 × 50 pt", LOGO, "The DGTL wordmark. It spells the name, so logoText is omitted (logoIncludesName)."],
-    ["strip.png · eventTicket · 375 × 98 pt", specImg(stripSvg({ spark, height: 98, background: SAMPLES[0].design.wallet.background, material: TIER_MATERIALS.steel, scale: 2 })), "Day passes. Steel spark watermark, steel hairline."],
-    ["strip.png · storeCard · 375 × 144 pt", specImg(stripSvg({ spark, height: 144, background: "#000000", material: TIER_MATERIALS.gold, vip: true, scale: 2 })), "VIP. The spark at full strength over a soft gold glow."],
-    ["thumbnail.png · generic · 90 × 90 pt", specImg(thumbnailSvg({ spark, background: "#0a0a0a", material: TIER_MATERIALS.bronze, scale: 3 })), "Monthly (bronze) and yearly (silver). Becomes the holder photo later (R4)."]
+    ["icon.png · 29 × 29 pt · required", specImg(iconSvg({ spark, mark: TIER_PALETTE.gold.accent, scale: 4 })), "The gold DGTL spark on black. Lock screen, Mail and notifications. Same on every tier: it's the brand."],
+    ["logo.png · ≤ 160 × 50 pt + logoText", LOGO, "The DGTL wordmark with walletLogoText \"PASS\": the DGTL⚡ PASS lockup on every card."],
+    ["strip.png · eventTicket · 375 × 98 pt", specImg(stripSvg({ spark, height: 98, ...art(TIER_PALETTE.steel), scale: 2 })), "Day: steel-blue face and field, giant steel watermark, gold DGTL spark."],
+    ["strip.png · storeCard · 375 × 144 pt", specImg(stripSvg({ spark, height: 144, ...art(TIER_PALETTE.bronze), scale: 2 })), "Monthly: copper. Yearly uses the same composition in platinum."],
+    ["strip.png · storeCard · VIP", specImg(stripSvg({ spark, height: 144, ...art(TIER_PALETTE.gold), vip: true, scale: 2 })), "VIP: the black card. Pure black, a gold spotlight, the gold spark."]
   ]
     .map(([h, src, p]) => `<div class="spec-card"><h3>${esc(h)}</h3><img src="${src}" alt=""><p class="note">${esc(p)}</p></div>`)
     .join("");
 
   return page({
     title: "Apple Wallet passes",
-    lede: "Every pass sits on the kit's black surface ladder. The tier is carried by its material: labels, artwork and the hairline. Gold is the material of VIP only. Field layout comes straight from <span class=\"mono\">buildPassJson</span>.",
+    lede: "A branded card system. On every pass: the DGTL⚡ PASS lockup and the gold DGTL spark. Per tier: its own deep card face, glowing art field and label color, so Steel (blue), Bronze (copper), Silver (platinum) and VIP (black and gold) separate at a glance. Field layout comes straight from <span class=\"mono\">buildPassJson</span>.",
     css: WALLET_CSS,
     body: `
 <section class="section"><h2>The five presets</h2><div class="row">${figures}</div></section>
-<section class="section"><h2>In the Wallet stack</h2><p>Stacked, only the top of each card shows: logo and header field. The tier label color does the work, so each card stays identifiable on the same black.</p>
-  <div class="stack">${cards.map(({ card }) => card).join("")}</div></section>
+<section class="section"><h2>In the Wallet stack</h2><p>Stacked, only the top of each card shows. Every card says DGTL⚡ PASS, and the face color says which pass it is.</p>
+  <div class="stack">${cards.map(({ card }, i) => card.replace('<div class="wcard" style="', `<div class="wcard" style="--i:${i};`)).join("")}</div></section>
 <section class="section"><h2>Back of the VIP pass</h2><dl class="back">${back}</dl></section>
 <section class="section"><h2>Artwork, generated from the kit</h2><p>Rendered by <span class="mono">reference/walletArt.js</span> and rasterized with <span class="mono">sharp</span> in Phase 5. A tenant can upload its own art per pass type instead.</p><div class="spec-grid">${specs}</div></section>`
   });
@@ -233,10 +255,10 @@ const PASS_CSS = `
 .pp{position:relative;z-index:1;padding:28px 24px 28px;display:grid;gap:20px;flex:1;align-content:start}
 .pp-name{font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1.1;color:var(--text)}
 .pp-meta{color:var(--text-muted);font-size:15px;margin-top:6px}
-.pp-code{display:grid;justify-items:center;gap:12px;padding:22px}
-.qr-tile{background:#fff;border-radius:var(--r-control);padding:14px;width:248px}
-.qr-tile svg{display:block;width:220px;height:220px}
-.code{font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:15px;font-weight:700;letter-spacing:.22em;color:var(--text-muted)}
+.pp-code{display:grid;justify-items:center;gap:10px;padding:6px 0 2px}
+.qr-tile{background:#fff;border-radius:var(--r-control);padding:12px;width:224px}
+.qr-tile svg{display:block;width:200px;height:200px}
+.code{font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:15px;font-weight:700;letter-spacing:.22em;color:var(--text)}
 .badge-wallet{display:flex;align-items:center;justify-content:center;gap:10px;height:48px;border-radius:var(--r-control);background:#000;border:1px solid var(--border-strong);color:#fff;font-weight:600;font-size:15px;text-decoration:none}
 .badge-wallet small{font-size:10px;color:var(--text-dim);font-weight:500}
 .tip{font-size:13px;color:var(--text-dim);text-align:center}
@@ -252,25 +274,27 @@ const PASS_CSS = `
 `;
 
 function passPhone({ s, state }) {
-  const tier = s.design.accent;
-  const chip = s.design.isVip ? "VIP" : s.design.materialLabel;
-  const eyebrow = s.design.isVip ? "VIP · Lifetime" : s.passType.name;
-  const qrBlock = `<div class="card card-solid pp-code"><div class="qr-tile">${QR}</div><span class="code">${esc(formatShortCode(s.pass.shortCode))}</span><button class="btn btn-ghost btn-sm" type="button">Show barcode instead</button></div>
-    <a class="badge-wallet" href="#wallet"> Add to Apple Wallet <small>(official badge in production)</small></a>
-    <p class="tip">Turn your brightness up at the door.</p>`;
-  let main;
-  if (state === "expired") {
-    main = `<div class="card card-solid state"><span class="pill badge-error" style="justify-self:start">Expired</span><h3>This pass expired on ${esc(s.validity.untilShort)}.</h3><p>The code is hidden so it can't be shown at a busy door. To renew or ask a question, contact ${esc(kit.name)}.</p><p class="mono" style="color:var(--text)">help@example.com</p><a class="btn btn-secondary btn-sm" style="justify-self:start" href="#contact">Contact ${esc(kit.name)}</a></div>`;
+  const d = s.design;
+  const tierLabel = d.isVip ? "VIP · Lifetime" : `${d.materialLabel} · ${s.passType.name}`;
+  const expired = state === "expired";
+  const fields = expired
+    ? `<div class="pc-fields"><div><span class="pc-l">Pass</span><span class="pc-v">${esc(s.passType.name)}</span></div><div><span class="pc-l">Expired</span><span class="pc-v">${esc(s.validity.untilShort)}</span></div></div>`
+    : `<div class="pc-fields"><div><span class="pc-l">${state === "scheduled" ? "Starts" : "Pass"}</span><span class="pc-v">${esc(state === "scheduled" ? s.validity.fromDate : s.passType.name)}</span></div><div><span class="pc-l">${s.validity.lifetime ? "Expires" : "Valid until"}</span><span class="pc-v">${esc(s.validity.untilShort)}</span></div></div>`;
+  const qr = expired ? "" : `<div class="pp-code"><div class="qr-tile">${QR}</div><span class="code">${esc(formatShortCode(s.pass.shortCode))}</span></div>`;
+  const card = `<div class="pcard${expired ? " void" : ""}" style="${cardVars(d)}">${brandRow(d, tierLabel)}<img class="pc-art" src="${artUrl(d)}" alt=""><div class="pc-body"><div><span class="pc-l">${d.isVip ? "Member" : "Holder"}</span><span class="pc-name">${esc(s.holder.name)}</span></div>${fields}${qr}</div></div>`;
+  let after;
+  if (expired) {
+    after = `<div class="card card-solid state"><span class="pill badge-error" style="justify-self:start">Expired</span><h3>This pass expired on ${esc(s.validity.untilShort)}.</h3><p>The code is hidden so it can't be shown at a busy door. To renew or ask a question, contact ${esc(kit.name)}.</p><p class="mono" style="color:var(--text)">help@example.com</p><a class="btn btn-secondary btn-sm" style="justify-self:start" href="#contact">Contact ${esc(kit.name)}</a></div>`;
   } else {
-    const startNote = state === "scheduled" ? `<span class="pill badge-info" style="justify-self:start">Starts ${esc(s.validity.fromDate)}</span>` : "";
-    main = `${startNote}${qrBlock}${s.design.isVip ? `<label class="card card-solid optin"><input type="checkbox"><span><b>Send me VIP offers</b><small>First word on events and offers. Unsubscribe anytime.</small></span></label>` : ""}`;
+    after = `<button class="btn btn-ghost btn-sm" type="button" style="justify-self:center">Show barcode instead</button>
+    <a class="badge-wallet" href="#wallet"> Add to Apple Wallet <small>(official badge in production)</small></a>
+    <p class="tip">Turn your brightness up at the door.</p>
+    ${d.isVip ? `<label class="card card-solid optin"><input type="checkbox"><span><b>Send me VIP offers</b><small>First word on events and offers. Unsubscribe anytime.</small></span></label>` : ""}`;
   }
-  const meta = state === "expired" ? `${s.passType.name} · Expired` : s.validity.lifetime ? `${s.passType.name} · Never expires` : `${s.passType.name} · ${s.validity.until}`;
   return `<div class="phone"><div class="status"><span>9:41</span><span>●●●</span></div>
-    <img class="watermark" src="${sparkIn(tier)}" alt=""><div class="vignette"></div>
-    <div class="pp-bar glass-bar"><img src="${LOGO}" alt="DGTL" style="height:22px;width:auto"><span class="chip" style="--tier:${tier}">${esc(chip)}</span></div>
-    <main class="pp"><div><p class="eyebrow">${esc(eyebrow)}</p><h2 class="pp-name">${esc(s.holder.name)}</h2><p class="pp-meta">${esc(meta)}</p></div>
-    ${main}
+    <img class="watermark" src="${sparkIn(d.accent)}" alt=""><div class="vignette"></div>
+    <div class="pp-bar glass-bar"><img src="${LOGO}" alt="DGTL" style="height:22px;width:auto"><span class="chip" style="--tier:${d.accent}">${esc(d.isVip ? "VIP" : d.materialLabel)}</span></div>
+    <main class="pp">${card}${after}
     <footer class="pp-foot"><span><a href="#help">Help</a> · <a href="#terms">Terms</a></span><span>© 2026 ${esc(kit.name)}. All rights reserved.</span></footer></main></div>`;
 }
 
@@ -280,12 +304,12 @@ function passPage() {
   const monthly = SAMPLES[2];
   return page({
     title: "Holder pass page",
-    lede: "What a holder sees at <span class=\"mono\">/p/&lt;credential&gt;</span>, themed from the tenant brand kit (DGTL by default). It shows the QR only while the pass can be used, offers Apple Wallet, and on VIP passes collects express marketing consent in the holder's own hand.",
+    lede: "What a holder sees at <span class=\"mono\">/p/&lt;credential&gt;</span>: their pass as the branded DGTL card, identical to Wallet and the email, in its tier color. It shows the QR only while the pass can be used, offers Apple Wallet, and on VIP passes collects express marketing consent in the holder's own hand.",
     css: PASS_CSS,
     body: `<section class="section"><div class="row">
-      <figure>${passPhone({ s: vip, state: "active" })}<figcaption><b>VIP · active.</b> Gold appears once, in the tier chip; the checkbox accent is the kit's form style. Opening this page is the invitation's "accept" (first_viewed_at).</figcaption></figure>
-      <figure>${passPhone({ s: day, state: "scheduled" })}<figcaption><b>Day · scheduled.</b> The QR shows before the window opens so holders can add it to Wallet early. The info badge says when it starts.</figcaption></figure>
-      <figure>${passPhone({ s: monthly, state: "expired" })}<figcaption><b>Monthly · expired.</b> No QR. Plain words, the support address as selectable text, and a secondary action. Revoked, used and suspended follow the same pattern.</figcaption></figure>
+      <figure>${passPhone({ s: vip, state: "active" })}<figcaption><b>VIP · active.</b> The pass is the same branded card as in Wallet and email: DGTL⚡ PASS lockup, black-and-gold art, gold labels. Opening this page is the invitation's "accept" (first_viewed_at).</figcaption></figure>
+      <figure>${passPhone({ s: day, state: "scheduled" })}<figcaption><b>Day · scheduled.</b> Steel-blue card. The QR shows before the window opens so holders can add it to Wallet early, and "Starts" leads the fields.</figcaption></figure>
+      <figure>${passPhone({ s: monthly, state: "expired" })}<figcaption><b>Monthly · expired.</b> The copper card desaturates and loses its QR, so a dead pass can't be waved at a busy door. Revoked, used and suspended follow the same pattern.</figcaption></figure>
     </div></section>`
   });
 }
@@ -330,6 +354,8 @@ const SCAN_CSS = `
 .v-foot{font-size:13px;font-weight:600;opacity:.7;margin-top:18px}
 .v-progress{width:160px;height:4px;border-radius:var(--r-pill);background:rgba(0,0,0,.18);overflow:hidden;margin-top:6px}
 .v-progress span{display:block;width:62%;height:100%;background:#000}
+.v-tier{display:inline-flex;align-items:center;gap:8px;background:#000;color:var(--tier);border-radius:var(--r-pill);padding:7px 14px 7px 10px;font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-top:6px}
+.v-tier img{height:16px}
 .vip-band{display:flex;align-items:center;justify-content:center;gap:10px;background:#000;color:var(--gold);padding:12px;font-size:13px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
 .vip-band img{height:18px}
 .offline{flex:1;display:grid;align-content:center;justify-items:center;gap:12px;padding:32px 28px;text-align:center}
@@ -359,12 +385,13 @@ function scanPhone(inner, { bar = true } = {}) {
   return `<div class="phone"><div class="status"><span>21:15</span><span>●●●</span></div>${bar ? scanBar() : ""}${inner}</div>`;
 }
 
-function verdictScreen({ result, name, detail, foot, vip = false, auto = false }) {
+function verdictScreen({ result, name, detail, foot, vip = false, auto = false, tier = null }) {
   const meta = RESULT_META[result];
   const icon = meta.tone === "admit" ? ICON.check : meta.tone === "warn" ? ICON.bang : ICON.cross;
   const band = vip ? `<div class="vip-band"><img src="${sparkIn(TIER_MATERIALS.gold)}" alt="">VIP · Lifetime</div>` : "";
   const progress = auto ? `<div class="v-progress" aria-hidden="true"><span></span></div>` : "";
-  return `${band}<div class="verdict ${meta.tone}" role="status" aria-live="assertive"><div class="v-icon">${icon}</div><div class="v-title">${esc(meta.title)}</div>${name ? `<div class="v-name">${esc(name)}</div>` : ""}<div class="v-detail">${detail}</div>${progress}<div class="v-foot">${esc(foot)}</div></div>`;
+  const tierPill = tier ? `<span class="v-tier" style="--tier:${tier.accent}"><img src="${sparkIn(TIER_PALETTE.gold.accent)}" alt="">${esc(tier.label)}</span>` : "";
+  return `${band}<div class="verdict ${meta.tone}" role="status" aria-live="assertive"><div class="v-icon">${icon}</div><div class="v-title">${esc(meta.title)}</div>${name ? `<div class="v-name">${esc(name)}</div>` : ""}${tierPill}<div class="v-detail">${detail}</div>${progress}<div class="v-foot">${esc(foot)}</div></div>`;
 }
 
 function scannerPage() {
@@ -373,10 +400,10 @@ function scannerPage() {
   const scanning = scanPhone(`<div class="cam"><div class="finder"><i></i><i></i><i></i><i></i><div class="qr-ghost">${QR}</div></div><p class="cam-hint">Point at the QR code</p></div>
     <div class="sc-controls"><button class="btn btn-secondary btn-sm" type="button">Enter code</button><button class="btn btn-icon" type="button" aria-label="Torch" style="border:1px solid var(--border)">${ICON.torch}</button></div>
     <div class="recent"><div class="r"><span class="pill badge-success">Valid</span><span>Maya Chen</span><span>21:15</span></div><div class="r"><span class="pill badge-error">Used</span><span>Jordan Avery</span><span>21:14</span></div><div class="r"><span class="pill badge-warning">Recently used</span><span>Sam Okafor</span><span>21:12</span></div></div>`);
-  const admit = scanPhone(verdictScreen({ result: "valid", name: monthly.holder.name, detail: `${esc(monthly.passType.name)} · Bronze<br>${esc(monthly.validity.until)} · Visit 14`, foot: "Continues automatically · tap to skip", auto: true }));
+  const admit = scanPhone(verdictScreen({ result: "valid", name: monthly.holder.name, tier: { accent: TIER_PALETTE.bronze.accent, label: "Bronze · Monthly" }, detail: `${esc(monthly.validity.until)} · Visit 14`, foot: "Continues automatically · tap to skip", auto: true }));
   const vipAdmit = scanPhone(verdictScreen({ result: "valid", name: "Alex Rivera", detail: "Never expires · Visit 31", foot: "Continues automatically · tap to skip", vip: true, auto: true }));
-  const warn = scanPhone(verdictScreen({ result: "recently_used", name: "Sam Okafor", detail: "Annual Pass · admitted 2 min ago at Side door<br>Re-entry opens in 3:00", foot: "Tap to continue" }));
-  const deny = scanPhone(verdictScreen({ result: "used", name: "Jordan Avery", detail: "Single Entry · used 21:14 at Main door", foot: "Tap to continue" }));
+  const warn = scanPhone(verdictScreen({ result: "recently_used", name: "Sam Okafor", tier: { accent: TIER_PALETTE.silver.accent, label: "Silver · Annual" }, detail: "Admitted 2 min ago at Side door<br>Re-entry opens in 3:00", foot: "Tap to continue" }));
+  const deny = scanPhone(verdictScreen({ result: "used", name: "Jordan Avery", tier: { accent: TIER_PALETTE.steel.accent, label: "Steel · Single Entry" }, detail: "Used 21:14 at Main door", foot: "Tap to continue" }));
   const offline = scanPhone(`<div class="offline" role="status" aria-live="assertive"><div class="v-icon">${ICON.wifi}</div><span class="pill badge-error">Don't admit</span><h3>No connection</h3><p>Can't verify this pass. Check Wi-Fi or mobile data, then scan again. The scan will retry with the same ID, so nobody is admitted twice.</p><button class="btn btn-secondary btn-sm" type="button">Retry</button></div>`);
   const manual = scanPhone(`<div class="manual"><p class="eyebrow">Manual entry</p><h3>Type the pass code</h3><label class="label" for="code">Pass code</label><input id="code" class="input code-input focus-ring" value="K7M2-QX9P" aria-describedby="code-help"><p id="code-help" class="note">8 characters, printed under the QR. Letters and numbers only. O and 0 are the same.</p><button class="btn btn-primary" type="button">Check code →</button><button class="btn btn-ghost btn-sm" type="button">Back to camera</button></div>`);
   const fig = (html, cap) => `<figure>${html}<figcaption>${cap}</figcaption></figure>`;
@@ -390,7 +417,7 @@ function scannerPage() {
       ${fig(manual, "<b>Manual entry.</b> Kit input with the gold focus ring, Crockford-forgiving, 10-miss lockout.")}
     </div></section>
     <section class="section"><h2>Verdicts</h2><div class="row">
-      ${fig(admit, `<b>${esc(RESULT_META.valid.title)}.</b> Success fill, auto-returns after 2.5 s.`)}
+      ${fig(admit, `<b>${esc(RESULT_META.valid.title)}.</b> Success fill, auto-returns after 2.5 s. The black tier pill (gold spark + tier color) tells staff which pass it is.`)}
       ${fig(vipAdmit, "<b>VIP admit.</b> A black band with the gold spark sits on top of the green, so staff spot VIP in one glance.")}
       ${fig(warn, `<b>${esc(RESULT_META.recently_used.title)}.</b> Warning fill. Anti-passback on reusable passes, with the gate and time of the last admit.`)}
       ${fig(deny, `<b>${esc(RESULT_META.used.title)}.</b> Error fill for every refusal (used, expired, revoked, not found), each with its own title.`)}

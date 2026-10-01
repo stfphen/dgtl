@@ -19,15 +19,16 @@ the holder's Wallet.
 Design target: [`previews/wallet.html`](previews/wallet.html) (the five presets, the Wallet stack,
 the back of the pass and every artwork file, rendered from `buildPassJson` + `walletArt.js`).
 
-| Tier | Style | Background (kit ladder) | Labels + art | Why | Images |
+| Tier | Style | Face (`backgroundColor`) | Labels (`labelColor`) | Why | Images |
 |---|---|---|---|---|---|
-| Day | `eventTicket` | `#111111` | steel `#A9B4C2` | Time-bound, date in the header, `relevantDate` puts it on the lock screen that day | `icon`, `logo`, `strip` (375×98 pt) |
-| Monthly / Yearly | `generic` | `#0a0a0a` | bronze `#D29666` / silver `#DCE1E8` | Apple's intended style for memberships; the `thumbnail` (90×90) carries the tier spark now and the holder photo later (R4) | `icon`, `logo`, `thumbnail` |
-| VIP Lifetime | `storeCard` | `#000000` | gold `#F0CF50` | A wide `strip` (375×144 pt) gives the gold spark its hero moment: the black card | `icon`, `logo`, `strip` |
+| Day | `eventTicket` | `#13294A` steel blue | `#8DB4E8` | Time-bound, date in the header, `relevantDate` puts it on the lock screen that day | `icon`, `logo`, `strip` (375×98 pt) |
+| Monthly / Yearly | `storeCard` | `#3A1F0C` copper / `#2A3039` platinum | `#E0A170` / `#DCE1E8` | Apple's membership/loyalty style; the wide strip carries the branded art. Roadmap R4 (holder photo) moves them to `generic` + thumbnail | `icon`, `logo`, `strip` (375×144 pt) |
+| VIP Lifetime | `storeCard` | `#000000` | `#F0CF50` | The black card: gold spotlight + gold spark on pure black | `icon`, `logo`, `strip` |
 
-Every card sits on the DGTL brand kit's black surface ladder ("dark surfaces everywhere"). The tier
-is the **label color and the artwork**, so a Wallet stack reads as one family of near-black cards
-told apart by their metal. `foregroundColor` is always `#F0F0F0`.
+Every card carries the **DGTL⚡ PASS lockup**: `logo.png` is the wordmark, and `logoText` is
+`brandKit.walletLogoText` ("PASS"). It also carries the **gold spark** in its strip. The tier is its
+face colour, label colour and art field, so a Wallet stack reads blue / copper / platinum /
+black-gold at a glance. `foregroundColor` is always `#F0F0F0`.
 
 Image specs live in `WALLET_IMAGE_SPECS` (points; ship @2x and @3x). `icon.png` is **required**
 and a pass without it fails to install.
@@ -39,15 +40,16 @@ and a pass without it fails to install.
 
 | File | Composition |
 |---|---|
-| `strip.png` | Pass background, a soft radial glow of the material, the spark at the right edge (clear of the left half where Wallet overlays primary fields), and a 1-pt material hairline at the base. VIP runs the spark at 0.95 opacity, lower tiers as a 0.32 watermark |
-| `thumbnail.png` | The spark centred on the pass background, in a rounded square with a faint material rule |
-| `icon.png` | The spark on black. For a tenant, its app icon from `lib/branding/appIcon.js` instead |
-| `logo.png` | The tenant logo PNG. For DGTL, [`assets/dgtl-wordmark@4x.png`](assets/dgtl-wordmark@4x.png) (rasterized from the kit SVG). It spells the name, so `brandKit.logoIncludesName: true` omits `logoText` |
+| `strip.png` | ① tier face, ② tier field glowing in from the right, ③ giant tier-accent spark watermark (rotated, cropped), ④ **the crisp gold DGTL spark**, right-aligned at 80% height, ⑤ 2-pt tier-accent hairline at the base. The left ~55% stays calm for Wallet's primary-field text. VIP swaps the field for a gold spotlight |
+| `thumbnail.png` | (generic style only) the gold spark on the tier face, tier ring |
+| `icon.png` | The gold spark on black, on every tier. For a tenant, its app icon from `lib/branding/appIcon.js` instead |
+| `logo.png` | The tenant logo PNG. For DGTL, [`assets/dgtl-wordmark@4x.png`](assets/dgtl-wordmark@4x.png) (rasterized from the kit SVG). `logoIncludesName: true` + `walletLogoText: "PASS"` gives the lockup |
 
 Phase 5 rasterizes the SVGs with **`sharp`**, which is already in the platform tree through
 `next`. No new dependency is needed, and the pipeline is proven on this machine:
-`sharp(Buffer.from(stripSvg(…))).png()` produced the 750×288 VIP strip and the 270×270 thumbnails
-cleanly. Render @1x, @2x and @3x per pass type and cache them in memory. Copy `spark.svg` into
+`sharp(Buffer.from(stripSvg(…))).png()` produced all four branded 750×288 strips cleanly. The same
+PNG is served publicly per pass type at `/passes/art/<passTypeId>@2x.png` (no credential in the
+URL, long cache) for the email and pass-page card. Render @1x, @2x and @3x per pass type and cache them in memory. Copy `spark.svg` into
 `platform/assets/brand/`, since the platform image can't read `engine/` at runtime, and add a test
 that it is byte-identical to the kit's. A tenant can replace the generated art with its own upload
 (`design.wallet.imageAssetId`, a media-library id).
