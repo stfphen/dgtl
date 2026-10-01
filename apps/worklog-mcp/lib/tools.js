@@ -377,6 +377,49 @@ const TOOLS = [
   },
 
   {
+    name: 'worklog_list_clients',
+    description: 'List Worklog clients (accounts) with their project counts. Clients exist only while at least one project carries them; Worklog prunes clients with no projects, so client ids are not durable references.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    async run(client) {
+      const { clients } = await client.get('/api/clients');
+      return { count: clients.length, clients };
+    },
+  },
+
+  {
+    name: 'worklog_client_digest',
+    description: 'Provenance-backed client digest for one Worklog client: per-project workstreams, completed tasks, verbatim time-entry narrative, upcoming work, and a provenance list naming the exact entry/task ids behind every figure. Defaults to the current week; the range is capped at 92 days by the server.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        client: { type: ['string', 'number'], description: 'Client id or name (resolved like other references).' },
+        from: { type: 'string', description: 'Range start YYYY-MM-DD (defaults to the current week start).' },
+        to: { type: 'string', description: 'Range end YYYY-MM-DD (defaults to from + 6 days).' },
+      },
+      required: ['client'],
+      additionalProperties: false,
+    },
+    async run(client, args) {
+      const { clients } = await client.get('/api/clients');
+      let clientId = null;
+      if (isId(args.client)) {
+        clientId = Number(args.client);
+        if (!clients.some((row) => row.id === clientId)) throw new ToolError(`No client with id ${clientId}.`);
+      } else {
+        const needle = String(args.client).trim().toLowerCase();
+        const exact = clients.filter((row) => row.name.toLowerCase() === needle);
+        const partial = exact.length ? exact : clients.filter((row) => row.name.toLowerCase().includes(needle));
+        if (!partial.length) throw new ToolError(`No client matches "${args.client}".`);
+        if (partial.length > 1) throw new ToolError(`Ambiguous client "${args.client}": ${partial.slice(0, 8).map((row) => `${row.id}: ${row.name}`).join(', ')}. Pass the id.`);
+        clientId = partial[0].id;
+      }
+      const from = args.from ? asDate(args.from, 'from') : undefined;
+      const to = args.to ? asDate(args.to, 'to') : undefined;
+      return client.get(`/api/digest${qs({ clientId, from, to })}`);
+    },
+  },
+
+  {
     name: 'worklog_list_projects',
     description: 'List projects with logged time, open task counts, billable flag and budget.',
     inputSchema: {

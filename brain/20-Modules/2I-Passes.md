@@ -1,5 +1,5 @@
 ---
-title: 2E · DGTL Pass (passes, tickets, verification)
+title: 2I · DGTL Pass (passes, tickets, verification)
 type: module
 tags: [module, passes, wallet, verification]
 status: proposed

@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { permissionDeniedResponse, requireRole } from "../../../../../../lib/permissions";
 import { claimOutreachQueueItem, getSessionTeamId } from "../../../../../../lib/store";
+import { redirectSameHost } from "../../../../../../lib/http/redirects";
 
 function redirectAdmin(request, notice) {
-  const url = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
-  if (notice) url.searchParams.set("notice", notice);
-  return NextResponse.redirect(url, 303);
+  return redirectSameHost("/admin", notice);
 }
 
 // Transition selected queued items to approved so they become sendable (by the

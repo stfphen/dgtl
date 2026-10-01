@@ -3,7 +3,7 @@ title: 21 · Admin Shell, Auth & RBAC
 type: module
 tags: [module]
 status: stable
-updated: 2026-06-27
+updated: 2026-08-13
 ---
 
 # Admin Shell, Auth & RBAC
@@ -29,6 +29,16 @@ role-based access control, and audit logging.
 `owner` > `admin` > `sales` > `contractor` > `viewer`. Owner creates the first account via one-time
 `OWNER_PASSWORD` env to `npm run create-owner` (never written to `.env`).
 Call deletion is email-gated to `DELETE_ADMIN_EMAIL` (historically `stephen@dgtlgroup.io`).
+
+## Routed DGTL Core workspace (Phase 1–2)
+The legacy `/admin` cockpit remains intact. The authenticated routed shell now exposes:
+`/companies`, `/contacts`, `/opportunities`, `/imports`, `/campaigns`, and
+`/operations/{outbox,exceptions}`. `components/core/CoreShell.jsx` owns its navigation.
+
+Stage 2 adds explicit Core permissions: owner/admin/sales may stage imports and build cohorts/drafts;
+only owner/admin may apply/reverse an import, approve a campaign/message, queue/retry delivery, or
+resolve an exception. `team_id` comes from the authenticated session; request-supplied tenant IDs are
+checked with `requireTenantAccess`. See [[13-Data-Model]] and `docs/architecture/dgtl-core-phase-2.md`.
 
 ## ⚠️ Gotchas / open issues
 - **No rate limiting anywhere** — no `middleware.ts`; unthrottled bcrypt on `POST /api/admin/login` = brute-force/DoS risk (H1).

@@ -70,14 +70,14 @@ bad = sum(1 for m in re.finditer(r'data:image/png;base64,([A-Za-z0-9+/=]+)', h)
 assert bad == 0
 ```
 
-## DGTL deploy (deploy.dgtlmedia.io) — and what stays relative
+## DGTL deploy (deploy.dgtl.ltd) — and what stays relative
 
-DGTL no longer uses Netlify. Flatten the page to a **single self-contained HTML** (inline CSS/JS/images — no sibling files), then upload it to **deploy.dgtlmedia.io**; the portal indexes it and serves it at **https://pitch.dgtlmedia.io/<slug>/**. The editable source stays in the repo at `pitches/<slug>/` — the flattened file is a deploy artifact, not the source. See `references/repo-output.md`.
+DGTL no longer uses Netlify. Flatten the page to a **single self-contained HTML** (inline CSS/JS/images — no sibling files), then upload it to **deploy.dgtl.ltd**; the portal indexes it and serves it at **https://pitch.dgtl.ltd/<slug>/**. The editable source stays in the repo at `pitches/<slug>/` — the flattened file is a deploy artifact, not the source. See `references/repo-output.md`.
 
 **Connectivity is the point — but not every link is absolute.** A pitch and its teaser are one slug
 with two entry points (`index.html` + `teaser.html` in the same folder), so they link to each other
 with **plain relative hrefs**. Only a link to a *different* pitch or a creator feature is absolute
-(`https://pitch.dgtlmedia.io/<other-slug>/`).
+(`https://pitch.dgtl.ltd/<other-slug>/`).
 
 Never write a root-absolute path (`/full/`, `/media/x.jpg`). Those resolve only at a domain root, so
 they break locally and under the `/<slug>/` deploy scheme — this is how the DMTV x Bose teaser's

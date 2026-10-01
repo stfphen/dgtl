@@ -3,7 +3,7 @@ title: 53 · Known Issues, Risks & Tech Debt
 type: log
 tags: [audit, security]
 status: living
-updated: 2026-08-13
+updated: 2026-08-25
 source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, status docs
 ---
 
@@ -19,25 +19,46 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
   re-checks and re-executes every migration (job `migrations-postgres`). Verified by a clean local CI
   simulation (356/356, build exit 0, no `.env`). **Remaining:** push the branch, let both jobs go
   green on GitHub, then mark both checks required on `main` in branch protection.
+- **Stage 3 is local/test only.** The bounded worker protocol, isolated `pitch.pages` worker library,
+  immutable Artifact registry, and preview deployment are implemented, but no continuously operated
+  staging worker or production deploy adapter is enabled. Before production: use a fresh snapshot,
+  validate deferred team constraints, operate the worker with scoped secrets in staging, and wrap the
+  real portal with checksum/hostname verification and unknown-outcome recovery. Audit/report
+  generation remains `installed_unavailable` until its skills live under versioned `engine/` sources.
+  [[2E-Artifact-Automation]]
+
+- ✅ **Core 009–011 rehearsed on a production-shaped copy (08-14).** The sealed 2026-07-21 dump
+  restored into isolated PostgreSQL 16; backfills reconciled, repeat execution was stable, all
+  deferred team constraints validated, and there were zero orphans/cross-team rows. Remaining risk:
+  that dump is not current. A fresh backup/restore and isolated staging run are mandatory before
+  production. `docs/operations/dgtl-core-release-checkpoint.md` · [[13-Data-Model]]
+- **Legacy and canonical outreach engines still coexist.** Canonical imports/campaigns/messages do
+  not blindly dual-write, while legacy lead/outreach features retain their existing tables. The first
+  post-release migration should move `outreach_campaigns`/`outreach_queue` onto canonical IDs; two
+  independent delivery concepts are the largest duplication risk.
+- ✅ **Composite team-aware relationships added in migration 011.** All Core routes derive team from
+  the authenticated session and direct-ID attacks are covered. PostgreSQL RLS remains future
+  defense-in-depth and should be designed platform-wide before generalized agent writes.
+
 - ✅ **Platform migration build verified 2026-08-13.** Final `npm run build` on merged local `main`
   with Next 15.5.23 compiled, type-checked, generated 49/49 static pages, collected traces, and exited
   0. Earlier attempts failed fetching Geist Mono, so the root layout's seven Google font families
   remain a reproducibility risk. Self-host/pin or reduce them and make the build required CI.
-- **Three high production dependency advisories remain** after updating the lock to Next 15.5.23
-  and applying non-breaking audit fixes. They are transitive PostCSS and Sharp advisories through
-  Next 15; npm proposes Next 16.3.0 as a breaking fix. Test a deliberate Next 16 migration rather
-  than running `npm audit fix --force` on the production line.
+- ✅ **Three high production dependency advisories resolved 2026-08-14.** Narrow lockfile overrides
+  use patched PostCSS 8.5.26 and Sharp 0.35.3 without a breaking Next 16 upgrade. `npm audit
+  --omit=dev` reports zero vulnerabilities; platform tests pass 407/407 and production build passes.
 - ✅ **Primary platform test gate repaired 2026-08-13.** Five enrichment fixtures mocked `fetch` but
   not the SSRF guard's preceding DNS lookup. The lookup is now injectable through the enrichment
   path, tests use a fixed public address, production continues to resolve and validate real DNS, and
   the complete suite passes 356/356.
-- **Worklog v2 passes 375/375 tests but is not production-migration verified.** Back up the live
-  database, dry-run schema migration and restore against a production-shaped copy, then extend
+- **Worklog v2 passes 375/375 tests but is not production-migration verified.** The CI-discovered
+  WAL initialization race now has bounded `SQLITE_BUSY` retry (three consecutive 375/375 stress
+  runs). Back up the live database, dry-run schema migration and restore against a production-shaped copy, then extend
   `apps/worklog-mcp` for the new client, shift, reconciliation, and digest endpoints before deploy.
 - **Five root-absolute pitch links remain**, all in `pitches/hotels/index.html`, pointing to a
   nonexistent `/full/` target. Fourteen other invalid teaser links were repaired. Choose the actual
   full pitch or remove the calls to action. Three ESCOTT media files remain declared pending.
-- **Twelve open GitHub PRs have no CI statuses.** PRs 19 and 20 are superseded; PR 23 is an
+- **Twelve pre-existing open GitHub PRs had no CI statuses.** PRs 19 and 20 are superseded; PR 23 is an
   unmergeable mixed-scope branch; PRs 13–18 and 21–22 are unverified domain placeholders; PR 24 is
   the isolated DGTL Neon review branch. See the 2026-08-13 audit before merging or closing them.
 - **Polish Stone tenant content is not publish-ready.** The three formerly untracked modules contain
@@ -69,7 +90,7 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 | **L3** | Historic `.env.example` shipped `ADMIN_PASSWORD=change-this-password` placeholder. |
 | **L4 (NEW)** | `telephony/transcription` webhook accepts unsigned requests (proceeds when `X-Twilio-Signature` absent); the other four telephony callbacks hard-require a valid signature. Low impact (limited to our own account's transcripts). | `app/api/telephony/transcription/route.js` |
 | **L5 (NEW)** | Portfolio embed `<iframe src>` has no scheme allowlist (admin-controlled data, so low risk). | `components/FunnelPage.jsx` |
-| **L6 — SUPERSEDED (08-13)** | The July two-moderate snapshot is obsolete. After refreshing to Next 15.5.23, `npm audit --omit=dev` reports three high transitive PostCSS/Sharp advisories; npm offers only the breaking Next 16.3.0 fix. Track in the 2026-08-13 integration section above. | `node_modules/next` (transitive) |
+| ✅ **L6 — RESOLVED (08-14)** | The July snapshot and 08-13 three-high snapshot are obsolete. Locked overrides now resolve PostCSS 8.5.26 and Sharp 0.35.3; audit is zero and Next 15 tests/build pass. | `platform/package.json`, lockfile |
 
 ## 🐛 Functional / correctness (NEW — 07-02 audit)
 - ✅ **RESOLVED: pipeline status not validated on update.** `updateLeadStatus` now rejects statuses outside `pipelineStatuses` (Postgres stored junk verbatim; file store silently reset the lead to `new`). Test: `tests/lead-status-validation.test.js`.
@@ -162,7 +183,6 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 - **Branch sprawl** (~15+ local + backups + wip/rescue + remotes) — needs consolidation. [[47-Git-Workflow]]
 - **`team_default` workaround** — built-in tenants tied to one team; blocks clean multi-team onboarding. [[15-Multi-Tenancy]] / [[33-Sprint-2-Productization]]
 - **No `lint` script** despite the mobile prompt referencing `npm run lint`. [[11-Tech-Stack]]
-- **2 moderate npm advisories** (`npm install`) — not yet addressed.
 - **VPS drift risk** — ✅ RESOLVED 2026-07-03: VPS runs the current tip (`main@14a746b`, smoke green;
   migrations 006+007 applied, 5/5 tenants seeded, uploads volume mounted). Keep it current via
   `docs/DEPLOY_NEXT.md`. Still missing: an uptime monitor (Phase 12) to catch 502s automatically.
@@ -265,4 +285,82 @@ link checker intentionally does not scan templates under `engine/`.
 - **OG image for join.dgtlinfluence.com not produced** (`assets/img/og-join.jpg` referenced in plan, page currently ships without an og:image).
 - **Journal index canonicals still point at `pitch.dgtlmedia.io`** while pack.json canonicalUrls now say `dgtlinfluence.com` — the blanket canonical rewrite remains its own PR per the 2026-08-01 decision.
 
+- ✅ **RESOLVED (2026-08-25): "the dgtl.report/audit deploy token doesn't work."** Probed before
+  rebuilding anything: `deploy.dgtl.report/health` returns 200, `dgtl.report/` and
+  `audit.dgtl.report/` both serve, and a wrong token gets a clean `{"error":"bad token"}` — the
+  stack was live and the auth path was fine. The real fault was operational: two portals carrying
+  two deliberately-different `DEPLOY_TOKEN`s, with the live values recorded only in the
+  `dgtl-offboard-20260721` bundle. The unified portal uses **one** token for every destination.
+  [[52-Decision-Log]]
+
+- **OPEN — dgtlmag.com expires 2026-08-28 with auto-renew OFF, and this is now load-bearing (CRITICAL).**
+  Already tracked in [[65-Domain-Fleet]], repeated here because the 2026-08-25 portal merge decided to
+  keep `pitch.dgtlmag.com` serving rather than migrate its slugs, so every pitch link already sent to a
+  client dies with the domain — as does `deploy.dgtlmag.com`. Renew multi-year.
+
+- **OPEN — the two skills that publish to `dgtl.report` still name the old portal hostname (LOW).**
+  `dgtl-client-audit` and `dgtl-worklog-status-report` POST to `deploy.dgtl.report`. That keeps working
+  (the new container answers on all three hostnames with the same single token), but the canonical name
+  is `deploy.dgtl.ltd`. Neither skill has a source copy in `engine/` — they exist only in the installed
+  skills directory outside this repo, so repointing them is a manual edit there.
+
 - **dgtlinfluence.com ACME challenge failing repeatedly** (seen 2026-08-10 in `coolify-proxy` logs, every ~10 min: "Cannot retrieve the ACME challenge for dgtlinfluence.com"). The journal host may be serving on Traefik's fallback/self-signed cert or an expiring one. Unrelated to the dgtl.report stack. Check the journal router's cert and whether dgtlinfluence.com DNS actually points at this VPS.
+
+## DGTL Core Phase 2 follow-ups (2026-08-13)
+
+- ✅ **Production-shaped rehearsal completed 08-14** using the sealed 2026-07-21 dump. A fresh/current
+  backup and a separate staging target are still required before production.
+- **Native XLSX is not parsed.** `/imports` accepts CSV/TSV (8 MB, 10,000 rows). Add a reviewed streaming workbook parser before operators upload `.xlsx` directly.
+- **Merge reversal is conservative.** Batch-created records compensate safely; restoring explicitly merged fields from `before_state` after concurrent edits needs a field-level conflict UI.
+- ✅ **Outbound adapter boundary hardened 08-14:** fail-closed release gates, signed Resend events,
+  health, lease recovery, unknown-outcome quarantine, idempotency, and provider-independent caps are
+  implemented. Production stays disabled. No production inbound mailbox exists; connect one only
+  behind the tested deterministic correlation boundary.
+- **No isolated platform staging target exists.** The current compose and DNS are production-shaped;
+  do not reuse them. Follow `docs/operations/dgtl-core-staging-runbook.md` after authorization.
+- **GitHub branch protection must select `Required DGTL Core checkpoint`.** The workflow produces the
+  aggregate check, but a repository admin must make it required before merge bypass is mechanically
+  prevented.
+- **Application authorization is primary; PostgreSQL RLS is absent.** Composite team checks were added where practical, but RLS should be designed platform-wide rather than applied only to Stage 2.
+- **Import review UI exposes JSON mapping and candidate decisions, not a polished visual mapper/diff.** The workflow is complete and auditable; drag/drop mapping, per-field merge diffs, bulk decisions, and native large-sheet pagination remain Phase 3 ergonomics.
+- **Stage 4 Worklog bridge has no production configuration.** The dedicated integration account on
+  `office.dgtl.at`, `CORE_WORKLOG_*` env, and the team binding are deliberately unset; acceptance ran
+  only against a local throwaway Worklog. Follow the production-setup section of
+  `docs/architecture/dgtl-core-phase-4.md` after review — and remember Worklog revokes sessions on
+  password change, so credential rotation must update the env in step.
+- **Worklog is pull-only: no webhooks, events, or `updated_since` filters.** Stage 4 read-through is
+  explicit-refresh with cached snapshots; observed-transition Activities (archived, task completed)
+  only fire on refresh. A future event feed would need Worklog-side work; no fake cursor was invented.
+- **Worklog client ids are not durable.** Worklog prunes a client when its last project detaches and
+  re-derives clients from project codes on restart; Company↔Client links verify by fresh lookup and
+  surface `missing` for explicit repair rather than silently re-pointing.
+- **HOME shows canonical-only data.** Legacy leads that only exist as compatibility projections
+  (never backfilled) appear on entity list pages but not in HOME's pipeline counts; the gap closes
+  as dual-write/backfill retires the legacy paths. Documented in `docs/architecture/dgtl-core-phase-5.md`.
+- **`x-forwarded-host` is trusted for root host resolution (pre-existing).** A spoofed header
+  matching a claimed tenant domain renders that tenant's funnel on the app host. Unchanged by
+  Stage 5 (flagged during the routing audit); a host allow-list is a future hardening item.
+
+## DGTL.chat (Stage 6) follow-ups (2026-08-14)
+
+- **The chat rate limiter is in-process** (`lib/rateLimit.js`, fixed-window, keyed
+  `chat:turn:{team}:{user}`). Correct on the current single-instance deploy; a multi-instance
+  deployment needs a shared (e.g. Redis) backend before the 10-turns/min bound is real. Same
+  caveat as the existing login limiter — now with one more consumer.
+- ✅ **`apps/dgtl-os` AI proxies hardened 08-15 (Stage 6.5):** both `api/worker.js` (Cloudflare)
+  and `api/api/llm.js` (Vercel) now **deny every origin unless `ALLOWED_ORIGINS` is configured**
+  — the open-CORS default is gone and an unconfigured deploy refuses to spend the key. Remaining
+  manual step: whether an old copy is live on the Cloudflare account cannot be verified from the
+  repo (`wrangler deployments list --name dgtl-os-llm` / dashboard); delete or redeploy the
+  hardened version if found. Core `/chat` never routes through these proxies.
+- **Production still runs `main@32c9f73` (2026-07-04) — pre-Core.** Promoting to the Stage 6
+  release applies migrations 009–014 to the production database; the fresh-backup + isolated
+  restore rehearsal in `docs/operations/dgtl-chat-internal-alpha-runbook.md` is a hard gate
+  before that happens.
+- **No real-provider smoke test has run in CI or this environment** (`ANTHROPIC_API_KEY` absent by
+  design). The deterministic adapter is the acceptance authority; run the optional
+  `CORE_CHAT_PROVIDER=anthropic` smoke locally once before enabling the provider in any deployed
+  environment.
+- **Proposal expiry is passive.** Expired proposals are refused at confirmation and shown as
+  expired, but no background job transitions `proposed → expired`; listing queries treat
+  past-expiry proposals as inert. A sweeper is only needed if proposal lists ever grow noisy.

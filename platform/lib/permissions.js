@@ -19,6 +19,8 @@ const TENANT_MANAGEMENT_ROLES = [ROLE_OWNER, ROLE_ADMIN];
 const LEAD_MANAGEMENT_ROLES = [ROLE_OWNER, ROLE_ADMIN, ROLE_SALES];
 const CONTRACTOR_MANAGEMENT_ROLES = [ROLE_OWNER, ROLE_ADMIN];
 const DASHBOARD_VIEW_ROLES = ALL_ROLES;
+const CORE_WRITE_ROLES = [ROLE_OWNER, ROLE_ADMIN, ROLE_SALES];
+const CORE_APPROVAL_ROLES = [ROLE_OWNER, ROLE_ADMIN];
 
 export class PermissionError extends Error {
   constructor(message, status = 403) {
@@ -61,6 +63,22 @@ export function canViewDashboard(session) {
   return DASHBOARD_VIEW_ROLES.includes(session?.role);
 }
 
+export function canWriteCore(session) {
+  return CORE_WRITE_ROLES.includes(session?.role);
+}
+
+export function canApproveCore(session) {
+  return CORE_APPROVAL_ROLES.includes(session?.role);
+}
+
+export async function requireCoreWrite() {
+  return requireRole(CORE_WRITE_ROLES);
+}
+
+export async function requireCoreApproval() {
+  return requireRole(CORE_APPROVAL_ROLES);
+}
+
 // Hard-restricted destructive action (call deletion). Limited to a single
 // account by email — defaults to the owner, overridable via DELETE_ADMIN_EMAIL.
 export const DELETE_ADMIN_EMAIL = String(
@@ -94,7 +112,11 @@ export function permissionDeniedResponse(error, request) {
     if (prefersJsonResponse(request)) {
       return Response.json({ error: error.message || "Authentication required." }, { status: 401 });
     }
-    return Response.redirect(new URL("/admin/login", process.env.PUBLIC_APP_URL || request.url), 303);
+    // Relative Location keeps the browser on the origin it is already using —
+    // this app serves more than one host (dgtl.chat + dgtlmag.com), so an
+    // auth bounce must never jump domains. PUBLIC_APP_URL remains the
+    // canonical identity for outbound links (emails), not request redirects.
+    return new Response(null, { status: 303, headers: { Location: "/admin/login" } });
   }
 
   return Response.json({ error: error.message || "Forbidden." }, { status: 403 });

@@ -1,0 +1,54 @@
+services:
+  dgtl-publish:
+    build: .
+    image: dgtl-publish
+    container_name: dgtl-publish
+    restart: unless-stopped
+    environment:
+      # ONE token for every destination. Supersedes the two separate tokens the
+      # deploy.dgtlmag.com and deploy.dgtl.report portals used to carry.
+      DEPLOY_TOKEN: ${DEPLOY_TOKEN:?set DEPLOY_TOKEN in .env}
+      MAX_ZIP_BYTES: ${MAX_ZIP_BYTES:-150000000}
+    volumes:
+      # Every destination in targets.json, mounted read-write. A destination whose dir
+      # is not mounted is skipped at boot and simply does not appear in the portal, so
+      # you can route domains one at a time.
+      - /opt/dgtl-publish/site/pitch-ltd:/data/pitch-ltd     # pitch.dgtl.ltd
+      - /opt/dgtl-publish/site/gallery:/data/gallery         # shoots.dgtl.gallery
+      - /opt/dgtl-publish/site/pics:/data/pics               # sets.dgtl.pics
+      - /opt/dgtl-publish/site/mov:/data/mov                 # watch.dgtl.mov
+      - /opt/dgtl-report/site/reports:/data/reports          # dgtl.report        (served by report-host)
+      - /opt/dgtl-report/site/audits:/data/audits            # audit.dgtl.report  (served by report-host)
+      - /opt/dgtl-decks/site/pitch:/data/pitch-mag           # pitch.dgtlmag.com  (served by decks)
+      # Edit destinations without rebuilding the image by mounting your own registry:
+      # - /opt/dgtl-publish/targets.json:/app/targets.json:ro
+    networks:
+      - coolify
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "coolify"
+
+      # ONE app, three hostnames. deploy.dgtl.ltd is the canonical name; the two retired
+      # portal hosts are served by the same container rather than 301'd, because a 301
+      # downgrades POST to GET — redirecting them would silently break every skill that
+      # POSTs to /api/deploy or /api/deploy-zip on the old host. Same app, same single
+      # token, so old callers keep working unchanged while the UI teaches the new name.
+      #
+      # priority beats the retired dgtl-deploy / dgtl-report-deploy routers so the cutover
+      # is deterministic even if those containers are still up. Remove them anyway — see
+      # README "Cutover".
+      traefik.http.routers.dgtl-publish.rule: "Host(`deploy.dgtl.ltd`) || Host(`deploy.dgtl.report`) || Host(`deploy.dgtlmag.com`)"
+      traefik.http.routers.dgtl-publish.entrypoints: "https"
+      traefik.http.routers.dgtl-publish.priority: "100"
+      traefik.http.routers.dgtl-publish.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtl-publish-http.rule: "Host(`deploy.dgtl.ltd`) || Host(`deploy.dgtl.report`) || Host(`deploy.dgtlmag.com`)"
+      traefik.http.routers.dgtl-publish-http.entrypoints: "http"
+      traefik.http.routers.dgtl-publish-http.priority: "100"
+      traefik.http.routers.dgtl-publish-http.middlewares: "publish-redirect"
+      traefik.http.middlewares.publish-redirect.redirectscheme.scheme: "https"
+      traefik.http.services.dgtl-publish.loadbalancer.server.port: "80"
+
+networks:
+  # Coolify's proxy network (external). The coolify-proxy Traefik routes to us via labels.
+  coolify:
+    external: true

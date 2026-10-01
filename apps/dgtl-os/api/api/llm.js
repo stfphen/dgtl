@@ -13,16 +13,25 @@
  *   3. Deploy. Your endpoint is https://<project>.vercel.app/api/llm
  *   4. In the terminal:  config endpoint https://<project>.vercel.app/api/llm
  *
- * SECURITY: lock the CORS origin to your own domain in production.
+ * SECURITY: origins are DENIED unless allowlisted. Set ALLOWED_ORIGINS as an
+ * environment variable (comma-separated, e.g.
+ * "https://terminal.dgtlmedia.io"). With no ALLOWED_ORIGINS configured the
+ * proxy refuses every browser origin, so a deployed-but-unconfigured proxy
+ * cannot spend the API key for arbitrary sites.
  */
 
-const ALLOW_ORIGIN = "*"; // ← change to "https://terminal.dgtlmedia.io" in production
 const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", ALLOW_ORIGIN);
+  const allowed = String(process.env.ALLOWED_ORIGINS || "").split(",").map((o) => o.trim()).filter(Boolean);
+  const origin = req.headers.origin || "";
+  if (!allowed.includes(origin)) {
+    return res.status(403).json({ text: "Origin not allowed. Configure ALLOWED_ORIGINS." });
+  }
+  res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Vary", "Origin");
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ text: "POST only" });

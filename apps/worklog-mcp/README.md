@@ -40,6 +40,8 @@ Register it with Cowork / Claude Desktop:
 | `worklog_create_task` | Title required. **Omitting assignee leaves the task unassigned.** |
 | `worklog_create_tasks_bulk` | Up to 50, serialised. Reports per-item failures instead of aborting. |
 | `worklog_update_task` | Reassign, restatus, reprioritise, set/clear due date, archive. |
+| `worklog_list_clients` | Client accounts with project counts. Client ids are not durable — Worklog prunes a client when its last project detaches. |
+| `worklog_client_digest` | Provenance-backed weekly digest for one client: workstreams, completions, verbatim narrative, and the exact entry/task ids behind every figure. |
 | `worklog_list_projects` | Includes logged time and budget-used percentage. |
 | `worklog_create_project` | **Admin only.** |
 | `worklog_log_time` | Minutes or hours. Logging for another user is **admin only**. |
@@ -49,6 +51,15 @@ Register it with Cowork / Claude Desktop:
 IDs may be given as names — `project: "Growth Platform"`, `assignee: "marta@dgtl.at"`. Names
 resolve against a 30-second snapshot of `/api/bootstrap`; an ambiguous name is refused with the
 candidate list rather than guessed at.
+
+## Shared HTTP client
+
+The HTTP contract (cookie login, single 401 re-auth, serialised requests with a
+minimum gap for the shared-hosting cap, credential hygiene) lives in
+`apps/worklog/client/worklog-client.mjs`, beside the server it talks to. This
+connector's `lib/client.js` is a thin wrapper adding the `.env` fallbacks and
+the production default URL; the platform's Stage 4 Worklog bridge consumes the
+same shared module, so there is exactly one Worklog client implementation.
 
 ## Permissions
 

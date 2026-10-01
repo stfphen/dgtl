@@ -1,0 +1,66 @@
+{
+  "pitch-ltd": {
+    "label": "Corporate pitch",
+    "group": "Pitches",
+    "dir": "/data/pitch-ltd",
+    "base": "https://pitch.dgtl.ltd",
+    "hub": false,
+    "noindex": true,
+    "default": true,
+    "note": "Corporate/B2B pitch decks and proposals under the umbrella domain."
+  },
+  "pitch-mag": {
+    "label": "Legacy pitch",
+    "group": "Pitches",
+    "dir": "/data/pitch-mag",
+    "base": "https://pitch.dgtlmag.com",
+    "hub": true,
+    "noindex": false,
+    "note": "Pre-existing pitch host. Public hub index at the root. Kept so live client links keep resolving; dgtlmag.com must stay renewed."
+  },
+  "report": {
+    "label": "Status report",
+    "group": "Clients",
+    "dir": "/data/reports",
+    "base": "https://dgtl.report",
+    "hub": false,
+    "noindex": true,
+    "note": "dgtl-worklog-status-report pages. Private by URL."
+  },
+  "audit": {
+    "label": "Client audit",
+    "group": "Clients",
+    "dir": "/data/audits",
+    "base": "https://audit.dgtl.report",
+    "hub": false,
+    "noindex": true,
+    "note": "dgtl-client-audit pages. Private by URL."
+  },
+  "gallery": {
+    "label": "Shoot gallery",
+    "group": "Creative",
+    "dir": "/data/gallery",
+    "base": "https://shoots.dgtl.gallery",
+    "hub": false,
+    "noindex": true,
+    "note": "Subdomain, not the apex — dgtl.gallery serves its own placeholder site on Hostinger."
+  },
+  "pics": {
+    "label": "Photo set",
+    "group": "Creative",
+    "dir": "/data/pics",
+    "base": "https://sets.dgtl.pics",
+    "hub": false,
+    "noindex": true,
+    "note": "Subdomain, not the apex — dgtl.pics serves its own placeholder site on Hostinger."
+  },
+  "mov": {
+    "label": "Video page",
+    "group": "Creative",
+    "dir": "/data/mov",
+    "base": "https://watch.dgtl.mov",
+    "hub": false,
+    "noindex": true,
+    "note": "Subdomain, not the apex — dgtl.mov already serves a live site on the VPS."
+  }
+}

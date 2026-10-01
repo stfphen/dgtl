@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { logAudit } from "../../../../../lib/audit";
 import { permissionDeniedResponse, requireRole } from "../../../../../lib/permissions";
 import { getSessionTeamId, upsertTenantConfig } from "../../../../../lib/store";
+import { redirectSameHost } from "../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -31,5 +32,5 @@ export async function POST(request) {
   } catch (error) {
     return permissionDeniedResponse(error, request);
   }
-  return NextResponse.redirect(new URL("/admin", process.env.PUBLIC_APP_URL || request.url), 303);
+  return redirectSameHost("/admin");
 }

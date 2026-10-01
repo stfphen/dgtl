@@ -2,14 +2,15 @@ import { NextResponse } from "next/server";
 import { logAudit } from "../../../../../lib/audit";
 import { permissionDeniedResponse, requireRole } from "../../../../../lib/permissions";
 import { getSessionTeamId, publishTenantConfig } from "../../../../../lib/store";
+import { redirectToUrl, sameHostUrl } from "../../../../../lib/http/redirects";
 
 export const dynamic = "force-dynamic";
 
 function redirectAdmin(request, notice) {
-  const url = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
+  const url = sameHostUrl("/admin");
   url.searchParams.set("tab", "tenants");
   url.searchParams.set("notice", notice);
-  return NextResponse.redirect(url, 303);
+  return redirectToUrl(url);
 }
 
 export async function POST(request) {

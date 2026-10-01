@@ -3,7 +3,7 @@ title: 00 · Home (Master MOC)
 type: moc
 tags: [moc, home]
 status: living
-updated: 2026-07-16
+updated: 2026-08-14
 ---
 
 # 🏠 Home — Content Checkout Funnel
@@ -47,10 +47,24 @@ review → all tenant-scoped, permissioned, and audit-logged.*
 - [[42-Go-Live-Plan]] — the 12-phase production plan.
 - [[29-Funding-Program]] — the biggest/newest subsystem.
 
-## 🧭 Status at a glance (2026-07-16)
-- **Current priority:** merge `feature/platform-landing` (carries all the batch-email work); point `app.dgtlmedia.io` DNS + deploy the DGTL Growth Platform funnel (local `npm test && npm run build` gate first); deploy DGTL Group page; remaining ops items (C1/H3 rotations, pg dedupe parity). See [[31-Current-Priorities]].
-- **Active branch:** `feature/platform-landing` @ `61fd3bb` (extends `feature/batch-email-sending`) — everything from the batch-sending line (send engine + claim CAS, drain, drip, signed unsubscribe/H4 fix, migration 008) **plus, all now committed:** admin DGTL reskin **complete** (`4d12dfe` base + `a1e65f5` refinements — shell, pipeline table + drawer, login, cross-tab polish), single-flight `ensureSchema` deadlock fix (`0af5777`), the full `influence-journal/` microsite (`f9aaa71`), creator-features skill + brand-icon library + `dgtl-deploy/` scaffold (`0424b0b`), **DGTL Growth Platform funnel = sole owner of `app.dgtlmedia.io`** (`e8b3166`, new `platform` template + `dgtl-platform` tenant), logo-only admin login (`f6c98f9`), Escott pitch page (`fb2ec8f`), Traefik `app.dgtlmedia.io` route fix (`b8554ec`). **Working tree clean; branch unpushed** — push from the Mac after clearing the live `.git/index.lock` (see [[53-Known-Issues]]).
-- **`main`:** @ `fe2d78a` (**pushed**) — `app.dgtlmedia.io` made canonical host; ⚠️ deliberate `lib/defaultTenant.js` conflict with the platform branch — **keep the branch's version on merge** (see [[53-Known-Issues]]). DGTL Group agency page (`/t/dgtl-group`, fourth template `agency`) merged @ `4abc81f`, **not yet deployed**; dgtlgroup.io DNS not pointed. Superseded twin branch `feature/dgtl-group-page` must NOT also be merged.
+## 🧭 Status at a glance (2026-08-14)
+- **Current priority:** Stage 6.5 — promote merged Stages 1–6 to the `https://dgtl.chat`
+  internal alpha. Readiness work is on `ops/dgtl-chat-internal-alpha`; the gate-ordered runbook
+  is `docs/operations/dgtl-chat-internal-alpha-runbook.md`. Blocked on external steps only
+  (VPS fresh backup + restore rehearsal + deploy, registrar A record, Worklog integration
+  account, provider-key decision). Production email stays disabled.
+- **Stage 6** merged via PR #30 (`main@239587e`): DGTL.chat — the model proposes, Core
+  validates/authorizes/executes; 16-tool registry, ActionProposals with revalidated human
+  confirmation, deterministic CI adapter. [[2H-DGTL-Chat]]
+- **Stage 5** merged via PR #29 (`main@879cc3e`): the HOME command center — `/home` projection
+  over Stages 1–4, grouped navigation, ⌘K search, app-host root landing. [[2G-Home-Command-Center]]
+- **Stage 4** merged via PR #28 (`main@2fa56f9`): the Worklog delivery bridge — approved
+  idempotent handoff, read-through status, real-local-Worklog acceptance. [[2F-Worklog-Bridge]]
+- **Stage 3** merged via PR #27 (`main@33c0bde`): bounded artifact automation, immutable
+  versions, sandboxed preview, test deployment, exact Message attachment. [[2E-Artifact-Automation]]
+- **`main`:** Phase 1+2 Core checkpoint merged. Company/Contact/Opportunity, staged import,
+  Campaign/Message, durable outbox and the aggregate CI gate are canonical; production promotion
+  still requires current-snapshot and isolated-staging rehearsal.
 - **Deploy target:** `dgtlmag.com` on Hetzner VPS `37.27.198.189` (host `DGTLapps`, Coolify edge; the Hostinger box `[retired-vps]` was offboarded 2026-07-21) — **LIVE at `main@32c9f73` (2026-07-04: template library — vertical presets, section variants, authority archetype; smoke green)**. Production tracks `main`. See `docs/DEPLOY_NEXT.md` / [[41-Deployment-Runbook]].
 - **Biggest open risks:** C1 key rotation + H3 DB password (ops), pg-vs-file-store dedupe parity (HIGH), Stripe idempotency / batch-import idempotency; `npm audit` 2 moderate accepted (L6). ~~H4 unsubscribe~~ + outreach double-send **resolved 07-04**. See [[53-Known-Issues]].
 - **Recently shipped:** DGTL Growth Platform funnel (`app.dgtlmedia.io`) · admin DGTL reskin (complete) · Influence Journal microsite + creator-features skill · outreach batch sending + drip ([[26-Outreach]]) · DGTL Group agency page · Template & Asset Library · DMTV Studio showcase · YouTube hero media. See [[51-Timeline]] / [[16-Design-System]] / [[63-Tenants-Catalog]].

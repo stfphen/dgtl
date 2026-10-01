@@ -53,7 +53,7 @@ composed and extend it consistently instead of re-running the engine and getting
 
 Links inside the pitch folder stay **relative** (`teaser.html`, `media/…`); only a link to a
 *different* pitch is absolute. Then flatten to a single self-contained HTML for upload to
-**deploy.dgtlmedia.io**. Full deploy details in `build-verify-deploy.md`.
+**deploy.dgtl.ltd**. Full deploy details in `build-verify-deploy.md`.
 
 ## Non-negotiables
 - Every primary CTA is **"Book a Call →"** → `https://dgtlgroup.io/book-a-call`.

@@ -38,6 +38,11 @@ inbound ┘                                   │        ├─► OUTREACH (hum
 | [[2B-AI-Backend]] | AI backend | Shared Claude transport (subscription / apiKey). |
 | [[2C-Enterprise-Prospecting]] | Enterprise prospecting (ABM) | **MVP built.** Account-based motion: accounts → committee → campaign, 3 gates → outreach. |
 | [[2D-Portfolio-Media]] | Portfolio / references & media library | **Proposed.** Per-tenant portfolio section + reusable media library + AI-assisted selection + hero/media editor. |
-| [[2E-Passes]] | DGTL Pass (passes, tickets, verification) | **Proposed; spec + tested reference core.** Branded day/monthly/yearly/VIP passes → email/SMS → Apple Wallet → `/scan` PWA verification. `docs/specs/dgtl-pass/`. |
+| [[2E-Artifact-Automation]] | Sales-asset automation | Opportunity → bounded skill job → validated immutable Artifact → exact Message attachment. |
+| [[2F-Worklog-Bridge]] | Worklog delivery bridge | Company↔Client, Opportunity↔Project, approved idempotent task handoff, read-through status; Worklog stays execution authority. |
+| [[2G-Home-Command-Center]] | HOME command center | `/home` projection over Stages 1–4: attention, today, approvals, pipeline, delivery, health, activity, ⌘K search. |
+| [[2H-DGTL-Chat]] | DGTL.chat command & action layer | `/chat`: model proposes, Core validates/authorizes/executes; static 16-tool registry, ActionProposals with human confirmation + revalidation. |
+| [[2I-Passes]] | DGTL Pass (passes, tickets, verification) | **Proposed; spec + tested reference core.** Branded day/monthly/yearly/VIP passes → email/SMS → Apple Wallet → `/scan` PWA verification. `docs/specs/dgtl-pass/`. |
+
 
 Up: [[00-Home]]
