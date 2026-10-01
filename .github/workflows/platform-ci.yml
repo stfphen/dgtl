@@ -1,0 +1,125 @@
+# Release gate for platform/ (CLAUDE.md "Current priority" item 1; DGTL Pass build plan P0.1-P0.2).
+#
+#   test-and-build       npm ci → npm test → npm run build, exactly as CLAUDE.md requires before
+#                        any platform work is called complete. No .env and no secrets: the
+#                        platform must build and test with every integration unconfigured.
+#   migrations-postgres  Every migration applies to a real Postgres, re-applies cleanly (each file
+#                        must be idempotent), and any Postgres-backed test (tests/*.pg.test.js,
+#                        e.g. the passes double-scan test T-C1) runs against it.
+#
+# To make this a real gate, mark both checks required on main:
+#   Settings → Branches → main → Require status checks → "platform / test-and-build"
+#   and "platform / migrations-postgres".
+# No path filter on purpose: a required check that never reports blocks every PR that
+# doesn't touch platform/.
+name: platform
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: platform
+
+jobs:
+  test-and-build:
+    name: test-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: platform/package-lock.json
+
+      - name: Install (lockfile only)
+        run: npm ci --no-audit --no-fund
+
+      - name: Unit tests
+        run: npm test
+
+      # next/font downloads Google fonts at build time; a fetch failure here is the
+      # known font-reproducibility risk (brain/50-Audit-Log/53-Known-Issues.md), not flake.
+      - name: Production build
+        run: npm run build
+
+  migrations-postgres:
+    name: migrations-postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: dgtl
+          POSTGRES_PASSWORD: dgtl
+          POSTGRES_DB: dgtl_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dgtl -d dgtl_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgres://dgtl:dgtl@localhost:5432/dgtl_ci
+      PASSES_TEST_DATABASE_URL: postgres://dgtl:dgtl@localhost:5432/dgtl_ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: platform/package-lock.json
+
+      - name: Install (lockfile only)
+        run: npm ci --no-audit --no-fund
+
+      - name: Apply migrations
+        run: npm run migrate
+
+      - name: Migrations report up to date
+        run: npm run migrate | tee migrate-second-run.log && grep -q "Database is up to date" migrate-second-run.log
+
+      # migrate.js skips files it has recorded, so the run above proves bookkeeping only.
+      # This re-executes every file against the migrated schema: each must be safe to re-run.
+      - name: Every migration file re-applies cleanly
+        run: |
+          node --input-type=module -e '
+            import { readdir, readFile } from "node:fs/promises";
+            import pg from "pg";
+            const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+            await client.connect();
+            const files = (await readdir("migrations")).filter((f) => f.endsWith(".sql")).sort();
+            for (const file of files) {
+              await client.query(await readFile(`migrations/${file}`, "utf8"));
+              console.log(`re-applied ${file}`);
+            }
+            await client.end();
+          '
+
+      - name: Postgres-backed tests
+        run: |
+          shopt -s nullglob
+          files=(tests/*.pg.test.js)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No Postgres-backed tests yet. The passes concurrency test (T-C1) lands in build-plan Phase 3."
+            exit 0
+          fi
+          node --test "${files[@]}"
