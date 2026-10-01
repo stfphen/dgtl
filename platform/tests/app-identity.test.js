@@ -3,14 +3,21 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { getTenantClaimingHost } from "../lib/store.js";
-import {
-  DGTL_HOUSE_APP,
-  DGTL_HOUSE_APPLE_TOUCH_ICON,
-  DGTL_HOUSE_ICONS,
-  buildAppManifest
-} from "../lib/branding/appManifest.js";
+
+// Isolate the JSON fallback store BEFORE importing the data layer (the same
+// pattern as tenant-isolation.test.js). Without this the host-claim assertions
+// read whatever a developer's gitignored data/app-store.json holds: a stale
+// local tenant claiming dgtlmag.com failed this suite on a dev machine while
+// CI, which has no such file, passed.
+process.env.APP_STORE_PATH = path.join(os.tmpdir(), `app-identity-store-${process.pid}.json`);
+delete process.env.DATABASE_URL;
+
+const { getTenantClaimingHost } = await import("../lib/store.js");
+const { DGTL_HOUSE_APP, DGTL_HOUSE_APPLE_TOUCH_ICON, DGTL_HOUSE_ICONS, buildAppManifest } = await import(
+  "../lib/branding/appManifest.js"
+);
 
 // The web-app install identity. These exist because of a real, shipped bug:
 // /manifest.webmanifest and /branding/icon resolved the host with
@@ -138,7 +145,8 @@ test("the manifest's colours stay pinned to the brand stylesheet", async () => {
 test("the Core surface names itself and never host-resolves its icon", async () => {
   const layout = await read("app", "(core)", "layout.jsx");
   assert.match(layout, /appleWebApp/, "appleWebApp emits apple-mobile-web-app-title, which the platform lacked");
-  assert.match(layout, /title: "DGTL\.chat"/, "the iOS home-screen title must be set explicitly");
+  // docs/WEB-APP-BRANDING.md (PR #42): every DGTL-owned surface title starts with "DGTL --".
+  assert.match(layout, /title: "DGTL -- Core"/, "the iOS home-screen title must be set explicitly, per the DGTL -- prefix standard");
   assert.match(layout, /themeColor/, "in Next 15 themeColor belongs on the viewport export");
   assert.match(layout, /viewportFit: "cover"/, "env(safe-area-inset-*) rules depend on viewport-fit=cover");
 
@@ -156,7 +164,7 @@ test("the Core surface names itself and never host-resolves its icon", async () 
   // to suit it. A DGTL sign-in page showing a tenant's brand in the tab is the
   // bug; renaming the shared root would have been a worse one.
   const adminLayout = await read("app", "admin", "layout.jsx");
-  assert.match(adminLayout, /template: "%s · DGTL"/, "the admin shell names itself instead of the root being changed");
+  assert.match(adminLayout, /template: "DGTL -- Admin \| %s"/, "the admin shell names itself (DGTL -- prefix) instead of the root being changed");
 
   // absolute, so the shell's template does not turn this into "DGTL Login · DGTL".
   const login = await read("app", "admin", "login", "page.jsx");
