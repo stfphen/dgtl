@@ -3,7 +3,7 @@ title: 43 · Environment Variables
 type: reference
 tags: [ops]
 status: stable
-updated: 2026-08-14
+updated: 2026-10-01
 source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 ---
 
@@ -84,6 +84,17 @@ See [[2F-Worklog-Bridge]] and `docs/architecture/dgtl-core-phase-4.md` (producti
 | `CORE_CHAT_MODEL` | Model for the anthropic adapter | Defaults to `claude-sonnet-5`; only read when `CORE_CHAT_PROVIDER=anthropic`. Uses the existing `ANTHROPIC_API_KEY` — no other chat credential or endpoint exists. |
 
 See [[2H-DGTL-Chat]] and `docs/architecture/dgtl-core-phase-6.md`.
+
+## Google sign-in + DGTL Pass (Phase 1, 2026-10-01)
+| Var | Powers | Notes |
+|---|---|---|
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Staff "Continue with Google" | Web OAuth client; unset = the button is hidden. Invite-only: only an active user with a team membership gets in |
+| `GOOGLE_OAUTH_REDIRECT_ORIGINS` | Hosts the callback may land on | Comma list; defaults to `PUBLIC_APP_URL`. Register `<origin>/api/auth/google/callback` for each in Google Cloud |
+| `OAUTH_STATE_SECRET` | Signs the 10-minute OAuth state cookie | ≥ 32 characters, server-only; shorter disables Google sign-in |
+| `PASS_PUBLIC_BASE_URL` | Origin encoded in every pass QR | **Permanent once passes ship**; https; recommended `https://pass.dgtl.ltd` |
+| `PASS_ALLOWED_SCAN_HOSTS` | Extra hosts the scanner accepts | Keep retired pass hosts here forever |
+| `PASS_CREDENTIAL_SECRETS` / `PASS_CREDENTIAL_ACTIVE_KEY` | HMAC key(s) that derive pass credentials | `k1:<base64 ≥32 bytes>`; rotate by adding `k2` and switching the active key; never delete a key passes still reference. See [[44-Secrets-And-Rotation]] |
+| `PASSES_DRY_RUN` | Mock pass email/SMS | `true` in staging and demos |
 
 ## App host / canonical identity
 

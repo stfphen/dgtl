@@ -2,7 +2,7 @@
 title: 2I · DGTL Pass (passes, tickets, verification)
 type: module
 tags: [module, passes, wallet, verification]
-status: proposed
+status: in-build
 updated: 2026-10-01
 ---
 
@@ -16,12 +16,24 @@ config, teams/roles, sessions, audit, Resend, Twilio and Stripe. It sits after c
 lead lifecycle. Once [[27-Checkout-Payments]] issues passes automatically, it becomes a sellable
 feature (roadmap item R1 in the spec).
 
-**Status: proposed, Phase 0 started.** The full spec, a tested reference core (72 unit + 9 SQL
-tests) and a draft migration exist. The **DGTL brand kit** (`engine/dgtl-brand-kit/`) is applied to
-every surface, and every pass is a **branded DGTL card**: DGTL⚡ PASS lockup + gold spark on every tier,
-plus a distinct tier colour (Steel blue, Bronze copper, Silver platinum, VIP gold on black). Design
-targets are in `docs/specs/dgtl-pass/previews/` (emails, Wallet, pass page, scanner, admin). Launch
-plan: `docs/specs/dgtl-pass/17-launch-plan.md`. Phase 0 is covered by `main`'s existing `core-release-gate.yml` (restored to green by PR #44). No `platform/` code has changed yet.
+**Status: in build. Phase 1 (foundation) is built on `feat/pass-p1-foundation` (2026-10-01).**
+The full spec, a tested reference core and the migration exist. The **DGTL brand kit**
+(`engine/dgtl-brand-kit/`) is applied to every surface, and every pass is a **branded DGTL card**:
+the DGTL⚡ PASS lockup and gold spark on every tier, plus a distinct tier colour (Steel blue, Bronze
+copper, Silver platinum, VIP gold on black). Design targets are in `docs/specs/dgtl-pass/previews/`.
+Launch plan: `docs/specs/dgtl-pass/17-launch-plan.md`. Phase 0 is covered by `main`'s
+`core-release-gate.yml` (restored to green by PR #44).
+
+Phase 1 delivered:
+- migration 015
+- the pure pass modules in `platform/lib/passes/`
+- the pass-only roles `issuer` and `verifier`, refused centrally by `requireSession()`
+- invite-only Google sign-in
+- password-less staff accounts
+- `/scan` as the pass-only landing page
+- 77 new tests, including the T-R1 route sweep
+
+`npm test` is 613/613.
 
 ## Key files
 - Spec + handoff: `docs/specs/dgtl-pass/` (start at `README.md`; build agent prompt in `HANDOFF-PROMPT.md`)
@@ -36,8 +48,12 @@ plan: `docs/specs/dgtl-pass/17-launch-plan.md`. Phase 0 is covered by `main`'s e
   `pass_holders`, `passes`, `pass_deliveries`, `pass_scans`, `pass_wallet_registrations`,
   `user_identities`. New roles `issuer`, `verifier`. `users.password_hash` becomes nullable.
 - Design targets: `docs/specs/dgtl-pass/previews/` (`index.html` emails · `wallet.html` · `pass-page.html` · `scanner.html` · `admin.html`)
-- Target (not built): `lib/passes/*`, `app/scan`, `app/p/[credential]`, `app/api/admin/passes/*`,
-  `app/api/scan/*`, `app/api/auth/google/*`, and a Core routed module `/passes` (`app/(core)/passes`).
+- Built (P1): `platform/migrations/015_passes.sql`; `lib/passes/{credentials,validity,verify,tiers,brandKit,config}.js`;
+  `lib/oauth/{google,state,identities}.js` (PKCE + signed state cookie + jose JWKS, invite-only
+  linking by Google `sub`); `app/api/auth/google/{start,callback}`; `app/scan` (signed-in landing,
+  camera scanner in P3); pass roles + capability matrix in `lib/permissions.js`; `scripts/seed-passes-dev.js`.
+- Target (not built): `app/p/[credential]`, `app/api/admin/passes/*`, `app/api/scan/*`,
+  `lib/passes/repository.js`, and a Core routed module `/passes` (`app/(core)/passes`).
 
 ## Data flow
 Admin issues (idempotent on `issue_request_id`) → the pass row stores the window + usage snapshot
@@ -50,7 +66,7 @@ the ledger in one transaction.
 New env: `PASS_PUBLIC_BASE_URL` (permanent once QR codes ship), `PASS_CREDENTIAL_SECRETS`,
 `PASS_CREDENTIAL_ACTIVE_KEY`, `GOOGLE_OAUTH_*`, `OAUTH_STATE_SECRET`, `PASSKIT_*`,
 `TWILIO_MESSAGING_SERVICE_SID`, `PASSES_*`. Full table in the spec's `15-config-and-accounts.md`.
-Add to [[43-Environment-Variables]] when built. Tenant config gains a `passes` block (timezone,
+The Google and `PASS_*` variables are in [[43-Environment-Variables]] and `platform/.env.example`. Tenant config gains a `passes` block (timezone,
 cutoff, gates, brand kit, legal/postal address, VIP offer).
 
 ## ⚠️ Gotchas / open issues
@@ -64,6 +80,11 @@ cutoff, gates, brand kit, legal/postal address, VIP offer).
 - **Compliance:** every email needs a tenant postal address + preferences link or it is blocked;
   the VIP offer renders only with marketing consent (CASL). Not legal advice. Counsel confirms
   before the first commercial send.
+- **Pass-only roles are denied by default.** Any new workspace route that checks only "signed in"
+  must use `requireSession()`, never `getAdminSession()` directly. `tests/route-guard-sweep.test.js`
+  fails if a route has no guard and isn't on its PUBLIC list, or if a verifier/issuer gets through.
+- **Google-only accounts have `password_hash = null`.** `createAdminSession` runs a dummy bcrypt
+  compare and refuses, so a password can never open them (and timing doesn't reveal which kind it is).
 - Gated behind the release gate: Phase 0 makes `npm test` + `npm run build` required CI first
   ([[31-Current-Priorities]]).
 

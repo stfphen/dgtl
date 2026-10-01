@@ -46,6 +46,28 @@ done).
 
 ## P1 · Foundation: schema, roles, Google sign-in (≈ 2 days)
 
+**Status 2026-10-01: built** on `feat/pass-p1-foundation`. `npm test` 613/613 (536 existing + 77
+new), `npm run build` 63/63 pages, `npm audit --omit=dev` 0. `npm run migrate` ran 001–015 on a fresh
+PGlite and reported "up to date" on the second run. Browser e2e on a seeded dev DB: the password
+verifier landed on `/scan`, and `/home`, `/admin` and the workspace APIs refused it (403). The owner
+landed on `/home`. The Team tab created a Google-only verifier. `/api/auth/google/start` redirected
+with PKCE S256, a nonce and a signed state cookie, and forged and cancelled callbacks were refused.
+A Google-only account can't sign in with a password. **Still open:** the live Google round trip
+needs the real OAuth client (P0.6).
+
+Deviations from the table below, on purpose:
+- **P1.4:** `issuer`/`verifier` were **not** added to `ALL_ROLES`. Existing routes allow
+  `ALL_ROLES` (lead export, for one), so door staff would have inherited them. The roles live in
+  `PASS_ONLY_ROLES`. `requireSession()` refuses them centrally, which closes the 13 Core routes
+  that only check "signed in". Pass routes use `requirePassCapability()`.
+- **P1.5:** the module is `lib/oauth/{google,state,identities}.js`, not `lib/auth/google.js`,
+  because `lib/auth.js` is already a file.
+- **P1.8:** the redirect is in `app/admin/page.jsx`, `app/admin/invoices/page.jsx` and
+  `getCorePageContext()`, so no Core page renders for pass-only staff. `/scan` is a signed-in
+  landing until P3 replaces it.
+- **Added:** `scripts/seed-passes-dev.js`, `tests/route-guard-sweep.test.js` (T-R1, with an
+  explicit PUBLIC list), and PGlite as a devDependency for the SQL tests.
+
 | # | Task | Files |
 |---|---|---|
 | P1.1 | Copy `migration/015_passes.sql` → `platform/migrations/015_passes.sql`; update the migrations table in `platform/README.md` | migration, README |

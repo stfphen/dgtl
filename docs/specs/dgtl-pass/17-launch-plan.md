@@ -1,11 +1,11 @@
 # 17 · Status, launch timeline and production checklist
 
-**As of Thursday 2026-10-01 (evening update: repo synced, Phase 1 started).** This is the canonical record. Update the status column as items land,
+**As of Thursday 2026-10-01 (late update: Phase 1 built, PR open).** This is the canonical record. Update the status column as items land,
 and log dates in `brain/50-Audit-Log/51-Timeline.md`.
 
 ## Status at a glance
 
-**Design and specification are complete. The build has not started. Nothing is deployed.**
+**Design and specification are complete. Phase 1 (foundation) is built and tested on a branch. Nothing is deployed.**
 
 | Workstream | Status | Evidence |
 |---|---|---|
@@ -13,8 +13,8 @@ and log dates in `brain/50-Audit-Log/51-Timeline.md`.
 | Reference core (credentials, validity, verify, brand kit, tiers, Wallet JSON + art, emails, SMS, issue/scan transactions) | ✅ Done, tested | 75/75 unit + 9/9 SQL integration tests |
 | Database migration `015_passes.sql` | ✅ Drafted, validated | Applies on 001–014 (incl. Core) in PGlite; every migration re-runs cleanly |
 | Brand + UI design (branded DGTL card system, 4 tier colours) | ✅ Done | 12 design targets in `previews/`, built to `engine/dgtl-brand-kit` |
-| Phase 0: release-gate CI | 🟡 Exists on `main` (`core-release-gate.yml`); was red, **fix in [PR #44](https://github.com/stfphen/dgtl/pull/44)** | Locally 536/536 tests, build 63/63, audit 0. My separate `platform-ci.yml` retired as redundant |
-| Phase 1: foundation | 🟡 In progress | Branch `feat/pass-p1-foundation` |
+| Phase 0: release-gate CI | 🟡 Exists on `main` (`core-release-gate.yml`); was red, **fix in [PR #44](https://github.com/stfphen/dgtl/pull/44): green on GitHub (4/4), awaiting merge** | Locally 536/536 tests, build 63/63, audit 0. My separate `platform-ci.yml` retired as redundant |
+| Phase 1: foundation | ✅ Built, in review | `feat/pass-p1-foundation`: 613/613 tests (536 + 77 new), build 63/63, audit 0, migrate 001–015 twice, browser e2e (verifier → `/scan`, refused by `/home`, `/admin`, workspace APIs). Live Google round trip waits on the OAuth client (P0.6) |
 | Phases 2–6: platform code | ⬜ Not started | — |
 | External accounts (Apple, Twilio, Google, Resend, DNS) | ⬜ Not started | Stephen's |
 | Repo: local `main` vs GitHub `main` | ✅ Reconciled + pushed | Merge `5de31e0`; no regressions (535/536 = the pre-existing stale test, fixed in #44) |
@@ -42,7 +42,7 @@ each gate the same day. Monday Oct 12 is Canadian Thanksgiving (no work schedule
 | Dates (2026) | Work | Exit gate | Needs from Stephen |
 |---|---|---|---|
 | **Thu Oct 1 – Fri Oct 2** | **P0** finish: reconcile `main`, push, CI green on GitHub, mark checks required | CI required + green on `main` | Approve the `main` reconciliation; start Apple, Twilio, Google, Resend, DNS |
-| Mon Oct 5 – Tue Oct 6 | **P1** Foundation: migration 009, roles, Google sign-in, verifier routing | Gate P1 | Google OAuth client |
+| ~~Mon Oct 5 – Tue Oct 6~~ **done Thu Oct 1** | **P1** Foundation: migration 015, roles, Google sign-in, verifier routing | Gate P1 ✅ (bar the live Google login) | Google OAuth client |
 | Wed Oct 7 – Fri Oct 9 | **P2** Pass engine: pass types, issue/revoke, QR, holder pass page, Passes tab | Gate P2 (+ brand-kit visual check) | Pass host confirmed (`pass.dgtl.ltd`) |
 | Tue Oct 13 – Thu Oct 15 | **P3** Scanner ★ on iPhone + Android, ledger, real-Postgres double-scan test | **★ Product milestone:** issue → scan → admit/refuse → logged | HTTPS staging host |
 | Fri Oct 16 – Tue Oct 20 | **P4** Delivery: 5 emails + SMS, consent, unsubscribe, CSV bulk, webhooks | Gate P4 | Resend domain verified; Twilio approved (else SMS stays in dry-run) |
@@ -81,7 +81,7 @@ started · ⛔ blocker.
 ### B. Build phases (each gate per `13-build-plan.md`)
 | | Item | Owner |
 |---|---|---|
-| ⬜ | P1 Foundation (migration, roles, Google OIDC, verifier → `/scan`) | B |
+| 🟡 | P1 Foundation (migration, roles, Google OIDC, verifier → `/scan`): built and gated; merge after #44; live Google login after P0.6 | B |
 | ⬜ | P2 Pass engine + Passes tab + holder pass page, matching `previews/` | B |
 | ⬜ | P3 Scanner ★ + T-C1 double-scan test on real Postgres | B |
 | ⬜ | P4 Delivery: emails, SMS, consent, unsubscribe, bulk, webhooks | B |

@@ -26,16 +26,29 @@ PGLITE_PATH=/tmp/pglite/node_modules/@electric-sql/pglite node --test docs/specs
 | `email/email.test.js` (13) | **brand constants on every pass card** (wordmark ×2, PASS lockup, tier art), each tier's card face + labels in its own colour, five variants sendable, QR presence, **brand kit: gold 7 px button + arrow on every tier, gold-tan kicker, 700 headline, only the kit's radii, footer line, wordmark**, a light tenant's own button color with no DGTL gold leaking, tier colors + VIP frame, escaping, URL safety, compliance blockers, consent-gated offer + unsubscribe headers, copy overrides, badge warning, SMS segments |
 | `repository.test.js` (9, PGlite) | migrations apply + idempotent, role constraint, issue→scan→used, scan replay, foreign-team `not_found` + ledger reason, team-scoped manual entry, issue idempotency + holder dedupe, cross-tenant pass type refused, revoked/expired/cooldown/junk, DB-level max-uses backstop |
 
+## Written in Phase 1 (`platform/tests/`, 77 tests, all in `npm test`)
+
+| Suite | Covers |
+|---|---|
+| `passes-{credentials,validity,verify,tiers,brand-kit}.test.js` (51) | the reference suites above, ported unchanged against `lib/passes/*` |
+| `passes-foundation.test.js` (9, PGlite) | 001–015 re-run cleanly; live 015 equals the draft; role constraint; Google-only user has no password (**T-U1**); invite-only linking, sub match, link hijack and email reuse refused; disabled/teamless refused; session carries the role |
+| `oauth-google.test.js` (7) | signed state tamper/expiry/weak secret, RFC 7636 PKCE vector, `next` allow-list (**T-U4**), authorize URL, redirect origin, ID token valid and rejected for aud/iss/nonce/unverified/expired/foreign key with a local RS256 JWKS (**T-U3**) |
+| `passes-roles-config.test.js` (6) | capability matrix equals [10](10-auth-and-roles.md) (**T-U2**); pass-only roles hold no workspace rights; `requireSession` / `requirePassCapability`; pass config parsing |
+| `route-guard-sweep.test.js` (4) | **T-R1** for `verifier` *and* `issuer` over **every** `app/api` route (not only `/api/admin`): 401/403/login, else listed on an explicit PUBLIC map with a reason; Core pages redirect pass-only staff to `/scan`. Mutation-tested: removing the central deny fails it with 14 leaking routes per role |
+
+SQL tests use `@electric-sql/pglite` (devDependency) through `tests/support/migrated-pglite.js`.
+Route handlers are imported directly via `tests/support/next-resolve-hook.mjs`.
+
 ## To write during the build
 
 ### Unit (T-U)
 
 | Id | Test |
 |---|---|
-| T-U1 | `verifyPassword(any, null)` is false, including `""` |
-| T-U2 | capability matrix: every role × capability matches [10](10-auth-and-roles.md#roles-and-capabilities) |
-| T-U3 | OAuth: state mismatch, nonce mismatch, `email_verified: false`, wrong `aud`, expired token each rejected (stub JWKS) |
-| T-U4 | `next` allow-list: `//evil.com`, `https://evil.com`, `/admin/../x` rejected |
+| T-U1 ✅ P1 | `verifyPassword(any, null)` is false, including `""` |
+| T-U2 ✅ P1 | capability matrix: every role × capability matches [10](10-auth-and-roles.md#roles-and-capabilities) |
+| T-U3 ✅ P1 | OAuth: state mismatch, nonce mismatch, `email_verified: false`, wrong `aud`, expired token each rejected (stub JWKS) |
+| T-U4 ✅ P1 | `next` allow-list: `//evil.com`, `https://evil.com`, `/admin/../x` rejected |
 | T-U5 | tenant `passes` config validation: bad timezone, cutoff out of range, missing postal address → blocker |
 | T-U6 | SMS provider seam: not configured → envelope, dry run → mock, Twilio error mapping |
 | T-U7 | delivery gates: opted-out SMS skipped; suppressed holder gets no offer; render blocked → skipped with reason |
@@ -66,7 +79,7 @@ PGLITE_PATH=/tmp/pglite/node_modules/@electric-sql/pglite node --test docs/specs
 
 | Id | Test |
 |---|---|
-| T-R1 | **verifier sweep:** a verifier session against every `/api/admin/*` route handler → 403 (enumerate the `app/api/admin` tree so new routes are covered automatically) |
+| T-R1 ✅ P1 | **verifier sweep:** a verifier session against every `/api/admin/*` route handler → 403 (enumerate the `app/api/admin` tree so new routes are covered automatically) |
 | T-R2 | issuer session: pass routes allowed per matrix; tenants/users/outreach routes 403 |
 | T-S1 | `/p/<unknown>` and `/p/<rotated>` return identical 404 bodies |
 | T-S2 | `/p/*` sets `noindex`, `no-store`, `no-referrer`; title never contains the holder name |
