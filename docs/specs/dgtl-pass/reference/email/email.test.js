@@ -3,7 +3,7 @@ import test from "node:test";
 import { EMAIL_VARIANTS, renderPassEmail, renderPassSms, safeUrl, smsSegments } from "./render.js";
 import { buildSample } from "./fixtures.js";
 import { resolveBrandKit } from "../brand.js";
-import { resolvePassDesign } from "../tiers.js";
+import { TIER_PALETTE, resolvePassDesign } from "../tiers.js";
 
 test("all five variants render, fill every placeholder, and are sendable", () => {
   assert.deepEqual(EMAIL_VARIANTS, ["day", "monthly", "yearly", "vip_lifetime", "vip_onboarding"]);
@@ -30,10 +30,12 @@ test("standard emails print the QR and code; the invitation does not", () => {
   assert.ok(invite.html.includes("Accept my VIP pass"));
 });
 
-test("tier colors differ per variant and VIP gets the gold frame", () => {
-  const accents = { day: "#A9B4C2", monthly: "#D29666", yearly: "#DCE1E8", vip_lifetime: "#F0CF50" };
-  for (const [variant, accent] of Object.entries(accents)) {
-    assert.ok(renderPassEmail(buildSample(variant)).html.includes(accent), variant);
+test("each tier's pass card is its own color: face and labels differ per variant; VIP gets the gold frame", () => {
+  const tiers = { day: TIER_PALETTE.steel, monthly: TIER_PALETTE.bronze, yearly: TIER_PALETTE.silver, vip_lifetime: TIER_PALETTE.gold };
+  for (const [variant, p] of Object.entries(tiers)) {
+    const { html } = renderPassEmail(buildSample(variant));
+    assert.ok(html.includes(`bgcolor="${p.face}" style="background:${p.face};`), `${variant}: card face`);
+    assert.ok(html.includes(`color:${p.accent};">Holder`) || html.includes(`color:${p.accent};">Member`), `${variant}: tier-colored labels`);
   }
   assert.match(renderPassEmail(buildSample("vip_lifetime")).html, /class="container"[^>]+border:1px solid/);
   assert.doesNotMatch(renderPassEmail(buildSample("day")).html, /class="container"[^>]+border:1px solid/);
@@ -54,6 +56,19 @@ test("brand kit: gold 7px primary button with an arrow on every tier, gold-tan k
     assert.ok(html.includes("© 2026 DGTL. All rights reserved."), `${variant}: footer line`);
     assert.ok(html.includes('alt="DGTL"'), `${variant}: wordmark logo`);
   }
+});
+
+test("brand constants on every pass card: wordmark + PASS lockup + tier art strip", () => {
+  for (const variant of EMAIL_VARIANTS) {
+    const { html, warnings } = renderPassEmail(buildSample(variant));
+    assert.equal((html.match(/alt="DGTL"/g) || []).length, 2, `${variant}: wordmark in the header and on the card`);
+    assert.match(html, /letter-spacing:0\.22em;text-transform:uppercase;color:#F0F0F0;vertical-align:middle;padding-left:8px;">PASS</, `${variant}: lockup`);
+    assert.ok(html.includes('class="art" src="https://pass.example.com/passes/art/'), `${variant}: tier art`);
+    assert.ok(!warnings.includes("pass_art_missing"), variant);
+  }
+  const noArt = buildSample("day");
+  noArt.links.passArtUrl = "";
+  assert.ok(renderPassEmail(noArt).warnings.includes("pass_art_missing"));
 });
 
 test("a light tenant's button is its own brand color, not gold", () => {

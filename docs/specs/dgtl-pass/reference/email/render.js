@@ -12,9 +12,10 @@
 // constrained surfaces"): solid black ground, table layout, Manrope first with
 // a system fallback, bulletproof buttons in the *brand* accent (black text,
 // 7px radius, trailing arrow), gold-tan kickers, 0.15em letter-spaced labels,
-// 16px cards on #2a2a2a borders, 9999px pills. The tier's material color
-// appears only on the pass itself (band, chip, material label, callout rail),
-// so each view keeps a single gold moment: the primary button.
+// 16px cards, 9999px pills. The pass card is drawn as the branded card it is
+// in Wallet (tier face, DGTL lockup, tier art with the gold spark, tier
+// labels), so the brand mark is gold on every tier and the tier color
+// separates the passes; the only gold *control* in the view is the primary button.
 //
 // Compliance gates (08-messaging.md): every email must identify the sender
 // with a postal address and link to email preferences. A VIP onboarding offer
@@ -66,6 +67,10 @@ function theme(brandKit, design) {
     // brand action color: buttons
     action: design.action,
     onAction: design.onAction,
+    // the pass card face
+    face: design.face,
+    faceLine: design.faceLine,
+    accentOnFace: design.accentOnFace,
     frame: mix(design.accent, c.background, 0.55),
     r: DGTL_GEOMETRY,
     font: brandKit.fontStack,
@@ -110,8 +115,8 @@ function hero({ t, eyebrow, headline, body, centered }) {
   );
 }
 
-function fieldCell(t, name, value) {
-  return `<td class="stack" width="50%" valign="top" style="padding:0 0 18px;">${label(name, t)}<p style="margin:0;font-family:${t.font};font-size:15px;line-height:22px;font-weight:700;color:${t.text};">${esc(value)}</p></td>`;
+function fieldCell(t, name, value, labelColor = t.dim) {
+  return `<td class="stack" width="50%" valign="top" style="padding:0 0 18px;">${label(name, t, labelColor)}<p style="margin:0;font-family:${t.font};font-size:15px;line-height:22px;font-weight:700;color:${t.text};">${esc(value)}</p></td>`;
 }
 
 function entryText(pass) {
@@ -120,28 +125,46 @@ function entryText(pass) {
   return "Re-entry";
 }
 
-function passCard({ t, pass, passType, holder, design, validity, qrUrl, showQr }) {
+// The pass itself, drawn as the branded card it is in Wallet: the tier face,
+// the "DGTL⚡ PASS" lockup, the tier art strip (the same PNG Wallet uses, with
+// the gold DGTL spark), tier-colored labels, then the QR. Brand constant +
+// tier variable, so every tier is unmistakably DGTL and unmistakably itself.
+function passCard({ t, brandKit, pass, passType, holder, design, validity, qrUrl, artUrl, showQr, imgOpts }) {
+  const logo = safeUrl(brandKit.logoUrl, imgOpts);
+  const mark = logo
+    ? `<img src="${esc(logo)}" height="22" alt="${esc(brandKit.name)}" style="display:inline-block;height:22px;width:auto;border:0;vertical-align:middle;">`
+    : `<span style="font-family:${t.font};font-size:17px;line-height:22px;font-weight:800;letter-spacing:1px;color:${t.text};vertical-align:middle;">${esc(brandKit.logoText)}</span>`;
+  const lockup = brandKit.walletLogoText
+    ? `<span style="font-family:${t.font};font-size:13px;line-height:22px;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;color:${t.text};vertical-align:middle;padding-left:8px;">${esc(brandKit.walletLogoText)}</span>`
+    : "";
+  const tierLabel = design.isVip ? "VIP" : design.materialLabel || passType.name;
+  const art = artUrl
+    ? `<tr><td style="padding:0;line-height:0;font-size:0;"><img class="art" src="${esc(artUrl)}" width="552" alt="" style="display:block;width:100%;max-width:552px;height:auto;border:0;"></td></tr>`
+    : `<tr><td height="3" bgcolor="${t.accent}" style="height:3px;line-height:3px;font-size:0;background:${t.accent};">&nbsp;</td></tr>`;
   const qr = showQr && qrUrl
-    ? `<tr><td align="center" style="padding:8px 24px 26px;">
+    ? `<tr><td align="center" style="padding:6px 24px 26px;">
         <table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;padding:14px;border-radius:${t.r.control}px;">
           <img class="qr" src="${esc(qrUrl)}" width="200" height="200" alt="QR code for your pass" style="display:block;width:200px;height:200px;border:0;">
         </td></tr></table>
-        <p style="margin:14px 0 0;font-family:${MONO};font-size:13px;line-height:18px;font-weight:700;letter-spacing:3px;color:${t.muted};">${esc(formatShortCode(pass.shortCode))}</p>
+        <p style="margin:14px 0 0;font-family:${MONO};font-size:13px;line-height:18px;font-weight:700;letter-spacing:0.2em;color:${t.text};">${esc(formatShortCode(pass.shortCode))}</p>
       </td></tr>`
     : "";
   return row(
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${t.surface}" style="background:${t.surface};border:1px solid ${t.line};border-radius:${t.r.card}px;border-collapse:separate;overflow:hidden;">
-      <tr><td height="4" bgcolor="${t.accent}" style="height:4px;line-height:4px;font-size:0;background:${t.accent};border-radius:${t.r.card}px ${t.r.card}px 0 0;">&nbsp;</td></tr>
-      <tr><td style="padding:24px 24px 6px;">
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${t.face}" style="background:${t.face};border:1px solid ${t.faceLine};border-radius:${t.r.card}px;border-collapse:separate;overflow:hidden;">
+      <tr><td style="padding:16px 20px 14px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td valign="top">${label(design.isVip ? "Member" : "Holder", t)}<p style="margin:0;font-family:${t.font};font-size:24px;line-height:30px;font-weight:800;color:${t.text};">${esc(holder.name)}</p></td>
-          <td align="right" valign="top">${label(design.isVip ? "VIP" : design.materialLabel, t, t.accentText, "0")}</td>
+          <td align="left" valign="middle">${mark}${lockup}</td>
+          <td align="right" valign="middle">${label(tierLabel, t, t.accentOnFace, "0")}</td>
         </tr></table>
       </td></tr>
-      <tr><td style="padding:18px 24px 0;">
+      ${art}
+      <tr><td style="padding:20px 24px 4px;">
+        ${label(design.isVip ? "Member" : "Holder", t, t.accentOnFace)}<p style="margin:0;font-family:${t.font};font-size:26px;line-height:32px;font-weight:800;letter-spacing:-0.4px;color:${t.text};">${esc(holder.name)}</p>
+      </td></tr>
+      <tr><td style="padding:16px 24px 2px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-          <tr>${fieldCell(t, "Pass", passType.name)}${fieldCell(t, "Entry", entryText(pass))}</tr>
-          <tr>${fieldCell(t, "Valid from", validity.fromDate)}${fieldCell(t, validity.lifetime ? "Expires" : "Valid until", validity.untilShort)}</tr>
+          <tr>${fieldCell(t, "Pass", passType.name, t.accentOnFace)}${fieldCell(t, "Entry", entryText(pass), t.accentOnFace)}</tr>
+          <tr>${fieldCell(t, "Valid from", validity.fromDate, t.accentOnFace)}${fieldCell(t, validity.lifetime ? "Expires" : "Valid until", validity.untilShort, t.accentOnFace)}</tr>
         </table>
       </td></tr>
       ${qr}
@@ -340,6 +363,8 @@ export function renderPassEmail(input) {
     passPageUrl: safeUrl(links.passPageUrl),
     walletUrl: safeUrl(links.walletUrl),
     qrImageUrl: safeUrl(links.qrImageUrl, imgOpts),
+    // The tier art strip PNG (same art as Wallet): /passes/art/<passTypeId>@2x.png in production.
+    passArtUrl: safeUrl(links.passArtUrl, imgOpts),
     preferencesUrl: safeUrl(links.preferencesUrl),
     unsubscribeUrl: safeUrl(links.unsubscribeUrl)
   };
@@ -350,6 +375,7 @@ export function renderPassEmail(input) {
   if (!brandKit.legal.postalAddress) blockers.push("missing_postal_address");
   if (!safeLinks.preferencesUrl) blockers.push("missing_preferences_url");
   if (!badgeUrl) warnings.push("wallet_badge_placeholder");
+  if (!safeLinks.passArtUrl) warnings.push("pass_art_missing");
 
   let renderOffer = null;
   if (onboarding && offer?.title) {
@@ -363,7 +389,7 @@ export function renderPassEmail(input) {
   }
   const marketing = Boolean(renderOffer);
 
-  const rows = [header({ t, brandKit, chip: vip ? "VIP" : [design.materialLabel, passType.name].filter(Boolean).join(" · "), imgOpts })];
+  const rows = [header({ t, brandKit, chip: vip ? "VIP" : passType.name, imgOpts })];
   rows.push(hero({ t, eyebrow: c.eyebrow, headline: c.headline, body: c.body, centered: vip }));
 
   if (onboarding) {
@@ -373,12 +399,12 @@ export function renderPassEmail(input) {
     // The invitation previews the pass rather than printing its QR. The code
     // is revealed on the pass page ("accept") and in Wallet, which keeps the
     // moment an invitation and gives a first-view event to measure.
-    rows.push(passCard({ t, pass, passType, holder, design, validity, showQr: false }));
+    rows.push(passCard({ t, brandKit, pass, passType, holder, design, validity, artUrl: safeLinks.passArtUrl, showQr: false, imgOpts }));
     rows.push(row(walletBadge({ t, walletUrl: safeLinks.walletUrl, badgeUrl }), { t, align: "center", padding: "0 32px 28px" }));
     rows.push(tip({ t, text: c.tip }));
     rows.push(signature({ t, name: c.signoff, title: c.signoffTitle }));
   } else {
-    rows.push(passCard({ t, pass, passType, holder, design, validity, qrUrl: safeLinks.qrImageUrl, showQr: true }));
+    rows.push(passCard({ t, brandKit, pass, passType, holder, design, validity, qrUrl: safeLinks.qrImageUrl, artUrl: safeLinks.passArtUrl, showQr: true, imgOpts }));
     rows.push(actions({ t, links: safeLinks, badgeUrl, cta: c.cta }));
     rows.push(perks({ t, heading: "Included", list: passType.perks }));
     rows.push(tip({ t, text: c.tip }));

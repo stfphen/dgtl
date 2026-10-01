@@ -16,6 +16,7 @@ import { EMAIL_VARIANTS, esc, renderPassEmail, renderPassSms } from "./render.js
 import { buildSample } from "./fixtures.js";
 import { resolveBrandKit } from "../brand.js";
 import { resolvePassDesign } from "../tiers.js";
+import { cardArtSvg, sparkFromSvg } from "../walletArt.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, "../../previews");
@@ -44,7 +45,14 @@ const qr = await qrDataUrl("https://pass.example.com/p/0123456789ABCDEFGHJKMNPQR
 // The DGTL wordmark (rasterized from engine/dgtl-brand-kit/assets/logos/logo-white-gold.svg).
 // Production emails reference its hosted URL; previews inline it.
 const wordmark = `data:image/png;base64,${(await readFile(path.resolve(here, "../../assets/dgtl-wordmark@4x.png"))).toString("base64")}`;
-const withLogo = (input) => ({ ...input, brandKit: { ...input.brandKit, logoUrl: wordmark } });
+// The tier art strip (production: the rasterized PNG at /passes/art/<passTypeId>@2x.png).
+const spark = sparkFromSvg(await readFile(path.resolve(here, "../../../../../engine/dgtl-brand-kit/assets/logos/spark.svg"), "utf8"));
+const artFor = (design) => `data:image/svg+xml;base64,${Buffer.from(cardArtSvg(design, spark)).toString("base64")}`;
+const withLogo = (input) => ({
+  ...input,
+  brandKit: { ...input.brandKit, logoUrl: wordmark },
+  links: { ...input.links, passArtUrl: artFor(input.design) }
+});
 
 const titles = {
   day: ["Day · Steel", "Single-entry day ticket. Practical, fast, door-first."],
@@ -80,6 +88,7 @@ const light = buildSample("monthly", { qrImageUrl: qr });
 light.brandKit = resolveBrandKit(lightTenant);
 light.passType = { ...light.passType, design: { ...light.passType.design, useBrandAccent: true } };
 light.design = resolvePassDesign(light.passType, light.brandKit);
+light.links = { ...light.links, passArtUrl: artFor(light.design) };
 await emit(
   "monthly-light-tenant.html",
   "Monthly · another tenant (light kit)",

@@ -15,6 +15,8 @@ export const SAMPLE_TENANT = {
       // spells the name, so Wallet omits logoText.
       logoUrl: "https://pass.example.com/assets/dgtl-wordmark@4x.png",
       logoIncludesName: true,
+      // "DGTL⚡ PASS": the product lockup on Wallet and the email pass card.
+      walletLogoText: "PASS",
       sender: { fromName: "DGTL", fromEmail: "passes@example.com" },
       legal: {
         postalAddress: "Sample address · Toronto, ON · Canada",
@@ -99,6 +101,7 @@ export function buildSample(variant, { qrImageUrl = `${BASE}/p/SAMPLE/qr.png`, w
       passPageUrl: credentialPath,
       walletUrl: `${credentialPath}/wallet.pkpass`,
       qrImageUrl,
+      passArtUrl: `${BASE}/passes/art/${sample.presetId}@2x.png`,
       preferencesUrl: `${BASE}/email/preferences?t=SAMPLE`,
       unsubscribeUrl: `${BASE}/email/unsubscribe?t=SAMPLE`
     },

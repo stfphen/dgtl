@@ -80,7 +80,7 @@ node docs/specs/dgtl-pass/reference/email/preview.js
 node docs/specs/dgtl-pass/reference/ui/mockups.js
 ```
 
-Results on 2026-10-01: **72/72 unit + 9/9 SQL integration pass.** The first command reports 81
+Results on 2026-10-01: **75/75 unit + 9/9 SQL integration pass.** The first command reports 84
 tests with 9 skipped, because the SQL suite skips itself unless `PGLITE_PATH` is set. Previews regenerated with
 real QR codes (`PREVIEW_QRCODE_PATH` pointed at a scratch `qrcode` install).
 
@@ -102,10 +102,10 @@ real QR codes (`PREVIEW_QRCODE_PATH` pointed at a scratch `qrcode` install).
    updates are Phase 5b, not a launch blocker.
 9. **Google OAuth is invite-only** and linked by `sub`. There's no self-signup and no JIT
    provisioning.
-10. **Every surface follows the DGTL brand kit** (`engine/dgtl-brand-kit/`). Tiers are Steel →
-    Bronze → Silver → Gold. The **pass** carries the tier material on the black ladder, and the
-    **button** carries the brand: gold is the primary action on every tier, and the material of
-    VIP only. (Revised 2026-10-01 from "gold reserved for VIP".)
+10. **Every surface follows the DGTL brand kit** (`engine/dgtl-brand-kit/`), and every pass is a
+    **branded DGTL card**. On every tier: the DGTL⚡ PASS lockup, the gold spark and a gold primary
+    button. Per tier: its own deep face colour, art field and labels, in four distinct hues: Steel
+    blue, Bronze copper, Silver platinum, and VIP gold on black. (Revised twice on 2026-10-01.)
 11. **The VIP invitation previews the pass and reveals the QR on accept**, and the offer renders
     only with marketing consent on file.
 12. **Every email is blocked without a postal address and a preferences link** (sender

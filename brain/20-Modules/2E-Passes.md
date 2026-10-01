@@ -18,8 +18,10 @@ feature (roadmap item R1 in the spec).
 
 **Status: proposed, Phase 0 started.** The full spec, a tested reference core (72 unit + 9 SQL
 tests) and a draft migration exist. The **DGTL brand kit** (`engine/dgtl-brand-kit/`) is applied to
-every surface, with design targets in `docs/specs/dgtl-pass/previews/` (emails, Wallet, pass page,
-scanner, admin). The Phase 0 release-gate CI is written (`.github/workflows/platform-ci.yml`) and
+every surface, and every pass is a **branded DGTL card**: DGTL⚡ PASS lockup + gold spark on every tier,
+plus a distinct tier colour (Steel blue, Bronze copper, Silver platinum, VIP gold on black). Design
+targets are in `docs/specs/dgtl-pass/previews/` (emails, Wallet, pass page, scanner, admin). Launch
+plan: `docs/specs/dgtl-pass/17-launch-plan.md`. The Phase 0 release-gate CI is written (`.github/workflows/platform-ci.yml`) and
 awaits push + branch protection. No `platform/` code has changed yet.
 
 ## Key files

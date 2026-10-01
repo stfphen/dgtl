@@ -31,7 +31,7 @@ written and tested. Your job is to build it into `platform/`, phase by phase, to
 
 ## What already exists and is proven
 
-- `docs/specs/dgtl-pass/reference/`: dependency-free modules with 72 unit tests (credentials,
+- `docs/specs/dgtl-pass/reference/`: dependency-free modules with 75 unit tests (credentials,
   validity windows, the verify decision, brand kit, tiers, Apple `pass.json` + Wallet art, five
   email variants + SMS) and a `repository.js` with the issue/verify/revoke transactions, proven by 9 SQL
   integration tests against platform migrations 001–008 + the draft 009 in PGlite.

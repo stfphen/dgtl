@@ -172,6 +172,7 @@ Rate limit: 60 requests/minute per verifier and 600/minute per team. Beyond that
 | `GET /p/[credential]` | HTML pass page | 404 on unknown; `noindex`, `no-store`, `no-referrer`; stamps `first_viewed_at` |
 | `GET /p/[credential]/qr.png` | PNG, 600×600, QR level M, 4-module quiet zone | `Cache-Control: private, max-age=300` |
 | `GET /p/[credential]/barcode.png` | PNG, Code 128 of the credential | same |
+| `GET /passes/art/[passTypeId]@2x.png` | PNG, the pass type's branded art strip (same as Wallet) | no credential, no PII; `Cache-Control: public, max-age=86400`, busted by `pass_types.updated_at` |
 | `GET /p/[credential]/wallet.pkpass` | `application/vnd.apple.pkpass` | 404 when Apple is not configured; `Content-Disposition: attachment; filename="<brand>-pass.pkpass"` |
 | `POST /p/[credential]/preferences` | `{ ok }` | holder opt-in to marketing from the pass page (sets express consent, source `pass_page_optin`) |
 | `GET /email/preferences?t=` · `POST /api/passes/unsubscribe` | page / `{ ok }` | signed token (reuse `lib/outreach/unsubscribe.js` signing), one-click POST per RFC 8058 |
