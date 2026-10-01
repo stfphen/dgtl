@@ -69,7 +69,7 @@ existing style:
 
 | Capability | owner | admin | sales | issuer | verifier | contractor | viewer |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `pass.view` (Passes tab, lists, ledger) | ✓ | ✓ | ✓ | ✓ | — | — | ✓ |
+| `pass.view` (Passes module, lists, ledger) | ✓ | ✓ | ✓ | ✓ | — | — | ✓ |
 | `pass.issue` (issue, resend, import) | ✓ | ✓ | ✓ | ✓ | — | — | — |
 | `pass.verify` (`/scan`) | ✓ | ✓ | ✓ | ✓ | ✓ | — | — |
 | `pass.revoke` (revoke, suspend, reactivate, rotate, extend) | ✓ | ✓ | — | — | — | — | — |
@@ -81,8 +81,8 @@ existing style:
   and every existing `can*` helper already excludes an unknown role. **Add a test** that walks
   every existing admin API route with a verifier session and expects 403. This is the regression
   that matters most.
-- **`issuer`** sees only the Passes tab. The shell's `navItems` are filtered by capability, and
-  other tab panels are not rendered, not just hidden.
+- **`issuer`** sees only the Passes module. `CoreShell.jsx` navigation is filtered by capability,
+  and every other Core page denies it server-side, not just hidden.
 - `sales` gets issue + verify because front-of-house sales staff commonly do both. Remove it from
   the lists if a tenant objects. It is one line.
 - Team tab: "Add staff" takes an email + role (+ optional name). It creates the `users` row with a

@@ -1,7 +1,7 @@
 # 03 · Data model
 
-The full DDL is [`migration/009_passes.sql`](migration/009_passes.sql). It applies cleanly on top
-of `platform/migrations/001–008` and is idempotent. Both are proven by
+The full DDL is [`migration/015_passes.sql`](migration/015_passes.sql). It applies cleanly on top
+of `platform/migrations/001–014` and is idempotent. Both are proven by
 [`reference/repository.test.js`](reference/repository.test.js).
 
 ## Entities
@@ -92,7 +92,7 @@ end
 The platform falls back to a JSON file store when `DATABASE_URL` is unset. **Passes do not.**
 Atomic redemption needs row locks and transactions, and the file store has a known unserialised
 read-modify-write race (Known Issues: "file-store write race", HIGH). A double scan against it
-could admit twice. Without Postgres the Passes tab renders "Passes need a database — set
+could admit twice. Without Postgres the Passes module renders "Passes need a database — set
 `DATABASE_URL`", and `/api/scan/verify` returns 503. Tests use PGlite (in-process Postgres) for
 the SQL, plus one real-Postgres concurrency test in CI ([14-test-plan.md](14-test-plan.md)).
 

@@ -16,7 +16,7 @@ can't drift):
 | Apple Wallet passes, stack, back, artwork | [`previews/wallet.html`](previews/wallet.html) | `reference/ui/mockups.js` |
 | Holder pass page (active, scheduled, expired) | [`previews/pass-page.html`](previews/pass-page.html) | `reference/ui/mockups.js` |
 | Door scanner (start, scanning, manual, 4 verdicts, offline) | [`previews/scanner.html`](previews/scanner.html) | `reference/ui/mockups.js` |
-| Admin Passes tab (overview, live scans, issue + live preview) | [`previews/admin.html`](previews/admin.html) | `reference/ui/mockups.js` |
+| Passes module in the Core shell (overview, live scans, issue + live preview) | [`previews/admin.html`](previews/admin.html) | `reference/ui/mockups.js` |
 
 ## The kit rules, applied to passes
 
@@ -33,8 +33,8 @@ can't drift):
 | Atmosphere: the spark bolt at low opacity, vignettes, glassy bars | The pass art: a giant tier-colour spark watermark behind the crisp gold spark. Pass page + scanner: spark watermark + glass top bar. Email: the art strip PNG only (no CSS effects) |
 | Logo: `logo-white-gold.svg` | Web: the SVG. Email + Wallet: [`assets/dgtl-wordmark@4x.png`](assets/dgtl-wordmark@4x.png), rasterized from the kit SVG (`#F0CF50` and `#FFFFFF` verified exact). With `walletLogoText: "PASS"` it forms the **DGTL⚡ PASS lockup** on every card. `logoIncludesName` stops a second "DGTL" |
 | Arrows after CTAs | In the copy defaults, and `withArrow()` adds one if an override forgets |
-| `platform/` spells gold `--blue` | Platform components use `var(--blue)`, never `var(--gold)` (it doesn't exist there). See the kit's `repo-surfaces.md` |
-| Never hardcode a brand value | Renderers resolve every color from `resolveBrandKit` → `DGTL_TOKENS`, drift-tested against **all three** token files (kit `dgtl-tokens.css`, `journal/_shared/dgtl-editorial.css`, and the platform alias layer in `dgtl-admin.css`) |
+| Platform tokens live in `platform/app/dgtl-tokens.css` (CLAUDE.md) | Platform components use the canonical names, `var(--gold)`, `var(--text-primary)`, `var(--success)` etc., from the one token layer every authenticated surface loads. `tests/brand-tokens.test.js` enforces it. (The older `--blue` alias in `dgtl-admin.css` is legacy) |
+| Never hardcode a brand value | Renderers resolve every color from `resolveBrandKit` → `DGTL_TOKENS`, drift-tested against **all three** token files (kit `dgtl-tokens.css`, `journal/_shared/dgtl-editorial.css`, and `platform/app/dgtl-tokens.css`) |
 | Never invent DGTL clients, stats or testimonials | Passes need none. All sample people, numbers and offers in previews are fictional and labelled |
 
 ## The brand kit contract (resolution)
@@ -58,8 +58,8 @@ DGTL_TOKENS (mirrors the kit; brand.test.js fails on drift from any of the three
 - `accent` is the brand's **action** color. `kicker` is gold-tan, contrast-adjusted on light kits.
 - **Task P2.3:** add `--tier-steel`, `--tier-bronze` and `--tier-silver` to the kit's
   `assets/dgtl-tokens.css` **and** `journal/_shared/dgtl-editorial.css` (the kit requires the two
-  to stay identical) **and** `platform/app/admin/dgtl-admin.css`. Then make `tiers.js`
-  `TIER_MATERIALS` mirror them with the same drift test. Gold is already `--gold` / `--blue`.
+  to stay identical) **and** `platform/app/dgtl-tokens.css`. Then make `tiers.js`
+  `TIER_PALETTE` mirror them with the same drift test. Gold is already `--gold` in all three.
 
 ## The pass card: brand constants + tier colour
 

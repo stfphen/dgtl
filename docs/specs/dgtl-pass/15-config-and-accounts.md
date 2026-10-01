@@ -4,8 +4,8 @@
 
 | Variable | Phase | Required | Example / format | Notes |
 |---|---|---|---|---|
-| `PASS_PUBLIC_BASE_URL` | P2 | yes | `https://pass.dgtlmag.com` | **Permanent once passes ship**; encoded in every QR |
-| `PASS_ALLOWED_SCAN_HOSTS` | P2 | no | `pass.dgtlmag.com,localhost` | defaults to the host of `PASS_PUBLIC_BASE_URL`; keep old hosts here forever |
+| `PASS_PUBLIC_BASE_URL` | P2 | yes | `https://pass.dgtl.ltd` | **Permanent once passes ship**; encoded in every QR |
+| `PASS_ALLOWED_SCAN_HOSTS` | P2 | no | `pass.dgtl.ltd,localhost` | defaults to the host of `PASS_PUBLIC_BASE_URL`; keep old hosts here forever |
 | `PASS_CREDENTIAL_SECRETS` | P1 | yes | `k1:<base64 ≥32 bytes>` | `openssl rand -base64 48`; comma-separate for rotation |
 | `PASS_CREDENTIAL_ACTIVE_KEY` | P1 | yes | `k1` | key id new passes use |
 | `PASSES_DRY_RUN` | P4 | no | `true` | mock both channels (staging, demos) |

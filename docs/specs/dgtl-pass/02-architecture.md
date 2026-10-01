@@ -2,8 +2,8 @@
 
 ## The decision: a platform module, not a new app
 
-DGTL Pass is built **inside `platform/`** as a module: `lib/passes/`, new routes, a ninth admin
-tab and a `/scan` page. It is **not** a standalone Next.js + Supabase app.
+DGTL Pass is built **inside `platform/`** as a module: `lib/passes/`, new routes, a Core routed
+module (`/passes`) and a `/scan` page. It is **not** a standalone Next.js + Supabase app.
 
 The first-draft plan this package replaces proposed Supabase Auth + Postgres + RLS as a separate
 stack. That would have rebuilt things the platform already runs in production:
@@ -66,7 +66,7 @@ flowchart LR
     AUD[lib/audit]
   end
 
-  PG[(Postgres<br/>009_passes.sql)]
+  PG[(Postgres<br/>015_passes.sql)]
   RS[Resend]
   TW[Twilio Messaging]
   AP[APNs<br/>Phase 5b]
@@ -94,7 +94,7 @@ justifies it, `lib/passes/` is already the boundary to lift out.
 
 ```
 platform/
-  migrations/009_passes.sql                  ← from migration/ in this package
+  migrations/015_passes.sql                  ← from migration/ in this package
   lib/passes/
     credentials.js    validity.js    verify.js     ← reference/ (port as-is)
     tiers.js          brandKit.js                  ← reference/ (brand.js → brandKit.js)
@@ -115,7 +115,7 @@ platform/
     twilioSms.js
   lib/auth/google.js  ← OIDC start/callback helpers (or lib/oauth.js)
   app/
-    admin/page.jsx                 ← + "passes" tab panel
+    (core)/passes/…                ← the Passes Core routed module (overview, issue, list, detail, types, scans)
     scan/page.jsx  scan/layout.jsx ← PWA shell (own manifest scope)
     p/[credential]/page.jsx        ← holder pass page
     p/[credential]/qr.png/route.js      p/[credential]/barcode.png/route.js
@@ -124,7 +124,7 @@ platform/
     api/auth/google/start/route.js  api/auth/google/callback/route.js
     api/cron/passes/drain/route.js
     api/wallet/v1/…                 ← Phase 5b
-  components/admin/passes/…        ← PassesPanel, IssuePassForm, PassTable, PassDrawer, PassTypeEditor, ScanLog
+  components/passes/…              ← IssuePassForm, PassTable, PassDetail, PassTypeEditor, ScanLog
   components/scan/…                ← Scanner, VerdictScreen, ManualEntry
   tests/passes-*.test.js
 ```
@@ -139,8 +139,8 @@ Conventions to keep (from the existing codebase):
 - Integrations degrade: no `RESEND_API_KEY` means sends are recorded as "not configured", and a
   dry-run flag sends through the mock provider. No Apple cert means the Wallet button is hidden,
   not broken.
-- Off-default admin panels load via `components/admin/lazyPanels.jsx` (`ssr:false`).
-- Styling: admin panels use `dgtl-admin.css` tokens. The scanner and pass page get their own
+- Passes pages live in the Core route group (`app/(core)/passes/`) and use `getCorePageContext()`; nav item in `components/core/CoreShell.jsx`.
+- Styling: Core module pages use `app/(core)/core.css` over the canonical `app/dgtl-tokens.css`. The scanner and pass page get their own
   small token sheet, derived from the tenant brand kit at request time and never hardcoded.
 
 ## Request flows
@@ -204,7 +204,8 @@ demand (no stored files) and returns `application/vnd.apple.pkpass`.
 - **Pass host:** `PASS_PUBLIC_BASE_URL`, served by the same platform container. The QR encodes
   `<base>/p/<credential>`, so **this host is permanent the moment the first real pass ships.**
   A later move must keep the old host in `PASS_ALLOWED_SCAN_HOSTS` and redirect it. Recommended:
-  `https://pass.dgtlmag.com`, a subdomain of the live app domain, one Coolify/Traefik label.
+  `https://pass.dgtl.ltd`, beside the canonical app host `os.dgtl.ltd` (decision 2026-08-17), one
+  Coolify/Traefik label.
   Confirm before Phase 2 ([15-config-and-accounts.md](15-config-and-accounts.md)).
 - **Per-tenant vanity hosts** (`pass.<tenant>.com`) are roadmap. The resolver already accepts a
   list, so adding one is config, not code.

@@ -6,8 +6,8 @@
 //   DGTL_TOKENS below  <- mirrors the DGTL brand kit tokens. brand.test.js fails if
 //                         these drift from any of the three token files:
 //                         engine/dgtl-brand-kit/assets/dgtl-tokens.css (the kit),
-//                         journal/_shared/dgtl-editorial.css, and the platform
-//                         alias layer in platform/app/admin/dgtl-admin.css
+//                         journal/_shared/dgtl-editorial.css, and
+//                         platform/app/dgtl-tokens.css (the platform's canonical layer)
 //   tenant.brand       <- name, logoText, logo, primaryColor (existing tenant config)
 //   tenant.passes.brandKit <- optional per-tenant overrides (new, see 09-brand-and-tiers.md)
 //

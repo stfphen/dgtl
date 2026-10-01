@@ -34,8 +34,8 @@ not themed per tenant. Staff moving between venues see the same tool.
 | `deny` (`used`, `expired`, `revoked`, `suspended`, `not_found`, `invalid_format`) | full-screen **error** `#E5484D`, black text | ✕ | one long low tone | on tap only |
 | offline / timeout | **black**, error-outline icon, "Don't admit" error badge | wifi-off | one long low tone | Retry (same scan id) |
 
-- The colors are the kit's **functional** set, already in the platform as `--success`, `--warn`
-  and `--danger` in `dgtl-admin.css`. Elsewhere the kit uses them as tint + text. **The scanner is
+- The colors are the kit's **functional** set, already in the platform as `--success`, `--warning`
+  and `--error` in `platform/app/dgtl-tokens.css`. Elsewhere the kit uses them as tint + text. **The scanner is
   the one surface that fills the screen with them**, because a dark door needs an answer at arm's
   length. Black text passes AA on all three (≥ 5:1).
 - **VIP admit** adds a black band above the green with the gold spark and "VIP · LIFETIME" in
@@ -78,10 +78,10 @@ not themed per tenant. Staff moving between venues see the same tool.
   `apple-touch-icon` from `lib/branding/appIcon.js` (already renders tenant icons).
 - No service-worker caching of API responses, ever. A cached verdict is a false admit. A service
   worker, if added, caches only the shell and the `.wasm`.
-- The scanner UI uses its own small CSS (`app/scan/scan.css`) that reads the platform tokens from
-  `dgtl-admin.css` (gold is `var(--blue)` there, per the kit's `repo-surfaces.md`; the verdict
-  fills are `var(--success)`, `var(--warn)` and `var(--danger)`). It does not import `styles.css`
-  and contains no hex values. Manrope via `next/font`, as in the admin layout.
+- The scanner UI uses its own small CSS (`app/scan/scan.css`) on top of the canonical token layer
+  `platform/app/dgtl-tokens.css` (`var(--gold)`; verdict fills `var(--success)`,
+  `var(--warning)`, `var(--error)`). It does not import `styles.css` and contains no hex values,
+  and `tests/brand-tokens.test.js` should be extended to scan it. Manrope via `lib/fonts.js`.
 
 ## Accessibility
 

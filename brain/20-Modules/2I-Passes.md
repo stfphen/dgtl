@@ -21,8 +21,7 @@ tests) and a draft migration exist. The **DGTL brand kit** (`engine/dgtl-brand-k
 every surface, and every pass is a **branded DGTL card**: DGTL⚡ PASS lockup + gold spark on every tier,
 plus a distinct tier colour (Steel blue, Bronze copper, Silver platinum, VIP gold on black). Design
 targets are in `docs/specs/dgtl-pass/previews/` (emails, Wallet, pass page, scanner, admin). Launch
-plan: `docs/specs/dgtl-pass/17-launch-plan.md`. The Phase 0 release-gate CI is written (`.github/workflows/platform-ci.yml`) and
-awaits push + branch protection. No `platform/` code has changed yet.
+plan: `docs/specs/dgtl-pass/17-launch-plan.md`. Phase 0 is covered by `main`'s existing `core-release-gate.yml` (restored to green by PR #44). No `platform/` code has changed yet.
 
 ## Key files
 - Spec + handoff: `docs/specs/dgtl-pass/` (start at `README.md`; build agent prompt in `HANDOFF-PROMPT.md`)
@@ -33,12 +32,12 @@ awaits push + branch protection. No `platform/` code has changed yet.
   - `repository.js`: `issuePass` / `verifyScan` / `revokePass` transactions (row lock + scan-id idempotency)
   - `brand.js` · `tiers.js` · `passJson.js` · `walletArt.js` · `email/render.js`: brand kit (drift-tested against all three token files), Steel/Bronze/Silver/Gold on the black ladder, Wallet fields + spark art, 5 emails + SMS
   - `ui/mockups.js`: generates the brand-kit design targets for Wallet, pass page, scanner and admin
-- Draft migration: `docs/specs/dgtl-pass/migration/009_passes.sql`. New tables `pass_types`,
+- Draft migration: `docs/specs/dgtl-pass/migration/015_passes.sql`. New tables `pass_types`,
   `pass_holders`, `passes`, `pass_deliveries`, `pass_scans`, `pass_wallet_registrations`,
   `user_identities`. New roles `issuer`, `verifier`. `users.password_hash` becomes nullable.
 - Design targets: `docs/specs/dgtl-pass/previews/` (`index.html` emails · `wallet.html` · `pass-page.html` · `scanner.html` · `admin.html`)
 - Target (not built): `lib/passes/*`, `app/scan`, `app/p/[credential]`, `app/api/admin/passes/*`,
-  `app/api/scan/*`, `app/api/auth/google/*`, and a ninth admin tab, Passes.
+  `app/api/scan/*`, `app/api/auth/google/*`, and a Core routed module `/passes` (`app/(core)/passes`).
 
 ## Data flow
 Admin issues (idempotent on `issue_request_id`) → the pass row stores the window + usage snapshot
@@ -59,7 +58,7 @@ cutoff, gates, brand kit, legal/postal address, VIP offer).
   (see the file-store race in [[53-Known-Issues]]).
 - **iOS Safari has no `BarcodeDetector`.** The scanner uses `zxing-wasm`.
 - **The pass host is permanent** once real QR codes exist. Decide it before Phase 2
-  (recommended `pass.dgtlmag.com`).
+  (recommended `pass.dgtl.ltd`).
 - **External lead times:** Apple Developer (Pass Type ID cert), Twilio A2P/toll-free
   registration. Start in Phase 0.
 - **Compliance:** every email needs a tenant postal address + preferences link or it is blocked;

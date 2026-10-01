@@ -1,8 +1,9 @@
--- 009_passes.sql: DGTL Pass (issue, deliver, verify)
+-- 015_passes.sql: DGTL Pass (issue, deliver, verify)
+-- Renumbered from 009 on 2026-10-01: main now carries Core migrations 009-014.
 --
 -- DRAFT migration for the handoff package. Copy to platform/migrations/ in
--- Phase 1 (13-build-plan.md). Idempotent like 001-008: every statement is safe
--- to re-run. Validated against 001-008 on PostgreSQL 18.3 (PGlite 0.5.8) on
+-- Phase 1 (13-build-plan.md). Idempotent like 001-014: every statement is safe
+-- to re-run. Validated against 001-014 on PostgreSQL 18.3 (PGlite 0.5.8) on
 -- 2026-09-30 by reference/repository.test.js.
 --
 -- Stored pass status is only active | suspended | revoked. "expired", "used"

@@ -1,6 +1,6 @@
 # 17 · Status, launch timeline and production checklist
 
-**As of Thursday 2026-10-01.** This is the canonical record. Update the status column as items land,
+**As of Thursday 2026-10-01 (evening update: repo synced, Phase 1 started).** This is the canonical record. Update the status column as items land,
 and log dates in `brain/50-Audit-Log/51-Timeline.md`.
 
 ## Status at a glance
@@ -11,15 +11,16 @@ and log dates in `brain/50-Audit-Log/51-Timeline.md`.
 |---|---|---|
 | Product spec, architecture, API, data model, security, build + test plans | ✅ Done | 17 docs in `docs/specs/dgtl-pass/` + `HANDOFF-PROMPT.md` |
 | Reference core (credentials, validity, verify, brand kit, tiers, Wallet JSON + art, emails, SMS, issue/scan transactions) | ✅ Done, tested | 75/75 unit + 9/9 SQL integration tests |
-| Database migration `009_passes.sql` | ✅ Drafted, validated | Applies on 001–008 in PGlite; every migration re-runs cleanly |
+| Database migration `015_passes.sql` | ✅ Drafted, validated | Applies on 001–014 (incl. Core) in PGlite; every migration re-runs cleanly |
 | Brand + UI design (branded DGTL card system, 4 tier colours) | ✅ Done | 12 design targets in `previews/`, built to `engine/dgtl-brand-kit` |
-| Phase 0: release-gate CI | 🟡 Written, verified locally, **not pushed** | `.github/workflows/platform-ci.yml`; clean CI simulation: 356/356 tests, build exit 0 |
-| Phases 1–6: platform code | ⬜ Not started | `platform/` unchanged |
+| Phase 0: release-gate CI | 🟡 Exists on `main` (`core-release-gate.yml`); was red, **fix in [PR #44](https://github.com/stfphen/dgtl/pull/44)** | Locally 536/536 tests, build 63/63, audit 0. My separate `platform-ci.yml` retired as redundant |
+| Phase 1: foundation | 🟡 In progress | Branch `feat/pass-p1-foundation` |
+| Phases 2–6: platform code | ⬜ Not started | — |
 | External accounts (Apple, Twilio, Google, Resend, DNS) | ⬜ Not started | Stephen's |
-| Repo: local `main` vs GitHub `main` | ⛔ Blocker | Local is 21 commits ahead and 19 behind (GitHub has PRs #40–#43 that local lacks) |
-| Platform: 3 high production advisories (Next 15 → PostCSS, Sharp) | ⛔ Open, platform-wide | Known Issues; the fix is a deliberate Next 16 migration |
+| Repo: local `main` vs GitHub `main` | ✅ Reconciled + pushed | Merge `5de31e0`; no regressions (535/536 = the pre-existing stale test, fixed in #44) |
+| Platform: production advisories | 🟡 Fixed in #44, pending merge | The Aug 14 overrides had fixed the old three. New ones since (critical Next RCE, axios, sharp/libheif…) are patched to Next 15.5.27 and sharp 0.35.5; no Next 16 needed |
 
-All work is local on `feature/dgtl-pass` (`62ab6ff`). Nothing is pushed.
+`main` is pushed and in sync with GitHub. `feature/dgtl-pass` and PR #44 (`fix/release-gate-advisories`) are pushed too.
 
 ## Critical path
 
@@ -42,10 +43,9 @@ each gate the same day. Monday Oct 12 is Canadian Thanksgiving (no work schedule
 |---|---|---|---|
 | **Thu Oct 1 – Fri Oct 2** | **P0** finish: reconcile `main`, push, CI green on GitHub, mark checks required | CI required + green on `main` | Approve the `main` reconciliation; start Apple, Twilio, Google, Resend, DNS |
 | Mon Oct 5 – Tue Oct 6 | **P1** Foundation: migration 009, roles, Google sign-in, verifier routing | Gate P1 | Google OAuth client |
-| Wed Oct 7 – Fri Oct 9 | **P2** Pass engine: pass types, issue/revoke, QR, holder pass page, Passes tab | Gate P2 (+ brand-kit visual check) | Pass host confirmed (`pass.dgtlmag.com`) |
+| Wed Oct 7 – Fri Oct 9 | **P2** Pass engine: pass types, issue/revoke, QR, holder pass page, Passes tab | Gate P2 (+ brand-kit visual check) | Pass host confirmed (`pass.dgtl.ltd`) |
 | Tue Oct 13 – Thu Oct 15 | **P3** Scanner ★ on iPhone + Android, ledger, real-Postgres double-scan test | **★ Product milestone:** issue → scan → admit/refuse → logged | HTTPS staging host |
 | Fri Oct 16 – Tue Oct 20 | **P4** Delivery: 5 emails + SMS, consent, unsubscribe, CSV bulk, webhooks | Gate P4 | Resend domain verified; Twilio approved (else SMS stays in dry-run) |
-| Mon Oct 19 – Fri Oct 23 *(parallel)* | Next 16 migration branch to clear the 3 high advisories | CI green on its own branch | Go/no-go on taking it before launch |
 | Wed Oct 21 – Thu Oct 22 | **P5** Apple Wallet: signed `.pkpass`, branded art, official badge | Gate P5 (5 presets install on a real iPhone) | Pass Type ID certificate |
 | Fri Oct 23 – Mon Oct 26 | **P6** Hardening: security review, log redaction, load check, backups, runbooks | Gate P6 | — |
 | Tue Oct 27 – Thu Oct 29 | **UAT on staging:** device matrix, email-client matrix, pilot tenant setup, door-staff training | Launch acceptance checklist complete | Pilot tenant details + VIP offer copy |
@@ -71,10 +71,10 @@ started · ⛔ blocker.
 |---|---|---|
 | ✅ | Spec, reference core, migration draft, design targets committed (`4e091e2`, `b6d341b`, `a706dd6`) | B |
 | ✅ | Release-gate workflow written and verified by a clean local CI simulation (`ffa2a75`) | B |
-| ⛔ | Reconcile local `main` with GitHub `main` (merge `origin/main` into `main`, resolve conflicts, push). Then bring `feature/dgtl-pass` up to date | S approves · B executes |
-| ⬜ | Push `feature/dgtl-pass`; open the PR; both CI jobs green on GitHub | B |
-| ⬜ | Mark `platform / test-and-build` and `platform / migrations-postgres` required on `main` | S |
-| ⬜ | Clear the 3 high production advisories (Next 16 migration), or record an explicit, dated acceptance with mitigation | B · S decides |
+| ✅ | Reconcile local `main` with GitHub `main`: merged (`5de31e0`) and pushed; `feature/dgtl-pass` brought up to date | S approved · B executed |
+| 🟡 | Merge PR #44 so the release gate is green on `main`; then open the passes PR against it | S · B |
+| ⬜ | Mark `Required DGTL Core checkpoint` required on `main` (branch protection is currently off) | S |
+| 🟡 | Production advisories at 0: patched in PR #44 (Next 15.5.27, sharp 0.35.5) | B |
 | ⬜ | Self-host or pin the Google fonts the build downloads (build reproducibility) | B |
 | ⬜ | Triage the 12 open PRs with no CI (not blocking, but they hide real failures) | S |
 
@@ -92,7 +92,7 @@ started · ⛔ blocker.
 ### C. External accounts and infrastructure
 | | Item | Owner | Lead time |
 |---|---|---|---|
-| ⬜ | Confirm pass host (`pass.dgtlmag.com`); DNS record, Coolify/Traefik label, HTTPS | S | hours |
+| ⬜ | Confirm pass host (`pass.dgtl.ltd`, beside `os.dgtl.ltd`); DNS record, Coolify/Traefik label, HTTPS | S | hours |
 | ⬜ | Apple Developer organisation membership → Pass Type ID → certificate → PEMs into secrets | S | days–2 wks |
 | ⬜ | Download the official "Add to Apple Wallet" badge | S | minutes |
 | ⬜ | Twilio Messaging Service (Advanced Opt-Out) + A2P 10DLC or toll-free verification | S | 1–3 wks |
@@ -145,10 +145,10 @@ started · ⛔ blocker.
 
 | # | Decision | Needed by | Recommendation |
 |---|---|---|---|
-| 1 | Approve reconciling local `main` with GitHub `main` | **Fri Oct 2** | Merge `origin/main` into `main` (no force-push, no reset), then update the feature branch |
+| 1 | ~~Approve reconciling `main`~~ | done Oct 1 | Merged and pushed |
 | 2 | Start Apple Developer + Twilio registration | **Fri Oct 2** | Both today: they're the critical path |
 | 3 | `sales` role: issue + scan passes? | Mon Oct 5 | Yes (current default) |
-| 4 | Pass host | Tue Oct 6 | `pass.dgtlmag.com`; it's permanent once QR codes ship |
-| 5 | Next 16 migration before launch, or dated risk acceptance | Fri Oct 16 | Migrate on a parallel branch Oct 19–23; launch only if CI is green |
+| 4 | Pass host | Tue Oct 6 | `pass.dgtl.ltd`; it's permanent once QR codes ship |
+| 5 | Merge PR #44 (release-gate fix) | **Fri Oct 2** | Merge once its checks are green |
 | 6 | Pilot tenant + content (address, offer, sign-off) | Mon Oct 19 | One venue, one event night |
 | 7 | Launch without SMS or Wallet if approvals lag? | Tue Oct 20 | Yes for the pilot; verification doesn't depend on either |

@@ -9,7 +9,7 @@ new framework. Test ids are referenced from the build plan gates.
 # 75 unit tests, no dependencies (the 9 SQL tests in the same folder report as skipped here)
 node --test docs/specs/dgtl-pass/reference/*.test.js docs/specs/dgtl-pass/reference/email/*.test.js
 
-# + 9 SQL integration tests (platform migrations 001–008 + 009 in PGlite)
+# + 9 SQL integration tests (platform migrations 001–014 + draft 015 in PGlite)
 npm i --prefix /tmp/pglite @electric-sql/pglite
 PGLITE_PATH=/tmp/pglite/node_modules/@electric-sql/pglite node --test docs/specs/dgtl-pass/reference/repository.test.js
 ```
@@ -86,6 +86,6 @@ after Phase 5b.
 
 - Tests that need Postgres are gated on `PASSES_TEST_DATABASE_URL` (or PGlite) and **skip with a
   reason** otherwise, so `npm test` stays green on a laptop with no database. CI runs them.
-- Keep the existing suite count in CLAUDE.md honest. Update "356 tests" to the new total in the
+- Keep the existing suite count in CLAUDE.md honest. Update the platform test count in CLAUDE.md to the new total in the
   PR that changes it.
 - No test sends a real email or SMS. The mock providers and `PASSES_DRY_RUN` exist for that.

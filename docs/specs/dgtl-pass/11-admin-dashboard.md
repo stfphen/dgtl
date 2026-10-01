@@ -1,29 +1,34 @@
-# 11 · Admin: the Passes tab, and the holder pass page
+# 11 · The Passes module (Core shell), and the holder pass page
 
 ## Placement
 
-A ninth tab, **Passes** (lucide `Ticket` icon), in `components/admin/AdminTabbedShell.jsx`
-`navItems`, visible when the session has `pass.view`. The panel is `PassesPanel`, loaded through
-`components/admin/lazyPanels.jsx` (`ssr:false`) like the other off-default tabs. It fetches its own
-data from the API. It does not add queries to the already-large server `page.jsx`.
+**Revised 2026-10-01:** `main` now has the **Core shell** (`app/(core)/`, `components/core/CoreShell.jsx`),
+the platform's routed-module surface (`/home`, `/companies`, `/opportunities`, `/invoices`…), with the
+legacy `/admin` linked from it. Passes is built as a **Core routed module**, not a ninth legacy tab:
 
-Design targets: [`previews/admin.html`](previews/admin.html) (the tab) and
-[`previews/pass-page.html`](previews/pass-page.html) (the holder page), both built to the DGTL
-brand kit's app components (`engine/dgtl-brand-kit/references/ui-components.md`).
+- Routes `app/(core)/passes/` (overview), `passes/issue`, `passes/list`, `passes/[id]`, `passes/types`,
+  `passes/scans`, each a server component using `getCorePageContext()` plus a pass-capability check.
+- A **Passes** item (lucide `Ticket`) in `CoreShell.jsx` `navigation`, shown only when the session has
+  `pass.view`. Issuers see Passes only. Verifiers never reach the Core shell (they land on `/scan`).
+- API routes as specified in [04-api.md](04-api.md): `app/api/admin/passes/*`, `app/api/admin/pass-types/*`, `app/api/scan/*`.
+- The legacy admin shell is untouched.
 
-Styling comes only from `app/admin/dgtl-admin.css` tokens and primitives (`.button--primary`,
-cards, tables, `.admin-notice`). The gold is `var(--blue)` there: the kit's alias layer, see its
-`repo-surfaces.md`. Never write `var(--gold)` in `platform/`. Tier chips use the tier materials via
-CSS custom properties set inline from the API (`style={{ "--tier": design.accent }}`) and render as
-the kit's tint pill (`color-mix(in srgb, var(--tier) 12%, transparent)` background, tier text). No
-hex literals go in components.
+Design targets: [`previews/admin.html`](previews/admin.html) (the module; its sidebar + glass top bar
+map onto the Core shell) and [`previews/pass-page.html`](previews/pass-page.html) (the holder page),
+built to the DGTL brand kit's app components (`engine/dgtl-brand-kit/references/ui-components.md`).
 
-The kit's internal-tool register applies: **gold marks only the active nav item (tint + 2-px rail),
-the active sub-tab underline, the headline KPI ("Active passes"), and the one primary action
-("Issue pass →" / "Issue & send →")**. Everything else is white, `#D0D0D0` or `#8a8a8a`. Status
-uses the functional badges (success / warning / error / info tint + text), never gold.
+Styling uses the Core sheet's conventions: `app/(core)/core.css` aliases over the canonical tokens in
+`app/dgtl-tokens.css` (`var(--gold)`, `var(--text-primary)`, functional `var(--success)`…). No hex
+literals are allowed (`tests/brand-tokens.test.js`). Tier chips use the tier materials via CSS custom
+properties set inline from the API (`style={{ "--tier": design.accent }}`), rendered as the kit's tint
+pill (`color-mix(in srgb, var(--tier) 12%, transparent)` background, tier text).
 
-Inside the tab, sub-navigation uses segmented buttons in the same pattern as the other tabs:
+The kit's internal-tool register applies: **gold marks only the active nav item, the active sub-tab,
+the headline KPI ("Active passes"), and the one primary action ("Issue pass →" / "Issue & send →")**.
+Everything else is primary, secondary or dim text. Status uses the functional badges, never gold (the
+CLAUDE.md gold-rationing rule).
+
+Inside the module, sub-navigation:
 
 ```
 Overview · Issue · Passes · Pass types · Scans

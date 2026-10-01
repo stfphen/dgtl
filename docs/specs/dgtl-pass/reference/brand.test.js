@@ -21,13 +21,14 @@ for (const file of ["engine/dgtl-brand-kit/assets/dgtl-tokens.css", "journal/_sh
   });
 }
 
-test("the platform alias layer maps to the same values (kit repo-surfaces.md)", async () => {
-  const css = await readFile(path.join(repoRoot, "platform/app/admin/dgtl-admin.css"), "utf8");
-  assert.equal(tokenValue(css, "--blue")?.toLowerCase(), DGTL_TOKENS["--gold"].toLowerCase(), "--blue is the gold accent");
-  const dark = /\[data-theme="dark"\]\s*\{([^}]*)\}/.exec(css)?.[1] || "";
-  const pairs = { "--bg": "--bg", "--surface": "--surface-1", "--surface-2": "--surface-2", "--border": "--border", "--fg": "--text", "--fg-muted": "--text-dim" };
-  for (const [platformName, kitName] of Object.entries(pairs)) {
-    assert.equal(tokenValue(dark, platformName)?.toLowerCase(), DGTL_TOKENS[kitName].toLowerCase(), `${platformName} ≠ kit ${kitName}`);
+test("the platform's canonical token layer (platform/app/dgtl-tokens.css) carries the same values", async () => {
+  const css = await readFile(path.join(repoRoot, "platform/app/dgtl-tokens.css"), "utf8");
+  // kit name -> platform name (CLAUDE.md: dgtl-tokens.css is canonical for every authenticated surface)
+  const pairs = { "--gold": "--gold", "--gold-tan": "--gold-tan", "--bg": "--bg", "--surface-1": "--surface", "--surface-2": "--surface-2",
+    "--border": "--border", "--text": "--text-primary", "--text-muted": "--text-secondary", "--text-dim": "--text-dim",
+    "--text-ghost": "--text-ghost", "--placeholder": "--placeholder" };
+  for (const [kitName, platformName] of Object.entries(pairs)) {
+    assert.equal(tokenValue(css, platformName)?.toLowerCase(), DGTL_TOKENS[kitName].toLowerCase(), `platform ${platformName} ≠ kit ${kitName}`);
   }
 });
 

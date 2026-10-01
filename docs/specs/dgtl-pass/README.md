@@ -35,14 +35,14 @@ config, roles, sessions, audit log, Resend, Twilio and Stripe. The reasons are i
 | [08-messaging.md](08-messaging.md) | Delivery pipeline, email/SMS rules, deliverability, CASL/CAN-SPAM gates |
 | [09-brand-and-tiers.md](09-brand-and-tiers.md) | Brand kit contract, Steel/Bronze/Silver/Gold ladder, voice, VIP onboarding strategy |
 | [10-auth-and-roles.md](10-auth-and-roles.md) | Google OIDC (invite-only), `issuer` + `verifier` roles, capability matrix |
-| [11-admin-dashboard.md](11-admin-dashboard.md) | The Passes tab, issue flow, drawer, pass types, ledger, holder pass page |
+| [11-admin-dashboard.md](11-admin-dashboard.md) | The Passes module (Core shell), issue flow, detail, pass types, ledger, holder pass page |
 | [12-security.md](12-security.md) | Threat model (20 threats → controls → tests), secrets inventory |
 | [13-build-plan.md](13-build-plan.md) | Phases P0–P6 with tasks, files, gates, launch acceptance |
 | [14-test-plan.md](14-test-plan.md) | What's tested already, what to write, test ids used by the gates |
 | [15-config-and-accounts.md](15-config-and-accounts.md) | Env vars, Apple / Google / Twilio / Resend / DNS checklists, new dependencies |
 | [16-roadmap.md](16-roadmap.md) | Selling passes, Google Wallet, renewals, photos, offline, … |
 | [17-launch-plan.md](17-launch-plan.md) | **Current status, production timeline (target Fri Oct 30, 2026), readiness checklist, decisions needed** |
-| [`migration/009_passes.sql`](migration/009_passes.sql) | Draft migration, validated against platform migrations 001–008 |
+| [`migration/015_passes.sql`](migration/015_passes.sql) | Draft migration, validated against platform migrations 001–014 |
 | [`reference/`](reference/) | Tested, dependency-free implementations to port into `platform/lib/passes/` |
 | [`previews/`](previews/) | UI design targets built to the DGTL brand kit: 7 emails + SMS, Wallet passes, pass page, scanner, admin tab |
 | [`assets/`](assets/) | `dgtl-wordmark@4x.png`, the kit wordmark rasterized for email and Wallet |
@@ -115,7 +115,7 @@ real QR codes (`PREVIEW_QRCODE_PATH` pointed at a scratch `qrcode` install).
 
 ## Open questions for Stephen (none block Phase 1)
 
-1. **Pass host.** `https://pass.dgtlmag.com` is recommended. It becomes permanent with the first
+1. **Pass host.** `https://pass.dgtl.ltd` is recommended. It becomes permanent with the first
    real pass (P0.3).
 2. **Apple Developer account.** Is DGTL enrolled as an organisation? If not, start now (P0.4).
 3. **First tenant.** Which venue, club or community runs the pilot? Its timezone, cutoff hour and

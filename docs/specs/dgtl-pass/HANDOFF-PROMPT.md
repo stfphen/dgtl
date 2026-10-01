@@ -18,7 +18,7 @@ written and tested. Your job is to build it into `platform/`, phase by phase, to
    force-push, never commit a key.
 2. `engine/dgtl-brand-kit/SKILL.md` and its `references/` (brand-tokens, ui-components,
    application-guide and **repo-surfaces**): every pass surface follows this kit. Inside
-   `platform/` the gold accent is `var(--blue)`, never `var(--gold)`. The design targets in
+   `platform/` use the canonical tokens in `platform/app/dgtl-tokens.css` (`var(--gold)`, `var(--text-primary)`…); `tests/brand-tokens.test.js` enforces no hex literals. The design targets in
    `docs/specs/dgtl-pass/previews/` (emails, `wallet.html`, `pass-page.html`, `scanner.html`,
    `admin.html`) are what to build. Match them.
 3. `docs/specs/dgtl-pass/README.md`: the package index and the decisions already made. **Do not
@@ -34,13 +34,13 @@ written and tested. Your job is to build it into `platform/`, phase by phase, to
 - `docs/specs/dgtl-pass/reference/`: dependency-free modules with 75 unit tests (credentials,
   validity windows, the verify decision, brand kit, tiers, Apple `pass.json` + Wallet art, five
   email variants + SMS) and a `repository.js` with the issue/verify/revoke transactions, proven by 9 SQL
-  integration tests against platform migrations 001–008 + the draft 009 in PGlite.
-- `docs/specs/dgtl-pass/migration/009_passes.sql`: the draft migration.
+  integration tests against platform migrations 001–014 + the draft 015 in PGlite.
+- `docs/specs/dgtl-pass/migration/015_passes.sql`: the draft migration.
 - `docs/specs/dgtl-pass/previews/`: brand-kit design targets for every surface (emails, Wallet,
   pass page, scanner, admin), generated from the reference code. `assets/dgtl-wordmark@4x.png` is
   the email/Wallet logo.
-- `.github/workflows/platform-ci.yml`: the Phase 0 release gate (written; pushing it and marking
-  both checks required on `main` is Stephen's step).
+- `.github/workflows/core-release-gate.yml` (on `main`): the release gate every PR must pass.
+  Add explicit steps for the passes suites as they land (the Postgres-backed T-C1 in Phase 3).
 
 **Port these modules. Don't rewrite them.** Change import paths, swap `brand.js`'s
 `readableForeground` for the one in `platform/lib/branding.js` (export it), and keep every test
@@ -62,7 +62,7 @@ diff.
   credential, or a `/p/<credential>` URL of a real holder into logs or chat.
 - Keep `brain/` current as you go: a timeline bullet per phase, decisions in the decision log,
   env vars in `43-Environment-Variables.md`, routes in `14-Routes-Map.md`, tables in
-  `13-Data-Model.md`. Create the module note `brain/20-Modules/2E-Passes.md` in Phase 1 (a stub
+  `13-Data-Model.md`. Create the module note `brain/20-Modules/2I-Passes.md` in Phase 1 (a stub
   exists; flip its status as phases land).
 
 ## Phases
@@ -80,7 +80,7 @@ verify and why.
 - **P2 Pass engine:** `lib/passes/store.js` (from `repository.js`), tenant `passes` config +
   editor section, tier tokens into both CSS token files with a drift test, pass types
   API + editor, issue / action / list / detail / overview / preview routes, QR + Code 128 images,
-  holder pass page, the Passes tab.
+  holder pass page, the Passes Core module (`/passes`).
 - **P3 Scanner ★:** `/api/scan/verify` + `/api/scan/session`, the `/scan` PWA with self-hosted
   `zxing-wasm`, verdict screens, manual entry, the ledger view, and the **real-Postgres
   concurrency test T-C1**. This gate is the product milestone.

@@ -1,4 +1,4 @@
-// Integration test: platform migrations 001-008 + draft 009, then issue and
+// Integration test: platform migrations 001-014 + draft 015, then issue and
 // verify through real SQL.
 //
 // Uses PGlite (Postgres compiled to WASM, in-process: no Docker, no server).
@@ -57,7 +57,7 @@ async function migrate() {
   const dir = path.join(repoRoot, "platform/migrations");
   const files = (await readdir(dir)).filter((f) => f.endsWith(".sql")).sort();
   for (const file of files) await db.exec(await readFile(path.join(dir, file), "utf8"));
-  await db.exec(await readFile(path.join(here, "../migration/009_passes.sql"), "utf8"));
+  await db.exec(await readFile(path.join(here, "../migration/015_passes.sql"), "utf8"));
 }
 
 async function seedPassType(teamId, tenantId, presetId, overrides = {}) {
@@ -79,10 +79,10 @@ const issue = (passTypeId, extra = {}) =>
     issuePass(tx, { teamId: "team_venue", tenantId: "tenant_venue", passTypeId, holder: { name: "Jordan Avery", email: "Jordan@Example.com" }, startDate: today, issuedBy: "user_admin", ...extra }, deps)
   );
 
-test("migrations 001-009 apply, and 009 is idempotent", { skip }, async () => {
+test("platform migrations 001-014 + draft 015 apply, and 015 is idempotent", { skip }, async () => {
   db = new PGlite();
   await migrate();
-  await db.exec(await readFile(path.join(here, "../migration/009_passes.sql"), "utf8"));
+  await db.exec(await readFile(path.join(here, "../migration/015_passes.sql"), "utf8"));
   const { rows } = await db.query(`select count(*)::int as n from information_schema.tables where table_name like 'pass%' or table_name = 'user_identities'`);
   assert.equal(rows[0].n, 7);
 
