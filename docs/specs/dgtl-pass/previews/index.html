@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DGTL Pass email previews</title>
+<style>
+  :root { --bg:#000; --surface:#0a0a0a; --line:#2a2a2a; --text:#F0F0F0; --dim:#8a8a8a; --gold:#F0CF50; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:Manrope, "Helvetica Neue", Arial, sans-serif; }
+  header { padding:40px 24px 8px; max-width:1400px; margin:0 auto; }
+  h1 { margin:0 0 8px; font-size:28px; letter-spacing:-0.3px; }
+  p.lead { margin:0; color:var(--dim); max-width:760px; line-height:1.6; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(420px, 1fr)); gap:24px; padding:24px; max-width:1400px; margin:0 auto; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  .meta { padding:18px 20px; border-bottom:1px solid var(--line); }
+  .meta h2 { margin:0 0 6px; font-size:16px; } .meta h2 a { color:var(--gold); text-decoration:none; }
+  .meta p { margin:0 0 4px; font-size:13px; color:var(--dim); line-height:1.5; }
+  .meta code { color:var(--text); }
+  iframe { width:100%; height:1100px; border:0; background:#000; display:block; }
+  .sms { max-width:1400px; margin:0 auto; padding:0 24px 48px; }
+  .bubble { display:inline-block; max-width:420px; margin:8px 12px 8px 0; padding:12px 16px; border-radius:18px; background:#1f1f1f; font-size:14px; line-height:1.45; }
+  .bubble small { display:block; margin-top:6px; color:var(--dim); font-size:11px; }
+  @media (max-width:480px) { .grid { grid-template-columns:1fr; padding:16px; } iframe { height:1000px; } }
+</style></head>
+<body>
+<header>
+  <h1>DGTL Pass: email previews</h1>
+  <p class="lead">Rendered by <code>reference/email/render.js</code> from the default DGTL brand kit and tier presets. All names, addresses and offers are sample content. The Apple Wallet button is a placeholder until the official badge artwork is configured. The QR codes are real and point at a sample URL.</p>
+</header>
+<div class="grid">
+<section class="card"><div class="meta">
+  <h2><a href="day.html">Day · Steel</a></h2>
+  <p>Single-entry day ticket. Practical, fast, door-first.</p>
+  <p>Subject: <code>Your DGTL pass for Sat, Oct 3, 2026</code></p>
+  <p>Preheader: <code>Show it at the door from this email, your pass page, or Apple Wallet.</code></p>
+  <p>Renderer notes: <code>wallet_badge_placeholder</code></p>
+</div><iframe src="day.html" title="Day · Steel" loading="lazy"></iframe></section>
+<section class="card"><div class="meta">
+  <h2><a href="monthly.html">Monthly · Bronze</a></h2>
+  <p>Membership voice starts here. Wallet is the hero action.</p>
+  <p>Subject: <code>Your DGTL Monthly Pass is active</code></p>
+  <p>Preheader: <code>Active now. Through Thu, Oct 29, 2026.</code></p>
+  <p>Renderer notes: <code>wallet_badge_placeholder</code></p>
+</div><iframe src="monthly.html" title="Monthly · Bronze" loading="lazy"></iframe></section>
+<section class="card"><div class="meta">
+  <h2><a href="yearly.html">Annual · Silver</a></h2>
+  <p>A year of access. Warmer, more welcoming.</p>
+  <p>Subject: <code>Welcome to your year, Sam</code></p>
+  <p>Preheader: <code>Your DGTL Annual Pass is active. Through Wed, Sep 29, 2027.</code></p>
+  <p>Renderer notes: <code>wallet_badge_placeholder</code></p>
+</div><iframe src="yearly.html" title="Annual · Silver" loading="lazy"></iframe></section>
+<section class="card"><div class="meta">
+  <h2><a href="vip_lifetime.html">VIP Lifetime · Gold</a></h2>
+  <p>The brand at full strength: gold frame, centered, personal.</p>
+  <p>Subject: <code>Alex, your VIP Lifetime pass</code></p>
+  <p>Preheader: <code>It carries your name, and it never expires.</code></p>
+  <p>Renderer notes: <code>wallet_badge_placeholder</code></p>
+</div><iframe src="vip_lifetime.html" title="VIP Lifetime · Gold" loading="lazy"></iframe></section>
+<section class="card"><div class="meta">
+  <h2><a href="vip_onboarding.html">VIP Onboarding · Invitation</a></h2>
+  <p>Hook + offer. Previews the pass; the QR is revealed on accept.</p>
+  <p>Subject: <code>Alex, you&#39;re on the list</code></p>
+  <p>Preheader: <code>A private invitation from DGTL. Your VIP pass is inside.</code></p>
+  <p>Renderer notes: <code>wallet_badge_placeholder</code></p>
+</div><iframe src="vip_onboarding.html" title="VIP Onboarding · Invitation" loading="lazy"></iframe></section>
+<section class="card"><div class="meta">
+  <h2><a href="vip_onboarding-no-consent.html">VIP Onboarding · no marketing consent</a></h2>
+  <p>Same invitation for a holder with no consent on file: the offer and unsubscribe are removed automatically.</p>
+  <p>Subject: <code>Alex, you&#39;re on the list</code></p>
+  <p>Preheader: <code>A private invitation from DGTL. Your VIP pass is inside.</code></p>
+  <p>Renderer notes: <code>wallet_badge_placeholder, offer_suppressed_no_marketing_consent</code></p>
+</div><iframe src="vip_onboarding-no-consent.html" title="VIP Onboarding · no marketing consent" loading="lazy"></iframe></section>
+<section class="card"><div class="meta">
+  <h2><a href="monthly-light-tenant.html">Monthly · another tenant (light kit)</a></h2>
+  <p>A fictional tenant with a light brand kit and a blue accent. Same templates, no code change.</p>
+  <p>Subject: <code>Your Northside Studio Monthly Pass is active</code></p>
+  <p>Preheader: <code>Active now. Through Thu, Oct 29, 2026.</code></p>
+  <p>Renderer notes: <code>wallet_badge_placeholder</code></p>
+</div><iframe src="monthly-light-tenant.html" title="Monthly · another tenant (light kit)" loading="lazy"></iframe></section>
+</div>
+<div class="sms"><h2 style="font-size:16px">SMS</h2>
+<div class="bubble">DGTL: your Monthly Pass is ready. Show this at the door: https://pass.example.com/p/0123456789ABCDEFGHJKMNPQRS Reply STOP to opt out.<small>133 chars · GSM-7 · 1 segment</small></div>
+<div class="bubble">DGTL VIP: Alex, your lifetime pass is live. Keep it in Wallet: https://pass.example.com/p/0123456789ABCDEFGHJKMNPQRS Reply STOP to opt out.<small>139 chars · GSM-7 · 1 segment</small></div>
+</div>
+</body></html>

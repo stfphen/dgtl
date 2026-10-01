@@ -2,7 +2,7 @@
 title: 20 · Modules MOC
 type: moc
 tags: [moc, module]
-updated: 2026-06-27
+updated: 2026-09-30
 ---
 
 # 🧩 Modules MOC
@@ -38,5 +38,6 @@ inbound ┘                                   │        ├─► OUTREACH (hum
 | [[2B-AI-Backend]] | AI backend | Shared Claude transport (subscription / apiKey). |
 | [[2C-Enterprise-Prospecting]] | Enterprise prospecting (ABM) | **MVP built.** Account-based motion: accounts → committee → campaign, 3 gates → outreach. |
 | [[2D-Portfolio-Media]] | Portfolio / references & media library | **Proposed.** Per-tenant portfolio section + reusable media library + AI-assisted selection + hero/media editor. |
+| [[2E-Passes]] | DGTL Pass (passes, tickets, verification) | **Proposed; spec + tested reference core.** Branded day/monthly/yearly/VIP passes → email/SMS → Apple Wallet → `/scan` PWA verification. `docs/specs/dgtl-pass/`. |
 
 Up: [[00-Home]]

@@ -3,13 +3,16 @@ title: 51 · Project Timeline
 type: log
 tags: [audit]
 status: living
-updated: 2026-08-13
+updated: 2026-09-30
 ---
 
 # Project Timeline
 
 Chronological history, reconstructed from repo docs + git. **Append newest entries at the top.**
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
+
+## 2026-09
+- 2026-09-30 — **DGTL Pass MVP designed and handed off (spec + tested reference core; no `platform/` code changed).** New package `docs/specs/dgtl-pass/`: 16 spec docs (product, architecture, data model, API, verification, scanner, Apple Wallet, messaging + CASL gates, brand kit + tier ladder + VIP onboarding strategy, Google OIDC + roles, admin UI, threat model, phased build plan P0–P6, test plan, config/accounts, roadmap) and `HANDOFF-PROMPT.md` for the build agent. It supersedes a first-draft standalone Supabase plan; the module lives in `platform/` ([[52-Decision-Log]]). Reference core in `reference/`: credentials, validity (DST-safe, business-day cutoff), verify decision, brand kit (token drift-tested against `dgtl-editorial.css` + `dgtl-admin.css`), tiers, Apple `pass.json`, five email variants + SMS, and `repository.js` issue/verify/revoke transactions. **Verified: 60/60 unit tests + 9/9 SQL integration tests** running platform migrations 001–008 + draft `009_passes.sql` in PGlite (PostgreSQL 18.3). Email previews (7, real QR) rendered and checked in-browser at 680 px and 375 px. Found and fixed during preview: tenants on their own brand accent were still labelled "Bronze". Module note [[2E-Passes]] (status *proposed*). Next: Stephen confirms the pass host, Apple Developer enrolment and pilot tenant, then Phase 0 (required CI) → Phase 1.
 
 ## 2026-08
 - 2026-08-13 — **Full repository, branch, worktree and operating-platform audit completed.** The
