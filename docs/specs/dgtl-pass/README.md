@@ -18,6 +18,7 @@ config, roles, sessions, audit log, Resend, Twilio and Stripe. The reasons are i
 |---|---|
 | the engineer or agent building it | [HANDOFF-PROMPT.md](HANDOFF-PROMPT.md), then [13-build-plan.md](13-build-plan.md) |
 | deciding whether to build it | [01-product.md](01-product.md) · [02-architecture.md](02-architecture.md) |
+| tracking the launch | [17-launch-plan.md](17-launch-plan.md) |
 | reviewing the look and copy | [`previews/index.html`](previews/index.html) (emails) · [`wallet.html`](previews/wallet.html) · [`pass-page.html`](previews/pass-page.html) · [`scanner.html`](previews/scanner.html) · [`admin.html`](previews/admin.html) · [09-brand-and-tiers.md](09-brand-and-tiers.md) |
 
 ## Contents
@@ -40,6 +41,7 @@ config, roles, sessions, audit log, Resend, Twilio and Stripe. The reasons are i
 | [14-test-plan.md](14-test-plan.md) | What's tested already, what to write, test ids used by the gates |
 | [15-config-and-accounts.md](15-config-and-accounts.md) | Env vars, Apple / Google / Twilio / Resend / DNS checklists, new dependencies |
 | [16-roadmap.md](16-roadmap.md) | Selling passes, Google Wallet, renewals, photos, offline, … |
+| [17-launch-plan.md](17-launch-plan.md) | **Current status, production timeline (target Fri Oct 30, 2026), readiness checklist, decisions needed** |
 | [`migration/009_passes.sql`](migration/009_passes.sql) | Draft migration, validated against platform migrations 001–008 |
 | [`reference/`](reference/) | Tested, dependency-free implementations to port into `platform/lib/passes/` |
 | [`previews/`](previews/) | UI design targets built to the DGTL brand kit: 7 emails + SMS, Wallet passes, pass page, scanner, admin tab |
