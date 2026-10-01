@@ -19,36 +19,32 @@ self-host the `.wasm` from `/public/scan/` so the door never depends on a CDN.
 
 ## Screens
 
-```
-┌─────────────────────────┐   ┌─────────────────────────┐   ┌─────────────────────────┐
-│ DGTL · Scanner     ⋯    │   │                         │   │                         │
-│ Main door ▾   ● Online  │   │            ✓            │   │            ✕            │
-│ ┌─────────────────────┐ │   │                         │   │                         │
-│ │                     │ │   │       VALID PASS        │   │     PASS ALREADY USED   │
-│ │   [ camera feed ]   │ │   │                         │   │                         │
-│ │     ┌───────┐       │ │   │   Alex Rivera           │   │   Jordan Avery          │
-│ │     │ frame │       │ │   │   ★ VIP LIFETIME        │   │   Single Entry          │
-│ │     └───────┘       │ │   │   Never expires         │   │   Used 21:14 · Main door│
-│ └─────────────────────┘ │   │   Visit 14              │   │                         │
-│  Point at the QR code   │   │                         │   │   [ Scan next ]         │
-│  [ Enter code ]  ⚡      │   │   (auto-continues 2.5s) │   │                         │
-│  Last: ✓ Maya Chen 21:15│   │                         │   │                         │
-└─────────────────────────┘   └─────────────────────────┘   └─────────────────────────┘
-     SCANNING (idle)              ADMIT (green #0f8a4b)         DENY (red #b3261e)
-```
+Design target: [`previews/scanner.html`](previews/scanner.html), built to the DGTL brand kit.
+It shows start, scanning, manual entry, valid, VIP valid, recently used, used and offline.
 
-| Tone | Background | Icon | Sound | Returns to camera |
+The scanner is **DGTL platform chrome**, an internal tool, so it follows the kit's quietest
+register: black ladder, glass top bar (logo · gate pill · online status), white viewfinder, and
+gold only on the one primary action ("Start scanning →", "Check code →") and the VIP band. It is
+not themed per tenant. Staff moving between venues see the same tool.
+
+| Tone | Screen | Icon | Sound | Returns to camera |
 |---|---|---|---|---|
-| `admit` | full-screen green | ✓ | short rising chirp | automatically after 2.5 s (tap to skip) |
-| `warn` (`recently_used`, `not_yet_valid`) | full-screen amber | ! | two low beeps | on tap only |
-| `deny` | full-screen red | ✕ | one long low tone | on tap only |
+| `admit` | full-screen **success** `#7BC47F`, black text | ✓ in a black ring | short rising chirp | automatically after 2.5 s (progress bar; tap to skip) |
+| `warn` (`recently_used`, `not_yet_valid`) | full-screen **warning** `#E8A33D`, black text | ! | two low beeps | on tap only |
+| `deny` (`used`, `expired`, `revoked`, `suspended`, `not_found`, `invalid_format`) | full-screen **error** `#E5484D`, black text | ✕ | one long low tone | on tap only |
+| offline / timeout | **black**, error-outline icon, "Don't admit" error badge | wifi-off | one long low tone | Retry (same scan id) |
 
-A **VIP** admit adds a gold band ("★ VIP") on the green screen, with the brand gold from the
-tenant kit. Door staff learn the pattern in one night.
-
-Verdict colors are *functional*, not brand. They are the same on every tenant, so staff moving
-between venues never misread them. Check them for contrast (white text ≥ 4.5:1) and never rely
-on color alone: icon + title + sound always accompany the color.
+- The colors are the kit's **functional** set, already in the platform as `--success`, `--warn`
+  and `--danger` in `dgtl-admin.css`. Elsewhere the kit uses them as tint + text. **The scanner is
+  the one surface that fills the screen with them**, because a dark door needs an answer at arm's
+  length. Black text passes AA on all three (≥ 5:1).
+- **VIP admit** adds a black band above the green with the gold spark and "VIP · LIFETIME" in
+  gold, letter-spaced. It's spotted in one glance, without turning the verdict itself gold (gold is
+  never a status color in the kit).
+- **Offline is not a verdict color.** It's a network problem, not a bad pass, so staff retry
+  rather than refuse the guest. It still means don't admit.
+- Never rely on color alone: icon + title + sound always accompany it. The verdict title is an
+  `aria-live="assertive"` region.
 
 ## Behaviour
 
@@ -62,8 +58,8 @@ on color alone: icon + title + sound always accompany the color.
    shows.
 4. **Verify.** `scanId = crypto.randomUUID()` is generated once per decode.
    `POST /api/scan/verify` with a 6 s timeout. On a network error, retry with **the same
-   `scanId`** (idempotent), up to 2 retries. Then show a red "No connection — can't verify"
-   screen. **Never admit on error.**
+   `scanId`** (idempotent), up to 2 retries. Then show the black "No connection" screen with its
+   "Don't admit" badge. **Never admit on error.**
 5. **Manual entry.** "Enter code" opens a keypad for `XXXX-XXXX` (uppercase, auto-dash) or a full
    26-char code, sent as `inputKind: "manual"`. The lockout message appears after 10 misses.
 6. **Recent strip.** The last 5 verdicts (name + icon + time) sit under the camera, so staff can
@@ -82,8 +78,10 @@ on color alone: icon + title + sound always accompany the color.
   `apple-touch-icon` from `lib/branding/appIcon.js` (already renders tenant icons).
 - No service-worker caching of API responses, ever. A cached verdict is a false admit. A service
   worker, if added, caches only the shell and the `.wasm`.
-- The scanner UI uses its own small CSS (`app/scan/scan.css`) with verdict tokens and the admin
-  tokens for chrome. It does not import `styles.css`.
+- The scanner UI uses its own small CSS (`app/scan/scan.css`) that reads the platform tokens from
+  `dgtl-admin.css` (gold is `var(--blue)` there, per the kit's `repo-surfaces.md`; the verdict
+  fills are `var(--success)`, `var(--warn)` and `var(--danger)`). It does not import `styles.css`
+  and contains no hex values. Manrope via `next/font`, as in the admin layout.
 
 ## Accessibility
 

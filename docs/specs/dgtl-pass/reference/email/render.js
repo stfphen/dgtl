@@ -8,6 +8,14 @@
 // Everything visual comes from the resolved brand kit (brand.js) and pass
 // design (tiers.js). Nothing here knows the word "DGTL".
 //
+// DGTL brand kit rules applied here (engine/dgtl-brand-kit, "Email /
+// constrained surfaces"): solid black ground, table layout, Manrope first with
+// a system fallback, bulletproof buttons in the *brand* accent (black text,
+// 7px radius, trailing arrow), gold-tan kickers, 0.15em letter-spaced labels,
+// 16px cards on #2a2a2a borders, 9999px pills. The tier's material color
+// appears only on the pass itself (band, chip, material label, callout rail),
+// so each view keeps a single gold moment: the primary button.
+//
 // Compliance gates (08-messaging.md): every email must identify the sender
 // with a postal address and link to email preferences. A VIP onboarding offer
 // is a commercial message, so it is rendered only when marketingAllowed is
@@ -18,7 +26,7 @@
 // Port target: platform/lib/passes/email/render.js.
 
 import { EMAIL_COPY, SMS_COPY, fill } from "./copy.js";
-import { mix } from "../tiers.js";
+import { DGTL_GEOMETRY, mix } from "../brand.js";
 import { formatShortCode } from "../credentials.js";
 
 export const EMAIL_VARIANTS = Object.keys(EMAIL_COPY);
@@ -50,10 +58,16 @@ function theme(brandKit, design) {
     text: c.text,
     muted: c.textMuted,
     dim: c.textDim,
+    kicker: c.kicker,
+    // tier material: the pass itself
     accent: design.accent,
     accentText: design.accentText,
-    onAccent: design.onAccent,
+    accentTint: design.accentTint,
+    // brand action color: buttons
+    action: design.action,
+    onAction: design.onAction,
     frame: mix(design.accent, c.background, 0.55),
+    r: DGTL_GEOMETRY,
     font: brandKit.fontStack,
     colorScheme: brandKit.theme === "light" ? "light" : "dark"
   };
@@ -66,18 +80,18 @@ function row(inner, { t, padding = "0 32px 28px", align = "left", extra = "" }) 
 }
 
 function label(text, t, color = t.dim, margin = "0 0 6px") {
-  return `<p style="margin:${margin};font-family:${t.font};font-size:11px;line-height:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${color};">${esc(text)}</p>`;
+  return `<p style="margin:${margin};font-family:${t.font};font-size:11px;line-height:14px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${color};">${esc(text)}</p>`;
 }
 
 function header({ t, brandKit, chip, imgOpts }) {
   const logo = safeUrl(brandKit.logoUrl, imgOpts);
   const mark = logo
-    ? `<img src="${esc(logo)}" height="28" alt="${esc(brandKit.name)}" style="display:block;height:28px;width:auto;border:0;">`
+    ? `<img src="${esc(logo)}" height="28" alt="${esc(brandKit.name)}" style="display:block;height:28px;width:auto;border:0;outline:none;">`
     : `<span style="font-family:${t.font};font-size:20px;line-height:24px;font-weight:800;letter-spacing:1px;color:${t.text};">${esc(brandKit.logoText)}</span>`;
   return row(
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
       <td align="left" valign="middle">${mark}</td>
-      <td align="right" valign="middle"><span style="display:inline-block;padding:6px 12px;border:1px solid ${t.frame};border-radius:999px;font-family:${t.font};font-size:11px;line-height:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${t.accentText};">${esc(chip)}</span></td>
+      <td align="right" valign="middle"><span style="display:inline-block;padding:6px 12px;background:${t.accentTint};border-radius:${t.r.pill}px;font-family:${t.font};font-size:11px;line-height:14px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${t.accentText};">${esc(chip)}</span></td>
     </tr></table>`,
     { t, padding: "28px 32px 32px" }
   );
@@ -86,11 +100,11 @@ function header({ t, brandKit, chip, imgOpts }) {
 function hero({ t, eyebrow, headline, body, centered }) {
   const align = centered ? "center" : "left";
   const rule = centered
-    ? `<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td width="48" height="1" style="width:48px;height:1px;line-height:1px;font-size:0;background:${t.accent};" bgcolor="${t.accent}">&nbsp;</td></tr></table>`
+    ? `<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td width="48" height="1" style="width:48px;height:1px;line-height:1px;font-size:0;background:${t.kicker};" bgcolor="${t.kicker}">&nbsp;</td></tr></table>`
     : "";
   return row(
-    `${rule}<p style="margin:0 0 14px;font-family:${t.font};font-size:12px;line-height:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:${t.accentText};">${esc(eyebrow)}</p>
-    <h1 class="h1" style="margin:0 0 16px;font-family:${t.font};font-size:38px;line-height:44px;font-weight:800;letter-spacing:-0.5px;color:${t.text};">${esc(headline)}</h1>
+    `${rule}<p style="margin:0 0 14px;font-family:${t.font};font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${t.kicker};">${esc(eyebrow)}</p>
+    <h1 class="h1" style="margin:0 0 16px;font-family:${t.font};font-size:38px;line-height:44px;font-weight:700;letter-spacing:-1px;color:${t.text};">${esc(headline)}</h1>
     <p style="margin:0;font-family:${t.font};font-size:16px;line-height:26px;color:${t.muted};">${esc(body)}</p>`,
     { t, align, padding: "0 32px 32px" }
   );
@@ -109,15 +123,15 @@ function entryText(pass) {
 function passCard({ t, pass, passType, holder, design, validity, qrUrl, showQr }) {
   const qr = showQr && qrUrl
     ? `<tr><td align="center" style="padding:8px 24px 26px;">
-        <table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;padding:14px;border-radius:12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;padding:14px;border-radius:${t.r.control}px;">
           <img class="qr" src="${esc(qrUrl)}" width="200" height="200" alt="QR code for your pass" style="display:block;width:200px;height:200px;border:0;">
         </td></tr></table>
         <p style="margin:14px 0 0;font-family:${MONO};font-size:13px;line-height:18px;font-weight:700;letter-spacing:3px;color:${t.muted};">${esc(formatShortCode(pass.shortCode))}</p>
       </td></tr>`
     : "";
   return row(
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${t.surface}" style="background:${t.surface};border:1px solid ${t.line};border-radius:16px;border-collapse:separate;overflow:hidden;">
-      <tr><td height="4" bgcolor="${t.accent}" style="height:4px;line-height:4px;font-size:0;background:${t.accent};border-radius:16px 16px 0 0;">&nbsp;</td></tr>
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${t.surface}" style="background:${t.surface};border:1px solid ${t.line};border-radius:${t.r.card}px;border-collapse:separate;overflow:hidden;">
+      <tr><td height="4" bgcolor="${t.accent}" style="height:4px;line-height:4px;font-size:0;background:${t.accent};border-radius:${t.r.card}px ${t.r.card}px 0 0;">&nbsp;</td></tr>
       <tr><td style="padding:24px 24px 6px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
           <td valign="top">${label(design.isVip ? "Member" : "Holder", t)}<p style="margin:0;font-family:${t.font};font-size:24px;line-height:30px;font-weight:800;color:${t.text};">${esc(holder.name)}</p></td>
@@ -136,10 +150,18 @@ function passCard({ t, pass, passType, holder, design, validity, qrUrl, showQr }
   );
 }
 
+// The kit's primary button, bulletproof for email: brand accent fill, black
+// (on-accent) text, 7px radius, 15px 24px padding, 16px/700, trailing arrow.
 function button({ t, href, text }) {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" align="center"><tr><td bgcolor="${t.accent}" style="border-radius:8px;background:${t.accent};">
-    <a href="${esc(href)}" style="display:inline-block;padding:16px 30px;font-family:${t.font};font-size:15px;line-height:18px;font-weight:800;letter-spacing:0.3px;color:${t.onAccent};text-decoration:none;border-radius:8px;">${esc(text)}</a>
+  return `<table role="presentation" cellpadding="0" cellspacing="0" align="center"><tr><td bgcolor="${t.action}" style="border-radius:${t.r.control}px;background:${t.action};">
+    <a href="${esc(href)}" style="display:inline-block;padding:15px 24px;font-family:${t.font};font-size:16px;line-height:18px;font-weight:700;color:${t.onAction};text-decoration:none;border-radius:${t.r.control}px;">${esc(withArrow(text))}</a>
   </td></tr></table>`;
+}
+
+// "Arrows after CTAs are a brand tic." Added once, never doubled.
+export function withArrow(text) {
+  const value = String(text || "").trim();
+  return /→$/.test(value) ? value : `${value} →`;
 }
 
 function walletBadge({ t, walletUrl, badgeUrl }) {
@@ -149,7 +171,7 @@ function walletBadge({ t, walletUrl, badgeUrl }) {
   // preview renders before the asset is uploaded; the renderer flags it.
   const inner = badgeUrl
     ? `<img src="${esc(badgeUrl)}" width="156" height="48" alt="Add to Apple Wallet" style="display:block;width:156px;height:48px;border:0;">`
-    : `<span style="display:inline-block;padding:13px 22px;border:1px solid ${t.dim};border-radius:10px;background:#000000;font-family:${t.font};font-size:14px;line-height:18px;font-weight:700;color:#FFFFFF;">Add to Apple Wallet</span>`;
+    : `<span style="display:inline-block;padding:13px 22px;border:1px solid ${t.dim};border-radius:${t.r.control}px;background:#000000;font-family:${t.font};font-size:14px;line-height:18px;font-weight:700;color:#FFFFFF;">Add to Apple Wallet</span>`;
   return `<a href="${esc(walletUrl)}" style="display:inline-block;text-decoration:none;">${inner}</a>`;
 }
 
@@ -169,7 +191,7 @@ function perks({ t, heading, list }) {
     .slice(0, 5)
     .map(
       (perk, index) => `<tr>
-        <td width="44" valign="top" style="padding:16px 0 16px;border-top:1px solid ${t.line};font-family:${MONO};font-size:13px;line-height:22px;font-weight:700;color:${t.accentText};">${String(index + 1).padStart(2, "0")}</td>
+        <td width="44" valign="top" style="padding:16px 0 16px;border-top:1px solid ${t.line};font-family:${MONO};font-size:13px;line-height:22px;font-weight:700;color:${t.kicker};">${String(index + 1).padStart(2, "0")}</td>
         <td valign="top" style="padding:16px 0 16px;border-top:1px solid ${t.line};">
           <p style="margin:0;font-family:${t.font};font-size:15px;line-height:22px;font-weight:700;color:${t.text};">${esc(perk.title)}</p>
           ${perk.body ? `<p style="margin:4px 0 0;font-family:${t.font};font-size:14px;line-height:22px;color:${t.muted};">${esc(perk.body)}</p>` : ""}
@@ -181,13 +203,13 @@ function perks({ t, heading, list }) {
 
 function offerBlock({ t, heading, offer }) {
   const code = offer.code
-    ? `<p style="margin:0 0 4px;"><span style="display:inline-block;padding:10px 18px;border:1px dashed ${t.accent};border-radius:8px;font-family:${MONO};font-size:15px;line-height:20px;font-weight:700;letter-spacing:3px;color:${t.accentText};">${esc(offer.code)}</span></p>`
+    ? `<p style="margin:0 0 4px;"><span style="display:inline-block;padding:10px 18px;border:1px dashed ${t.kicker};border-radius:${t.r.control}px;font-family:${MONO};font-size:15px;line-height:20px;font-weight:700;letter-spacing:0.2em;color:${t.text};">${esc(offer.code)}</span></p>`
     : "";
   const fine = [offer.expiresLabel ? `Offer ends ${offer.expiresLabel}.` : "", offer.terms || ""].filter(Boolean).join(" ");
   return row(
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${t.raised}" style="background:${t.raised};border:1px solid ${t.frame};border-radius:16px;border-collapse:separate;">
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${t.raised}" style="background:${t.raised};border:1px solid ${t.frame};border-radius:${t.r.card}px;border-collapse:separate;">
       <tr><td align="center" style="padding:30px 24px;">
-        ${label(heading, t, t.accentText, "0 0 12px")}
+        ${label(heading, t, t.kicker, "0 0 12px")}
         <p style="margin:0 0 10px;font-family:${t.font};font-size:26px;line-height:32px;font-weight:800;color:${t.text};">${esc(offer.title)}</p>
         ${offer.body ? `<p style="margin:0 0 20px;font-family:${t.font};font-size:15px;line-height:24px;color:${t.muted};">${esc(offer.body)}</p>` : ""}
         ${code}
@@ -200,7 +222,7 @@ function offerBlock({ t, heading, offer }) {
 
 function tip({ t, text }) {
   return row(
-    `<p style="margin:0;padding:14px 16px;border-left:2px solid ${t.accent};background:${t.raised};font-family:${t.font};font-size:13px;line-height:20px;color:${t.muted};">${esc(text)}</p>`,
+    `<p style="margin:0;padding:14px 16px;border-left:3px solid ${t.accent};border-radius:0 ${t.r.control}px ${t.r.control}px 0;background:${t.raised};font-family:${t.font};font-size:13px;line-height:20px;color:${t.muted};">${esc(text)}</p>`,
     { t }
   );
 }
@@ -215,7 +237,7 @@ function signature({ t, name, title }) {
   );
 }
 
-function footer({ t, brandKit, reason, links, passId, marketing }) {
+function footer({ t, brandKit, reason, links, passId, marketing, year }) {
   const link = (href, text) => (href ? `<a href="${esc(href)}" style="color:${t.muted};text-decoration:underline;">${esc(text)}</a>` : "");
   const help = brandKit.legal.supportEmail
     ? link(`mailto:${brandKit.legal.supportEmail}`, "Help")
@@ -226,13 +248,14 @@ function footer({ t, brandKit, reason, links, passId, marketing }) {
     ${brandKit.legal.postalAddress ? `<p style="margin:0 0 8px;font-family:${t.font};font-size:12px;line-height:18px;color:${t.dim};">${esc(brandKit.legal.postalAddress)}</p>` : ""}
     <p style="margin:0 0 8px;font-family:${t.font};font-size:12px;line-height:18px;color:${t.dim};">${esc(reason)}</p>
     <p style="margin:0 0 14px;font-family:${t.font};font-size:12px;line-height:18px;color:${t.dim};">${bits.join(" &nbsp;·&nbsp; ")}</p>
+    <p style="margin:0 0 6px;font-family:${t.font};font-size:12px;line-height:18px;color:${t.dim};">© ${esc(year)} ${esc(brandKit.name)}. All rights reserved.</p>
     <p style="margin:0;font-family:${MONO};font-size:11px;line-height:16px;color:${t.dim};">Pass ID ${esc(passId)}</p>`,
     { t, padding: "26px 32px 28px", extra: `border-top:1px solid ${t.line};` }
   );
 }
 
 function documentShell({ t, title, preheader, rows, framed, fontCssUrl }) {
-  const frame = framed ? `border:1px solid ${t.frame};border-radius:20px;border-collapse:separate;` : "";
+  const frame = framed ? `border:1px solid ${t.frame};border-radius:${t.r.card}px;border-collapse:separate;` : "";
   // Invisible filler after the preheader stops clients pulling body text into the inbox preview.
   const filler = "&#8199;&#847; ".repeat(40);
   return `<!doctype html>
@@ -289,7 +312,7 @@ ${rows.join("\n")}
  * marketingAllowed: consent basis on file for this holder (vip_onboarding offer)
  */
 export function renderPassEmail(input) {
-  const { variant, brandKit, design, pass, passType, holder, validity, links = {}, assets = {}, offer = null, sender = {}, marketingAllowed = false, allowDataImages = false } = input;
+  const { variant, brandKit, design, pass, passType, holder, validity, links = {}, assets = {}, offer = null, sender = {}, marketingAllowed = false, allowDataImages = false, year = new Date().getUTCFullYear() } = input;
   if (!EMAIL_VARIANTS.includes(variant)) throw new Error(`Unknown email variant "${variant}".`);
 
   const warnings = [];
@@ -361,7 +384,7 @@ export function renderPassEmail(input) {
     rows.push(tip({ t, text: c.tip }));
     if (c.closing) rows.push(row(`<p style="margin:0;font-family:${t.font};font-size:18px;line-height:26px;font-weight:800;color:${t.text};">${esc(c.closing)}</p>`, { t, align: "center" }));
   }
-  rows.push(footer({ t, brandKit, reason: c.reason, links: safeLinks, passId: pass.id, marketing }));
+  rows.push(footer({ t, brandKit, reason: c.reason, links: safeLinks, passId: pass.id, marketing, year }));
 
   const html = documentShell({ t, title: c.subject, preheader: c.preheader, rows: rows.filter(Boolean), framed: vip, fontCssUrl: brandKit.fontCssUrl });
 
@@ -378,7 +401,7 @@ export function renderPassEmail(input) {
     `${validity.lifetime ? "Expires" : "Valid until"}: ${validity.untilShort}`,
     ...(onboarding ? [] : [`Pass code: ${formatShortCode(pass.shortCode)}`]),
     "",
-    `${c.cta}: ${safeLinks.passPageUrl}`,
+    `${c.cta.replace(/\s*→\s*$/, "")}: ${safeLinks.passPageUrl}`,
     safeLinks.walletUrl ? `Add to Apple Wallet: ${safeLinks.walletUrl}` : "",
     "",
     c.tip,
@@ -387,6 +410,7 @@ export function renderPassEmail(input) {
     brandKit.name,
     brandKit.legal.postalAddress,
     c.reason,
+    `© ${year} ${brandKit.name}. All rights reserved.`,
     safeLinks.preferencesUrl ? `Email preferences: ${safeLinks.preferencesUrl}` : "",
     marketing ? `Unsubscribe: ${safeLinks.unsubscribeUrl}` : "",
     `Pass ID ${pass.id}`

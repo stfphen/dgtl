@@ -3,6 +3,7 @@ import test from "node:test";
 import { EMAIL_VARIANTS, renderPassEmail, renderPassSms, safeUrl, smsSegments } from "./render.js";
 import { buildSample } from "./fixtures.js";
 import { resolveBrandKit } from "../brand.js";
+import { resolvePassDesign } from "../tiers.js";
 
 test("all five variants render, fill every placeholder, and are sendable", () => {
   assert.deepEqual(EMAIL_VARIANTS, ["day", "monthly", "yearly", "vip_lifetime", "vip_onboarding"]);
@@ -36,6 +37,32 @@ test("tier colors differ per variant and VIP gets the gold frame", () => {
   }
   assert.match(renderPassEmail(buildSample("vip_lifetime")).html, /class="container"[^>]+border:1px solid/);
   assert.doesNotMatch(renderPassEmail(buildSample("day")).html, /class="container"[^>]+border:1px solid/);
+});
+
+test("brand kit: gold 7px primary button with an arrow on every tier, gold-tan kickers, three radii only", () => {
+  for (const variant of EMAIL_VARIANTS) {
+    const { html, text } = renderPassEmail(buildSample(variant));
+    assert.match(html, /<td bgcolor="#F0CF50" style="border-radius:7px;background:#F0CF50;">/, `${variant}: primary button is the brand gold`);
+    assert.match(html, /→<\/a>/, `${variant}: CTA ends with the arrow`);
+    assert.ok(!/→:/.test(text), `${variant}: no arrow in the plain-text part`);
+    assert.match(html, /letter-spacing:0\.15em;text-transform:uppercase;color:#b3a06a;/, `${variant}: gold-tan kicker`);
+    assert.match(html, /font-weight:700;letter-spacing:-1px;color:#F0F0F0;/, `${variant}: 700-weight headline`);
+    const radii = new Set([...html.matchAll(/border-radius:([^;"]+)/g)].map((m) => m[1].trim()));
+    for (const radius of radii) {
+      assert.ok(/^(7px|16px|9999px|16px 16px 0 0|0 7px 7px 0)$/.test(radius), `${variant}: off-kit radius "${radius}"`);
+    }
+    assert.ok(html.includes("© 2026 DGTL. All rights reserved."), `${variant}: footer line`);
+    assert.ok(html.includes('alt="DGTL"'), `${variant}: wordmark logo`);
+  }
+});
+
+test("a light tenant's button is its own brand color, not gold", () => {
+  const input = buildSample("monthly");
+  input.brandKit = resolveBrandKit({ brand: { name: "Northside", primaryColor: "#2459E0" }, passes: { brandKit: { theme: "light", legal: { postalAddress: "x" } } } });
+  input.design = resolvePassDesign(input.passType, input.brandKit);
+  const { html } = renderPassEmail(input);
+  assert.match(html, /<td bgcolor="#2459E0"/);
+  assert.ok(!html.includes("#F0CF50"), "no DGTL gold leaks into another tenant's email");
 });
 
 test("holder input is escaped everywhere", () => {

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Holder pass page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ---- engine/dgtl-brand-kit/assets/dgtl-tokens.css (inlined verbatim) ---- */
+/* ==========================================================================
+   DGTL Group — brand tokens + base components (dgtlgroup.io, July 2026)
+   Inline this into any DGTL-branded build as the starting point.
+   Font: add  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+   ========================================================================== */
+:root{
+  /* surfaces */
+  --bg:#000000; --surface-1:#0a0a0a; --surface-2:#111111;
+  --surface-card:rgba(0,0,0,0.45);
+  /* text */
+  --text:#F0F0F0; --text-muted:#D0D0D0; --text-dim:#8a8a8a;
+  --text-ghost:#5a5a56; --gold-tan:#b3a06a; --placeholder:#6a6a6a;
+  /* accent */
+  --gold:#F0CF50; --gold-tint:rgba(240,207,80,0.08);
+  --gold-ring:rgba(240,207,80,0.15);
+  /* borders */
+  --border:#2a2a2a; --border-subtle:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.4);
+  /* functional */
+  --success:#7BC47F; --success-tint:rgba(123,196,127,0.10);
+  --warning:#E8A33D; --warning-tint:rgba(232,163,61,0.10);
+  --error:#E5484D;   --error-tint:rgba(229,72,77,0.10);
+  --info:#6E9FDB;    --info-tint:rgba(110,159,219,0.10);
+  /* charts (series order) */
+  --chart-1:#F0CF50; --chart-2:#b3a06a; --chart-3:#F0F0F0;
+  --chart-4:#6E9FDB; --chart-5:#7BC47F; --chart-6:#8a8a8a;
+  --chart-grid:#1c1c1c;
+  /* geometry */
+  --r-control:7px; --r-card:16px; --r-pill:9999px;
+  /* effects */
+  --shadow-card:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15);
+  --glass-bg:rgba(0,0,0,0.45);
+  --font:'Manrope',ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);
+     background:var(--bg);-webkit-font-smoothing:antialiased}
+::placeholder{color:var(--placeholder)}
+:focus-visible{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+::selection{background:var(--gold);color:#000}
+
+/* --- buttons --- */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);
+     font-weight:700;font-size:16px;border-radius:var(--r-control);
+     padding:15px 24px;border:1px solid transparent;cursor:pointer;
+     text-decoration:none;transition:filter .15s,transform .15s;line-height:1}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-secondary{background:transparent;border-color:var(--border-strong);color:#fff}
+.btn-ghost{background:transparent;color:var(--text-muted);font-weight:500}
+.btn-ghost:hover{color:#fff}
+.btn-danger{background:transparent;border-color:rgba(229,72,77,.4);color:var(--error)}
+.btn-sm{padding:10px 18px;font-size:14px}
+.btn-icon{width:36px;height:36px;padding:0;justify-content:center;color:var(--text-dim)}
+.btn-icon:hover{background:var(--surface-2);color:#fff}
+
+/* --- cards --- */
+.card{background:var(--surface-card);border:1px solid var(--border);
+      border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:24px}
+.card-solid{background:var(--surface-1)}
+.card-hover:hover{border-color:#3a3a3a;transform:translateY(-2px);transition:.2s}
+.card-callout{border-left:3px solid var(--gold)}
+
+/* --- pills & badges --- */
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-pill);
+      font-size:11px;padding:2px 8px;background:var(--gold-tint);color:var(--gold)}
+.badge-success{background:var(--success-tint);color:var(--success)}
+.badge-warning{background:var(--warning-tint);color:var(--warning)}
+.badge-error{background:var(--error-tint);color:var(--error)}
+.badge-info{background:var(--info-tint);color:var(--info)}
+
+/* --- forms --- */
+.label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px}
+.input,.select,.textarea{width:100%;background:var(--surface-1);color:var(--text);
+      border:1px solid var(--border);border-radius:var(--r-control);
+      padding:12px 16px;font-family:var(--font);font-size:14px}
+input[type=checkbox],input[type=radio]{accent-color:var(--gold)}
+
+/* --- type helpers --- */
+.h-display{font-size:clamp(40px,6vw,70px);font-weight:700;letter-spacing:-1.4px;
+           line-height:1.1;color:#fff}
+.h-section{font-size:40px;font-weight:700;color:#fff}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold-tan)}
+.gold{color:var(--gold)}
+.metric{font-weight:800;font-variant-numeric:tabular-nums}
+.muted{color:var(--text-muted)} .dim{color:var(--text-dim)}
+
+/* --- glassy bar (nav / app header) --- */
+.glass-bar{background:var(--glass-bg);backdrop-filter:blur(8px) saturate(1.8);
+           -webkit-backdrop-filter:blur(8px) saturate(1.8);
+           border-bottom:1px solid var(--border-subtle)}
+
+/* --- table --- */
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th{background:var(--surface-2);color:var(--text-dim);font-size:11px;
+          text-transform:uppercase;letter-spacing:.1em;font-weight:600;
+          text-align:left;padding:12px 16px}
+.table td{padding:14px 16px;border-top:1px solid #1c1c1c;color:var(--text)}
+.table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.table tbody tr:hover{background:#0f0f0f}
+.table-wrap{border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+/* ---- mockup page chrome ---- */
+.wrap{max-width:1320px;margin:0 auto;padding:56px 24px 96px;display:grid;grid-template-columns:minmax(0,1fr);gap:56px}
+.head{display:grid;gap:12px;max-width:780px;min-width:0}
+.head h1{font-size:clamp(32px,4vw,48px);font-weight:700;letter-spacing:-1.4px;line-height:1.1;color:var(--text)}
+.head p{color:var(--text-muted)}
+.head .nav{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.head .nav a{font-size:14px;color:var(--text-muted);text-decoration:none;border:1px solid var(--border);border-radius:var(--r-pill);padding:8px 16px}
+.head .nav a[aria-current]{background:var(--text);color:#000;border-color:var(--text)}
+.section{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;min-width:0}
+.section h2{font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.4px}
+.section > p{color:var(--text-muted);max-width:70ch}
+.note{font-size:13px;color:var(--text-dim);max-width:72ch}
+.mono{font-family:ui-monospace,'SFMono-Regular',Menlo,monospace}
+.row{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+figure{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:0;min-width:0;max-width:100%;flex:0 1 auto}
+figcaption{font-size:13px;color:var(--text-dim);max-width:390px;line-height:1.5}
+figcaption b{color:var(--text-muted);font-weight:600}
+.phone{width:390px;max-width:100%;min-height:844px;border-radius:44px;border:1px solid var(--border);background:var(--bg);overflow:hidden;position:relative;box-shadow:var(--shadow-card);display:flex;flex-direction:column}
+.status{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:14px;font-weight:600;color:var(--text);flex:none}
+.watermark{position:absolute;width:520px;right:-170px;top:110px;opacity:.05;transform:rotate(-12deg);pointer-events:none}
+.vignette{position:absolute;inset:0;background:radial-gradient(120% 55% at 50% 0%,rgba(255,255,255,.035),transparent 60%);pointer-events:none}
+.chip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border-radius:var(--r-pill);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:5px 10px;color:var(--tier);background:color-mix(in srgb,var(--tier) 12%,transparent)}
+@media (max-width:480px){.wrap{padding:40px 16px 72px;gap:44px}.phone{border-radius:28px}}
+
+.pp-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;position:relative;z-index:1}
+.pp{position:relative;z-index:1;padding:28px 24px 28px;display:grid;gap:20px;flex:1;align-content:start}
+.pp-name{font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1.1;color:var(--text)}
+.pp-meta{color:var(--text-muted);font-size:15px;margin-top:6px}
+.pp-code{display:grid;justify-items:center;gap:12px;padding:22px}
+.qr-tile{background:#fff;border-radius:var(--r-control);padding:14px;width:248px}
+.qr-tile svg{display:block;width:220px;height:220px}
+.code{font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:15px;font-weight:700;letter-spacing:.22em;color:var(--text-muted)}
+.badge-wallet{display:flex;align-items:center;justify-content:center;gap:10px;height:48px;border-radius:var(--r-control);background:#000;border:1px solid var(--border-strong);color:#fff;font-weight:600;font-size:15px;text-decoration:none}
+.badge-wallet small{font-size:10px;color:var(--text-dim);font-weight:500}
+.tip{font-size:13px;color:var(--text-dim);text-align:center}
+.optin{display:flex;gap:12px;align-items:flex-start;padding:16px 18px;cursor:pointer}
+.optin input{width:18px;height:18px;margin-top:2px;flex:none}
+.optin b{display:block;font-size:14px;color:var(--text)}
+.optin small{display:block;font-size:12px;color:var(--text-dim);margin-top:2px}
+.pp-foot{font-size:12px;color:var(--text-dim);text-align:center;display:grid;gap:4px;padding-top:4px}
+.pp-foot a{color:var(--text-muted)}
+.state{display:grid;gap:12px;padding:22px}
+.state h3{font-size:18px;font-weight:700;color:var(--text)}
+.state p{font-size:14px;color:var(--text-muted)}
+
+</style></head>
+<body><div class="wrap">
+<header class="head">
+  <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22%2F%3E%0A%3C%2Fsvg%3E" alt="DGTL" height="26" style="height:26px;width:auto">
+  <span class="eyebrow">DGTL Pass · UI design targets · DGTL brand kit</span>
+  <h1>Holder pass page</h1>
+  <p>What a holder sees at <span class="mono">/p/&lt;credential&gt;</span>, themed from the tenant brand kit (DGTL by default). It shows the QR only while the pass can be used, offers Apple Wallet, and on VIP passes collects express marketing consent in the holder's own hand.</p>
+  <nav class="nav" aria-label="Design targets">
+    <a href="index.html">Emails</a><a href="wallet.html">Wallet passes</a><a href="pass-page.html" aria-current="page">Pass page</a><a href="scanner.html">Scanner</a><a href="admin.html">Admin</a>
+  </nav>
+</header>
+<section class="section"><div class="row">
+      <figure><div class="phone"><div class="status"><span>9:41</span><span>●●●</span></div>
+    <img class="watermark" src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%22222%20160%20327%20450%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M529.17%20383.142V383.083C529.17%20383.015%20529.161%20382.947%20529.161%20382.887C529.153%20382.743%20529.153%20382.598%20529.136%20382.462C528.804%20375.126%20522.769%20369.278%20515.356%20369.278H434.789C427.164%20369.278%20420.976%20375.458%20420.976%20383.091V383.678C420.976%20391.303%20427.156%20397.491%20434.789%20397.491H480.989L348.144%20528.1L463.274%20195.138C465.221%20189.519%20463.308%20183.51%20458.964%20179.948C458.88%20179.863%20458.812%20179.769%20458.727%20179.676C453.261%20174.117%20444.335%20174.049%20438.776%20179.506L242.016%20372.976C239.033%20375.908%20237.647%20379.844%20237.834%20383.72C237.834%20383.746%20237.834%20383.78%20237.834%20383.805V384.392C237.834%20392.017%20244.014%20398.205%20251.648%20398.205H332.954C340.579%20398.205%20346.767%20392.025%20346.767%20384.392V383.805C346.767%20376.18%20340.588%20369.992%20332.954%20369.992H285.301L418.128%20239.391L302.965%20572.43C300.474%20579.638%20304.299%20587.501%20311.508%20590L312.06%20590.196C312.077%20590.204%20312.103%20590.204%20312.12%20590.213C317.305%20592.635%20323.655%20591.751%20327.973%20587.501L524.97%20393.81C527.946%20390.886%20529.331%20386.993%20529.17%20383.142Z%22%20fill%3D%22%23F0CF50%22%2F%3E%0A%3C%2Fsvg%3E" alt=""><div class="vignette"></div>
+    <div class="pp-bar glass-bar"><img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22%2F%3E%0A%3C%2Fsvg%3E" alt="DGTL" style="height:22px;width:auto"><span class="chip" style="--tier:#F0CF50">VIP</span></div>
+    <main class="pp"><div><p class="eyebrow">VIP · Lifetime</p><h2 class="pp-name">Alex Rivera</h2><p class="pp-meta">VIP Lifetime · Never expires</p></div>
+    <div class="card card-solid pp-code"><div class="qr-tile"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges"><path fill="#FFFFFF" d="M0 0h33v33H0z"/><path stroke="#000000" d="M0 0.5h7m2 0h2m1 0h2m1 0h1m1 0h5m1 0h1m2 0h7M0 1.5h1m5 0h1m4 0h1m1 0h3m1 0h1m4 0h1m1 0h1m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h1m1 0h4m1 0h1m1 0h4m2 0h1m2 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h2m4 0h1m1 0h1m2 0h6m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h1m1 0h1m2 0h1m2 0h3m2 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h1m1 0h1m3 0h5m1 0h4m2 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m3 0h1m2 0h1m5 0h3M0 8.5h1m1 0h5m2 0h1m4 0h2m1 0h1m4 0h3m1 0h5M2 9.5h2m1 0h1m2 0h2m1 0h2m1 0h1m3 0h2m2 0h3m1 0h2m1 0h2m1 0h1M0 10.5h1m1 0h1m1 0h4m2 0h1m4 0h1m2 0h1m1 0h2m3 0h1m2 0h1m1 0h1M2 11.5h2m1 0h1m1 0h1m1 0h1m2 0h1m1 0h2m4 0h2m1 0h3m2 0h4M0 12.5h2m2 0h1m1 0h1m1 0h1m6 0h1m2 0h1m2 0h1m3 0h1m3 0h1m2 0h1M2 13.5h1m2 0h1m2 0h1m3 0h1m1 0h4m2 0h1m3 0h4m2 0h3M0 14.5h2m1 0h2m1 0h1m2 0h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m3 0h4m1 0h2M0 15.5h3m2 0h1m2 0h2m1 0h1m4 0h1m2 0h3m1 0h6M3 16.5h4m3 0h1m1 0h3m1 0h2m1 0h1m2 0h2m1 0h1m1 0h2m1 0h1m1 0h1M0 17.5h1m8 0h1m1 0h1m3 0h1m1 0h4m2 0h1m1 0h3m1 0h2m1 0h1M2 18.5h1m3 0h4m4 0h4m4 0h1m4 0h2m1 0h2M0 19.5h2m1 0h1m1 0h1m4 0h1m1 0h1m1 0h1m1 0h3m1 0h1m2 0h2m2 0h4m1 0h1M0 20.5h1m1 0h1m2 0h4m1 0h1m5 0h1m2 0h4m1 0h1m1 0h4m2 0h1M0 21.5h1m1 0h1m1 0h1m4 0h1m1 0h2m2 0h1m1 0h2m2 0h1m1 0h1m1 0h3m2 0h1m1 0h1M0 22.5h1m2 0h1m1 0h2m1 0h1m1 0h1m2 0h1m1 0h2m3 0h2m1 0h1m5 0h3M0 23.5h1m1 0h2m1 0h1m1 0h1m4 0h1m1 0h2m5 0h3m5 0h1m1 0h2M0 24.5h1m2 0h5m1 0h7m1 0h2m3 0h1m1 0h5m1 0h1m1 0h1M8 25.5h1m1 0h1m2 0h2m3 0h4m1 0h2m3 0h1m1 0h1m1 0h1M0 26.5h7m2 0h1m5 0h1m2 0h1m2 0h1m1 0h2m1 0h1m1 0h1m1 0h2M0 27.5h1m5 0h1m1 0h1m3 0h1m2 0h1m5 0h4m3 0h3m1 0h1M0 28.5h1m1 0h3m1 0h1m1 0h1m1 0h3m2 0h1m2 0h1m2 0h1m2 0h6m1 0h1M0 29.5h1m1 0h3m1 0h1m1 0h1m1 0h8m2 0h1m1 0h4m2 0h2m1 0h1M0 30.5h1m1 0h3m1 0h1m1 0h2m1 0h1m5 0h1m1 0h1m1 0h2m1 0h1m1 0h2m1 0h2M0 31.5h1m5 0h1m2 0h2m1 0h2m2 0h1m2 0h5m1 0h1m2 0h3M0 32.5h7m1 0h2m3 0h2m1 0h2m1 0h2m1 0h1m3 0h2m2 0h2"/></svg>
+</div><span class="code">V1PG-0LD8</span><button class="btn btn-ghost btn-sm" type="button">Show barcode instead</button></div>
+    <a class="badge-wallet" href="#wallet"> Add to Apple Wallet <small>(official badge in production)</small></a>
+    <p class="tip">Turn your brightness up at the door.</p><label class="card card-solid optin"><input type="checkbox"><span><b>Send me VIP offers</b><small>First word on events and offers. Unsubscribe anytime.</small></span></label>
+    <footer class="pp-foot"><span><a href="#help">Help</a> · <a href="#terms">Terms</a></span><span>© 2026 DGTL. All rights reserved.</span></footer></main></div><figcaption><b>VIP · active.</b> Gold appears once, in the tier chip; the checkbox accent is the kit's form style. Opening this page is the invitation's "accept" (first_viewed_at).</figcaption></figure>
+      <figure><div class="phone"><div class="status"><span>9:41</span><span>●●●</span></div>
+    <img class="watermark" src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%22222%20160%20327%20450%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M529.17%20383.142V383.083C529.17%20383.015%20529.161%20382.947%20529.161%20382.887C529.153%20382.743%20529.153%20382.598%20529.136%20382.462C528.804%20375.126%20522.769%20369.278%20515.356%20369.278H434.789C427.164%20369.278%20420.976%20375.458%20420.976%20383.091V383.678C420.976%20391.303%20427.156%20397.491%20434.789%20397.491H480.989L348.144%20528.1L463.274%20195.138C465.221%20189.519%20463.308%20183.51%20458.964%20179.948C458.88%20179.863%20458.812%20179.769%20458.727%20179.676C453.261%20174.117%20444.335%20174.049%20438.776%20179.506L242.016%20372.976C239.033%20375.908%20237.647%20379.844%20237.834%20383.72C237.834%20383.746%20237.834%20383.78%20237.834%20383.805V384.392C237.834%20392.017%20244.014%20398.205%20251.648%20398.205H332.954C340.579%20398.205%20346.767%20392.025%20346.767%20384.392V383.805C346.767%20376.18%20340.588%20369.992%20332.954%20369.992H285.301L418.128%20239.391L302.965%20572.43C300.474%20579.638%20304.299%20587.501%20311.508%20590L312.06%20590.196C312.077%20590.204%20312.103%20590.204%20312.12%20590.213C317.305%20592.635%20323.655%20591.751%20327.973%20587.501L524.97%20393.81C527.946%20390.886%20529.331%20386.993%20529.17%20383.142Z%22%20fill%3D%22%23A9B4C2%22%2F%3E%0A%3C%2Fsvg%3E" alt=""><div class="vignette"></div>
+    <div class="pp-bar glass-bar"><img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22%2F%3E%0A%3C%2Fsvg%3E" alt="DGTL" style="height:22px;width:auto"><span class="chip" style="--tier:#A9B4C2">Steel</span></div>
+    <main class="pp"><div><p class="eyebrow">Single Entry</p><h2 class="pp-name">Jordan Avery</h2><p class="pp-meta">Single Entry · Through Sat, Oct 3, 2026</p></div>
+    <span class="pill badge-info" style="justify-self:start">Starts Sat, Oct 3, 2026</span><div class="card card-solid pp-code"><div class="qr-tile"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges"><path fill="#FFFFFF" d="M0 0h33v33H0z"/><path stroke="#000000" d="M0 0.5h7m2 0h2m1 0h2m1 0h1m1 0h5m1 0h1m2 0h7M0 1.5h1m5 0h1m4 0h1m1 0h3m1 0h1m4 0h1m1 0h1m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h1m1 0h4m1 0h1m1 0h4m2 0h1m2 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h2m4 0h1m1 0h1m2 0h6m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h1m1 0h1m2 0h1m2 0h3m2 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h1m1 0h1m3 0h5m1 0h4m2 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m3 0h1m2 0h1m5 0h3M0 8.5h1m1 0h5m2 0h1m4 0h2m1 0h1m4 0h3m1 0h5M2 9.5h2m1 0h1m2 0h2m1 0h2m1 0h1m3 0h2m2 0h3m1 0h2m1 0h2m1 0h1M0 10.5h1m1 0h1m1 0h4m2 0h1m4 0h1m2 0h1m1 0h2m3 0h1m2 0h1m1 0h1M2 11.5h2m1 0h1m1 0h1m1 0h1m2 0h1m1 0h2m4 0h2m1 0h3m2 0h4M0 12.5h2m2 0h1m1 0h1m1 0h1m6 0h1m2 0h1m2 0h1m3 0h1m3 0h1m2 0h1M2 13.5h1m2 0h1m2 0h1m3 0h1m1 0h4m2 0h1m3 0h4m2 0h3M0 14.5h2m1 0h2m1 0h1m2 0h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m3 0h4m1 0h2M0 15.5h3m2 0h1m2 0h2m1 0h1m4 0h1m2 0h3m1 0h6M3 16.5h4m3 0h1m1 0h3m1 0h2m1 0h1m2 0h2m1 0h1m1 0h2m1 0h1m1 0h1M0 17.5h1m8 0h1m1 0h1m3 0h1m1 0h4m2 0h1m1 0h3m1 0h2m1 0h1M2 18.5h1m3 0h4m4 0h4m4 0h1m4 0h2m1 0h2M0 19.5h2m1 0h1m1 0h1m4 0h1m1 0h1m1 0h1m1 0h3m1 0h1m2 0h2m2 0h4m1 0h1M0 20.5h1m1 0h1m2 0h4m1 0h1m5 0h1m2 0h4m1 0h1m1 0h4m2 0h1M0 21.5h1m1 0h1m1 0h1m4 0h1m1 0h2m2 0h1m1 0h2m2 0h1m1 0h1m1 0h3m2 0h1m1 0h1M0 22.5h1m2 0h1m1 0h2m1 0h1m1 0h1m2 0h1m1 0h2m3 0h2m1 0h1m5 0h3M0 23.5h1m1 0h2m1 0h1m1 0h1m4 0h1m1 0h2m5 0h3m5 0h1m1 0h2M0 24.5h1m2 0h5m1 0h7m1 0h2m3 0h1m1 0h5m1 0h1m1 0h1M8 25.5h1m1 0h1m2 0h2m3 0h4m1 0h2m3 0h1m1 0h1m1 0h1M0 26.5h7m2 0h1m5 0h1m2 0h1m2 0h1m1 0h2m1 0h1m1 0h1m1 0h2M0 27.5h1m5 0h1m1 0h1m3 0h1m2 0h1m5 0h4m3 0h3m1 0h1M0 28.5h1m1 0h3m1 0h1m1 0h1m1 0h3m2 0h1m2 0h1m2 0h1m2 0h6m1 0h1M0 29.5h1m1 0h3m1 0h1m1 0h1m1 0h8m2 0h1m1 0h4m2 0h2m1 0h1M0 30.5h1m1 0h3m1 0h1m1 0h2m1 0h1m5 0h1m1 0h1m1 0h2m1 0h1m1 0h2m1 0h2M0 31.5h1m5 0h1m2 0h2m1 0h2m2 0h1m2 0h5m1 0h1m2 0h3M0 32.5h7m1 0h2m3 0h2m1 0h2m1 0h2m1 0h1m3 0h2m2 0h2"/></svg>
+</div><span class="code">K7M2-QX9P</span><button class="btn btn-ghost btn-sm" type="button">Show barcode instead</button></div>
+    <a class="badge-wallet" href="#wallet"> Add to Apple Wallet <small>(official badge in production)</small></a>
+    <p class="tip">Turn your brightness up at the door.</p>
+    <footer class="pp-foot"><span><a href="#help">Help</a> · <a href="#terms">Terms</a></span><span>© 2026 DGTL. All rights reserved.</span></footer></main></div><figcaption><b>Day · scheduled.</b> The QR shows before the window opens so holders can add it to Wallet early. The info badge says when it starts.</figcaption></figure>
+      <figure><div class="phone"><div class="status"><span>9:41</span><span>●●●</span></div>
+    <img class="watermark" src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%22222%20160%20327%20450%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M529.17%20383.142V383.083C529.17%20383.015%20529.161%20382.947%20529.161%20382.887C529.153%20382.743%20529.153%20382.598%20529.136%20382.462C528.804%20375.126%20522.769%20369.278%20515.356%20369.278H434.789C427.164%20369.278%20420.976%20375.458%20420.976%20383.091V383.678C420.976%20391.303%20427.156%20397.491%20434.789%20397.491H480.989L348.144%20528.1L463.274%20195.138C465.221%20189.519%20463.308%20183.51%20458.964%20179.948C458.88%20179.863%20458.812%20179.769%20458.727%20179.676C453.261%20174.117%20444.335%20174.049%20438.776%20179.506L242.016%20372.976C239.033%20375.908%20237.647%20379.844%20237.834%20383.72C237.834%20383.746%20237.834%20383.78%20237.834%20383.805V384.392C237.834%20392.017%20244.014%20398.205%20251.648%20398.205H332.954C340.579%20398.205%20346.767%20392.025%20346.767%20384.392V383.805C346.767%20376.18%20340.588%20369.992%20332.954%20369.992H285.301L418.128%20239.391L302.965%20572.43C300.474%20579.638%20304.299%20587.501%20311.508%20590L312.06%20590.196C312.077%20590.204%20312.103%20590.204%20312.12%20590.213C317.305%20592.635%20323.655%20591.751%20327.973%20587.501L524.97%20393.81C527.946%20390.886%20529.331%20386.993%20529.17%20383.142Z%22%20fill%3D%22%23D29666%22%2F%3E%0A%3C%2Fsvg%3E" alt=""><div class="vignette"></div>
+    <div class="pp-bar glass-bar"><img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%2273%20148%20987%20453%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M221.797%20286.332H138.578L93.3214%20455.354H176.532C211.656%20455.354%20243.005%20442.391%20265.166%20421.412C287.089%20400.433%20299.108%20371.906%20299.108%20344.568C299.108%20309.674%20275.537%20286.332%20221.797%20286.332ZM242.3%20394.296C228.861%20409.852%20207.176%20418.105%20183.842%20418.105H143.295L168.754%20322.875H209.301C242.3%20322.875%20257.388%20332.302%20257.388%20353.519C257.388%20368.607%20251.727%20383.687%20242.3%20394.296Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M379.743%20394.066H436.79L432.072%20411.509C424.294%20416.456%20412.98%20421.88%20390.581%20421.88C355.22%20421.88%20339.196%20410.804%20339.196%20388.643C339.196%20369.551%20348.156%20350.689%20361.825%20338.669C374.558%20327.593%20391.763%20320.988%20411.799%20320.988C445.035%20320.988%20459.418%20329.004%20466.72%20339.612L496.658%20312.505C484.868%20295.529%20463.66%20283.51%20425.229%20283.51C387.045%20283.51%20356.163%20295.062%20334.003%20315.335C311.136%20336.552%20297.23%20368.14%20297.23%20397.84C297.23%20440.037%20331.41%20459.367%20378.791%20459.367C401.896%20459.367%20444.797%20452.056%20468.131%20427.541L486.279%20359.886H388.932L379.743%20394.066Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M660.921%20322.875L670.824%20286.332H508.882L498.979%20322.875H559.8L524.438%20455.354H564.747L600.109%20322.875H660.921Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M716.191%20286.332H676.111L630.855%20455.354H769.93L779.833%20418.105H680.829L716.191%20286.332Z%22%20fill%3D%22white%22%2F%3E%0A%3Cpath%20d%3D%22M1039.67%20371.642V371.583C1039.67%20371.515%201039.66%20371.447%201039.66%20371.387C1039.65%20371.243%201039.65%20371.098%201039.63%20370.962C1039.3%20363.626%201033.27%20357.778%201025.85%20357.778H945.286C937.661%20357.778%20931.473%20363.958%20931.473%20371.591V372.178C931.473%20379.803%20937.652%20385.991%20945.286%20385.991H991.486L858.641%20516.6L973.771%20183.638C975.717%20178.019%20973.805%20172.009%20969.461%20168.448C969.376%20168.363%20969.308%20168.269%20969.223%20168.176C963.757%20162.617%20954.832%20162.549%20949.272%20168.006L752.513%20361.476C749.529%20364.408%20748.144%20368.344%20748.331%20372.22C748.331%20372.246%20748.331%20372.28%20748.331%20372.305V372.892C748.331%20380.517%20754.511%20386.705%20762.144%20386.705H843.451C851.075%20386.705%20857.264%20380.525%20857.264%20372.892V372.305C857.264%20364.68%20851.084%20358.492%20843.451%20358.492H795.797L928.625%20227.891L813.461%20560.93C810.97%20568.138%20814.796%20576.001%20822.004%20578.5L822.556%20578.696C822.573%20578.704%20822.599%20578.704%20822.616%20578.713C827.801%20581.135%20834.151%20580.251%20838.469%20576.001L1035.47%20382.31C1038.44%20379.386%201039.83%20375.493%201039.67%20371.642Z%22%20fill%3D%22%23F0CF50%22%2F%3E%0A%3C%2Fsvg%3E" alt="DGTL" style="height:22px;width:auto"><span class="chip" style="--tier:#D29666">Bronze</span></div>
+    <main class="pp"><div><p class="eyebrow">Monthly Pass</p><h2 class="pp-name">Maya Chen</h2><p class="pp-meta">Monthly Pass · Expired</p></div>
+    <div class="card card-solid state"><span class="pill badge-error" style="justify-self:start">Expired</span><h3>This pass expired on Thu, Oct 29, 2026.</h3><p>The code is hidden so it can't be shown at a busy door. To renew or ask a question, contact DGTL.</p><p class="mono" style="color:var(--text)">help@example.com</p><a class="btn btn-secondary btn-sm" style="justify-self:start" href="#contact">Contact DGTL</a></div>
+    <footer class="pp-foot"><span><a href="#help">Help</a> · <a href="#terms">Terms</a></span><span>© 2026 DGTL. All rights reserved.</span></footer></main></div><figcaption><b>Monthly · expired.</b> No QR. Plain words, the support address as selectable text, and a secondary action. Revoked, used and suspended follow the same pattern.</figcaption></figure>
+    </div></section>
+<p class="note">Sample people, numbers and offers are fictional. Styled only from <span class="mono">engine/dgtl-brand-kit</span> tokens and assets. Production code reads the same values through <span class="mono">platform/app/admin/dgtl-admin.css</span>.</p>
+</div></body></html>

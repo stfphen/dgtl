@@ -14,6 +14,11 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 
 ## Repository/platform integration audit (2026-08-13)
 
+- 🟡 **Release-gate CI written 2026-10-01, not yet enforced.** `.github/workflows/platform-ci.yml`
+  runs `npm ci && npm test && npm run build` (job `test-and-build`) and a Postgres job that applies,
+  re-checks and re-executes every migration (job `migrations-postgres`). Verified by a clean local CI
+  simulation (356/356, build exit 0, no `.env`). **Remaining:** push the branch, let both jobs go
+  green on GitHub, then mark both checks required on `main` in branch protection.
 - ✅ **Platform migration build verified 2026-08-13.** Final `npm run build` on merged local `main`
   with Next 15.5.23 compiled, type-checked, generated 49/49 static pages, collected traces, and exited
   0. Earlier attempts failed fetching Geist Mono, so the root layout's seven Google font families

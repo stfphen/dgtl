@@ -17,6 +17,9 @@ import { formatShortCode } from "./credentials.js";
 
 // Image slots per style, in points (@1x). Ship @2x and @3x as well.
 // Sources: Apple Wallet Developer Guide, "Pass Design and Creation".
+// Artwork is generated from the brand kit (lib/passes/wallet/art.js, task P5.2):
+// the kit's spark bolt in the tier's material color on the pass background.
+// See 07-apple-wallet.md "Artwork".
 export const WALLET_IMAGE_SPECS = Object.freeze({
   common: {
     "icon.png": { width: 29, height: 29, required: true, note: "Lock screen + Mail. Square, no transparency tricks." },
@@ -89,7 +92,6 @@ export function buildPassJson({ pass, passType, holder, brandKit, design, validi
     serialNumber: pass.id,
     organizationName: brandKit.name,
     description: `${brandKit.name} ${passType.name}`,
-    logoText: brandKit.logoText,
     backgroundColor: walletColor(design.wallet.background),
     foregroundColor: walletColor(design.wallet.foreground),
     labelColor: walletColor(design.wallet.label),
@@ -114,6 +116,9 @@ export function buildPassJson({ pass, passType, holder, brandKit, design, validi
     }
   };
 
+  // A wordmark logo (the DGTL one) already spells the name; repeating it as
+  // logoText would print "DGTL DGTL" across the top of the card.
+  if (!brandKit.logoIncludesName) json.logoText = brandKit.logoText;
   if (pass.validUntil) json.expirationDate = new Date(pass.validUntil).toISOString().replace(/\.\d{3}Z$/, "Z");
   if (style === "eventTicket") json.relevantDate = new Date(pass.validFrom).toISOString().replace(/\.\d{3}Z$/, "Z");
   if (pass.status === "revoked") json.voided = true;

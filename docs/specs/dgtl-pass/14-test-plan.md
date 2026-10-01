@@ -3,10 +3,10 @@
 Everything runs under the platform's existing runner: `node --test tests/*.test.js`. There's no
 new framework. Test ids are referenced from the build plan gates.
 
-## Already written (reference, 69 tests)
+## Already written (reference, 81 tests)
 
 ```bash
-# 60 unit tests, no dependencies (the 9 SQL tests in the same folder report as skipped here)
+# 72 unit tests, no dependencies (the 9 SQL tests in the same folder report as skipped here)
 node --test docs/specs/dgtl-pass/reference/*.test.js docs/specs/dgtl-pass/reference/email/*.test.js
 
 # + 9 SQL integration tests (platform migrations 001–008 + 009 in PGlite)
@@ -19,10 +19,11 @@ PGLITE_PATH=/tmp/pglite/node_modules/@electric-sql/pglite node --test docs/specs
 | `credentials.test.js` (9) | alphabet, secret parsing, derivation determinism and rotation, hashing, wallet token, normalisation, short codes, scan payload parsing incl. foreign host / insecure / junk |
 | `validity.test.js` (11) | local-midnight windows, 4 am cutoff, multi-day, DST 25 h / 23 h days, ambiguous and skipped wall times, month/leap clamping, lifetime, fixed, bad input |
 | `verify.test.js` (12) | every decision rule, half-open window, cooldown, derived status, admission patch, response PII stripping |
-| `brand.test.js` (6) | **token drift vs `dgtl-editorial.css` and `dgtl-admin.css`**, defaults, overrides, fallbacks, light theme |
-| `tiers.test.js` (7) | Wallet + email contrast for every preset, VIP-only gold, overrides, material label, warnings |
-| `passJson.test.js` (5) | style per tier, identity fields, expiry/void, web service validation, no contact details |
-| `email/email.test.js` (10) | five variants sendable, QR presence, tier colors + VIP frame, escaping, URL safety, compliance blockers, consent-gated offer + unsubscribe headers, copy overrides, badge warning, SMS segments |
+| `brand.test.js` (8) | **token drift vs all three token files** (brand kit `dgtl-tokens.css`, `dgtl-editorial.css`, and the `dgtl-admin.css` alias layer, where `--blue` is gold), kit radii, defaults (gold-tan kicker, black-on-gold, Manrope 400–800), overrides, fallbacks, kit light-mode values |
+| `tiers.test.js` (9) | Wallet cards on the black ladder, labels = tier material, action = brand accent on every tier, Wallet + email contrast, VIP-only gold, overrides, material label, warnings |
+| `passJson.test.js` (6) | style per tier, identity fields, expiry/void, web service validation, wordmark suppresses `logoText`, no contact details |
+| `walletArt.test.js` (5) | spark parsed from the kit file, strip/thumbnail/icon sizes for Apple, material colors, VIP strength vs watermark, self-contained SVG |
+| `email/email.test.js` (12) | five variants sendable, QR presence, **brand kit: gold 7 px button + arrow on every tier, gold-tan kicker, 700 headline, only the kit's radii, footer line, wordmark**, a light tenant's own button color with no DGTL gold leaking, tier colors + VIP frame, escaping, URL safety, compliance blockers, consent-gated offer + unsubscribe headers, copy overrides, badge warning, SMS segments |
 | `repository.test.js` (9, PGlite) | migrations apply + idempotent, role constraint, issue→scan→used, scan replay, foreign-team `not_found` + ledger reason, team-scoped manual entry, issue idempotency + holder dedupe, cross-tenant pass type refused, revoked/expired/cooldown/junk, DB-level max-uses backstop |
 
 ## To write during the build

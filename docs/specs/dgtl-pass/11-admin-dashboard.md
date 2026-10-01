@@ -7,9 +7,21 @@ A ninth tab, **Passes** (lucide `Ticket` icon), in `components/admin/AdminTabbed
 `components/admin/lazyPanels.jsx` (`ssr:false`) like the other off-default tabs. It fetches its own
 data from the API. It does not add queries to the already-large server `page.jsx`.
 
+Design targets: [`previews/admin.html`](previews/admin.html) (the tab) and
+[`previews/pass-page.html`](previews/pass-page.html) (the holder page), both built to the DGTL
+brand kit's app components (`engine/dgtl-brand-kit/references/ui-components.md`).
+
 Styling comes only from `app/admin/dgtl-admin.css` tokens and primitives (`.button--primary`,
-cards, tables, `.admin-notice`). Tier chips use the tier accents via CSS custom properties set
-inline from the API (`style={{ "--tier": design.accent }}`). No hex literals go in components.
+cards, tables, `.admin-notice`). The gold is `var(--blue)` there: the kit's alias layer, see its
+`repo-surfaces.md`. Never write `var(--gold)` in `platform/`. Tier chips use the tier materials via
+CSS custom properties set inline from the API (`style={{ "--tier": design.accent }}`) and render as
+the kit's tint pill (`color-mix(in srgb, var(--tier) 12%, transparent)` background, tier text). No
+hex literals go in components.
+
+The kit's internal-tool register applies: **gold marks only the active nav item (tint + 2-px rail),
+the active sub-tab underline, the headline KPI ("Active passes"), and the one primary action
+("Issue pass →" / "Issue & send →")**. Everything else is white, `#D0D0D0` or `#8a8a8a`. Status
+uses the functional badges (success / warning / error / info tint + text), never gold.
 
 Inside the tab, sub-navigation uses segmented buttons in the same pattern as the other tabs:
 
@@ -34,7 +46,8 @@ Overview · Issue · Passes · Pass types · Scans
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Tiles are numbers in Manrope tabular figures. "Expiring 7D" links to the Passes list with that
+- KPI cards follow the kit: 12-px uppercase dim label, 38-px/800 tabular value, delta as a tiny
+  success/error badge. Only "Active passes" is gold. Tiles are numbers in Manrope tabular figures. "Expiring 7D" links to the Passes list with that
   filter. That is the renewal list.
 - Live scans poll `GET /api/admin/passes/overview` every 10 s while the tab is visible
   (`document.visibilityState`), with no websockets.

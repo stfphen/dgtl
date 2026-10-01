@@ -14,6 +14,24 @@ test("every preset's Wallet colors are legible", () => {
   }
 });
 
+test("every Wallet card sits on the kit's black surface ladder", () => {
+  const ladder = [DGTL_TOKENS["--bg"], DGTL_TOKENS["--surface-1"], DGTL_TOKENS["--surface-2"]].map((c) => c.toLowerCase());
+  for (const preset of Object.values(TIER_PRESETS)) {
+    assert.ok(ladder.includes(preset.design.wallet.background.toLowerCase()), `${preset.presetId} background is not on the ladder`);
+    assert.equal(preset.design.wallet.foreground, DGTL_TOKENS["--text"]);
+    assert.equal(preset.design.wallet.label, preset.design.accent, "tier material carries the labels");
+  }
+});
+
+test("the action color is the brand accent on every tier; tier color never paints a button", () => {
+  for (const preset of Object.values(TIER_PRESETS)) {
+    const design = resolvePassDesign({ tier: preset.tier, design: preset.design }, dark);
+    assert.equal(design.action, DGTL_TOKENS["--gold"], preset.presetId);
+    assert.equal(design.onAction, "#050505");
+    assert.match(design.accentTint, /^#[0-9a-f]{6}$/);
+  }
+});
+
 test("tier accents read as text on the dark email surface without adjustment", () => {
   for (const preset of Object.values(TIER_PRESETS)) {
     const design = resolvePassDesign({ tier: preset.tier, design: preset.design }, dark);

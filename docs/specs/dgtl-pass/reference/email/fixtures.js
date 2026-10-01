@@ -11,6 +11,10 @@ export const SAMPLE_TENANT = {
     timeZone: "America/Toronto",
     dayCutoffHour: 0,
     brandKit: {
+      // Production: the media-library URL of assets/dgtl-wordmark@4x.png. The wordmark
+      // spells the name, so Wallet omits logoText.
+      logoUrl: "https://pass.example.com/assets/dgtl-wordmark@4x.png",
+      logoIncludesName: true,
       sender: { fromName: "DGTL", fromEmail: "passes@example.com" },
       legal: {
         postalAddress: "Sample address · Toronto, ON · Canada",
@@ -100,7 +104,8 @@ export function buildSample(variant, { qrImageUrl = `${BASE}/p/SAMPLE/qr.png`, w
     },
     assets: { walletBadgeUrl },
     offer: variant === "vip_onboarding" ? SAMPLE_OFFER : null,
-    sender: { name: "Stephen", title: "Founder, DGTL" },
+    sender: { name: "Alexis Marin", title: "VIP host (sample)" },
+    year: 2026,
     marketingAllowed
   };
 }

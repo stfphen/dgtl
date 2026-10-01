@@ -71,6 +71,19 @@ test("the web service is only advertised when fully configured", () => {
   assert.throws(() => build("monthly", {}, { teamIdentifier: "" }), /required/);
 });
 
+test("a wordmark logo suppresses logoText so the name isn't printed twice", () => {
+  assert.equal(build("monthly").logoText, "DGTL");
+  const preset = TIER_PRESETS.monthly;
+  const passType = { name: preset.name, tier: preset.tier, design: preset.design };
+  const kit = resolveBrandKit({ passes: { brandKit: { logoIncludesName: true } } });
+  const json = buildPassJson({
+    pass: { id: "p", status: "active", validFrom: "2026-10-03T04:00:00Z", validUntil: null, shortCode: "K7M2QX9P" },
+    passType, holder: { name: "A" }, brandKit: kit, design: resolvePassDesign(passType, kit),
+    validity: { lifetime: true, untilShort: "Never", from: "x", fromDate: "x" }, links, wallet, issuedLabel: "x"
+  });
+  assert.equal(json.logoText, undefined);
+});
+
 test("pass.json carries the holder's name but no contact details", () => {
   const serialized = JSON.stringify(build("yearly"));
   assert.ok(serialized.includes("Alex Rivera"));

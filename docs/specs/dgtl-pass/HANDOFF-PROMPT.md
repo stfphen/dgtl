@@ -16,22 +16,31 @@ written and tested. Your job is to build it into `platform/`, phase by phase, to
    (DGTL is a default, never hardcoded), brand values come from tokens, the verification table
    (`cd platform && npm test` **and** `npm run build`, with output shown), small branches, never
    force-push, never commit a key.
-2. `docs/specs/dgtl-pass/README.md`: the package index and the decisions already made. **Do not
+2. `engine/dgtl-brand-kit/SKILL.md` and its `references/` (brand-tokens, ui-components,
+   application-guide and **repo-surfaces**): every pass surface follows this kit. Inside
+   `platform/` the gold accent is `var(--blue)`, never `var(--gold)`. The design targets in
+   `docs/specs/dgtl-pass/previews/` (emails, `wallet.html`, `pass-page.html`, `scanner.html`,
+   `admin.html`) are what to build. Match them.
+3. `docs/specs/dgtl-pass/README.md`: the package index and the decisions already made. **Do not
    re-open those decisions.** If you find a real reason one is wrong, stop and say so with
    evidence instead of silently diverging.
-3. `docs/specs/dgtl-pass/13-build-plan.md`: your task list and gates.
-4. The spec file for whichever phase you're on (the build plan links them).
-5. `brain/00-Index/00-Home.md`, then `brain/50-Audit-Log/53-Known-Issues.md` (file-store race,
+4. `docs/specs/dgtl-pass/13-build-plan.md`: your task list and gates.
+5. The spec file for whichever phase you're on (the build plan links them).
+6. `brain/00-Index/00-Home.md`, then `brain/50-Audit-Log/53-Known-Issues.md` (file-store race,
    release gate).
 
 ## What already exists and is proven
 
-- `docs/specs/dgtl-pass/reference/`: dependency-free modules with 60 unit tests (credentials,
-  validity windows, the verify decision, brand kit, tiers, Apple `pass.json`, five email variants
-  + SMS) and a `repository.js` with the issue/verify/revoke transactions, proven by 9 SQL
+- `docs/specs/dgtl-pass/reference/`: dependency-free modules with 72 unit tests (credentials,
+  validity windows, the verify decision, brand kit, tiers, Apple `pass.json` + Wallet art, five
+  email variants + SMS) and a `repository.js` with the issue/verify/revoke transactions, proven by 9 SQL
   integration tests against platform migrations 001–008 + the draft 009 in PGlite.
 - `docs/specs/dgtl-pass/migration/009_passes.sql`: the draft migration.
-- `docs/specs/dgtl-pass/previews/`: rendered emails, which are the visual target.
+- `docs/specs/dgtl-pass/previews/`: brand-kit design targets for every surface (emails, Wallet,
+  pass page, scanner, admin), generated from the reference code. `assets/dgtl-wordmark@4x.png` is
+  the email/Wallet logo.
+- `.github/workflows/platform-ci.yml`: the Phase 0 release gate (written; pushing it and marking
+  both checks required on `main` is Stephen's step).
 
 **Port these modules. Don't rewrite them.** Change import paths, swap `brand.js`'s
 `readableForeground` for the one in `platform/lib/branding.js` (export it), and keep every test
@@ -94,7 +103,9 @@ verify and why.
 5. Only `sha256(credential)` is stored. Credentials are derived, never persisted.
 6. Every email carries sender identification (postal address) and a preferences link, or it is
    not sent. The VIP offer renders only with marketing consent.
-7. No hardcoded brand values in components. Colors come from the brand kit and tokens.
+7. No hardcoded brand values in components. Colors come from the brand kit and tokens. Gold is
+   rationed per the kit: one primary action per view, active states, THE number, VIP. Run the
+   kit's verification checklist (desktop + 390 px screenshots) on every UI phase gate.
 8. `npm test` and `npm run build` pass in `platform/` at every gate. Report the counts.
 
 ## When to stop and ask Stephen

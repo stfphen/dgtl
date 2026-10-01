@@ -1,9 +1,17 @@
 // DGTL Pass — tier presets and pass design resolution (reference implementation).
 //
-// The default ladder is material-coded: Steel -> Bronze -> Silver -> Gold. Gold
-// is the brand's own #F0CF50 and is reserved for VIP, so the signature color is
-// something you earn rather than something every day pass wears. See
-// 09-brand-and-tiers.md for the creative rationale.
+// The default ladder is material-coded: Steel -> Bronze -> Silver -> Gold.
+//
+// How it sits inside the DGTL brand kit (engine/dgtl-brand-kit):
+//   - Every pass lives on the kit's black surface ladder. Wallet cards are
+//     #000 / #0a0a0a / #111, never coloured panels, because "dark surfaces
+//     everywhere" is a non-negotiable.
+//   - The tier is carried by its *material* color: Wallet labels, the email
+//     pass-card band and chip, and the spark-bolt artwork on the strip or
+//     thumbnail. Gold #F0CF50 is the material of VIP only.
+//   - The *action* color is the brand accent (gold for DGTL) on every tier:
+//     the primary button is always gold, whatever the pass. That is the kit's
+//     "one gold moment per view". Tier color never paints a button.
 //
 // A preset is the *starting point* for a tenant's pass_types row. Admins pick
 // one in "New pass type" and can override anything; the resolved values are
@@ -16,11 +24,23 @@
 //
 // Port target: platform/lib/passes/tiers.js.
 
-import { DGTL_TOKENS, contrastRatio, hexToRgb, isHex, readableForeground } from "./brand.js";
+import { DGTL_TOKENS, contrastRatio, ensureContrast, isHex, mix, readableForeground } from "./brand.js";
+
+export { ensureContrast, mix };
 
 export const TIERS = ["day", "monthly", "yearly", "vip_lifetime", "custom"];
 export const WALLET_STYLES = ["eventTicket", "generic", "storeCard"];
 export const EMAIL_VARIANTS = ["day", "monthly", "yearly", "vip_lifetime", "vip_onboarding"];
+
+// Tier materials. Each passes 4.5:1 as text on every surface of the black ladder.
+export const TIER_MATERIALS = Object.freeze({
+  steel: "#A9B4C2",
+  bronze: "#D29666",
+  silver: "#DCE1E8",
+  gold: DGTL_TOKENS["--gold"]
+});
+
+const TEXT = DGTL_TOKENS["--text"];
 
 export const TIER_PRESETS = Object.freeze({
   day_single: {
@@ -32,8 +52,9 @@ export const TIER_PRESETS = Object.freeze({
     usage: { maxUses: 1, reentryCooldownSeconds: 0 },
     isVip: false,
     design: {
-      accent: "#A9B4C2",
-      wallet: { style: "eventTicket", background: "#16191E", foreground: "#F0F0F0", label: "#A9B4C2" }
+      accent: TIER_MATERIALS.steel,
+      // eventTicket strip: black, a steel spark watermark, a steel hairline.
+      wallet: { style: "eventTicket", background: DGTL_TOKENS["--surface-2"], foreground: TEXT, label: TIER_MATERIALS.steel, art: "strip" }
     },
     email: { variant: "day" }
   },
@@ -47,8 +68,8 @@ export const TIER_PRESETS = Object.freeze({
     usage: { maxUses: null, reentryCooldownSeconds: 300 },
     isVip: false,
     design: {
-      accent: "#A9B4C2",
-      wallet: { style: "eventTicket", background: "#16191E", foreground: "#F0F0F0", label: "#A9B4C2" }
+      accent: TIER_MATERIALS.steel,
+      wallet: { style: "eventTicket", background: DGTL_TOKENS["--surface-2"], foreground: TEXT, label: TIER_MATERIALS.steel, art: "strip" }
     },
     email: { variant: "day" }
   },
@@ -61,8 +82,9 @@ export const TIER_PRESETS = Object.freeze({
     usage: { maxUses: null, reentryCooldownSeconds: 300 },
     isVip: false,
     design: {
-      accent: "#D29666",
-      wallet: { style: "generic", background: "#7A4B2A", foreground: "#FFF4EA", label: "#F2C9A5" }
+      accent: TIER_MATERIALS.bronze,
+      // generic thumbnail: a bronze spark on black (later: the holder photo, roadmap R4).
+      wallet: { style: "generic", background: DGTL_TOKENS["--surface-1"], foreground: TEXT, label: TIER_MATERIALS.bronze, art: "thumbnail" }
     },
     email: { variant: "monthly" }
   },
@@ -75,8 +97,8 @@ export const TIER_PRESETS = Object.freeze({
     usage: { maxUses: null, reentryCooldownSeconds: 300 },
     isVip: false,
     design: {
-      accent: "#DCE1E8",
-      wallet: { style: "generic", background: "#C7CDD4", foreground: "#111418", label: "#4A525C" }
+      accent: TIER_MATERIALS.silver,
+      wallet: { style: "generic", background: DGTL_TOKENS["--surface-1"], foreground: TEXT, label: TIER_MATERIALS.silver, art: "thumbnail" }
     },
     email: { variant: "yearly" }
   },
@@ -89,42 +111,24 @@ export const TIER_PRESETS = Object.freeze({
     usage: { maxUses: null, reentryCooldownSeconds: 0 },
     isVip: true,
     design: {
-      accent: DGTL_TOKENS["--gold"],
-      // The black card: gold labels on pure black, the brand at full strength.
-      wallet: { style: "storeCard", background: DGTL_TOKENS["--bg"], foreground: DGTL_TOKENS["--text"], label: DGTL_TOKENS["--gold"] }
+      accent: TIER_MATERIALS.gold,
+      // The black card: pure black, gold labels, a gold spark strip. The brand at full strength.
+      wallet: { style: "storeCard", background: DGTL_TOKENS["--bg"], foreground: TEXT, label: TIER_MATERIALS.gold, art: "strip" }
     },
     email: { variant: "vip_lifetime" }
   }
 });
 
-export function mix(hex, target, amount) {
-  const a = hexToRgb(hex);
-  const b = hexToRgb(target);
-  const part = (x, y) => Math.round(x + (y - x) * amount).toString(16).padStart(2, "0");
-  return `#${part(a.r, b.r)}${part(a.g, b.g)}${part(a.b, b.b)}`;
-}
-
-// Nudge `fg` toward black or white until it reads on `bg` at `min`:1. Used
-// for accent-colored *text*. A light tenant theme would otherwise turn a
-// Steel eyebrow into grey-on-white.
-export function ensureContrast(fg, bg, min = 4.5) {
-  if (contrastRatio(fg, bg) >= min) return fg;
-  const toward = contrastRatio("#000000", bg) > contrastRatio("#ffffff", bg) ? "#000000" : "#ffffff";
-  for (let step = 1; step <= 20; step += 1) {
-    const candidate = mix(fg, toward, step / 20);
-    if (contrastRatio(candidate, bg) >= min) return candidate;
-  }
-  return toward;
-}
-
 function pick(value, fallback) {
   return isHex(value) ? value.trim() : fallback;
 }
 
+const ART_FOR_STYLE = { eventTicket: "strip", storeCard: "strip", generic: "thumbnail" };
+
 /**
  * Resolve the concrete colors for one pass type on one tenant's brand kit.
  * passType.design may override any preset value; passType.design.useBrandAccent
- * swaps the tier accent for the tenant's brand accent.
+ * swaps the tier material for the tenant's brand accent.
  */
 export function resolvePassDesign(passType, brandKit) {
   const preset = Object.values(TIER_PRESETS).find((p) => p.tier === passType.tier) || TIER_PRESETS.day;
@@ -132,6 +136,7 @@ export function resolvePassDesign(passType, brandKit) {
   const accent = design.useBrandAccent ? brandKit.colors.accent : pick(design.accent, preset.design.accent);
   const wallet = design.wallet || {};
   const walletStyle = WALLET_STYLES.includes(wallet.style) ? wallet.style : preset.design.wallet.style;
+  const surface = brandKit.colors.surface;
   const warnings = [];
 
   const resolved = {
@@ -143,15 +148,22 @@ export function resolvePassDesign(passType, brandKit) {
     materialLabel:
       typeof design.materialLabel === "string" ? design.materialLabel.trim() : design.useBrandAccent ? "" : preset.material,
     isVip: Boolean(passType.isVip),
+    // Tier material: card band, chip, labels, Wallet art.
     accent,
+    accentText: ensureContrast(accent, surface),
+    // Pre-mixed tint for the tier chip (the kit's tint-pill, solid for email).
+    accentTint: mix(accent, surface, 0.88),
+    // Action color: the brand accent, identical on every tier.
+    action: brandKit.colors.accent,
+    onAction: brandKit.colors.onAccent,
     onAccent: readableForeground(accent),
-    accentText: ensureContrast(accent, brandKit.colors.surface),
     wallet: {
       style: walletStyle,
       background: pick(wallet.background, preset.design.wallet.background),
       foreground: pick(wallet.foreground, preset.design.wallet.foreground),
-      label: pick(wallet.label, preset.design.wallet.label),
-      // Media-library asset id for the strip / thumbnail image (optional).
+      label: design.useBrandAccent && !wallet.label ? accent : pick(wallet.label, preset.design.wallet.label),
+      // Generated spark artwork unless the tenant uploads its own (media-library id).
+      art: ART_FOR_STYLE[walletStyle],
       imageAssetId: wallet.imageAssetId || ""
     },
     warnings

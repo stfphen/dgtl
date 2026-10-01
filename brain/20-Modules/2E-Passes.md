@@ -3,7 +3,7 @@ title: 2E · DGTL Pass (passes, tickets, verification)
 type: module
 tags: [module, passes, wallet, verification]
 status: proposed
-updated: 2026-09-30
+updated: 2026-10-01
 ---
 
 # DGTL Pass
@@ -16,8 +16,11 @@ config, teams/roles, sessions, audit, Resend, Twilio and Stripe. It sits after c
 lead lifecycle. Once [[27-Checkout-Payments]] issues passes automatically, it becomes a sellable
 feature (roadmap item R1 in the spec).
 
-**Status: proposed.** The full spec, a tested reference core and a draft migration exist. No
-`platform/` code has changed yet.
+**Status: proposed, Phase 0 started.** The full spec, a tested reference core (72 unit + 9 SQL
+tests) and a draft migration exist. The **DGTL brand kit** (`engine/dgtl-brand-kit/`) is applied to
+every surface, with design targets in `docs/specs/dgtl-pass/previews/` (emails, Wallet, pass page,
+scanner, admin). The Phase 0 release-gate CI is written (`.github/workflows/platform-ci.yml`) and
+awaits push + branch protection. No `platform/` code has changed yet.
 
 ## Key files
 - Spec + handoff: `docs/specs/dgtl-pass/` (start at `README.md`; build agent prompt in `HANDOFF-PROMPT.md`)
@@ -26,11 +29,12 @@ feature (roadmap item R1 in the spec).
   - `validity.js`: tenant-timezone windows, business-day cutoff, DST-safe
   - `verify.js`: pure admit/deny decision, derived status, PII-stripped scanner response
   - `repository.js`: `issuePass` / `verifyScan` / `revokePass` transactions (row lock + scan-id idempotency)
-  - `brand.js` · `tiers.js` · `passJson.js` · `email/render.js`: brand kit, Steel/Bronze/Silver/Gold, Wallet, 5 emails + SMS
+  - `brand.js` · `tiers.js` · `passJson.js` · `walletArt.js` · `email/render.js`: brand kit (drift-tested against all three token files), Steel/Bronze/Silver/Gold on the black ladder, Wallet fields + spark art, 5 emails + SMS
+  - `ui/mockups.js`: generates the brand-kit design targets for Wallet, pass page, scanner and admin
 - Draft migration: `docs/specs/dgtl-pass/migration/009_passes.sql`. New tables `pass_types`,
   `pass_holders`, `passes`, `pass_deliveries`, `pass_scans`, `pass_wallet_registrations`,
   `user_identities`. New roles `issuer`, `verifier`. `users.password_hash` becomes nullable.
-- Email previews: `docs/specs/dgtl-pass/previews/index.html`
+- Design targets: `docs/specs/dgtl-pass/previews/` (`index.html` emails · `wallet.html` · `pass-page.html` · `scanner.html` · `admin.html`)
 - Target (not built): `lib/passes/*`, `app/scan`, `app/p/[credential]`, `app/api/admin/passes/*`,
   `app/api/scan/*`, `app/api/auth/google/*`, and a ninth admin tab, Passes.
 

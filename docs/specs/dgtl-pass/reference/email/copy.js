@@ -12,6 +12,8 @@
 //   - Promise only what the system enforces. No "skip the line" unless a perk says so.
 //   - One idea per sentence. No exclamation marks. No emoji in SMS (keeps GSM-7, 160 chars).
 //   - Tiers get warmer as they climb: Day is practical, VIP is personal.
+//   - CTAs end in "→" (a DGTL brand-kit tic). The renderer adds it if an
+//     override forgets, and strips it from the plain-text part.
 
 export const EMAIL_COPY = Object.freeze({
   day: {
@@ -20,7 +22,7 @@ export const EMAIL_COPY = Object.freeze({
     eyebrow: "Day pass",
     headline: "You're in, {firstName}.",
     body: "You're set for {fromDate}. Show the code below at the door. It works from this email, from your pass page, or from Apple Wallet.",
-    cta: "Open my pass",
+    cta: "Open my pass →",
     tip: "At the door: open your pass and turn your screen brightness up. Apple Wallet is the fastest way in.",
     reason: "You're receiving this because a {brand} pass was issued to this address."
   },
@@ -30,7 +32,7 @@ export const EMAIL_COPY = Object.freeze({
     eyebrow: "Monthly pass",
     headline: "A month of access starts now.",
     body: "{firstName}, your {passName} is active. Keep it in Apple Wallet and it's one tap away every time you arrive.",
-    cta: "Open my pass",
+    cta: "Open my pass →",
     tip: "Your pass works every visit until it ends. Add it to Wallet once and you won't need this email again.",
     reason: "You're receiving this because a {brand} pass was issued to this address."
   },
@@ -40,7 +42,7 @@ export const EMAIL_COPY = Object.freeze({
     eyebrow: "Annual pass",
     headline: "Your year starts today.",
     body: "Twelve months of access on one pass. Add it to Apple Wallet once and it stays with you all year.",
-    cta: "Open my pass",
+    cta: "Open my pass →",
     tip: "Your pass works every visit until it ends. Add it to Wallet once and you won't need this email again.",
     reason: "You're receiving this because a {brand} pass was issued to this address."
   },
@@ -50,7 +52,7 @@ export const EMAIL_COPY = Object.freeze({
     eyebrow: "VIP · Lifetime",
     headline: "Access that doesn't expire.",
     body: "This pass is yours for good. It carries your name, it has no end date, and it lives in your Apple Wallet.",
-    cta: "Open my VIP pass",
+    cta: "Open my VIP pass →",
     tip: "Keep it in Wallet. The code is yours alone, so please don't share screenshots of it.",
     closing: "Welcome in.",
     reason: "You're receiving this because {brand} issued you a VIP pass."
@@ -63,7 +65,7 @@ export const EMAIL_COPY = Object.freeze({
     body: "{firstName}, we keep our VIP list small on purpose, and we've added you to it. Inside is a lifetime pass in your name, plus a welcome that's only for the people on this list.",
     offerLabel: "Your welcome",
     perksLabel: "What comes with it",
-    cta: "Accept my VIP pass",
+    cta: "Accept my VIP pass →",
     tip: "Your pass never expires and carries your name. It's yours alone, so please don't forward this email.",
     signoff: "{senderName}",
     signoffTitle: "{senderTitle}",

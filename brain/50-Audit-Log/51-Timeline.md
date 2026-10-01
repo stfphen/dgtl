@@ -3,13 +3,21 @@ title: 51 · Project Timeline
 type: log
 tags: [audit]
 status: living
-updated: 2026-09-30
+updated: 2026-10-01
 ---
 
 # Project Timeline
 
 Chronological history, reconstructed from repo docs + git. **Append newest entries at the top.**
 Dates are from doc timestamps / commit themes; treat older "status" claims as point-in-time snapshots.
+
+## 2026-10
+- 2026-10-01 — **DGTL Pass: handoff committed (`4e091e2`), Phase 0 CI written, DGTL brand kit applied to every pass surface.** Handoff package committed on `docs/dgtl-pass-mvp-handoff`. Phase 0 added `.github/workflows/platform-ci.yml`, with `test-and-build` (npm ci → test → build, no `.env`) and `migrations-postgres` (migrate, up-to-date check, re-execute every migration, run `tests/*.pg.test.js`). Simulated locally from a clean `git archive` of the tree: `npm ci` ok, **356/356**, build exit 0. All eight migrations re-ran twice cleanly in PGlite. Not yet pushed, and marking the checks required on `main` is Stephen's step. Brand kit (`engine/dgtl-brand-kit/`) applied:
+  - emails: gold 7 px CTAs with → on every tier, gold-tan kickers, 700 headlines, the wordmark PNG (rasterized from the kit SVG, colors verified exact), copyright footer, only the kit's radii;
+  - Wallet cards on the black ladder with material labels and spark art (`reference/walletArt.js`, rasterized with the platform's `sharp`);
+  - new design targets `previews/wallet.html`, `pass-page.html`, `scanner.html` and `admin.html`, generated from the reference code and the kit's own `dgtl-tokens.css`.
+
+  Tests now **72/72 unit + 9/9 SQL**: brand tokens drift-tested against all three token files, plus kit-rule assertions. Visual check at desktop + 375 px. It found and fixed three layout overflows at phone width (phone frames, the email index grid, SMS URLs) and wrapping table chips. Kit structural check: 12 files, 11 PNG payloads decode, tags balanced. Decision log: gold is the action color on every tier and the material of VIP only (supersedes 09-30).
 
 ## 2026-09
 - 2026-09-30 — **DGTL Pass MVP designed and handed off (spec + tested reference core; no `platform/` code changed).** New package `docs/specs/dgtl-pass/`: 16 spec docs (product, architecture, data model, API, verification, scanner, Apple Wallet, messaging + CASL gates, brand kit + tier ladder + VIP onboarding strategy, Google OIDC + roles, admin UI, threat model, phased build plan P0–P6, test plan, config/accounts, roadmap) and `HANDOFF-PROMPT.md` for the build agent. It supersedes a first-draft standalone Supabase plan; the module lives in `platform/` ([[52-Decision-Log]]). Reference core in `reference/`: credentials, validity (DST-safe, business-day cutoff), verify decision, brand kit (token drift-tested against `dgtl-editorial.css` + `dgtl-admin.css`), tiers, Apple `pass.json`, five email variants + SMS, and `repository.js` issue/verify/revoke transactions. **Verified: 60/60 unit tests + 9/9 SQL integration tests** running platform migrations 001–008 + draft `009_passes.sql` in PGlite (PostgreSQL 18.3). Email previews (7, real QR) rendered and checked in-browser at 680 px and 375 px. Found and fixed during preview: tenants on their own brand accent were still labelled "Bronze". Module note [[2E-Passes]] (status *proposed*). Next: Stephen confirms the pass host, Apple Developer enrolment and pilot tenant, then Phase 0 (required CI) → Phase 1.

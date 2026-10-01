@@ -110,8 +110,9 @@ passes: {
   brandKit: {
     theme: "dark",                   // "dark" (DGTL ladder) | "light"
     name: "", logoText: "",          // default from brand.name / brand.logoText
-    logoUrl: "",                     // https PNG for email (media library asset URL)
-    colors: { accent: "", background: "", surface: "", surfaceRaised: "", line: "", text: "", textMuted: "", textDim: "" },
+    logoUrl: "",                     // https PNG for email + Wallet (media library asset URL)
+    logoIncludesName: false,         // true when the logo spells the name (the DGTL wordmark)
+    colors: { accent: "", background: "", surface: "", surfaceRaised: "", line: "", text: "", textMuted: "", textDim: "", kicker: "" },
     sender: { fromName: "", fromEmail: "", replyTo: "" },
     legal: { postalAddress: "", supportEmail: "", supportUrl: "", termsUrl: "" }
   },

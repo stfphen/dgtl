@@ -16,16 +16,41 @@ the holder's Wallet.
 
 ## Pass styles per tier
 
-| Tier | Style | Why | Images |
-|---|---|---|---|
-| Day | `eventTicket` | Time-bound, date in the header, `relevantDate` puts it on the lock screen that day | `icon`, `logo`, optional `strip` (375×98 pt) |
-| Monthly / Yearly | `generic` | Apple's intended style for memberships; room for a `thumbnail` (90×90), later the holder photo | `icon`, `logo`, optional `thumbnail` |
-| VIP Lifetime | `storeCard` | A wide `strip` (375×144 pt) gives the gold VIP artwork its hero moment: the black card | `icon`, `logo`, `strip` |
+Design target: [`previews/wallet.html`](previews/wallet.html) (the five presets, the Wallet stack,
+the back of the pass and every artwork file, rendered from `buildPassJson` + `walletArt.js`).
+
+| Tier | Style | Background (kit ladder) | Labels + art | Why | Images |
+|---|---|---|---|---|---|
+| Day | `eventTicket` | `#111111` | steel `#A9B4C2` | Time-bound, date in the header, `relevantDate` puts it on the lock screen that day | `icon`, `logo`, `strip` (375×98 pt) |
+| Monthly / Yearly | `generic` | `#0a0a0a` | bronze `#D29666` / silver `#DCE1E8` | Apple's intended style for memberships; the `thumbnail` (90×90) carries the tier spark now and the holder photo later (R4) | `icon`, `logo`, `thumbnail` |
+| VIP Lifetime | `storeCard` | `#000000` | gold `#F0CF50` | A wide `strip` (375×144 pt) gives the gold spark its hero moment: the black card | `icon`, `logo`, `strip` |
+
+Every card sits on the DGTL brand kit's black surface ladder ("dark surfaces everywhere"). The tier
+is the **label color and the artwork**, so a Wallet stack reads as one family of near-black cards
+told apart by their metal. `foregroundColor` is always `#F0F0F0`.
 
 Image specs live in `WALLET_IMAGE_SPECS` (points; ship @2x and @3x). `icon.png` is **required**
-and a pass without it fails to install. Strip/thumbnail artwork is a media-library asset id on
-the pass type (`design.wallet.imageAssetId`), with a per-tier default generated from the brand
-kit (solid tier background + logo) so a tenant with no artwork still gets a clean pass.
+and a pass without it fails to install.
+
+### Artwork (generated from the brand kit)
+
+[`reference/walletArt.js`](reference/walletArt.js) draws every image as SVG from the kit's spark bolt
+(`engine/dgtl-brand-kit/assets/logos/spark.svg`, parsed, never retyped):
+
+| File | Composition |
+|---|---|
+| `strip.png` | Pass background, a soft radial glow of the material, the spark at the right edge (clear of the left half where Wallet overlays primary fields), and a 1-pt material hairline at the base. VIP runs the spark at 0.95 opacity, lower tiers as a 0.32 watermark |
+| `thumbnail.png` | The spark centred on the pass background, in a rounded square with a faint material rule |
+| `icon.png` | The spark on black. For a tenant, its app icon from `lib/branding/appIcon.js` instead |
+| `logo.png` | The tenant logo PNG. For DGTL, [`assets/dgtl-wordmark@4x.png`](assets/dgtl-wordmark@4x.png) (rasterized from the kit SVG). It spells the name, so `brandKit.logoIncludesName: true` omits `logoText` |
+
+Phase 5 rasterizes the SVGs with **`sharp`**, which is already in the platform tree through
+`next`. No new dependency is needed, and the pipeline is proven on this machine:
+`sharp(Buffer.from(stripSvg(…))).png()` produced the 750×288 VIP strip and the 270×270 thumbnails
+cleanly. Render @1x, @2x and @3x per pass type and cache them in memory. Copy `spark.svg` into
+`platform/assets/brand/`, since the platform image can't read `engine/` at runtime, and add a test
+that it is byte-identical to the kit's. A tenant can replace the generated art with its own upload
+(`design.wallet.imageAssetId`, a media-library id).
 
 Field layout per style is fixed in `buildPassJson`:
 

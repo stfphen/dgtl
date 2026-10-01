@@ -55,6 +55,13 @@ deliverNow(delivery)
 
 ## Email: technical rules (implemented in `render.js`)
 
+- **DGTL brand kit, "Email / constrained surfaces":** solid black, table layout, inline styles,
+  Manrope first with a system fallback stack, the bulletproof primary button in the brand accent
+  (black text, 7 px radius, `15px 24px`, 16 px/700, trailing `→`), gold-tan kickers, `0.15em` labels,
+  16 px cards on `#2a2a2a`, 9999 px pills, and identity through the black/gold/white ratio rather
+  than effects. The logo is the hosted wordmark PNG ([`assets/dgtl-wordmark@4x.png`](assets/dgtl-wordmark@4x.png),
+  shown at 28 px tall). The tests enforce the button, kicker, headline weight, the three radii and
+  the footer line.
 - Table layout, inline styles, 600 px container, a mobile stack under 620 px, and `role=presentation`.
 - **Images are hosted, never `data:` URIs.** Gmail strips `data:`. The QR is
   `/p/<credential>/qr.png`, and the logo is an https PNG. SVG is not used in email. Resend also

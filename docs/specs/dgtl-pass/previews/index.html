@@ -1,29 +1,37 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DGTL Pass email previews</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#000; --surface:#0a0a0a; --line:#2a2a2a; --text:#F0F0F0; --dim:#8a8a8a; --gold:#F0CF50; }
+  /* DGTL brand kit tokens (engine/dgtl-brand-kit/assets/dgtl-tokens.css) */
+  :root { --bg:#000000; --surface:#0a0a0a; --line:#2a2a2a; --text:#F0F0F0; --muted:#D0D0D0; --dim:#8a8a8a; --gold-tan:#b3a06a; }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:Manrope, "Helvetica Neue", Arial, sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:Manrope, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+  .eyebrow { font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--gold-tan); }
+  .nav { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .nav a { font-size:14px; color:var(--muted); text-decoration:none; border:1px solid var(--line); border-radius:9999px; padding:8px 16px; }
+  .nav a[aria-current] { background:var(--text); color:#000; border-color:var(--text); }
   header { padding:40px 24px 8px; max-width:1400px; margin:0 auto; }
-  h1 { margin:0 0 8px; font-size:28px; letter-spacing:-0.3px; }
+  h1 { margin:8px 0 8px; font-size:40px; font-weight:700; letter-spacing:-1.4px; line-height:1.1; }
   p.lead { margin:0; color:var(--dim); max-width:760px; line-height:1.6; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(420px, 1fr)); gap:24px; padding:24px; max-width:1400px; margin:0 auto; }
-  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap:24px; padding:24px; max-width:1400px; margin:0 auto; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:0 6px 6px rgba(0,0,0,.3), 0 0 20px rgba(0,0,0,.15); }
   .meta { padding:18px 20px; border-bottom:1px solid var(--line); }
-  .meta h2 { margin:0 0 6px; font-size:16px; } .meta h2 a { color:var(--gold); text-decoration:none; }
+  .meta h2 { margin:0 0 6px; font-size:16px; font-weight:700; } .meta h2 a { color:var(--text); text-decoration:none; } .meta h2 a:hover { text-decoration:underline; }
   .meta p { margin:0 0 4px; font-size:13px; color:var(--dim); line-height:1.5; }
   .meta code { color:var(--text); }
   iframe { width:100%; height:1100px; border:0; background:#000; display:block; }
   .sms { max-width:1400px; margin:0 auto; padding:0 24px 48px; }
-  .bubble { display:inline-block; max-width:420px; margin:8px 12px 8px 0; padding:12px 16px; border-radius:18px; background:#1f1f1f; font-size:14px; line-height:1.45; }
+  .bubble { display:inline-block; max-width:min(420px, 100%); overflow-wrap:anywhere; margin:8px 12px 8px 0; padding:12px 16px; border-radius:18px; background:#1f1f1f; font-size:14px; line-height:1.45; }
   .bubble small { display:block; margin-top:6px; color:var(--dim); font-size:11px; }
   @media (max-width:480px) { .grid { grid-template-columns:1fr; padding:16px; } iframe { height:1000px; } }
 </style></head>
 <body>
 <header>
-  <h1>DGTL Pass: email previews</h1>
+  <span class="eyebrow">DGTL Pass · UI design targets · DGTL brand kit</span>
+  <h1>Emails</h1>
   <p class="lead">Rendered by <code>reference/email/render.js</code> from the default DGTL brand kit and tier presets. All names, addresses and offers are sample content. The Apple Wallet button is a placeholder until the official badge artwork is configured. The QR codes are real and point at a sample URL.</p>
+  <nav class="nav" aria-label="Design targets"><a href="index.html" aria-current="page">Emails</a><a href="wallet.html">Wallet passes</a><a href="pass-page.html">Pass page</a><a href="scanner.html">Scanner</a><a href="admin.html">Admin</a></nav>
 </header>
 <div class="grid">
 <section class="card"><div class="meta">

@@ -21,15 +21,18 @@ P0 Prereqs ─ P1 Foundation ─ P2 Pass engine ─ P3 Scanner ★ ─ P4 Delive
 The repo's current priority is stabilisation (CLAUDE.md). This phase makes the release gate real
 **before** a large module lands on it, and starts everything with outside lead times.
 
-| # | Task | Output |
-|---|---|---|
-| P0.1 | Add required CI: `cd platform && npm ci && npm test && npm run build` on every PR (GitHub Actions). Mark it required on `main` | `.github/workflows/platform-ci.yml`; audit finding 1 closed |
-| P0.2 | Add a **Postgres service** job to CI (`postgres:17`, `DATABASE_URL`) that runs `npm run migrate` + the `passes-pg` tests (T-C1) | same workflow, second job |
-| P0.3 | Confirm the **pass host** (recommended `pass.dgtlmag.com`) and add the DNS record + Coolify label | decision logged in `brain/50-Audit-Log/52-Decision-Log.md` |
-| P0.4 | Start **Apple Developer** enrolment/verification if DGTL isn't enrolled (D-U-N-S can take days) | account ready by P5 |
-| P0.5 | Start **Twilio sender registration** (A2P 10DLC or toll-free verification) | approved by P4 |
-| P0.6 | Create the **Google OAuth client** (web) and consent screen | client id/secret in the secrets store |
-| P0.7 | Verify the pass sending domain in **Resend** (SPF, DKIM, DMARC `p=none` + rua) | green in Resend |
+**Status 2026-10-01:** P0.1–P0.2 written and verified locally. P0.3–P0.7 are Stephen's (external
+accounts and settings).
+
+| # | Task | Output | Status |
+|---|---|---|---|
+| P0.1 | Add required CI: `cd platform && npm ci && npm test && npm run build` on every PR (GitHub Actions). Mark it required on `main` | `.github/workflows/platform-ci.yml` job `test-and-build`; audit finding 1 closed | **Written.** A clean `git archive` of the tree + `npm ci` + `npm test` (356/356) + `npm run build` (exit 0) with no `.env` passed locally. **Stephen:** push, then mark the check required in branch protection |
+| P0.2 | Add a **Postgres service** job to CI (`postgres:17`, `DATABASE_URL`): `npm run migrate`, a second run must report up to date, **every migration file re-executes cleanly**, then any `tests/*.pg.test.js` (T-C1 lands in P3) | same workflow, job `migrations-postgres` | **Written.** Re-executing all eight migrations twice was verified in PGlite. First real-Postgres run happens on push |
+| P0.3 | Confirm the **pass host** (recommended `pass.dgtlmag.com`) and add the DNS record + Coolify label | decision logged in `brain/50-Audit-Log/52-Decision-Log.md` | Stephen |
+| P0.4 | Start **Apple Developer** enrolment/verification if DGTL isn't enrolled (D-U-N-S can take days) | account ready by P5 | Stephen |
+| P0.5 | Start **Twilio sender registration** (A2P 10DLC or toll-free verification) | approved by P4 | Stephen |
+| P0.6 | Create the **Google OAuth client** (web) and consent screen | client id/secret in the secrets store | Stephen |
+| P0.7 | Verify the pass sending domain in **Resend** (SPF, DKIM, DMARC `p=none` + rua) | green in Resend | Stephen |
 
 **Gate P0:** CI green on `main` with both jobs; the four external tracks started (not necessarily
 done).
@@ -63,12 +66,17 @@ existing `/api/admin/*` route (T-R1).
 |---|---|---|
 | P2.1 | Port `repository.js` → `lib/passes/store.js`; add list/detail/overview queries (effective status in SQL, see [03](03-data-model.md#pass-lifecycle)); 23505 retry wrapper | `lib/passes/store.js` |
 | P2.2 | Tenant config `passes` block: schema in `lib/tenantValidation.js`, defaults in `defaultTenant.js`, editor section in the tenant editor | tenant validation/editor |
-| P2.3 | Tier tokens → `dgtl-editorial.css` + `dgtl-admin.css`; `tiers.js` mirrors them with a drift test | CSS, `lib/passes/tiers.js`, test |
+| P2.3 | Tier tokens `--tier-steel/-bronze/-silver` → the brand kit's `engine/dgtl-brand-kit/assets/dgtl-tokens.css` **and** `journal/_shared/dgtl-editorial.css` (kept identical, per the kit) **and** `platform/app/admin/dgtl-admin.css`; `tiers.js` `TIER_MATERIALS` mirrors them with a drift test | CSS ×3, `lib/passes/tiers.js`, test |
 | P2.4 | Pass types API + editor (presets → overrides → contrast warnings) | `app/api/admin/pass-types`, `components/admin/passes/PassTypeEditor.jsx` |
 | P2.5 | `POST /api/admin/passes` (issue, no delivery yet), `…/action` (revoke/suspend/reactivate/rotate/extend), `GET` list/detail/overview; all audit-logged | `app/api/admin/passes/*` |
 | P2.6 | QR + Code 128 images: `qrcode` + `bwip-js`, `lib/passes/images.js`, routes `qr.png` / `barcode.png` | `lib/passes/images.js`, `app/p/[credential]/*` |
-| P2.7 | Holder pass page `/p/[credential]` per [11](11-admin-dashboard.md#the-holder-pass-page-pcredential) (brand kit theming, state layouts, headers) | `app/p/[credential]/page.jsx` |
-| P2.8 | Passes tab: Overview, Issue (with live preview via `POST /api/admin/passes/preview`), Passes list + drawer, Pass types | `components/admin/passes/*`, `lazyPanels.jsx`, `AdminTabbedShell.jsx` |
+| P2.7 | Holder pass page `/p/[credential]` per [11](11-admin-dashboard.md#the-holder-pass-page-pcredential), **matching [`previews/pass-page.html`](previews/pass-page.html)** (brand kit theming, state layouts, headers) | `app/p/[credential]/page.jsx` |
+| P2.8 | Passes tab: Overview, Issue (with live preview via `POST /api/admin/passes/preview`), Passes list + drawer, Pass types, **matching [`previews/admin.html`](previews/admin.html)** (kit app components; gold via `var(--blue)`) | `components/admin/passes/*`, `lazyPanels.jsx`, `AdminTabbedShell.jsx` |
+
+**Every UI gate (P2, P3, P5) also runs the DGTL brand kit's verification checklist**
+(`engine/dgtl-brand-kit/references/application-guide.md`): desktop + 390 px screenshots compared
+against the matching design target, gold sampled at `#F0CF50` in only its intended places, 7 / 16 /
+9999 px radii, Manrope actually rendering, no horizontal scroll at 390 px.
 
 **Gate P2:** an admin creates the five preset types for a tenant, issues one pass of each, opens
 each pass page on a phone, and sees the right tier, state and QR. Revoke → the page shows
@@ -82,7 +90,7 @@ each pass page on a phone, and sees the right tier, state and QR. Revoke → the
 |---|---|---|
 | P3.1 | `POST /api/scan/verify` → `store.verifyScan` inside a pg transaction; 23505 retry; rate limits; `GET /api/scan/session` | `app/api/scan/*` |
 | P3.2 | `/scan` PWA shell: layout, manifest (scope `/scan`), icons, own CSS | `app/scan/*` |
-| P3.3 | Scanner component: start button (gesture unlock), `zxing-wasm` worker (self-hosted wasm), debounce, verdict screens, sounds, haptics, wake lock, torch, recent strip, gate picker | `components/scan/*`, `public/scan/*` |
+| P3.3 | Scanner component: start button (gesture unlock), `zxing-wasm` worker (self-hosted wasm), debounce, verdict screens, sounds, haptics, wake lock, torch, recent strip, gate picker, **matching [`previews/scanner.html`](previews/scanner.html)** (verdict fills `var(--success/--warn/--danger)`, black text) | `components/scan/*`, `public/scan/*` |
 | P3.4 | Manual entry with lockout | `components/scan/ManualEntry.jsx` |
 | P3.5 | Scans ledger view in the Passes tab + live scans on Overview | `components/admin/passes/ScanLog.jsx` |
 | P3.6 | Real-Postgres concurrency test T-C1 in the CI Postgres job | `tests/passes-pg.test.js` |
@@ -120,7 +128,7 @@ fully.
 | # | Task | Files |
 |---|---|---|
 | P5.1 | Certificates → env per [07](07-apple-wallet.md#certificates-and-identity); gitignore `*.p12`, `*.pem` | `.gitignore`, `.env.example` |
-| P5.2 | Port `passJson.js`; `lib/passes/wallet/pkpass.js` with `passkit-generator`; per-tier default images from the brand kit; image cache | `lib/passes/wallet/*` |
+| P5.2 | Port `passJson.js` + `walletArt.js`; copy the kit's `spark.svg` into `platform/assets/brand/` with a byte-identical drift test; rasterize strip/thumbnail/icon @1x/@2x/@3x with `sharp` (already present); upload `assets/dgtl-wordmark@4x.png` as the DGTL tenant logo (`logoIncludesName: true`); `lib/passes/wallet/pkpass.js` with `passkit-generator`; image cache. Must match [`previews/wallet.html`](previews/wallet.html) | `lib/passes/wallet/*`, `platform/assets/brand/` |
 | P5.3 | `GET /p/[credential]/wallet.pkpass`; hide Wallet UI when not configured | route, pass page, email links |
 | P5.4 | Upload the official Apple badge; set `PASS_WALLET_BADGE_URL` | media / env |
 
@@ -165,6 +173,7 @@ plus the following:
 - [ ] Cross-team scan reads `not_found` and never leaks a name (T-I4)
 - [ ] Security review highs resolved; secrets in the rotation doc
 - [ ] Door-staff one-pager printed for the first venue
+- [ ] Brand kit checklist passed on every surface against its design target in `previews/`
 
 ## Effort
 
