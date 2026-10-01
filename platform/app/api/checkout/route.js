@@ -38,7 +38,7 @@ export async function POST(request) {
     tenant,
     pkg,
     lead,
-    publicAppUrl: process.env.PUBLIC_APP_URL || new URL(request.url).origin
+    publicAppUrl: new URL(request.url).origin || process.env.PUBLIC_APP_URL
   });
 
   if (!result.ok) {

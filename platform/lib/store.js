@@ -717,9 +717,17 @@ export function getRenderableTenantConfig(tenant, mode = "published") {
 }
 
 // Explicit-claim-only host resolution: returns the tenant whose domains list
-// contains the host, or null. Unlike getTenantForHost there is NO fallback —
-// the root page uses this to send unclaimed hosts to /admin instead of
-// rendering a default funnel.
+// contains the host, or null. There is deliberately NO fallback — an unclaimed
+// host belongs to no tenant, and callers must say what that means for them:
+// the root page sends it to /admin instead of rendering a default funnel, and
+// the manifest/icon routes serve the DGTL house identity.
+//
+// This replaced getTenantForHost (removed 2026-08-17), whose final clause
+// returned an arbitrary active tenant for an unclaimed host — from an
+// unordered `select ... where status = 'active'`. That is how dgtl.chat,
+// dgtlmag.com and www.dgtlmag.com all came to install to the home screen
+// branded "DMTV". Do not reintroduce a fallback here; add it at the call site
+// where the intent is visible.
 export async function getTenantClaimingHost(host) {
   const normalized = normalizeHost(host);
   const matchesHost = (tenant) => {
@@ -735,39 +743,6 @@ export async function getTenantClaimingHost(host) {
   const store = await readFileStore();
   const fileTenants = store.tenants.map(normalizeTenantConfig).filter((tenant) => tenant.status === "active");
   return fileTenants.find(matchesHost) || builtInTenants().find(matchesHost) || null;
-}
-
-export async function getTenantForHost(host) {
-  const normalized = normalizeHost(host);
-  const matchesHost = (tenant) => {
-    const published = getRenderableTenantConfig(tenant, "published");
-    return published.status === "active" && published.domains.map(normalizeHost).includes(normalized);
-  };
-  // Built-in tenants (default + funded-growth) are not persisted as DB rows, so a
-  // configured subdomain (e.g. funding.dgtlmag.com -> funded-growth) must be matched
-  // against them too, otherwise host routing falls back to the default tenant.
-  const builtInByHost = () => builtInTenants().find(matchesHost) || null;
-  const pool = await ensureSchema();
-
-  if (pool) {
-    const result = await pool.query("select * from tenants where status = 'active'");
-    const tenants = result.rows.map(mapTenantRow);
-    return (
-      tenants.find(matchesHost) ||
-      builtInByHost() ||
-      tenants.find((tenant) => getRenderableTenantConfig(tenant, "published").status === "active") ||
-      defaultTenant
-    );
-  }
-
-  const store = await readFileStore();
-  const fileTenants = store.tenants.map(normalizeTenantConfig).filter((tenant) => tenant.status === "active");
-  return (
-    fileTenants.find(matchesHost) ||
-    builtInByHost() ||
-    fileTenants[0] ||
-    normalizeTenantConfig(defaultTenant)
-  );
 }
 
 export async function getTenantBySlug(slug) {

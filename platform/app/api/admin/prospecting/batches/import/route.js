@@ -12,6 +12,7 @@ import {
   updateLead,
   updateProspectingBatch
 } from "../../../../../../lib/store";
+import { redirectToUrl, sameHostUrl } from "../../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -25,12 +26,12 @@ export async function POST(request) {
   const form = await request.formData();
   const batchId = String(form.get("batchId") || "");
   const batch = await getProspectingBatch(batchId, { teamId });
-  const url = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
+  const url = sameHostUrl("/admin");
   url.searchParams.set("batchId", batchId);
 
   if (!batch) {
     url.searchParams.set("notice", "Prospecting batch was not found.");
-    return NextResponse.redirect(url, 303);
+    return redirectToUrl(url);
   }
 
   const selectedIndexes = form.getAll("selected").map((value) => Number(value));
@@ -92,7 +93,7 @@ export async function POST(request) {
     "notice",
     `Imported ${imported} leads. Skipped ${skippedDuplicates} duplicates. Enriched ${enriched}. Failed ${failed}.`
   );
-  return NextResponse.redirect(url, 303);
+  return redirectToUrl(url);
 }
 
 async function enrichLeadFromBatch({ lead, batch }) {

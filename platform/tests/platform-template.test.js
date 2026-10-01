@@ -64,7 +64,7 @@ test("proof roster links to live tenant slugs", () => {
 });
 
 test("no tenant claims the canonical app host — its root is the admin door", () => {
-  // app.dgtlmedia.io root redirects to /admin (app/page.jsx). If any tenant
+  // app.dgtlmedia.io root redirects to /home (app/page.jsx). If any tenant
   // claims it, the root renders a funnel again — that is a regression.
   const all = [
     dgtlPlatformTenant,

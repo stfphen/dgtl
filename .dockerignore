@@ -1,0 +1,20 @@
+# Build context for platform/Dockerfile is the REPO ROOT (so the shared
+# apps/worklog/client can ship into the image at /apps/worklog/client). Keep
+# the context lean: exclude everything, then re-include only what the image
+# build actually reads.
+*
+!platform/
+!apps/worklog/client/
+
+# Inside platform/, keep the historical exclusions (mirrors the old
+# platform/.dockerignore, which no longer applies with a root context).
+platform/.git
+platform/.DS_Store
+platform/node_modules
+platform/npm-debug.log
+platform/.next
+platform/data
+platform/.env
+platform/*.tgz
+platform/backups
+platform/uploads

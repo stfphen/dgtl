@@ -3,7 +3,7 @@
 bundle-funnel.py — (optional) bundle a DGTL teaser + full pitch into one upload for sub-path hosts.
 
 NOTE: The default DGTL flow deploys the teaser and full pitch as TWO slugs on
-one pitch.dgtlmedia.io slug (via deploy.dgtlmedia.io), cross-linked relatively. Use this
+one pitch.dgtl.ltd slug (via deploy.dgtl.ltd), cross-linked relatively. Use this
 bundler only if your host serves both pages from a single upload.
 
 The teaser becomes index.html at the zip root; the full dgtl-pitch-pages page is
@@ -18,7 +18,7 @@ Usage:
 (the one dgtl-pitch-pages produces); if a zip is given, its index.html is used.
 
 The result: one bundle for a host that serves sub-paths. DGTL's default is instead two
-one pitch.dgtlmedia.io slug as teaser.html + index.html, cross-linked relatively.
+one pitch.dgtl.ltd slug as teaser.html + index.html, cross-linked relatively.
 """
 import argparse
 import os

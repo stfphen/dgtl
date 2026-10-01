@@ -37,8 +37,9 @@ Mirrors the architecture mockup one-to-one:
 - **Monthly Report Trigger** (1st of the month, 09:00) → `dgtl-client-reports` — the QBR loop from
   the mockup's dashed edge.
 
-Live URL pattern is **`https://pitch.dgtlmag.com/<slug>/`** — the mockup's `pitch.dgtlmedia.io`
-and `deploy.dgtlmedia.io` are dead (domain lost, Hostinger box offboarded 2026-07-21; see
+Live URL pattern for new pitches is **`https://pitch.dgtl.ltd/<slug>/`**, published through
+`deploy.dgtl.ltd`. `pitch.dgtlmag.com/<slug>/` still serves existing pitches. The mockup's
+`pitch.dgtlmedia.io` and `deploy.dgtlmedia.io` are dead (domain lost, Hostinger box offboarded 2026-07-21; see
 `deploy/decks/README.md`).
 
 ### Import & host requirements

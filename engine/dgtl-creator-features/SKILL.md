@@ -236,13 +236,13 @@ Two rules that break things when ignored:
 
 ## Deploy & connectivity
 
-Publishing goes through the DGTL portal at **deploy.dgtlmedia.io**: upload the finished
+Publishing goes through the DGTL portal at **deploy.dgtl.ltd**: upload the finished
 **single self-contained HTML** (the `.standalone.html`), which the portal indexes and serves at a
 slug. One file per slug — so the deploy artifact must inline everything (no sibling folders);
 `scripts/make-standalone.py` is what produces it.
 
 **The published URL scheme is not settled — do not hardcode one.** Journal pages historically sat at
-`pitch.dgtlmedia.io/journal/creators/<slug>.html`, which no longer matches the pack layout, and
+`pitch.dgtl.ltd/journal/creators/<slug>.html`, which no longer matches the pack layout, and
 `skill-mods/migrate-to-main-domain/` moves ranking pages to `dgtlgroup.io/pitch/<slug>/` for the SEO
 authority. Until that migration lands:
 

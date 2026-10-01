@@ -3,7 +3,7 @@ title: 14 · Routes Map
 type: reference
 tags: [architecture]
 status: stable
-updated: 2026-07-04
+updated: 2026-08-14
 source: app/
 ---
 
@@ -19,8 +19,25 @@ API routes are `route.js` handlers.
 | `/t/[slug]` | `app/t/[slug]/page.jsx` | Per-tenant page preview; `?preview=draft` renders the draft config. Same template-registry renderer selection + per-template `generateMetadata`. |
 | `/admin` | `app/admin/page.jsx` | The admin shell (server component importing all admin components). [[21-Admin-Shell]] |
 | `/admin/login` | `app/admin/login/page.jsx` | Login (DB-backed; redirects here if unauthenticated). |
+| `/companies` | `app/(core)/companies/page.jsx` | Authenticated canonical Company list through the hybrid Core repository. |
+| `/companies/[id]` | `app/(core)/companies/[id]/page.jsx` | Company graph: details, contacts, opportunities, research, artifacts, activity, external links. |
+| `/contacts` | `app/(core)/contacts/page.jsx` | Authenticated canonical Contact list. |
+| `/contacts/[id]` | `app/(core)/contacts/[id]/page.jsx` | Contact detail with company, opportunities, activity, and external links. |
+| `/opportunities` | `app/(core)/opportunities/page.jsx` | Authenticated canonical Opportunity list. |
+| `/opportunities/[id]` | `app/(core)/opportunities/[id]/page.jsx` | Opportunity-centered operating view: company/stakeholders, approach, research, assets/jobs, campaign/messages, activity, links. |
+| `/generation-jobs` | `app/(core)/generation-jobs/page.jsx` | Team-scoped GenerationJob queue and adapter status. |
+| `/generation-jobs/[id]` | `app/(core)/generation-jobs/[id]/page.jsx` | Immutable context/brief, adapter identity, validation, output, sandboxed preview, and approval controls. |
+| `/artifacts` | `app/(core)/artifacts/page.jsx` | Immutable Artifact version registry. |
+| `/artifacts/[id]` | `app/(core)/artifacts/[id]/page.jsx` | Version/checksum lineage, test deployment, revision request, and exact Message attachment. |
+| `/home` | `app/(core)/home/page.jsx` | Stage 5 HOME command center: attention, today, approvals, pipeline, delivery (snapshot-fresh), health, activity, quick actions; ⌘K palette hits session-scoped `/api/core/search`. Unclaimed app hosts now land here from `/`; tenant hosts unchanged. |
+| `/operations/worklog` | `app/(core)/operations/worklog/page.jsx` | Worklog bridge: connector health, delivery-handoff queue, pending operations (approve/execute/cancel/reconcile/retry), linked projects/clients, stale links, exceptions. Stage 4: Company/Opportunity detail also gain Worklog panels; mutations post to `/api/core/worklog/*`, `/api/core/companies/[id]/worklog/*`, `/api/core/opportunities/[id]/worklog/*` — all session-authenticated, connector endpoint server-configured. |
+| `/chat` | `app/(core)/chat/page.jsx` | Stage 6 DGTL.chat: threads, grounded answers with SourceRef chips, ActionProposal cards with explicit confirm/reject; bounded unavailable state when no provider is configured. Entry points: sidebar, ⌘K "Ask DGTL" (`/chat?q=…`), contextual "Ask DGTL about this" on Company/Opportunity. API: `/api/core/chat/threads` (GET/POST), `threads/[id]` (GET), `threads/[id]/turns` (POST), `proposals/[id]/confirm` (POST, `requireCoreWrite`), `proposals/[id]/reject` (POST), `health` (GET) — all session-team-scoped. |
 | `/branding/icon` | `app/branding/icon/route.js` | Per-tenant PWA icon. |
 | `/manifest.webmanifest` | route | PWA manifest. |
+
+The `(core)` route group shares `components/core/CoreShell.jsx`; it does not alter the public URL.
+`/admin` remains reachable as the compatibility UI. `/` is deliberately still host-resolved so a
+data-model migration cannot break tenant-domain routing. See [[13-Data-Model]].
 
 ## Public API routes (UNAUTHENTICATED — security-sensitive)
 | Route | Method | Purpose | Notes |
@@ -52,5 +69,13 @@ API routes are `route.js` handlers.
 | `recording`, `recordings/[callId]`, `transcription`, `dial` | mixed | Recording proxy + transcription. |
 
 See [[28-Telephony]] for the full telephony flow.
+
+## Artifact worker API (`/api/core/generation-*`)
+- Authenticated operator routes create/approve briefs and Artifacts, request revisions/test
+  deployments, and attach exact Artifact versions to Messages.
+- Bearer-service routes claim/heartbeat/result/fail GenerationJobs and claim/result deployment jobs.
+  Team and worker identity come from server configuration; request JSON cannot override them.
+- No route imports shell/process execution or deployment credentials. The separately operated worker
+  uses the bounded contract in [[2E-Artifact-Automation]].
 
 Up: [[10-Architecture-MOC]]

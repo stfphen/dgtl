@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { permissionDeniedResponse, requireRole } from "../../../../../lib/permissions";
 import { getLeadById, getSessionTeamId, mergeLeadMetadata, updateLead } from "../../../../../lib/store";
 import { buildReviewPatch } from "../../../../../lib/funding/review";
+import { redirectSameHost } from "../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -27,7 +28,5 @@ export async function POST(request) {
     await updateLead(leadId, { metadata }, { teamId });
   }
 
-  const url = new URL(redirectTo, process.env.PUBLIC_APP_URL || request.url);
-  url.searchParams.set("notice", lead ? "Funding review saved." : "Lead not found.");
-  return NextResponse.redirect(url, 303);
+  return redirectSameHost(redirectTo, lead ? "Funding review saved." : "Lead not found.");
 }

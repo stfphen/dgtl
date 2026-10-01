@@ -75,8 +75,12 @@ new features:
 ## Brand (non-negotiable)
 
 Black + gold, gold is `#F0CF50`, typeface is Manrope. Canonical tokens live in
-`platform/app/admin/dgtl-admin.css` and `journal/_shared/dgtl-editorial.css`. Never hardcode a
-brand value into a component, a page or a pack — reference the token. Both halves of the repo
+`platform/app/dgtl-tokens.css` (every authenticated platform surface — Core OS, the admin shell
+and login) and `journal/_shared/dgtl-editorial.css` (publishing). Never hardcode a brand value
+into a component, a page or a pack — reference the token. `platform/tests/brand-tokens.test.js`
+enforces this, including the gold-rationing rules: gold marks the primary action, the active nav
+item and brand moments — states use the functional palette (`--success`/`--warning`/`--error`/
+`--info`), never gold. Both halves of the repo
 share the palette on purpose.
 
 ## Platform rules

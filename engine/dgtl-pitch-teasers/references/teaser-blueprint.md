@@ -37,7 +37,7 @@ Whichever source, the *layout* comes from `variance-system.md` (mosaic, filmstri
 
 ## Funnel wiring + interest tracking
 
-The teaser and the full page are **one pitch with two entry points**, living in the same folder `pitches/<slug>/` as `teaser.html` and `index.html`. They link to each other with plain relative hrefs. Only a link to a *different* pitch is absolute (`https://pitch.dgtlmedia.io/<other-slug>/`).
+The teaser and the full page are **one pitch with two entry points**, living in the same folder `pitches/<slug>/` as `teaser.html` and `index.html`. They link to each other with plain relative hrefs. Only a link to a *different* pitch is absolute (`https://pitch.dgtl.ltd/<other-slug>/`).
 
 **Links:**
 - Every "See the Full Pitch →" → `href="index.html"`. Never `/full/` or a root-absolute path: those only resolve at a domain root and are exactly how the DMTV x Bose teaser button silently broke. `tools/check-links.py` flags them as `root_absolute`.
@@ -78,9 +78,9 @@ Wire the CTAs (don't block navigation):
 
 Keep tracking honest and light: named events on the two CTAs, nothing that fingerprints visitors. Privacy-friendly providers (Plausible/Fathom) fit DGTL better than heavyweight tags.
 
-## Deploy (deploy.dgtlmedia.io — one slug, two entry points)
+## Deploy (deploy.dgtl.ltd — one slug, two entry points)
 
-Both pages flatten to **single self-contained HTML** files and deploy under the same slug: the teaser at `pitch.dgtlmedia.io/<slug>/teaser.html`, the full pitch at `pitch.dgtlmedia.io/<slug>/`. The relative `index.html` link resolves in both places — locally and on the host — which is the whole reason it stays relative. `pitches/pitches.index.json` is the slug registry; keep creator features they showcase cross-linked from there.
+Both pages flatten to **single self-contained HTML** files and deploy under the same slug: the teaser at `pitch.dgtl.ltd/<slug>/teaser.html`, the full pitch at `pitch.dgtl.ltd/<slug>/`. The relative `index.html` link resolves in both places — locally and on the host — which is the whole reason it stays relative. `pitches/pitches.index.json` is the slug registry; keep creator features they showcase cross-linked from there.
 
 (`scripts/bundle-funnel.py` remains for hosts that need the pair bundled into one upload.)
 

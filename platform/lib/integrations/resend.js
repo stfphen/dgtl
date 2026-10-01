@@ -8,7 +8,7 @@ export async function validateResendConfig() {
   return providerSuccess("resend", { configured: true });
 }
 
-export async function sendResendEmail({ from, to, subject, html, text, headers }) {
+export async function sendResendEmail({ from, to, subject, html, text, headers, idempotencyKey }, { fetchImpl = fetch } = {}) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     return providerNotConfigured("resend", "RESEND_API_KEY");
@@ -19,11 +19,12 @@ export async function sendResendEmail({ from, to, subject, html, text, headers }
   if (headers && Object.keys(headers).length) payload.headers = headers;
 
   try {
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await fetchImpl("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {})
       },
       body: JSON.stringify(payload)
     });

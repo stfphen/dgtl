@@ -3,7 +3,7 @@ title: 42 · Go-Live Plan (12 phases)
 type: runbook
 tags: [ops, roadmap]
 status: living
-updated: 2026-06-27
+updated: 2026-08-14
 source: GO_LIVE_PLAN.md
 ---
 
@@ -26,7 +26,7 @@ Phases are dependency-ordered; 4–9 can run in parallel once the app + auth/DB 
 | **8** | Prospecting providers QA | Live-validate Google (billing/quota/Places), Hunter (Free 50/mo), Apollo (People API); preview batch + import; verify source metadata, dedupe, not-configured behavior. | [[23-Prospecting]] |
 | **9** | Frontend: survey + funnels live | Deploy from a branch with the survey; add `funding`/`grants` A records; verify `getTenantForHost`; smoke survey, CTA, funnels, package→checkout→confirmation with white-label theming. | [[29-Funding-Program]] |
 | **10** | Secrets hygiene & rotation | Rotate the four provider keys; confirm `.env*` git-ignored (only `.env.example` committed); restrict Google key to Places API + server IP; restart stack. | [[44-Secrets-And-Rotation]] |
-| **11** | Full verification & smoke | Hard gate `npm test` + `npm run build`; post-deploy smoke on `/`, `/t/funded-growth`, funding subdomain, `/admin`, one prospecting search, one outreach action, one Stripe test, one inbound call, one AI feature; address 2 moderate npm advisories; independent subagent verification. | [[62-Testing]] |
+| **11** | Full verification & smoke | Hard gate `npm test` + `npm run build`; post-deploy smoke on `/`, `/t/funded-growth`, funding subdomain, `/admin`, one prospecting search, one outreach action, one Stripe test, one inbound call, one AI feature; require zero known production dependency advisories; independent verification. | [[62-Testing]] |
 | **12** | Launch hardening & ops | Uptime monitor (would catch the next 502), scheduled DB backups, log-review routine, incident + rollback runbook, confirm LetsEncrypt auto-renew. Then Sprint 2. | [[33-Sprint-2-Productization]] |
 
 ## Guardrails (do not violate)

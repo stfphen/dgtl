@@ -8,6 +8,7 @@ import {
   requireTenantAccess,
   updateProspectingBatch
 } from "../../../../../lib/store";
+import { redirectToUrl, sameHostUrl } from "../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -48,7 +49,7 @@ export async function POST(request) {
     targetRoles: defaultApolloRoles
   });
 
-  const url = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
+  const url = sameHostUrl("/admin");
   url.searchParams.set("batchId", batch.id);
 
   const result = await searchGooglePlaces({ query, maxResults });
@@ -59,7 +60,7 @@ export async function POST(request) {
       error: result.error || result.reason
     }, { teamId });
     url.searchParams.set("notice", result.error || result.reason);
-    return NextResponse.redirect(url, 303);
+    return redirectToUrl(url);
   }
 
   await updateProspectingBatch(batch.id, {
@@ -70,5 +71,5 @@ export async function POST(request) {
   }, { teamId });
 
   url.searchParams.set("notice", `Previewed ${result.prospects.length} prospects for "${query}".`);
-  return NextResponse.redirect(url, 303);
+  return redirectToUrl(url);
 }

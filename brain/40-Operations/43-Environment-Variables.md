@@ -3,7 +3,7 @@ title: 43 · Environment Variables
 type: reference
 tags: [ops]
 status: stable
-updated: 2026-06-27
+updated: 2026-08-14
 source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 ---
 
@@ -22,7 +22,7 @@ source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 | `TEAM_SLUG` | Owner's team | **MUST be `default`** so owner sees built-in tenants + funnel leads. [[15-Multi-Tenancy]] |
 | `OWNER_PASSWORD` | One-time owner seed | Passed inline to `create-owner`; never written to `.env`. |
 | `SESSION_SECRET` | Session signing | ⚠️ Referenced in docs but **not actually read by code yet** (security L2). |
-| `PUBLIC_APP_URL` / `NEXT_PUBLIC_APP_URL` | App origin | `https://dgtlmag.com`. |
+| `PUBLIC_APP_URL` / `NEXT_PUBLIC_APP_URL` | App origin for OUTBOUND links | `https://dgtlmag.com`, moving to `https://os.dgtl.ltd`. See the App host section below — never use these for in-app redirects. |
 
 ## AI (pick one path)
 | Var | Powers | Notes |
@@ -55,6 +55,45 @@ source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 - `OUTREACH_DRY_RUN=true` — forces the **mock** email provider for ALL sends (records `sent` + events + a `dryrun_*` id, no real email). Opt-in only; also settable per-campaign via `testMode`. Never auto in prod. `lib/integrations/{emailProvider,mockEmailProvider}.js`.
 - `OUTREACH_CRON_TOKEN` — bearer token the scheduled-send drain requires. Host cron: `POST /api/cron/outreach/drain` with `Authorization: Bearer $OUTREACH_CRON_TOKEN` (constant-time check). See [[41-Deployment-Runbook]].
 - `UNSUBSCRIBE_SECRET` — HMAC key for signed one-click unsubscribe links; falls back to `SESSION_SECRET`. `lib/outreach/unsubscribe.js`. [[26-Outreach]]
+
+## DGTL Core Artifact worker (Stage 3)
+| Var | Powers | Notes |
+|---|---|---|
+| `CORE_GENERATION_WORKER_TOKEN` | Service bearer authentication | Server-only; never expose to browser code. |
+| `CORE_GENERATION_WORKER_TEAM_ID` | Worker team scope | Authoritative; request input cannot override it. |
+| `CORE_GENERATION_WORKER_ID` | Stable worker actor | Used in leases and Activity. |
+| `CORE_ARTIFACT_PREVIEW_ROOT` | Shared local/staging HTML preview root | Fixed-root hashed filenames; authenticated reads only. Defaults to OS temp for local rehearsal. |
+| `DGTL_SOURCE_COMMIT` | Deployed skill/source baseline | Snapshotted on GenerationJob. |
+| `CORE_ARTIFACT_PRODUCTION_DEPLOY_AUTHORIZED` | Reserved future release gate | Does **not** enable deployment alone; production adapters remain disabled in code. |
+
+See [[2E-Artifact-Automation]] and `docs/operations/dgtl-artifact-worker-runbook.md`.
+
+## DGTL Core Worklog bridge (Stage 4)
+| Var | Powers | Notes |
+|---|---|---|
+| `CORE_WORKLOG_BASE_URL` | Worklog origin for the connector | Server-only, **no default** — unset means the bridge is off; production is never an implicit target. |
+| `CORE_WORKLOG_EMAIL` / `CORE_WORKLOG_PASSWORD` | Dedicated Worklog integration account | Admin role required for project creation; Worklog revokes sessions on password change — rotate in step. Never reaches a browser. |
+| `CORE_WORKLOG_TEAM_ID` | The one Core team the connector serves | Same server-owned team binding as the Stage 3 worker; unset fails closed for every team. |
+
+See [[2F-Worklog-Bridge]] and `docs/architecture/dgtl-core-phase-4.md` (production setup section).
+
+## DGTL.chat (Stage 6)
+| Var | Powers | Notes |
+|---|---|---|
+| `CORE_CHAT_PROVIDER` | Chat model adapter selection | Unset = chat shows a bounded "not configured" state (platform unaffected). `deterministic` = rule-based adapter, no external calls — the CI/acceptance/demo mode. `anthropic` = the real provider through the shared transport (API-key path only). `disabled` = explicit off. |
+| `CORE_CHAT_MODEL` | Model for the anthropic adapter | Defaults to `claude-sonnet-5`; only read when `CORE_CHAT_PROVIDER=anthropic`. Uses the existing `ANTHROPIC_API_KEY` — no other chat credential or endpoint exists. |
+
+See [[2H-DGTL-Chat]] and `docs/architecture/dgtl-core-phase-6.md`.
+
+## App host / canonical identity
+
+`PUBLIC_APP_URL` and `NEXT_PUBLIC_APP_URL` are the app's identity for links that
+**leave the process** — unsubscribe URLs baked into sent email, Stripe return
+URLs, the telephony webhook fallback. They must never decide where a request
+redirects *within* the app: several hosts share one deployment and the session
+cookie is host-scoped, so an absolute redirect logs the operator out. Use
+`lib/http/redirects.js` for that. Migration to `os.dgtl.ltd`:
+`docs/operations/os-dgtl-ltd-migration-runbook.md`.
 
 ## Telephony
 `TELEPHONY_PROVIDER` (`twilio` default; `mock`/`telnyx`), `TELEPHONY_WEBHOOK_BASE_URL` (byte-exact;

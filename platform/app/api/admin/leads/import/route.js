@@ -3,6 +3,7 @@ import { logAudit } from "../../../../../lib/audit";
 import { permissionDeniedResponse, requireRole } from "../../../../../lib/permissions";
 import { leadFromCsvRecord, parseCsv } from "../../../../../lib/csv";
 import { createLead, getSessionTeamId, requireTenantAccess } from "../../../../../lib/store";
+import { redirectSameHost } from "../../../../../lib/http/redirects";
 
 export async function POST(request) {
   let session;
@@ -44,7 +45,5 @@ export async function POST(request) {
     }
   }
 
-  const url = new URL("/admin", process.env.PUBLIC_APP_URL || request.url);
-  url.searchParams.set("notice", `Imported ${imported} CSV leads. Skipped ${skippedDuplicates} duplicates.`);
-  return NextResponse.redirect(url, 303);
+  return redirectSameHost("/admin", `Imported ${imported} CSV leads. Skipped ${skippedDuplicates} duplicates.`);
 }
