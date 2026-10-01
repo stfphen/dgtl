@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminSession } from "../../../../../lib/auth";
+import { permissionDeniedResponse, requireSession } from "../../../../../lib/permissions";
 
 const INVOICE_API_URL = "https://invoice-generator.com";
 const DGTL_INVOICE_DEFAULTS = Object.freeze({
@@ -29,8 +29,12 @@ function withDgtlDefaults(payload) {
 }
 
 export async function POST(request) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // requireSession refuses pass-only staff; before this, any signed-in session could generate invoices.
+  try {
+    await requireSession();
+  } catch (error) {
+    return permissionDeniedResponse(error, request);
+  }
 
   const apiKey = process.env.INVOICE_GENERATOR_API_KEY;
   if (!apiKey) {

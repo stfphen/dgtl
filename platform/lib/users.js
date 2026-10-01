@@ -2,7 +2,10 @@ import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { Pool } from "pg";
 
-export const USER_ROLES = ["owner", "admin", "sales", "contractor", "viewer"];
+// Workspace roles first; issuer and verifier are DGTL Pass staff roles
+// (docs/specs/dgtl-pass/10-auth-and-roles.md), refused by every workspace guard.
+export const USER_ROLES = ["owner", "admin", "sales", "contractor", "viewer", "issuer", "verifier"];
+export const AUTH_METHODS = ["password", "google"];
 export const USER_STATUSES = ["active", "disabled"];
 
 const MIN_PASSWORD_LENGTH = 12;
@@ -137,16 +140,20 @@ export async function verifyPassword(password, hash) {
   return bcrypt.compare(password, hash);
 }
 
-export async function createUser({ email, name = "", password, teamId, role }) {
+// authMethod "google" creates a password-less account that can only sign in
+// with Google (migration 015 made password_hash nullable; verifyPassword
+// rejects a null hash, so no password ever works for it).
+export async function createUser({ email, name = "", password, teamId, role, authMethod = "password" }) {
   const normalizedEmail = normalizeEmail(email);
   assertEmail(normalizedEmail);
-  assertPassword(password);
+  if (!AUTH_METHODS.includes(authMethod)) throw new Error(`Sign-in method must be one of: ${AUTH_METHODS.join(", ")}.`);
+  if (authMethod === "password") assertPassword(password);
   assertTeamId(teamId);
   assertRole(role);
 
   const userId = id("user");
   const membershipId = id("membership");
-  const passwordHash = await hashPassword(password);
+  const passwordHash = authMethod === "password" ? await hashPassword(password) : null;
 
   return withTransaction(async (client) => {
     const userResult = await client.query(
