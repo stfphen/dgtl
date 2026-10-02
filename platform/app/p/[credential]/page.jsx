@@ -61,6 +61,9 @@ export default async function HolderPassPage({ params, searchParams }) {
   const apple = /iPhone|iPad|iPod|Macintosh/.test(ua);
   const android = /Android/.test(ua);
   const walletOn = showCode && config.walletEnabled;
+  // A hosted provider issues one pass for both wallets; DGTL's own Apple
+  // certificate signs Apple Wallet only (Google Wallet is roadmap R2).
+  const googleOn = walletOn && config.wallet.provider === "walletwallet";
   const year = new Date().getFullYear();
 
   return (
@@ -123,7 +126,7 @@ export default async function HolderPassPage({ params, searchParams }) {
                 <AppleIcon /> Add to Apple Wallet
               </a>
             ) : null}
-            {walletOn && (android || !apple) ? (
+            {googleOn && (android || !apple) ? (
               <a className="pp-wallet" href={`/p/${view.credential}/google-wallet`} rel="noreferrer">
                 <WalletIcon /> Save to Google Wallet
               </a>

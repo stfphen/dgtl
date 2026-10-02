@@ -128,10 +128,11 @@ test("pass config: WalletWallet turns Apple Wallet on without an Apple certifica
     [{ WALLETWALLET_API_KEY: key, WALLETWALLET_API_URL: "http://api.walletwallet.dev" }, /must be https/]
   ];
   for (const [env, pattern] of bad) assert.throws(() => readPassesConfig(env), pattern, JSON.stringify(env));
-  const apple = {
+  // A complete PASSKIT_* set selects DGTL's own certificate, and junk in it
+  // fails at load (the real-certificate cases are in passes-wallet-signing).
+  const junkApple = {
     PASSKIT_TEAM_ID: "T", PASSKIT_PASS_TYPE_ID: "pass.x", PASSKIT_SIGNER_CERT_B64: "c", PASSKIT_SIGNER_KEY_B64: "k", PASSKIT_WWDR_CERT_B64: "w"
   };
-  const ownCert = readPassesConfig(apple);
-  assert.equal(ownCert.wallet.provider, "apple");
-  assert.equal(ownCert.walletEnabled, false, "DGTL's own certificate is Phase 5: recognised, not yet on");
+  assert.throws(() => readPassesConfig(junkApple), /PASSKIT_SIGNER_CERT_B64/);
+  assert.equal(readPassesConfig({ WALLETWALLET_API_KEY: key, PASS_WALLET_PROVIDER: "walletwallet", ...junkApple }).wallet.provider, "walletwallet", "an explicit provider wins, and the unused certificate set is not parsed");
 });

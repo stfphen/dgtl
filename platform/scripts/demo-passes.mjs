@@ -126,9 +126,19 @@ function run(script) {
 run("scripts/migrate.js");
 run("scripts/seed-passes-dev.js");
 
-// Wallet: read the key the same way Next will (process env, then platform/.env).
+// Wallet: read the settings the same way Next will (process env, then platform/.env).
 const dotenv = existsSync(path.join(platformRoot, ".env")) ? readFileSync(path.join(platformRoot, ".env"), "utf8") : "";
-const walletKey = process.env.WALLETWALLET_API_KEY || /^WALLETWALLET_API_KEY=(.+)$/m.exec(dotenv)?.[1]?.trim();
+const setting = (name) => process.env[name] || new RegExp(`^${name}=(.+)$`, "m").exec(dotenv)?.[1]?.trim() || "";
+const appleCert = ["PASSKIT_TEAM_ID", "PASSKIT_PASS_TYPE_ID", "PASSKIT_SIGNER_CERT_B64", "PASSKIT_SIGNER_KEY_B64", "PASSKIT_WWDR_CERT_B64"].every(setting);
+const provider = setting("PASS_WALLET_PROVIDER") || (appleCert ? "apple" : setting("WALLETWALLET_API_KEY") ? "walletwallet" : "");
+const walletLine =
+  provider === "apple"
+    ? "ON  DGTL-signed: the exact DGTL design"
+    : provider === "walletwallet"
+      ? setting("WALLETWALLET_BRANDING") === "full"
+        ? "ON  WalletWallet Pro: DGTL art, tier colours"
+        : "ON  WalletWallet free: colour preset + text (WALLETWALLET_BRANDING=full on Pro)"
+      : "OFF  add WALLETWALLET_API_KEY to platform/.env (free key at walletwallet.dev)";
 
 say(`
   ┌──────────────────────────────────────────────────────────────────
@@ -143,7 +153,7 @@ say(`
   │                     door@passes-demo.test (photo scan over Wi-Fi)
   │
   │  Demo password      PASSES_DEMO_PASSWORD in platform/data/passes-demo.env
-  │  Apple Wallet       ${walletKey ? "ON  (WalletWallet)" : "OFF  add WALLETWALLET_API_KEY to platform/.env (free key at walletwallet.dev)"}
+  │  Apple Wallet       ${walletLine}
   │  Pass links use     ${baseUrl}${host === "localhost" ? "   (no Wi-Fi address found: set DEMO_HOST)" : ""}
   └──────────────────────────────────────────────────────────────────
 `);

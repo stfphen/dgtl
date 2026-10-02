@@ -4,6 +4,7 @@
 // Wallet button). Malformed settings throw, so a bad deploy is caught when the
 // first pass route loads, not at the door. Spec: docs/specs/dgtl-pass/15-config-and-accounts.md.
 
+import { createPrivateKey, X509Certificate } from "node:crypto";
 import { parseCredentialSecrets } from "./credentials.js";
 
 let cached = null;
@@ -49,7 +50,8 @@ function parseBaseUrl(raw, { production }) {
  *   walletwallet  WalletWallet's API signs with its own Pass Type ID, so no Apple
  *                 Developer account is needed. Free plan: colour presets and text
  *                 only; "full" branding (logo, strip art, tier colours) needs Pro.
- *   apple         DGTL's own Pass Type ID certificate (Phase 5, not built yet).
+ *   apple         DGTL's own Pass Type ID certificate (PASSKIT_*): the exact design,
+ *                 signed here (lib/passes/wallet/apple.js).
  * PASS_WALLET_PROVIDER picks one; unset, a complete PASSKIT_* set means apple,
  * else a WalletWallet key means walletwallet.
  */
@@ -80,8 +82,57 @@ function readWalletConfig(env) {
   return {
     provider,
     appleConfigured,
-    walletwallet: provider === "walletwallet" ? { apiKey, apiUrl, branding } : null
+    walletwallet: provider === "walletwallet" ? { apiKey, apiUrl, branding } : null,
+    apple: provider === "apple" ? readAppleConfig(env) : null
   };
+}
+
+const pem = (name, raw) => {
+  const text = Buffer.from(String(raw).trim(), "base64").toString("utf8");
+  if (!/-----BEGIN [A-Z ]+-----/.test(text)) throw new Error(`${name} must be a base64-encoded PEM file.`);
+  return text;
+};
+
+const subjectField = (cert, field) => new RegExp(`^${field}=(.+)$`, "m").exec(cert.subject)?.[1]?.trim() || "";
+
+/**
+ * DGTL's own Pass Type ID certificate. Checked at load so a wrong upload fails
+ * the deploy, not a guest's tap: the key must match the certificate, and the
+ * certificate must be for this Pass Type ID and team, and still valid.
+ */
+function readAppleConfig(env) {
+  const teamId = String(env.PASSKIT_TEAM_ID).trim();
+  const passTypeId = String(env.PASSKIT_PASS_TYPE_ID).trim();
+  let signer;
+  let wwdr;
+  try {
+    signer = new X509Certificate(pem("PASSKIT_SIGNER_CERT_B64", env.PASSKIT_SIGNER_CERT_B64));
+  } catch (error) {
+    throw new Error(`PASSKIT_SIGNER_CERT_B64 is not a certificate: ${error.message}`);
+  }
+  try {
+    wwdr = new X509Certificate(pem("PASSKIT_WWDR_CERT_B64", env.PASSKIT_WWDR_CERT_B64));
+  } catch (error) {
+    throw new Error(`PASSKIT_WWDR_CERT_B64 is not a certificate: ${error.message}`);
+  }
+  let privateKey;
+  try {
+    privateKey = createPrivateKey({
+      key: pem("PASSKIT_SIGNER_KEY_B64", env.PASSKIT_SIGNER_KEY_B64),
+      ...(env.PASSKIT_SIGNER_KEY_PASSPHRASE ? { passphrase: String(env.PASSKIT_SIGNER_KEY_PASSPHRASE) } : {})
+    });
+  } catch (error) {
+    throw new Error(`PASSKIT_SIGNER_KEY_B64 could not be read (wrong passphrase?): ${error.message}`);
+  }
+  if (privateKey.asymmetricKeyType !== "rsa") throw new Error("PASSKIT_SIGNER_KEY_B64 must be the RSA key Apple's Pass Type ID certificate was requested with.");
+  if (!signer.checkPrivateKey(privateKey)) throw new Error("PASSKIT_SIGNER_KEY_B64 does not match PASSKIT_SIGNER_CERT_B64.");
+  const uid = subjectField(signer, "UID");
+  if (uid && uid !== passTypeId) throw new Error(`The signer certificate is for ${uid}, not PASSKIT_PASS_TYPE_ID ${passTypeId}.`);
+  const team = subjectField(signer, "OU");
+  if (team && team !== teamId) throw new Error(`The signer certificate belongs to team ${team}, not PASSKIT_TEAM_ID ${teamId}.`);
+  if (new Date(signer.validTo).getTime() < Date.now()) throw new Error(`The Pass Type ID certificate expired on ${signer.validTo}. Renew it in the Apple Developer portal.`);
+  if (!signer.checkIssued(wwdr)) throw new Error("PASSKIT_WWDR_CERT_B64 is not the issuer of the signer certificate (use Apple's WWDR G4).");
+  return { teamId, passTypeId, signerCertDer: signer.raw, wwdrCertDer: wwdr.raw, privateKey, expiresAt: signer.validTo };
 }
 
 /**
@@ -119,9 +170,7 @@ export function readPassesConfig(env = process.env) {
     secrets,
     activeKeyId,
     wallet,
-    // Only providers that are built count. Signing with DGTL's own Apple
-    // certificate is build-plan Phase 5; until then "apple" is recognised but off.
-    walletEnabled: wallet.provider === "walletwallet",
+    walletEnabled: Boolean(wallet.provider),
     smsEnabled: Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_MESSAGING_SERVICE_SID),
     dryRun: String(env.PASSES_DRY_RUN || "").toLowerCase() === "true"
   };
