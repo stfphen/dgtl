@@ -24,6 +24,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8093", "--directory", "docs/specs/dgtl-pass/previews"],
       "port": 8093
+    },
+    {
+      "name": "passes-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "platform", "run", "demo:passes"],
+      "port": 8090
     }
   ]
 }

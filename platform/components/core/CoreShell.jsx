@@ -3,7 +3,7 @@
 import Link from "next/link";
 import CommandPalette from "./CommandPalette";
 import { usePathname } from "next/navigation";
-import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, MessageCircle, PackageOpen, ReceiptText, Siren, Sparkles, Target } from "lucide-react";
+import { Building2, ContactRound, Home, Import, LayoutDashboard, ListChecks, LogOut, Mail, MessageCircle, PackageOpen, ReceiptText, Siren, Sparkles, Target, Ticket } from "lucide-react";
 import DgtlWordmark from "../brand/DgtlWordmark";
 
 // Grouped navigation. Groups render as label rows inside ONE .core-nav grid so
@@ -36,6 +36,8 @@ const navigation = [
       { href: "/operations/worklog", label: "Worklog", icon: ListChecks, mobile: true },
       { href: "/operations/outbox", label: "Operations", icon: Siren, mobile: true },
       { href: "/invoices", label: "Invoices", icon: ReceiptText, mobile: false },
+      // DGTL Pass. Shown only to roles holding pass.view (the layout decides).
+      { href: "/passes", label: "Passes", icon: Ticket, mobile: false, capability: "passes" },
     ],
   },
 ];
@@ -52,6 +54,7 @@ function initials(value) {
 
 export default function CoreShell({ user, children }) {
   const pathname = usePathname();
+  const allowed = ({ capability }) => !capability || (capability === "passes" && user?.canViewPasses);
   const renderItem = ({ href, label, icon: Icon, mobile }) => {
     const active = pathname === href || pathname.startsWith(`${href}/`);
     return (
@@ -76,7 +79,7 @@ export default function CoreShell({ user, children }) {
           {navigation.map((group) => (
             <div className="core-nav__group" key={group.label || "home"}>
               {group.label ? <p className="core-nav-label">{group.label}</p> : null}
-              {group.items.map(renderItem)}
+              {group.items.filter(allowed).map(renderItem)}
             </div>
           ))}
         </nav>

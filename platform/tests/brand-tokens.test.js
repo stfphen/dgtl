@@ -115,3 +115,19 @@ test("statusTone maps real vocabularies onto the functional palette", () => {
   assert.equal(statusTone(undefined), "neutral");
   assert.equal(statusTone(null), "neutral");
 });
+
+test("the DGTL Pass surfaces carry no hex literals at all: tokens and tier variables only", async () => {
+  const sheets = [
+    ["app/p/pass.css", await readCss("app", "p", "pass.css")],
+    ["app/scan/scan.css", await readCss("app", "scan", "scan.css")],
+    ["app/(core)/passes/passes.css", await readCss("app", "(core)", "passes", "passes.css")]
+  ];
+  for (const [name, raw] of sheets) {
+    assert.doesNotMatch(stripComments(raw), /#[0-9a-f]{3,8}\b/i, `${name} must use tokens (app/dgtl-tokens.css) or tier variables, not literals`);
+  }
+  const tokens = await readCss("app", "dgtl-tokens.css");
+  assert.match(tokens, /html \.dgtl-pass \{/, "the pass surfaces are scoped into the canonical token layer");
+  // Gold is rationed on the scanner: the primary action, the VIP band, the brand mark. Never a verdict.
+  const scan = stripComments(sheets[1][1]);
+  assert.doesNotMatch(scan, /\.sc-verdict[^{]*\{[^}]*var\(--gold\)/, "a verdict is never gold");
+});

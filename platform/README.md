@@ -41,6 +41,8 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
 | `npm run seed:funding-demo` | Seeds funding-program demo data |
 | `npm run seed:enterprise-demo` | Seeds enterprise prospecting demo data |
 | `npm run seed:outreach-demo` | Seeds outreach campaigns/queue demo data |
+| `npm run seed:passes-dev` | Seeds the DGTL Pass demo team, owner / door / issuer accounts, DGTL tenant and five pass types (refuses production; needs `PASSES_DEMO_PASSWORD`) |
+| `npm run demo:passes` | The DGTL Pass phone demo in one command: its own Postgres container, migrations, seed, and the app on port 8090 reachable from a phone on the same Wi-Fi (`-- --reset` wipes the demo data). See `docs/specs/dgtl-pass/18-iphone-demo.md` |
 
 ## Surfaces
 
@@ -67,6 +69,10 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
 - `/generation-jobs`, `/artifacts` — immutable generation context, bounded agent jobs,
   validation/review, artifact versions, test deployment, and exact Message attachments.
 - `/api/core/health` — authenticated, team-scoped worker/outbox/import/exception health.
+- `/passes` — DGTL Pass (Core, `pass.view`): issue branded passes, open them on a phone
+  from a QR, revoke, live door feed. `/p/[credential]` is the holder's pass page (public,
+  never cached or indexed; the URL is the credential) with Apple/Google Wallet when a
+  provider is configured. `/scan` is the door scanner for staff with `pass.verify`.
 
 The admin shell has eight tabs: **pipeline**, **funding**, **prospecting**,
 **accounts**, **outreach**, **calls**, **tenants**, **team**. Its styling lives in
@@ -112,6 +118,7 @@ Run in order by `npm run migrate`; each file is idempotent.
 | `013_worklog_operations_phase_4.sql` | Generic approved integration operations (idempotent, quarantine-aware) and external-link lifecycle/snapshot columns; no Worklog data copies |
 | `014_dgtl_chat_command_layer.sql` | Assistant threads/messages/tool-run audit and ActionProposals (payload hash, precondition snapshot, expiry, CAS states, one live proposal per exact payload) |
 | `015_passes.sql` | DGTL Pass: `issuer`/`verifier` roles, password-less (Google) users, `user_identities`, pass types, holders, passes (hashed credentials), deliveries, the scan ledger, Wallet registrations (`docs/specs/dgtl-pass/`) |
+| `016_pass_wallet_provider.sql` | DGTL Pass: the holder's hosted Apple Wallet copy (provider serial, signed `.pkpass`, Google save link, sync errors), so one pass makes one provider pass |
 
 The Core architecture, legacy mapping, and spreadsheet-import contract are documented
 in [`docs/architecture/dgtl-core-phase-1.md`](../docs/architecture/dgtl-core-phase-1.md).

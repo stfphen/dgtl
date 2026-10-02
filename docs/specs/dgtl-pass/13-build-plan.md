@@ -89,6 +89,29 @@ existing `/api/admin/*` route (T-R1).
 
 ## P2 · Pass engine: types, issue, holder page, QR (≈ 3 days)
 
+**Status 2026-10-02: built for the demo** on `feat/pass-p2-p3-demo`, with Apple Wallet
+through WalletWallet pulled forward from P5 (see [07](07-apple-wallet.md) and
+[18-iphone-demo.md](18-iphone-demo.md)).
+
+| Task | State | Notes |
+|---|---|---|
+| P2.1 | done | `lib/passes/store.js` |
+| P2.2 | partial | `lib/passes/settings.js` reads tenant `passes` (timezone, cutoff, gates, brand kit) with defaults. The tenant editor section is open |
+| P2.3 | open | Tier colours are still in `tiers.js`; pages get them as inline variables |
+| P2.4 | partial | Preset install only (`POST /api/admin/pass-types {action:"install_presets"}`). No editor |
+| P2.5 | partial | Issue, list, detail, overview, revoke. Suspend, rotate, extend and resend are open |
+| P2.6 | partial | QR as SVG (`qrcode`). Code 128 is open |
+| P2.7 | done | `/p/[credential]`, matching the design target |
+| P2.8 | partial | Core `/passes`: overview, issue with an "open on your phone" QR, list, revoke, live scans. No live email preview (P4) |
+
+The P2 gate items that are built were verified on real Postgres 16 through
+`npm run demo:passes`:
+- all five tiers were issued and their pages render;
+- revoke hides the QR;
+- a double-click issue creates one pass.
+
+`npm test` covers them too.
+
 | # | Task | Files |
 |---|---|---|
 | P2.1 | Port `repository.js` → `lib/passes/store.js`; add list/detail/overview queries (effective status in SQL, see [03](03-data-model.md#pass-lifecycle)); 23505 retry wrapper | `lib/passes/store.js` |
@@ -112,6 +135,30 @@ each pass page on a phone, and sees the right tier, state and QR. Revoke → the
 ---
 
 ## P3 · Scanner ★ (≈ 3 days)
+
+**Status 2026-10-02: the scanner works end to end; the device matrix is open.**
+
+| Task | State | Notes |
+|---|---|---|
+| P3.1 | done | Verify (60/min per verifier, 600/min per team) and session |
+| P3.2 | partial | Layout and `scan.css` on the tokens. No manifest or icons yet |
+| P3.3 | mostly | `zxing-wasm` 3.1.4, self-hosted and hash-pinned; verdict screens; sounds; haptics; wake lock; torch; recent strip; gate picker |
+| P3.4 | done | Manual entry with the 10-miss lockout |
+| P3.5 | partial | Live scans on the Passes overview; no `/passes/scans` page |
+| P3.6 | done | T-C1..T-C3 in `tests/passes.pg.test.js`, as a release-gate step on Postgres 16 |
+
+Notes on P3.3:
+- Decoding runs on the main thread at about 8 fps, not yet in a Worker.
+- A photo fallback (`<input capture>`) decodes the same way and works over plain http,
+  where live camera can't.
+
+Verified on real Postgres: 20 parallel scans of one single-use pass admitted exactly once
+(1 valid, 19 used), over HTTP and in T-C1.
+
+Still open:
+- the HTTPS device matrix on iPhone and Android;
+- the PWA manifest;
+- moving decoding into a Worker.
 
 | # | Task | Files |
 |---|---|---|

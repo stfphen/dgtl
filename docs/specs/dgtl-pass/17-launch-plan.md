@@ -1,11 +1,11 @@
 # 17 · Status, launch timeline and production checklist
 
-**As of Thursday 2026-10-01 (late update: Phase 1 built, PR open).** This is the canonical record. Update the status column as items land,
+**As of Friday 2026-10-02 (Phases 2–3 built for the iPhone demo; Wallet without an Apple account).** This is the canonical record. Update the status column as items land,
 and log dates in `brain/50-Audit-Log/51-Timeline.md`.
 
 ## Status at a glance
 
-**Design and specification are complete. Phase 1 (foundation) is built and tested on a branch. Nothing is deployed.**
+**Design and specification are complete. Phases 1–3 (foundation, pass engine, scanner) are built and tested on branches and demo on a real iPhone over Wi-Fi (`npm run demo:passes`, [18](18-iphone-demo.md)). Nothing is deployed.**
 
 | Workstream | Status | Evidence |
 |---|---|---|
@@ -15,7 +15,10 @@ and log dates in `brain/50-Audit-Log/51-Timeline.md`.
 | Brand + UI design (branded DGTL card system, 4 tier colours) | ✅ Done | 12 design targets in `previews/`, built to `engine/dgtl-brand-kit` |
 | Phase 0: release-gate CI | 🟡 Exists on `main` (`core-release-gate.yml`); was red, **fix in [PR #44](https://github.com/stfphen/dgtl/pull/44): green on GitHub (4/4), awaiting merge** | Locally 536/536 tests, build 63/63, audit 0. My separate `platform-ci.yml` retired as redundant |
 | Phase 1: foundation | ✅ Built, in review | `feat/pass-p1-foundation`: 613/613 tests (536 + 77 new), build 63/63, audit 0, migrate 001–015 twice, browser e2e (verifier → `/scan`, refused by `/home`, `/admin`, workspace APIs). Live Google round trip waits on the OAuth client (P0.6) |
-| Phases 2–6: platform code | ⬜ Not started | — |
+| Phase 2: pass engine + holder page | 🟡 Built for the demo | `feat/pass-p2-p3-demo`: Core `/passes` (issue, open-on-phone QR, revoke, live feed), `/p/[credential]` in all four tier colours, migration 016. Open: pass-type editor, suspend/rotate/extend, Code 128, tenant editor section |
+| Phase 3: scanner | 🟡 Works end to end | `/scan`: zxing-wasm (self-hosted), verdict screens, manual entry, photo fallback for http. **T-C1 on real Postgres: 20 parallel scans → 1 admit.** Open: HTTPS device matrix, PWA manifest, Worker decode |
+| Apple Wallet | 🟡 Built via WalletWallet (no Apple Developer account) | Free plan = colour preset + text; needs Stephen's free key in `platform/.env`. Own certificate (P5) still the launch recommendation |
+| Phases 4–6: delivery, own-cert Wallet, hardening | ⬜ Not started | — |
 | External accounts (Apple, Twilio, Google, Resend, DNS) | ⬜ Not started | Stephen's |
 | Repo: local `main` vs GitHub `main` | ✅ Reconciled + pushed | Merge `5de31e0`; no regressions (535/536 = the pre-existing stale test, fixed in #44) |
 | Platform: production advisories | 🟡 Fixed in #44, pending merge | The Aug 14 overrides had fixed the old three. New ones since (critical Next RCE, axios, sharp/libheif…) are patched to Next 15.5.27 and sharp 0.35.5; no Next 16 needed |
@@ -33,6 +36,11 @@ reconcile main ─ push + CI required ─ P1 ─ P2 ─ P3 ★ ─ P4 ─ P5 ─
 The two external approvals are the real schedule risk: Twilio A2P 10DLC / toll-free
 verification (1–3 weeks) and Apple Developer organisation enrolment (days to 2 weeks if a D-U-N-S
 number is needed). **Start both by Friday Oct 2.**
+
+**Update 2026-10-02:** Apple Wallet no longer blocks the demo or the pilot. WalletWallet signs
+with its own Pass Type ID (free, 1,000 passes a month). The Apple enrolment moves from the
+critical path to a launch-quality upgrade: full DGTL art in Wallet, holder data kept
+first-party, and $99/year instead of $39/month for branded Pro.
 
 ## Timeline
 
@@ -146,7 +154,8 @@ started · ⛔ blocker.
 | # | Decision | Needed by | Recommendation |
 |---|---|---|---|
 | 1 | ~~Approve reconciling `main`~~ | done Oct 1 | Merged and pushed |
-| 2 | Start Apple Developer + Twilio registration | **Fri Oct 2** | Both today: they're the critical path |
+| 2 | Start Apple Developer + Twilio registration | **Fri Oct 2** | Twilio today (critical path). Apple: still recommended for launch, no longer blocking (WalletWallet covers Wallet until then) |
+| 2b | Sign up for a free WalletWallet key, put it in `platform/.env` | before the demo | Yes: 2 minutes, turns on "Add to Apple Wallet" ([18](18-iphone-demo.md)) |
 | 3 | `sales` role: issue + scan passes? | Mon Oct 5 | Yes (current default) |
 | 4 | Pass host | Tue Oct 6 | `pass.dgtl.ltd`; it's permanent once QR codes ship |
 | 5 | Merge PR #44 (release-gate fix) | **Fri Oct 2** | Merge once its checks are green |

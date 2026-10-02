@@ -1,0 +1,173 @@
+/* ==========================================================================
+   DGTL Pass — the door scanner (/scan).
+   Design target: docs/specs/dgtl-pass/previews/scanner.html.
+
+   The kit's quietest register: black ladder, glass top bar, white viewfinder,
+   gold only on the one primary action and the VIP band. Verdicts fill the
+   screen with the functional colours and black text, because a dark door needs
+   an answer at arm's length. Tokens only (app/dgtl-tokens.css via .dgtl-pass).
+   ========================================================================== */
+
+html:has(.sc-root),
+html:has(.sc-root) body { background-color: black; }
+
+html .sc-root {
+  min-height: 100svh; display: flex; flex-direction: column;
+  background: var(--bg); color: var(--text-primary); font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+}
+html .sc-root * { box-sizing: border-box; }
+html .sc-root .dgtl-logo__bolt { fill: var(--gold); }
+html .sc-root .sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ---- top bar ---- */
+html .sc-bar {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter);
+  border-bottom: 1px solid var(--border-subtle); position: relative; z-index: 2;
+}
+html .sc-wordmark { height: 20px; width: auto; color: var(--text-primary); }
+html .sc-gate {
+  display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: var(--r-pill); padding: 6px 12px; background: var(--surface);
+}
+html .sc-gate select { appearance: none; border: 0; background: transparent; color: inherit; font: inherit; padding: 0 2px; }
+html .sc-online { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--success); }
+html .sc-online::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+/* ---- buttons (kit app recipe) ---- */
+html .sc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px;
+  border: 1px solid var(--border-strong); border-radius: var(--r-control); background: transparent;
+  color: var(--text-primary); font: inherit; font-size: 15px; font-weight: 700; text-decoration: none; cursor: pointer;
+}
+html .sc-btn.is-primary { background: var(--gold); border-color: var(--gold); color: var(--on-blue); }
+html .sc-btn.is-ghost { border-color: transparent; color: var(--text-dim); font-weight: 500; }
+html .sc-btn.is-on { border-color: var(--text-primary); }
+html .sc-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+html .sc-btn:focus-visible, html .sc-code-input:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--gold-ring); border-color: var(--gold); }
+html .sc-wide { width: 100%; }
+html .sc-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+/* ---- start / signed out / not set up ---- */
+html .sc-start {
+  flex: 1; display: grid; place-content: center; justify-items: center; gap: 14px;
+  padding: 32px 28px calc(env(safe-area-inset-bottom) + 32px); text-align: center; max-width: 440px; margin: 0 auto; width: 100%;
+}
+html .sc-start h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; }
+html .sc-start p { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+html .sc-start .sc-btn.is-primary { margin-top: 10px; }
+html .sc-spark { width: 56px; height: auto; }
+
+/* ---- scanning ---- */
+html .sc-scan { flex: 1; display: flex; flex-direction: column; }
+html .sc-cam {
+  position: relative; flex: 1; min-height: 52svh; display: grid; place-items: center; overflow: hidden;
+  background: radial-gradient(90% 60% at 50% 40%, var(--surface-3), var(--bg));
+}
+html .sc-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+html .sc-finder { position: relative; width: min(64vw, 260px); aspect-ratio: 1; }
+html .sc-finder i { position: absolute; width: 42px; height: 42px; border: 3px solid var(--text-primary); border-radius: 4px; }
+html .sc-finder i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+html .sc-finder i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+html .sc-finder i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+html .sc-finder i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+html .sc-cam-hint {
+  position: absolute; bottom: 18px; left: 0; right: 0; margin: 0; text-align: center;
+  font-size: 14px; font-weight: 600; color: var(--text-primary); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+html .sc-cam-error {
+  position: absolute; top: 14px; left: 14px; right: 14px; margin: 0; padding: 10px 12px; font-size: 13px;
+  border-radius: var(--r-control); background: var(--error-tint); color: var(--error);
+}
+html .sc-nocam { position: relative; display: grid; gap: 16px; justify-items: center; padding: 28px; text-align: center; max-width: 360px; }
+html .sc-nocam p { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+html .sc-toast {
+  margin: 12px 16px 0; padding: 10px 12px; border-radius: var(--r-control); font-size: 13px;
+  background: var(--warning-tint); color: var(--warning);
+}
+html .sc-controls { display: flex; gap: 10px; padding: 14px 16px; }
+html .sc-controls .sc-btn { flex: 1; min-height: 44px; font-size: 14px; }
+html .sc-recent {
+  list-style: none; margin: 0; border-top: 1px solid var(--border);
+  padding: 6px 16px calc(env(safe-area-inset-bottom) + 12px); display: grid; gap: 2px;
+}
+html .sc-recent li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; font-size: 13px; padding: 7px 0; }
+html .sc-recent li span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html .sc-recent li span:last-child { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+html .sc-pill {
+  display: inline-flex; border-radius: var(--r-pill); padding: 3px 9px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+}
+html .sc-pill.is-success { background: var(--success-tint); color: var(--success); }
+html .sc-pill.is-warning { background: var(--warning-tint); color: var(--warning); }
+html .sc-pill.is-error { background: var(--error-tint); color: var(--error); }
+
+/* ---- manual entry ---- */
+html .sc-manual { flex: 1; display: grid; align-content: start; gap: 12px; padding: 28px 20px; max-width: 440px; margin: 0 auto; width: 100%; }
+html .sc-manual h1 { margin: 0; font-size: 22px; font-weight: 700; }
+html .sc-eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold-tan); }
+html .sc-manual__form { display: grid; gap: 12px; }
+html .sc-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+html .sc-code-input {
+  width: 100%; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 26px; font-weight: 700;
+  letter-spacing: 0.2em; text-align: center; padding: 16px; border: 1px solid var(--border); border-radius: var(--r-control);
+  background: var(--surface); color: var(--text-primary); text-transform: uppercase;
+}
+html .sc-code-input::placeholder { color: var(--placeholder); }
+html .sc-note { margin: 0; font-size: 13px; color: var(--text-dim); }
+
+/* ---- verdicts: the one surface that fills the screen with the functional colours ---- */
+html .sc-verdict-wrap {
+  flex: 1; display: flex; flex-direction: column; width: 100%; min-height: 100svh; padding: 0; border: 0;
+  background: none; font: inherit; color: inherit; text-align: center; cursor: pointer;
+}
+html .sc-verdict {
+  flex: 1; display: grid; align-content: center; justify-items: center; gap: 10px;
+  padding: calc(env(safe-area-inset-top) + 32px) 28px calc(env(safe-area-inset-bottom) + 32px); color: var(--bg);
+}
+html .sc-verdict.is-admit { background: var(--success); }
+html .sc-verdict.is-warn { background: var(--warning); }
+html .sc-verdict.is-deny { background: var(--error); }
+html .sc-v-icon {
+  width: 104px; height: 104px; border-radius: 50%; border: 4px solid currentColor;
+  display: grid; place-items: center; margin-bottom: 8px;
+}
+html .sc-v-icon svg { width: 52px; height: 52px; }
+html .sc-v-icon.is-outline { border-color: var(--error); color: var(--error); }
+html .sc-v-title { font-size: 32px; font-weight: 800; letter-spacing: -0.6px; }
+html .sc-v-name { font-size: 30px; font-weight: 700; letter-spacing: -0.4px; margin-top: 4px; overflow-wrap: anywhere; }
+html .sc-v-tier {
+  display: inline-flex; align-items: center; gap: 8px; background: var(--bg); color: var(--tier);
+  border-radius: var(--r-pill); padding: 7px 14px 7px 10px; font-size: 12px; font-weight: 800;
+  letter-spacing: 0.15em; text-transform: uppercase; margin-top: 4px;
+}
+html .sc-v-tier img { height: 16px; width: auto; }
+html .sc-v-detail { display: grid; gap: 2px; font-size: 17px; font-weight: 600; opacity: 0.8; line-height: 1.45; max-width: 32ch; }
+html .sc-v-foot { font-size: 13px; font-weight: 600; opacity: 0.7; margin-top: 18px; }
+html .sc-v-progress { width: 160px; height: 4px; border-radius: var(--r-pill); background: rgba(0, 0, 0, 0.18); overflow: hidden; margin-top: 6px; }
+html .sc-v-progress span { display: block; height: 100%; width: 100%; background: var(--bg); transform-origin: left; animation: sc-drain 2.5s linear forwards; }
+@keyframes sc-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+html .sc-vip-band {
+  display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--bg); color: var(--gold);
+  padding: calc(env(safe-area-inset-top) + 12px) 12px 12px; font-size: 13px; font-weight: 800;
+  letter-spacing: 0.2em; text-transform: uppercase;
+}
+html .sc-vip-band img { height: 18px; width: auto; }
+html .sc-vip-band + .sc-verdict { padding-top: 32px; }
+
+/* ---- offline: black, never a verdict colour; still means don't admit ---- */
+html .sc-offline {
+  flex: 1; display: grid; align-content: center; justify-items: center; gap: 12px;
+  padding: 32px 28px; text-align: center; max-width: 440px; margin: 0 auto;
+}
+html .sc-offline h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+html .sc-offline p { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+
+@media (prefers-reduced-motion: reduce) {
+  html .sc-v-progress span { animation: none; }
+}

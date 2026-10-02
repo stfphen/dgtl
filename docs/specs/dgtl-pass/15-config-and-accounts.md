@@ -23,6 +23,12 @@
 | `PASSKIT_SIGNER_KEY_PASSPHRASE` | P5 | if the key is encrypted | — | |
 | `PASSKIT_WWDR_CERT_B64` | P5 | for Wallet | base64 PEM (WWDR G4) | |
 | `PASS_WALLET_BADGE_URL` | P5 | for launch | https PNG | official Apple badge |
+| `WALLETWALLET_API_KEY` | P2 (built) | for hosted Wallet | `ww_live_` + 32 hex | WalletWallet signs with its own Pass Type ID: no Apple account. Server-only; `platform/.env`, never committed |
+| `WALLETWALLET_BRANDING` | P2 (built) | no | `preset` (Free) · `full` (Pro) | Pro sends the tier face colour + logo URL |
+| `WALLETWALLET_API_URL` | P2 (built) | no | `https://api.walletwallet.dev` | https only; tests point it elsewhere |
+| `PASS_WALLET_PROVIDER` | P2 (built) | no | `walletwallet` · `apple` | Unset: `apple` when the PASSKIT_* set is complete, else `walletwallet` when its key is set |
+| `PASSES_DEFAULT_TIMEZONE` | P2 (built) | no | `America/Toronto` | Fallback when a tenant has no `passes.timeZone` |
+| `NEXT_DEV_ALLOWED_ORIGINS` | P2 (built) | dev only | `192.168.2.131` | A phone on the Wi-Fi loading the dev server; set by `npm run demo:passes`. A LAN `PASS_PUBLIC_BASE_URL` (http) is accepted outside production only |
 | `PASSES_TEST_DATABASE_URL` | tests | CI | `postgres://…` | enables T-C* |
 
 Validation at boot lives in `lib/passes/config.js`. A **missing optional provider disables that
@@ -31,6 +37,13 @@ feature**, so the UI hides Wallet and SMS shows "not configured". A **malformed*
 deploy, not at the door.
 
 ## External accounts (start in P0; lead times noted)
+
+### WalletWallet: hosted Wallet signing (lead time: minutes)
+
+Sign up at https://www.walletwallet.dev/signup/ (free, no card), copy the team key into
+`WALLETWALLET_API_KEY`. That's all a phone demo needs. Keys are team-owned and rotating one
+revokes the old at once. Before real holders: list WalletWallet as a processor in the
+privacy notice.
 
 ### Apple Developer: Wallet (lead time: days, if enrolling)
 - [ ] Apple Developer Program, organisation account (requires a D-U-N-S number)

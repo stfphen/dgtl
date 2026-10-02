@@ -1,5 +1,6 @@
 import CoreShell from "../../components/core/CoreShell";
 import { getCorePageContext } from "../../lib/core/server";
+import { canUsePass } from "../../lib/permissions";
 import { manrope } from "../../lib/fonts";
 import "../dgtl-tokens.css";
 import "../admin/dgtl-admin.css";
@@ -37,7 +38,7 @@ export default async function CoreLayout({ children }) {
   const { session } = await getCorePageContext();
   return (
     <div className={manrope.variable} style={{ display: "contents" }}>
-      <CoreShell user={{ ...session.user, email: session.email, role: session.role }}>
+      <CoreShell user={{ ...session.user, email: session.email, role: session.role, canViewPasses: canUsePass(session, "pass.view") }}>
         {children}
       </CoreShell>
     </div>

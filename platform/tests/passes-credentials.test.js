@@ -110,3 +110,12 @@ test("parseScannedPayload refuses anything that is not ours before it reaches th
     credential
   });
 });
+
+test("http pass links are accepted only from hosts the dev config marks insecure-ok", () => {
+  const credential = "0123456789ABCDEFGHJKMNPQRS";
+  const lan = `http://192.168.2.10:8090/p/${credential}`;
+  assert.deepEqual(parseScannedPayload(lan, { allowedHosts: ["192.168.2.10"] }), { kind: "invalid", reason: "insecure_url" });
+  assert.deepEqual(parseScannedPayload(lan, { allowedHosts: ["192.168.2.10"], insecureHosts: ["192.168.2.10"] }), { kind: "credential", credential });
+  assert.deepEqual(parseScannedPayload(lan, { allowedHosts: [], insecureHosts: ["192.168.2.10"] }), { kind: "invalid", reason: "foreign_host" }, "insecure-ok never widens the allow-list");
+  assert.deepEqual(parseScannedPayload(`http://192.168.2.99/p/${credential}`, { allowedHosts: ["192.168.2.10", "192.168.2.99"], insecureHosts: ["192.168.2.10"] }), { kind: "invalid", reason: "insecure_url" });
+});

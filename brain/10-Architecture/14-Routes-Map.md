@@ -3,7 +3,7 @@ title: 14 · Routes Map
 type: reference
 tags: [architecture]
 status: stable
-updated: 2026-08-14
+updated: 2026-10-02
 source: app/
 ---
 
@@ -15,7 +15,9 @@ API routes are `route.js` handlers.
 ## Pages
 | Route | File | Purpose |
 |---|---|---|
-| `/scan` | `app/scan/page.jsx` | DGTL Pass door scanner. Phase 1: signed-in landing for `verifier`/`issuer` staff (pass-only roles are redirected here from `/home`, `/admin`); camera scanner arrives in Phase 3. [[2I-Passes]] |
+| `/scan` | `app/scan/page.jsx` → `components/scan/Scanner.jsx` | DGTL Pass door scanner (`pass.verify`). Pass-only roles land here.<br>• Decoder: `zxing-wasm`, self-hosted at `/scan/zxing_reader.wasm`<br>• Live camera on HTTPS/localhost; a photo fallback on plain http<br>• Manual entry with lockout; verdict screens in the functional colours. [[2I-Passes]] |
+| `/passes` | `app/(core)/passes/page.jsx` → `components/passes/PassesWorkspace.jsx` | Core module (`pass.view`):<br>• issue, with an "open on your phone" QR<br>• recent passes with QR and revoke<br>• tier bars, live scans every 10 s |
+| `/p/[credential]` | `app/p/[credential]/page.jsx` | **Public** holder pass page: branded card per tier, QR while usable, Wallet buttons when a provider is set.<br>• `no-store`, `no-referrer`, `noindex`<br>• title never has the holder's name<br>• every miss gets the same `app/p/not-found.jsx` |
 | `/` | `app/page.jsx` | Public tenant page, host-resolved via `getTenantForHost`; renderer picked by the config's `template` field via `components/templates/registry.js` (default FunnelPage; `"showcase"` → ShowcasePage, `"authority"` → AuthorityPage, `"agency"` → AgencyPage, `"platform"` → PlatformPage). Since 2026-07-16 also exposes host-resolved `generateMetadata` via the template's `buildMetadata` (funnel tenants keep inheriting layout metadata). `app.dgtlmedia.io` → `dgtl-platform`. |
 | `/t/[slug]` | `app/t/[slug]/page.jsx` | Per-tenant page preview; `?preview=draft` renders the draft config. Same template-registry renderer selection + per-template `generateMetadata`. |
 | `/admin` | `app/admin/page.jsx` | The admin shell (server component importing all admin components). [[21-Admin-Shell]] |
@@ -45,6 +47,19 @@ data-model migration cannot break tenant-domain routing. See [[13-Data-Model]].
 |---|---|---|---|
 | `/api/auth/google/start` | GET | Begin staff Google sign-in (state + nonce + PKCE in a signed 10-min cookie) | Rate limited; `next` allow-listed. [[2I-Passes]] |
 | `/api/auth/google/callback` | GET | Verify state, exchange code, verify ID token (JWKS, aud, iss, nonce, email_verified), invite-only resolve, create session | Pass-only roles land on `/scan`; every failure goes to `/admin/login?error=` |
+| `/p/[credential]/wallet.pkpass` | GET | The holder's signed Apple Wallet pass (WalletWallet today). Created on first tap, then served from the stored copy | 20/min per IP. Same 404 as the page for dead or unknown passes. Provider failure → back to the page with `?wallet=unavailable` |
+| `/p/[credential]/google-wallet` | GET | 303 to Google's save link for the same provider pass | Same limits and 404 rules |
+
+## DGTL Pass API (session + capability: `requirePassCapability`, T-R2 in `tests/passes-routes.test.js`)
+| Route | Method | Capability | Purpose |
+|---|---|---|---|
+| `/api/admin/passes` | GET / POST | `pass.view` / `pass.issue` | List (no credentials) / issue (idempotent on `issueRequestId`; returns the pass link) |
+| `/api/admin/passes/detail` | GET | `pass.view` | One pass + its links (the credential) |
+| `/api/admin/passes/overview` | GET | `pass.view` | KPIs for the tenant business day, by tier, last 12 scans |
+| `/api/admin/passes/action` | POST | `pass.revoke` | `revoke` (also deletes the Wallet copy, best effort) |
+| `/api/admin/pass-types` | GET / POST | `pass.view` / `pass.configure` | List / `install_presets` (the five DGTL tiers) |
+| `/api/scan/session` | GET | `pass.verify` | User, team, tenants, gates, allowed hosts |
+| `/api/scan/verify` | POST | `pass.verify` | The scan transaction; always 200 for a verdict; 60/min per verifier, 600/min per team |
 | `/api/leads` | POST | Create a lead from the funnel. | ⚠️ public; can set internal fields (security M1/M2). [[61-Security-Review]] |
 | `/api/funding/survey` | POST | Funding scan: teaser w/o email, full result + `funding_scan` lead w/ email; re-scores server-side. | ⚠️ public; SSRF vector via website field (C2). |
 | `/api/checkout` | POST | Resolves tenant+package price server-side, captures lead, redirects to Stripe (or falls back). | [[27-Checkout-Payments]] |
