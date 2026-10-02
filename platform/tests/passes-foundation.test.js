@@ -26,10 +26,10 @@ await db.exec(`
   insert into teams (id, name, slug) values ('team_venue', 'Venue', 'venue') on conflict do nothing;
 `);
 
-test("migration 015 is the last file and every migration re-runs cleanly on top of itself", async () => {
+test("the pass migrations are the last files and every migration re-runs cleanly on top of itself", async () => {
   const files = await migrationFiles();
-  assert.equal(files.at(-1), "015_passes.sql");
-  await applyMigrations(db); // second pass over 001-015: each must be idempotent
+  assert.deepEqual(files.slice(-2), ["015_passes.sql", "016_pass_wallet_provider.sql"]);
+  await applyMigrations(db); // second pass over 001-016: each must be idempotent
   const { rows } = await db.query(
     `select table_name from information_schema.tables
       where table_name in ('pass_types','pass_holders','passes','pass_deliveries','pass_scans','pass_wallet_registrations','user_identities')

@@ -1,12 +1,26 @@
 // DGTL Pass — environment configuration.
 //
-// Missing optional settings disable a feature (no Apple certificate means no
+// Missing optional settings disable a feature (no Wallet provider means no
 // Wallet button). Malformed settings throw, so a bad deploy is caught when the
 // first pass route loads, not at the door. Spec: docs/specs/dgtl-pass/15-config-and-accounts.md.
 
 import { parseCredentialSecrets } from "./credentials.js";
 
 let cached = null;
+
+export const WALLET_PROVIDERS = ["walletwallet", "apple"];
+const WALLETWALLET_KEY = /^ww_(live|test)_[0-9a-f]{32}$/i;
+
+// A phone on the same Wi-Fi reaches a dev server by its LAN address, and a
+// QR code has to carry an address the phone can open. Private ranges and
+// mDNS (.local) names are allowed over http outside production only.
+function isPrivateHost(hostname) {
+  if (hostname.endsWith(".local")) return true;
+  const octets = hostname.split(".").map(Number);
+  if (octets.length !== 4 || octets.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
+  const [a, b] = octets;
+  return a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
+}
 
 function parseBaseUrl(raw, { production }) {
   if (!raw) return null;
@@ -17,10 +31,13 @@ function parseBaseUrl(raw, { production }) {
     throw new Error(`PASS_PUBLIC_BASE_URL is not a URL: "${raw}".`);
   }
   const local = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname.endsWith(".localhost");
-  if (url.protocol !== "https:" && !(local && url.protocol === "http:")) {
-    throw new Error("PASS_PUBLIC_BASE_URL must be https (http is allowed only on localhost).");
+  const lan = !production && isPrivateHost(url.hostname);
+  if (url.protocol !== "https:" && !((local || lan) && url.protocol === "http:")) {
+    throw new Error("PASS_PUBLIC_BASE_URL must be https (http is allowed only on localhost, or a LAN address in development).");
   }
-  if (production && local) throw new Error("PASS_PUBLIC_BASE_URL cannot be localhost in production.");
+  if (production && (local || isPrivateHost(url.hostname))) {
+    throw new Error("PASS_PUBLIC_BASE_URL cannot be localhost or a private address in production.");
+  }
   if (url.pathname !== "/" || url.search || url.hash) {
     throw new Error("PASS_PUBLIC_BASE_URL must be an origin with no path, query or fragment.");
   }
@@ -28,8 +45,48 @@ function parseBaseUrl(raw, { production }) {
 }
 
 /**
+ * Apple Wallet. Two ways to get a signed .pkpass:
+ *   walletwallet  WalletWallet's API signs with its own Pass Type ID, so no Apple
+ *                 Developer account is needed. Free plan: colour presets and text
+ *                 only; "full" branding (logo, strip art, tier colours) needs Pro.
+ *   apple         DGTL's own Pass Type ID certificate (Phase 5, not built yet).
+ * PASS_WALLET_PROVIDER picks one; unset, a complete PASSKIT_* set means apple,
+ * else a WalletWallet key means walletwallet.
+ */
+function readWalletConfig(env) {
+  const appleConfigured = Boolean(
+    env.PASSKIT_TEAM_ID && env.PASSKIT_PASS_TYPE_ID && env.PASSKIT_SIGNER_CERT_B64 && env.PASSKIT_SIGNER_KEY_B64 && env.PASSKIT_WWDR_CERT_B64
+  );
+  const apiKey = String(env.WALLETWALLET_API_KEY || "").trim();
+  const explicit = String(env.PASS_WALLET_PROVIDER || "").trim().toLowerCase();
+  if (explicit && !WALLET_PROVIDERS.includes(explicit)) {
+    throw new Error(`PASS_WALLET_PROVIDER must be one of ${WALLET_PROVIDERS.join(", ")}.`);
+  }
+  if (apiKey && !WALLETWALLET_KEY.test(apiKey)) {
+    throw new Error("WALLETWALLET_API_KEY is malformed (expected ww_live_ followed by 32 hex characters).");
+  }
+  const provider = explicit || (appleConfigured ? "apple" : apiKey ? "walletwallet" : null);
+  if (provider === "walletwallet" && !apiKey) throw new Error("PASS_WALLET_PROVIDER=walletwallet needs WALLETWALLET_API_KEY.");
+  if (provider === "apple" && !appleConfigured) throw new Error("PASS_WALLET_PROVIDER=apple needs the full PASSKIT_* certificate set.");
+
+  const branding = String(env.WALLETWALLET_BRANDING || "preset").trim().toLowerCase();
+  if (!["preset", "full"].includes(branding)) throw new Error('WALLETWALLET_BRANDING must be "preset" (Free) or "full" (Pro).');
+  let apiUrl = "https://api.walletwallet.dev";
+  if (env.WALLETWALLET_API_URL) {
+    const parsed = new URL(env.WALLETWALLET_API_URL);
+    if (parsed.protocol !== "https:") throw new Error("WALLETWALLET_API_URL must be https.");
+    apiUrl = parsed.origin;
+  }
+  return {
+    provider,
+    appleConfigured,
+    walletwallet: provider === "walletwallet" ? { apiKey, apiUrl, branding } : null
+  };
+}
+
+/**
  * Read and validate pass configuration from an env object (default process.env).
- * Returns { enabled, baseUrl, allowedScanHosts, secrets, activeKeyId, walletEnabled, smsEnabled }.
+ * Returns { enabled, baseUrl, allowedScanHosts, insecureScanHosts, secrets, activeKeyId, wallet, walletEnabled, smsEnabled, dryRun }.
  */
 export function readPassesConfig(env = process.env) {
   const production = env.NODE_ENV === "production";
@@ -47,19 +104,24 @@ export function readPassesConfig(env = process.env) {
     .map((host) => host.trim().toLowerCase())
     .filter(Boolean);
   const allowedScanHosts = [...new Set([...(baseUrl ? [new URL(baseUrl).hostname] : []), ...hostList])];
+  // http QR codes are accepted only from the base URL's own host, and only
+  // when that base URL is itself http (localhost or LAN, never production).
+  const insecureScanHosts = baseUrl?.startsWith("http:") ? [new URL(baseUrl).hostname] : [];
 
-  const walletEnabled = Boolean(
-    env.PASSKIT_TEAM_ID && env.PASSKIT_PASS_TYPE_ID && env.PASSKIT_SIGNER_CERT_B64 && env.PASSKIT_SIGNER_KEY_B64 && env.PASSKIT_WWDR_CERT_B64
-  );
+  const wallet = readWalletConfig(env);
 
   return {
     // Issuing needs a public URL for the QR and a key to derive credentials.
     enabled: Boolean(baseUrl && secrets.size && activeKeyId),
     baseUrl,
     allowedScanHosts,
+    insecureScanHosts,
     secrets,
     activeKeyId,
-    walletEnabled,
+    wallet,
+    // Only providers that are built count. Signing with DGTL's own Apple
+    // certificate is build-plan Phase 5; until then "apple" is recognised but off.
+    walletEnabled: wallet.provider === "walletwallet",
     smsEnabled: Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_MESSAGING_SERVICE_SID),
     dryRun: String(env.PASSES_DRY_RUN || "").toLowerCase() === "true"
   };

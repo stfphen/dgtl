@@ -104,6 +104,10 @@ jobs:
         run: node --test tests/stage6-5-internal-alpha.test.js
       - name: Run DGTL brand-token contract tests explicitly
         run: node --test tests/brand-tokens.test.js
+      - name: Run DGTL Pass race tests on real PostgreSQL (T-C1..T-C3)
+        env:
+          PASSES_PG_TEST_URL: postgres://postgres:postgres@127.0.0.1:5432/dgtl_ci
+        run: node --test tests/passes.pg.test.js
       - name: Run complete deterministic platform suite
         run: npm test
       - name: Rehearse import through duplicate-safe test delivery

@@ -128,13 +128,16 @@ export function credentialUrl(baseUrl, credential) {
 // What the scanner decoded -> what the verify endpoint should look up.
 //
 //   https://<allowed host>/p/<credential>  -> { kind: "credential" }   (QR)
+//   http://<insecure host>/p/<credential>  -> same, only for hosts the caller
+//                                              lists in insecureHosts (a dev
+//                                              base URL on the LAN; never in production)
 //   <26-char credential>                   -> { kind: "credential" }   (Code 128, manual)
 //   <8-char short code, with or w/o dash>  -> { kind: "short_code" }   (manual entry)
 //   anything else                          -> { kind: "invalid" }
 //
 // A URL on any other host is rejected before it reaches the database. Scanning a
 // random QR at the door must never become a lookup of attacker-chosen input.
-export function parseScannedPayload(raw, { allowedHosts = [] } = {}) {
+export function parseScannedPayload(raw, { allowedHosts = [], insecureHosts = [] } = {}) {
   const text = String(raw ?? "").trim();
   if (!text) return { kind: "invalid", reason: "empty" };
   if (text.length > 512) return { kind: "invalid", reason: "too_long" };
@@ -148,7 +151,8 @@ export function parseScannedPayload(raw, { allowedHosts = [] } = {}) {
     }
     const host = url.hostname.toLowerCase();
     const local = host === "localhost" || host === "127.0.0.1" || host.endsWith(".localhost");
-    if (url.protocol !== "https:" && !(local && url.protocol === "http:")) {
+    const insecureOk = local || insecureHosts.map((h) => h.toLowerCase()).includes(host);
+    if (url.protocol !== "https:" && !(insecureOk && url.protocol === "http:")) {
       return { kind: "invalid", reason: "insecure_url" };
     }
     if (!allowedHosts.map((h) => h.toLowerCase()).includes(host)) {
