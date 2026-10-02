@@ -20,6 +20,8 @@ import {
   WalletProviderError
 } from "../lib/passes/wallet/walletwallet.js";
 import { getOrCreateWalletCopy, revokeWalletCopy } from "../lib/passes/wallet/index.js";
+import { walletWalletImages } from "../lib/passes/wallet/images.js";
+import sharp from "sharp";
 
 const ZIP = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from("signed pass")]);
 const WW = { apiKey: `ww_live_${"a".repeat(32)}`, apiUrl: "https://api.walletwallet.dev", branding: "preset" };
@@ -67,6 +69,30 @@ test("tiers stay apart on the free plan's presets, and never borrow the scanner'
 test("Pro branding sends the tier's exact card face", () => {
   const request = buildWalletWalletRequest({ ...sample("monthly"), branding: "full" });
   assert.equal(request.color, TIER_PALETTE.bronze.face);
+});
+
+test("Pro branding: the DGTL-signed card's layout, the tier face, and the brand-kit art in WalletWallet's sizes", async () => {
+  const vip = sample("vip_lifetime");
+  const request = buildWalletWalletRequest({ ...vip, branding: "full", images: await walletWalletImages(vip.design), issuedLabel: "Oct 2, 2026" });
+  assert.equal(request.color, TIER_PALETTE.gold.face);
+  assert.equal("colorPreset" in request, false);
+  assert.deepEqual(request.headerFields, [{ label: "TIER", value: "VIP" }]);
+  assert.deepEqual(request.primaryFields, [{ label: "ACCESS", value: "Lifetime" }]);
+  assert.deepEqual(request.secondaryFields.map((f) => f.label), ["MEMBER", "EXPIRES", "MEMBER SINCE"]);
+  assert.equal(request.logoText, "PASS", "the wordmark image + PASS: the DGTL⚡ PASS lockup");
+  const dims = { stripURL: [1080, 360], iconURL: [120, 120] };
+  for (const key of ["stripURL", "iconURL", "logoURL"]) {
+    assert.match(request[key], /^data:image\/png;base64,/);
+    const png = Buffer.from(request[key].split(",")[1], "base64");
+    assert.ok(png.length < 1_000_000, `${key} under WalletWallet's 1 MB image limit`);
+    const meta = await sharp(png).metadata();
+    if (dims[key]) assert.deepEqual([meta.width, meta.height], dims[key], key);
+    else assert.ok(meta.width <= 480 && meta.height <= 150, `logo ${meta.width}×${meta.height}`);
+  }
+  assert.ok(Buffer.byteLength(JSON.stringify(request)) < 2_000_000, "the whole request is under the 2 MB body limit");
+  const monthly = buildWalletWalletRequest({ ...sample("monthly"), branding: "full", images: await walletWalletImages(sample("monthly").design) });
+  assert.equal(monthly.color, TIER_PALETTE.bronze.face);
+  assert.notEqual(monthly.stripURL, request.stripURL, "each tier has its own strip art");
 });
 
 test("expiry rounds up to whole days, so Wallet never greys a pass that still works", () => {
@@ -143,4 +169,39 @@ test("two taps on Add to Apple Wallet create one provider pass; revoke greys it 
   const { rows } = await db.query(`select wallet_error from passes where id = $1`, [issued.pass.id]);
   assert.match(rows[0].wallet_error, /unreachable/, "a provider failure is recorded on the pass, never thrown at the admin");
   assert.deepEqual(await revokeWalletCopy({ id: "p", walletProvider: null, walletRef: null }, config), { skipped: "no_wallet_copy" });
+});
+
+test("a key not on Pro: refused Pro fields fall back to the free card, and the pass says why", async () => {
+  const types = await listPassTypes({ teamId: "team_w", tenantId: "tenant_w" });
+  const monthlyType = types.find((t) => t.tier === "monthly");
+  const secrets = parseCredentialSecrets(`k1:${Buffer.alloc(32, 5).toString("base64")}`);
+  const issued = await withTransaction((tx) =>
+    issuePass(tx, { teamId: "team_w", tenantId: "tenant_w", passTypeId: monthlyType.id, holder: { name: "Maya Chen", email: "maya@example.com" }, startDate: "2026-10-02" }, { secrets, activeKeyId: "k1", timeZone: "America/Toronto", dayCutoffHour: 4 })
+  );
+  const sent = [];
+  const fetchImpl = async (url, init) => {
+    const body = JSON.parse(init.body);
+    sent.push(body);
+    if (body.color) return new Response(JSON.stringify({ error: "Custom branding requires the Pro plan" }), { status: 403 });
+    return new Response(JSON.stringify({ serialNumber: "ww-free", applePass: ZIP.toString("base64") }), { status: 200 });
+  };
+  const config = { wallet: { provider: "walletwallet", walletwallet: { ...WW, branding: "full" } } };
+  const view = { ...sample("monthly"), pass: issued.pass, passType: monthlyType, config, settings: { timeZone: "America/Toronto" } };
+  const copy = await getOrCreateWalletCopy(view, { fetchImpl });
+  assert.equal(sent.length, 2);
+  assert.ok(sent[0].stripURL && sent[0].color, "first try: Pro art");
+  assert.equal(sent[1].colorPreset, "orange", "then the free card");
+  assert.match(copy.warning, /Pro branding refused/);
+  const { rows } = await db.query(`select wallet_ref, wallet_error from passes where id = $1`, [issued.pass.id]);
+  assert.equal(rows[0].wallet_ref, "ww-free");
+  assert.match(rows[0].wallet_error, /Check the WalletWallet plan/);
+
+  // A provider outage is not a plan refusal: no silent downgrade, the holder retries.
+  const other = await withTransaction((tx) =>
+    issuePass(tx, { teamId: "team_w", tenantId: "tenant_w", passTypeId: monthlyType.id, holder: { name: "Down Day", email: "down@example.com" }, startDate: "2026-10-02" }, { secrets, activeKeyId: "k1", timeZone: "America/Toronto", dayCutoffHour: 4 })
+  );
+  await assert.rejects(
+    getOrCreateWalletCopy({ ...view, pass: other.pass }, { fetchImpl: async () => new Response("{}", { status: 503 }) }),
+    (error) => error instanceof WalletProviderError && error.httpStatus === 503
+  );
 });

@@ -542,13 +542,22 @@ export async function lockPassForWallet(tx, passId) {
   return { pass: mapPass(rows[0]), pkpass: rows[0].wallet_pkpass ? Buffer.from(rows[0].wallet_pkpass) : null };
 }
 
-export async function saveWalletCopy(tx, { passId, provider, ref, shareUrl, googleUrl, pkpass }) {
+export async function saveWalletCopy(tx, { passId, provider, ref, shareUrl, googleUrl, pkpass, warning = null }) {
   await tx.query(
     `update passes set wallet_provider = $2, wallet_ref = $3, wallet_share_url = $4, wallet_google_url = $5,
-                       wallet_pkpass = $6, wallet_issued_at = now(), wallet_synced_at = now(), wallet_error = null,
+                       wallet_pkpass = $6, wallet_issued_at = now(), wallet_synced_at = now(), wallet_error = $7,
                        updated_at = now()
      where id = $1`,
-    [passId, provider, ref, shareUrl || null, googleUrl || null, pkpass]
+    [passId, provider, ref, shareUrl || null, googleUrl || null, pkpass, warning]
+  );
+}
+
+/** A DGTL-signed pass is built on demand; only the first add is recorded. */
+export async function markWalletIssued({ passId, provider }) {
+  await query(
+    `update passes set wallet_provider = coalesce(wallet_provider, $2), wallet_issued_at = coalesce(wallet_issued_at, now()), updated_at = now()
+     where id = $1`,
+    [passId, provider]
   );
 }
 

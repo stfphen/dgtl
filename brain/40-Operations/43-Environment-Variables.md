@@ -97,7 +97,8 @@ See [[2H-DGTL-Chat]] and `docs/architecture/dgtl-core-phase-6.md`.
 | `PASSES_DRY_RUN` | Mock pass email/SMS | `true` in staging and demos |
 | `PASSES_DEFAULT_TIMEZONE` | Tenant timezone fallback | IANA name; a tenant's `passes.timeZone` wins |
 | `WALLETWALLET_API_KEY` | Apple Wallet **without an Apple Developer account** (WalletWallet signs with its own Pass Type ID) | `ww_live_…`, server-only, `platform/.env` only. Free = 1,000 passes/month, preset colours + text. Malformed → config error at load |
-| `WALLETWALLET_BRANDING` | `preset` (Free) / `full` (Pro: tier face colour + logo URL) | default `preset` |
+| `WALLETWALLET_BRANDING` | `preset` (Free) / `full` (Pro: DGTL layout, tier face, strip art, icon, wordmark) | default `preset`; a plan refusal falls back to the free card and records why |
+| `PASSKIT_TEAM_ID`, `PASSKIT_PASS_TYPE_ID`, `PASSKIT_SIGNER_CERT_B64`, `PASSKIT_SIGNER_KEY_B64`, `PASSKIT_SIGNER_KEY_PASSPHRASE`, `PASSKIT_WWDR_CERT_B64` | DGTL's own Apple certificate: the exact Wallet design | Written and checked by `npm run passkit:setup -- env`. Validated at load (key matches cert, UID/OU match, WWDR issued it, not expired). Secrets: back up the key, set a reminder for the expiry |
 | `PASS_WALLET_PROVIDER` | `walletwallet` / `apple` | Unset: `apple` if the PASSKIT_* set is complete, else `walletwallet` if its key is set. `apple` = own certificate, Phase 5, recognised but not yet on |
 | `NEXT_DEV_ALLOWED_ORIGINS` | Dev only: a phone on the Wi-Fi loading the dev server | Set by `npm run demo:passes`. A LAN `PASS_PUBLIC_BASE_URL` (http, private range) is accepted only outside production, and only that host's http QR codes scan |
 

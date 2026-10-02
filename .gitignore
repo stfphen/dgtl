@@ -45,3 +45,11 @@ apps/creator-intake/dev-mail/
 
 # Local Worklog v2 handoff/review bundle; canonical source lives in apps/worklog/
 apps/dgtl-worklog-demo/
+
+# Apple Wallet (DGTL Pass) signing material. The Pass Type ID private key and
+# certificates live in the secrets store; local working copies stay in
+# platform/data/passkit/ (already ignored). Belt and braces for stray files:
+*.p12
+*.cer
+passkit*.key
+passkit*.pem

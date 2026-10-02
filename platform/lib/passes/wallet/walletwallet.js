@@ -8,18 +8,23 @@
 //
 // Plans (checked 2026-10-01): Free is 1,000 creates + updates a month, with a
 // colour preset and text only. Pro ($39/month) adds the logo, strip art and
-// exact tier colours, sent here when WALLETWALLET_BRANDING=full.
+// exact tier colours, sent here when WALLETWALLET_BRANDING=full: the same
+// layout and artwork as a DGTL-signed pass (wallet/passJson.js, wallet/images.js).
 //
 // Data: the holder's name and the pass link go to WalletWallet, a processor.
 // Say so in the privacy notice before real holders get passes this way.
 
 import { formatShortCode } from "../credentials.js";
+import { walletLayout } from "./passJson.js";
 
 export class WalletProviderError extends Error {
-  constructor(message, status = 502) {
+  constructor(message, status = 502, httpStatus = null) {
     super(message);
     this.name = "WalletProviderError";
     this.status = status;
+    // The provider's own status, so callers can tell "your plan can't do that"
+    // (4xx) from "the provider is down".
+    this.httpStatus = httpStatus;
   }
 }
 
@@ -47,11 +52,14 @@ export function expirationDaysFor(validUntil, now) {
 
 const field = (label, value) => ({ label: String(label), value: String(value ?? "") });
 
+const plainField = ({ label, value }) => field(label, value);
+
 /**
  * The create request for one pass. Pure: no network, no secrets.
  * design: resolvePassDesign(...) · validity: describeValidity(...) · kit: resolveBrandKit(...)
+ * images: walletWalletImages(design), for branding "full" (Pro).
  */
-export function buildWalletWalletRequest({ pass, passType, holder, design, validity, kit, passPageUrl, now, branding = "preset", logoUrl = "" }) {
+export function buildWalletWalletRequest({ pass, passType, holder, design, validity, kit, passPageUrl, now, branding = "preset", images = null, issuedLabel = "" }) {
   const tierLabel = design.isVip ? "VIP" : design.materialLabel || passType.name;
   const code = formatShortCode(pass.shortCode);
   const back = [
@@ -83,10 +91,19 @@ export function buildWalletWalletRequest({ pass, passType, holder, design, valid
   };
 
   if (branding === "full") {
-    // Pro: the tier's own card face, and the wordmark beside "PASS".
+    // Pro: the DGTL-signed card's own layout (a strip makes WalletWallet use
+    // the storeCard style), the tier's card face, the brand-kit strip art, the
+    // spark icon and the wordmark beside "PASS".
+    const layout = walletLayout({ style: "storeCard", pass, passType, holder, design, validity, issuedLabel });
+    request.headerFields = layout.headerFields.map(plainField);
+    request.primaryFields = layout.primaryFields.map(plainField);
+    request.secondaryFields = [...layout.secondaryFields, ...layout.auxiliaryFields].map(plainField);
     request.color = design.wallet.background;
-    if (/^https:\/\//.test(logoUrl)) {
-      request.logoURL = logoUrl;
+    delete request.colorPreset;
+    if (images) {
+      request.stripURL = images.stripURL;
+      request.iconURL = images.iconURL;
+      request.logoURL = images.logoURL;
       request.logoText = kit.walletLogoText || "";
     }
   }
@@ -114,7 +131,7 @@ async function call(config, method, path, body, fetchImpl) {
   if (!response.ok) {
     const reason = typeof data?.error === "string" ? data.error.slice(0, 200) : `HTTP ${response.status}`;
     // 429 = the plan's monthly pass allowance is used up.
-    throw new WalletProviderError(`WalletWallet refused the request: ${reason}`, response.status === 429 ? 429 : 502);
+    throw new WalletProviderError(`WalletWallet refused the request: ${reason}`, response.status === 429 ? 429 : 502, response.status);
   }
   return data;
 }

@@ -13,7 +13,7 @@ export async function GET(request, { params }) {
   if (!limit.allowed) return new Response("Too many requests.", { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } });
 
   const view = await loadHolderPass(credential);
-  if (!view || !SHOWS_CODE.has(view.status) || !view.config.walletEnabled) return new Response("Not found.", { status: 404 });
+  if (!view || !SHOWS_CODE.has(view.status) || view.config.wallet.provider !== "walletwallet") return new Response("Not found.", { status: 404 });
 
   try {
     const copy = await getOrCreateWalletCopy(view);

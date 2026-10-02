@@ -17,7 +17,7 @@ and log dates in `brain/50-Audit-Log/51-Timeline.md`.
 | Phase 1: foundation | ✅ Built, in review | `feat/pass-p1-foundation`: 613/613 tests (536 + 77 new), build 63/63, audit 0, migrate 001–015 twice, browser e2e (verifier → `/scan`, refused by `/home`, `/admin`, workspace APIs). Live Google round trip waits on the OAuth client (P0.6) |
 | Phase 2: pass engine + holder page | 🟡 Built for the demo | `feat/pass-p2-p3-demo`: Core `/passes` (issue, open-on-phone QR, revoke, live feed), `/p/[credential]` in all four tier colours, migration 016. Open: pass-type editor, suspend/rotate/extend, Code 128, tenant editor section |
 | Phase 3: scanner | 🟡 Works end to end | `/scan`: zxing-wasm (self-hosted), verdict screens, manual entry, photo fallback for http. **T-C1 on real Postgres: 20 parallel scans → 1 admit.** Open: HTTPS device matrix, PWA manifest, Worker decode |
-| Apple Wallet | 🟡 Built via WalletWallet (no Apple Developer account) | Free plan = colour preset + text; needs Stephen's free key in `platform/.env`. Own certificate (P5) still the launch recommendation |
+| Apple Wallet | 🟡 Works on iPhone via WalletWallet (confirmed Oct 2). Matching designs built | Free = colour preset + text (what Stephen saw). **Pro** (`WALLETWALLET_BRANDING=full`) sends the DGTL art and tier colours. **Own certificate** (P5 code done, `npm run passkit:setup`) gives the exact design once the Apple enrolment lands. Decision: Pro now, Apple later |
 | Phases 4–6: delivery, own-cert Wallet, hardening | ⬜ Not started | — |
 | External accounts (Apple, Twilio, Google, Resend, DNS) | ⬜ Not started | Stephen's |
 | Repo: local `main` vs GitHub `main` | ✅ Reconciled + pushed | Merge `5de31e0`; no regressions (535/536 = the pre-existing stale test, fixed in #44) |

@@ -82,7 +82,7 @@ locally without `PASSES_PG_TEST_URL`; 3/3 pass against the demo database).
 - Target (not built):
   - pass-type editor; suspend / rotate / extend / resend
   - delivery (P4)
-  - DGTL-signed `.pkpass` (P5)
+  - the official Wallet badges (P5.4); the Apple web service for updates (P5b)
   - `/passes/scans` ledger; scanner PWA manifest + Worker decode
 
 ## Data flow
@@ -100,6 +100,15 @@ The Google and `PASS_*` variables are in [[43-Environment-Variables]] and `platf
 cutoff, gates, brand kit, legal/postal address, VIP offer).
 
 ## ⚠️ Gotchas / open issues
+- **Matching the design in Wallet (2026-10-02).** On WalletWallet's free plan, Stephen's live
+  test showed a plain card. Two ways to the DGTL card, both built:
+  - **WalletWallet Pro** (`WALLETWALLET_BRANDING=full`): our layout, tier face, strip art,
+    icon and wordmark. A plan refusal falls back to the free card and records why.
+  - **DGTL's own certificate** (`PASS_WALLET_PROVIDER=apple`): the exact design, signed in
+    `lib/passes/wallet/apple.js` (pkijs CMS + sharp art + our ZIP). Setup is
+    `npm run passkit:setup`.
+
+  Decision: Pro now, Apple later.
 - **Wallet without Apple, and its limits.** WalletWallet signs with its own Pass Type ID.
   The Free plan gives a colour preset and text only (Day blue, Monthly orange, Annual
   purple, VIP dark; never green or red). The holder's name and pass link go to a processor.

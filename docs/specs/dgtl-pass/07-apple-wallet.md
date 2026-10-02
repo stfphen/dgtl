@@ -21,8 +21,15 @@ that path first, through **WalletWallet** (`lib/passes/wallet/walletwallet.js`):
   - Free: a colour preset per tier (Day blue, Monthly orange, Annual purple, VIP dark)
     plus "DGTL PASS" as text. Green and red are avoided because they are the scanner's
     verdict colours.
-  - Pro (`WALLETWALLET_BRANDING=full`): the tier's exact face colour and the tenant's logo
-    URL.
+  - Pro (`WALLETWALLET_BRANDING=full`):
+    - the same field layout as the DGTL-signed card (`walletLayout`);
+    - the tier's exact face colour;
+    - the brand-kit strip art (1080×360), the spark icon (120×120) and the wordmark, sent
+      as data URIs (`lib/passes/wallet/images.js`).
+
+    WalletWallet still picks the style (a strip makes it a store card) and the label
+    colours. If the plan refuses Pro fields (400/402/403), the pass is issued on the free
+    card with the reason in `wallet_error`.
   - The pass page in Safari is fully branded on every plan.
 - **Data.** The holder's name and pass link reach the provider, which makes it a
   processor; put it in the privacy notice before real holders get passes this way. No
@@ -34,6 +41,24 @@ the two, so moving is configuration, not a rewrite. The demo runbook is
 [18-iphone-demo.md](18-iphone-demo.md).
 
 ## What ships with DGTL's own certificate (Phase 5)
+
+**Built 2026-10-02** (`lib/passes/wallet/{passJson,images,apple,zip}.js`):
+- `pass.json` from `buildPassJson` (ported, tests ported);
+- art rasterized with `sharp` at @1x/@2x/@3x;
+- `manifest.json` with a SHA-1 per file;
+- a detached CMS SignedData `signature` (SHA-256, RSA, signed attributes, signer + WWDR
+  certificates), built with `pkijs` on Node's WebCrypto. `passkit-generator` was rejected:
+  its pinned `joi` and `node-forge` carry three high advisories, and the release gate
+  requires audit 0;
+- a dependency-free ZIP writer.
+
+The config checks the certificate at load: the key matches it, its UID is the Pass Type ID,
+its OU is the team, the WWDR issued it, and it hasn't expired. `npm run passkit:setup` does
+the CSR and the conversion. `tests/passes-wallet-signing.test.js` has OpenSSL verify every
+tier's signature against Apple-shaped test certificates.
+
+**Not verified until the real certificate exists:** an install on an iPhone (iOS checks
+the chain to Apple's root).
 
 - A signed `.pkpass` generated on demand at `GET /p/<credential>/wallet.pkpass`.
 - An "Add to Apple Wallet" badge in every email and on the pass page (iOS/macOS Safari).
