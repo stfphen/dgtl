@@ -86,6 +86,10 @@ See [[2F-Worklog-Bridge]] and `docs/architecture/dgtl-core-phase-4.md` (producti
 See [[2H-DGTL-Chat]] and `docs/architecture/dgtl-core-phase-6.md`.
 
 ## Google sign-in + DGTL Pass (Phase 1, 2026-10-01)
+
+> Production reads only what `platform/docker-compose.yml` lists under `environment:`. Every
+> variable below is listed there (tested by `tests/passes-production-config.test.js`). A new one
+> must be added there too, or it is silently unset in production.
 | Var | Powers | Notes |
 |---|---|---|
 | `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Staff "Continue with Google" | Web OAuth client; unset = the button is hidden. Invite-only: only an active user with a team membership gets in |
@@ -100,6 +104,7 @@ See [[2H-DGTL-Chat]] and `docs/architecture/dgtl-core-phase-6.md`.
 | `WALLETWALLET_BRANDING` | `preset` (Free) / `full` (Pro: DGTL layout, tier face, strip art, icon, wordmark) | default `preset`; a plan refusal falls back to the free card and records why |
 | `PASSKIT_TEAM_ID`, `PASSKIT_PASS_TYPE_ID`, `PASSKIT_SIGNER_CERT_B64`, `PASSKIT_SIGNER_KEY_B64`, `PASSKIT_SIGNER_KEY_PASSPHRASE`, `PASSKIT_WWDR_CERT_B64` | DGTL's own Apple certificate: the exact Wallet design | Written and checked by `npm run passkit:setup -- env`. Validated at load (key matches cert, UID/OU match, WWDR issued it, not expired). Secrets: back up the key, set a reminder for the expiry |
 | `PASS_WALLET_PROVIDER` | `walletwallet` / `apple` | Unset: `apple` if the PASSKIT_* set is complete, else `walletwallet` if its key is set. `apple` = own certificate, Phase 5, recognised but not yet on |
+| `TWILIO_MESSAGING_SERVICE_SID` | Pass SMS (Phase 4) through a Twilio Messaging Service | Passed through compose since 2026-10-02 |
 | `NEXT_DEV_ALLOWED_ORIGINS` | Dev only: a phone on the Wi-Fi loading the dev server | Set by `npm run demo:passes`. A LAN `PASS_PUBLIC_BASE_URL` (http, private range) is accepted only outside production, and only that host's http QR codes scan |
 
 ## App host / canonical identity

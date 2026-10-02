@@ -53,6 +53,13 @@ Verified on real Postgres 16: 20 parallel scans of one single-use pass → exact
 (T-C1, now a release-gate step). `npm test` 647 (644 pass, 3 real-Postgres tests skip
 locally without `PASSES_PG_TEST_URL`; 3/3 pass against the demo database).
 
+**Production:** `docs/operations/dgtl-pass-production-runbook.md`.
+- Holders use `pass.dgtl.ltd`. Traefik routes only `/p/*` and static files there, so no admin
+  or API is reachable on the pass host.
+- Staff use the app host's `/passes` and `/scan`.
+- Every pass setting must be listed in `platform/docker-compose.yml`, or it never reaches the
+  container (tested).
+
 ## Key files
 - Spec + handoff: `docs/specs/dgtl-pass/` (start at `README.md`; build agent prompt in `HANDOFF-PROMPT.md`)
 - Reference core (tested, to port into `platform/lib/passes/`): `docs/specs/dgtl-pass/reference/`

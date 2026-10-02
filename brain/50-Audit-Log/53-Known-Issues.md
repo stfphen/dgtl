@@ -380,3 +380,4 @@ link checker intentionally does not scan templates under `engine/`.
 | P-6 | No PWA manifest for `/scan` | Home-screen install uses Apple meta only | `app/scan` manifest + icons (P3.2) |
 | P-7 | T-S1 / T-S2 checked by hand only | Identical 404s and no-store / no-referrer / noindex verified with curl, not in `npm test` | Add a route test (needs a Next request harness for pages) |
 | P-8 | Tenant normalisation fills legacy blue | A tenant without `brand.primaryColor` gets `#0071e3`, which then marks its passes | Set the colour when a tenant is created; consider defaulting new tenants to the DGTL token |
+| P-11 | `next build` can fail fetching Google Fonts | `next/font` crashes (`loader.js:122`, "reading '1'") when Google returns a font URL with no file extension. Hit CI on #45 and #47 (2026-10-02); the VPS Docker build does the same fetch | Re-run the build; lasting fix is to self-host the fonts with `next/font/local` (follow-up task raised) |

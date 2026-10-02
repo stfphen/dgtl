@@ -43,6 +43,7 @@ Create your first owner account with `OWNER_PASSWORD=... npm run create-owner`
 | `npm run seed:outreach-demo` | Seeds outreach campaigns/queue demo data |
 | `npm run seed:passes-dev` | Seeds the DGTL Pass demo team, owner / door / issuer accounts, DGTL tenant and five pass types (refuses production; needs `PASSES_DEMO_PASSWORD`) |
 | `npm run passkit:setup -- csr --email …` / `-- env --pass-type-id … --team-id …` | DGTL's own Apple Wallet certificate: makes the key + CSR for the Apple portal, then turns Apple's certificate into checked `PASSKIT_*` env in `data/passkit/` (git-ignored) |
+| `npm run passes:setup-tenant -- --team … --tenant … [--create] --support-email …` | Prepares a tenant to issue passes (production/staging): sets only its `passes` block, or creates a draft pass-only DGTL tenant, then installs the five pass types. See `docs/operations/dgtl-pass-production-runbook.md` |
 | `npm run demo:passes` | The DGTL Pass phone demo in one command: its own Postgres container, migrations, seed, and the app on port 8090 reachable from a phone on the same Wi-Fi (`-- --reset` wipes the demo data). See `docs/specs/dgtl-pass/18-iphone-demo.md` |
 
 ## Surfaces
