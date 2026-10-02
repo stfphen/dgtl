@@ -5,7 +5,8 @@
    Mirrors the DGTL brand kit (dgtlgroup.io, July 2026) so a future kit sync is
    a readable diff. Values are copied verbatim; do not "improve" them here.
 
-   Imported first by app/(core)/layout.jsx and app/admin/layout.jsx.
+   Imported first by app/(core)/layout.jsx and app/admin/layout.jsx, and by the
+   DGTL Pass surfaces (app/p, app/scan), which scope it with .dgtl-pass.
    Public tenant funnels never carry these classes, so they are untouched — and
    this file deliberately never edits :root in styles.css, which the funnels
    share.
@@ -31,7 +32,8 @@
 
 html .v2-admin-shell,
 html .admin-login,
-html .core-shell {
+html .core-shell,
+html .dgtl-pass {
   /* ---------- brand primitives ---------- */
   --gold: #F0CF50;
   --gold-strong: #cbab35;
@@ -93,12 +95,14 @@ html .core-shell {
 
 html .v2-admin-shell ::selection,
 html .admin-login ::selection,
-html .core-shell ::selection { background: var(--gold); color: #000; }
+html .core-shell ::selection,
+html .dgtl-pass ::selection { background: var(--gold); color: #000; }
 
 /* ---------- the dark ladder (the DGTL identity) ---------- */
 html .v2-admin-shell[data-theme="dark"],
 html .admin-login[data-theme="dark"],
-html .core-shell {
+html .core-shell,
+html .dgtl-pass {
   --bg: #000000;
   --surface: #0a0a0a;
   --surface-2: #111111;

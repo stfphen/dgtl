@@ -1,0 +1,131 @@
+/* ==========================================================================
+   DGTL Pass — the holder pass page (/p/<credential>).
+   Design target: docs/specs/dgtl-pass/previews/pass-page.html.
+
+   Brand constants come from app/dgtl-tokens.css (scoped by .dgtl-pass). The
+   tier variables (--face, --line, --acc, --tier) are set inline per pass from
+   lib/passes/tiers.js, which mirrors the kit's tier palette. No brand value is
+   written in this file.
+   ========================================================================== */
+
+/* The page is black edge to edge, including iOS overscroll. */
+html:has(.pp-root),
+html:has(.pp-root) body { background-color: black; }
+
+html .pp-root {
+  min-height: 100svh;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+html .pp-root * { box-sizing: border-box; }
+html .pp-root .dgtl-logo__bolt { fill: var(--gold); }
+
+html .pp-watermark {
+  position: absolute; width: 520px; right: -170px; top: 110px; opacity: 0.05;
+  transform: rotate(-12deg); pointer-events: none;
+}
+html .pp-vignette {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 55% at 50% 0%, rgba(255, 255, 255, 0.035), transparent 60%);
+}
+
+html .pp-bar {
+  position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center;
+  padding: calc(env(safe-area-inset-top) + 12px) 20px 12px;
+  background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter);
+  border-bottom: 1px solid var(--border-subtle);
+}
+html .pp-bar .pp-wordmark { height: 22px; width: auto; color: var(--text-primary); }
+
+html .pp-chip {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; border-radius: var(--r-pill);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 5px 10px;
+  color: var(--tier); background: color-mix(in srgb, var(--tier) 12%, transparent);
+}
+
+html .pp {
+  position: relative; z-index: 1; max-width: 440px; margin: 0 auto;
+  padding: 28px 20px calc(env(safe-area-inset-bottom) + 28px); display: grid; gap: 20px;
+}
+
+/* The branded DGTL pass card: brand constants + tier variables. */
+html .pcard {
+  border-radius: var(--r-card); background: var(--face); border: 1px solid var(--line);
+  overflow: hidden; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+html .pcard.is-void { filter: saturate(0.35); opacity: 0.7; }
+html .pc-top { display: flex; align-items: center; gap: 8px; padding: 14px 16px 12px; }
+html .pc-top .pp-wordmark { height: 20px; width: auto; color: var(--text-primary); }
+html .pc-lock { font-size: 12px; font-weight: 800; letter-spacing: 0.22em; color: var(--text-primary); }
+html .pc-tier {
+  margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--acc); text-align: right;
+}
+html .pc-art { display: block; width: 100%; height: auto; }
+html .pc-body { padding: 16px 18px 18px; display: grid; gap: 12px; }
+html .pc-l {
+  display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--acc);
+}
+html .pc-v { display: block; font-size: 14px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
+html .pc-name {
+  display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.4px; color: var(--text-primary);
+  margin-top: 2px; overflow-wrap: anywhere;
+}
+html .pc-fields { display: flex; justify-content: space-between; gap: 12px; }
+html .pc-fields > div:last-child { text-align: right; }
+
+/* The code. A white tile with a quiet zone reads under door lighting. */
+html .pp-code { display: grid; justify-items: center; gap: 10px; padding: 6px 0 2px; }
+html .qr-tile { background: white; border-radius: var(--r-control); padding: 8px; width: min(248px, 100%); }
+html .qr-tile img { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
+html .pp-shortcode {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 15px; font-weight: 700;
+  letter-spacing: 0.22em; color: var(--text-primary);
+}
+
+/* Wallet buttons. Placeholders for Apple's and Google's official badges,
+   which ship with the production artwork (spec warning wallet_badge_placeholder). */
+html .pp-actions { display: grid; gap: 10px; }
+html .pp-wallet {
+  display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px;
+  border-radius: var(--r-control); background: var(--bg); border: 1px solid var(--border-strong);
+  color: var(--text-primary); font-weight: 700; font-size: 15px; text-decoration: none;
+}
+html .pp-wallet:active { border-color: var(--text-primary); }
+html .pp-wallet svg { width: 20px; height: 20px; flex: none; }
+html .pp-tip { font-size: 13px; color: var(--text-dim); text-align: center; margin: 0; }
+html .pp-notice {
+  font-size: 13px; color: var(--warning); background: var(--warning-tint); border-radius: var(--r-control);
+  padding: 10px 12px; margin: 0;
+}
+
+/* Dead passes: the state in plain words, no code. */
+html .pp-state {
+  display: grid; gap: 12px; padding: 22px; border-radius: var(--r-card);
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+html .pp-state h2 { font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary); }
+html .pp-state p { font-size: 14px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+html .pp-state a { color: var(--text-primary); text-underline-offset: 3px; }
+html .pp-pill {
+  justify-self: start; border-radius: var(--r-pill); font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 5px 10px; color: var(--error); background: var(--error-tint);
+}
+html .pp-pill.is-warning { color: var(--warning); background: var(--warning-tint); }
+
+html .pp-foot { font-size: 12px; color: var(--text-dim); text-align: center; display: grid; gap: 4px; padding-top: 4px; }
+html .pp-foot a { color: var(--text-secondary); }
+
+@media (prefers-reduced-motion: no-preference) {
+  html .pcard { animation: pp-rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  @keyframes pp-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+}
+
+/* The one 404 every miss gets. */
+html .pp-missing { min-height: 100svh; align-content: center; justify-items: center; text-align: left; }
+html .pp-missing > .pp-wordmark { height: 26px; width: auto; color: var(--text-primary); margin-bottom: 8px; }
+html .pp-missing h1 { font-size: 20px; font-weight: 700; margin: 0; color: var(--text-primary); }

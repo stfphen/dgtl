@@ -1,0 +1,67 @@
+/* DGTL Pass — the Core /passes module. Core primitives (core-card, core-form,
+   core-table, core-status, core-button) come from core.css; this file only
+   lays them out. Tier accents arrive inline as --tier from lib/passes/tiers.js.
+   No brand values here: everything is a token. */
+
+.passes-stack { gap: 20px; }
+.passes-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.passes-tenant { display: inline-flex; align-items: center; gap: 10px; color: var(--core-muted); font-size: 13px; }
+.passes-tenant select {
+  min-height: 38px; padding: 0 12px; border: 1px solid var(--core-line); border-radius: var(--r-control);
+  background: var(--core-surface); color: var(--core-text); font: inherit;
+}
+.passes-muted { margin: 0; color: var(--core-muted); font-size: 13px; }
+.passes-muted strong { color: var(--core-text); }
+.passes-dim { margin: 0; color: var(--core-dim); font-size: 12px; }
+.passes-mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: 0.06em; }
+.passes-error { color: var(--error); font-size: 12px; font-weight: 500; }
+
+.passes-chip {
+  display: inline-flex; align-items: center; white-space: nowrap; border-radius: var(--r-pill); padding: 3px 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--tier); background: color-mix(in srgb, var(--tier) 12%, transparent);
+}
+
+.passes-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.passes-kpi {
+  display: grid; gap: 6px; padding: 18px 20px; border: 1px solid var(--core-line); border-radius: var(--r-card);
+  background: var(--core-card); box-shadow: var(--shadow-card);
+}
+.passes-kpi span { color: var(--core-dim); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.passes-kpi strong { color: var(--core-text); font-size: 34px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.passes-kpi strong.is-gold { color: var(--core-accent); }
+.passes-kpi small { color: var(--core-dim); font-size: 12px; }
+
+.passes-issue, .passes-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+/* The door feed gets the room (design target: 1 : 2). */
+.passes-two { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+.passes-issue__actions { justify-content: flex-end; }
+
+.passes-phone { display: grid; justify-items: center; gap: 12px; text-align: center; }
+.passes-phone.is-empty { padding: 32px 0 26px; }
+.passes-phone.is-empty p { margin: 0; color: var(--core-text); font-weight: 700; }
+.passes-phone.is-empty small { color: var(--core-dim); max-width: 34ch; }
+.passes-phone__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--gold-tint); color: var(--core-accent); }
+.passes-phone__head { width: 100%; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; text-align: left; }
+.passes-phone__head h3 { margin: 4px 0 2px; color: var(--core-text); font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.passes-qr { width: min(240px, 100%); padding: 10px; border-radius: var(--r-control); background: white; }
+.passes-qr img { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+.passes-phone__hint { margin: 0; color: var(--core-text); font-size: 14px; font-weight: 600; }
+.passes-phone__actions { justify-content: center; }
+
+.passes-bars { display: grid; gap: 14px; }
+.passes-bar { display: grid; grid-template-columns: 64px minmax(0, 1fr) 40px; gap: 12px; align-items: center; font-size: 13px; }
+.passes-bar__t { color: var(--tier); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+.passes-bar__track { height: 8px; border-radius: var(--r-pill); background: var(--surface-3); overflow: hidden; }
+.passes-bar__track span { display: block; height: 100%; min-width: 2px; border-radius: var(--r-pill); background: var(--tier); }
+.passes-bar__n { text-align: right; color: var(--core-text); font-variant-numeric: tabular-nums; }
+
+.passes-table-wrap { overflow-x: auto; }
+.passes-table-wrap td { white-space: nowrap; }
+.passes-row-actions { justify-content: flex-end; flex-wrap: nowrap; }
+.passes-row-actions .core-button { min-height: 32px; padding: 0 12px; }
+
+@media (max-width: 900px) {
+  .passes-issue, .passes-two { grid-template-columns: minmax(0, 1fr); }
+  .passes-kpis { grid-template-columns: minmax(0, 1fr); }
+}
