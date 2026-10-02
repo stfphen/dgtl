@@ -2,7 +2,7 @@
 title: 20 · Modules MOC
 type: moc
 tags: [moc, module]
-updated: 2026-08-14
+updated: 2026-09-30
 ---
 
 # 🧩 Modules MOC
@@ -42,6 +42,7 @@ inbound ┘                                   │        ├─► OUTREACH (hum
 | [[2F-Worklog-Bridge]] | Worklog delivery bridge | Company↔Client, Opportunity↔Project, approved idempotent task handoff, read-through status; Worklog stays execution authority. |
 | [[2G-Home-Command-Center]] | HOME command center | `/home` projection over Stages 1–4: attention, today, approvals, pipeline, delivery, health, activity, ⌘K search. |
 | [[2H-DGTL-Chat]] | DGTL.chat command & action layer | `/chat`: model proposes, Core validates/authorizes/executes; static 16-tool registry, ActionProposals with human confirmation + revalidation. |
+| [[2I-Passes]] | DGTL Pass (passes, tickets, verification) | **Proposed; spec + tested reference core.** Branded day/monthly/yearly/VIP passes → email/SMS → Apple Wallet → `/scan` PWA verification. `docs/specs/dgtl-pass/`. |
 
 
 Up: [[00-Home]]

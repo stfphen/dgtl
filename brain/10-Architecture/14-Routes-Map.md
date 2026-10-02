@@ -15,6 +15,7 @@ API routes are `route.js` handlers.
 ## Pages
 | Route | File | Purpose |
 |---|---|---|
+| `/scan` | `app/scan/page.jsx` | DGTL Pass door scanner. Phase 1: signed-in landing for `verifier`/`issuer` staff (pass-only roles are redirected here from `/home`, `/admin`); camera scanner arrives in Phase 3. [[2I-Passes]] |
 | `/` | `app/page.jsx` | Public tenant page, host-resolved via `getTenantForHost`; renderer picked by the config's `template` field via `components/templates/registry.js` (default FunnelPage; `"showcase"` → ShowcasePage, `"authority"` → AuthorityPage, `"agency"` → AgencyPage, `"platform"` → PlatformPage). Since 2026-07-16 also exposes host-resolved `generateMetadata` via the template's `buildMetadata` (funnel tenants keep inheriting layout metadata). `app.dgtlmedia.io` → `dgtl-platform`. |
 | `/t/[slug]` | `app/t/[slug]/page.jsx` | Per-tenant page preview; `?preview=draft` renders the draft config. Same template-registry renderer selection + per-template `generateMetadata`. |
 | `/admin` | `app/admin/page.jsx` | The admin shell (server component importing all admin components). [[21-Admin-Shell]] |
@@ -42,6 +43,8 @@ data-model migration cannot break tenant-domain routing. See [[13-Data-Model]].
 ## Public API routes (UNAUTHENTICATED — security-sensitive)
 | Route | Method | Purpose | Notes |
 |---|---|---|---|
+| `/api/auth/google/start` | GET | Begin staff Google sign-in (state + nonce + PKCE in a signed 10-min cookie) | Rate limited; `next` allow-listed. [[2I-Passes]] |
+| `/api/auth/google/callback` | GET | Verify state, exchange code, verify ID token (JWKS, aud, iss, nonce, email_verified), invite-only resolve, create session | Pass-only roles land on `/scan`; every failure goes to `/admin/login?error=` |
 | `/api/leads` | POST | Create a lead from the funnel. | ⚠️ public; can set internal fields (security M1/M2). [[61-Security-Review]] |
 | `/api/funding/survey` | POST | Funding scan: teaser w/o email, full result + `funding_scan` lead w/ email; re-scores server-side. | ⚠️ public; SSRF vector via website field (C2). |
 | `/api/checkout` | POST | Resolves tenant+package price server-side, captures lead, redirects to Stripe (or falls back). | [[27-Checkout-Payments]] |

@@ -14,7 +14,7 @@ This skill is deliberately unopinionated about page structure. It gives you the 
 1. `references/brand-tokens.md` — the source of truth: colors, type, radii, shadows, textures, logo assets, voice. Read this first, always.
 2. `references/ui-components.md` — the component library: shared primitives (buttons, cards, forms, pills), marketing components (hero, marquee, stats, statement line), and app UI patterns (app shell, sidebar, tables, modals, charts, badges, empty states, auth). Read the sections relevant to your build.
 3. `references/application-guide.md` — how to compose the kit per build type, restyling rules for existing UIs, common failure modes, and verification.
-4. `references/repo-surfaces.md` — **read this first if the build is inside the DGTL monorepo.** The repo already has canonical token files, and `platform/` styles through a legacy alias layer where the gold accent is called `--blue`. Writing `var(--gold)` there silently does nothing.
+4. `references/repo-surfaces.md` — **read this first if the build is inside the DGTL monorepo.** The repo already has canonical token files: `platform/app/dgtl-tokens.css` for every authenticated platform surface (real names, `var(--gold)`), `journal/_shared/dgtl-editorial.css` for publishing.
 5. `assets/dgtl-tokens.css` — drop-in stylesheet with every token as a CSS custom property plus base component classes. Inline it (or copy the variables) into any build as the starting point **outside** the repo; inside it, see `repo-surfaces.md` for which token file is canonical for that surface.
 6. `assets/logos/` — DGTL logo, gold spark bolt, and 18 white client marks, pre-processed for dark backgrounds. Embed via `scripts/logo-data-urls.py` as data URLs; never hotlink client logos.
 7. `scripts/verify-screenshots.mjs` — Playwright desktop+mobile screenshot capture for verification.
@@ -32,8 +32,8 @@ Read `references/brand-tokens.md` fully, then the relevant parts of `references/
 **If the build is inside the DGTL monorepo, read `references/repo-surfaces.md` now** and use the
 canonical token file for that surface instead of inlining a fresh copy:
 
-- `platform/` → `platform/app/admin/dgtl-admin.css`, through its alias layer (`--blue` *is* the gold
-  accent; `--white` holds a near-black). Do not introduce `--gold` there.
+- `platform/` → `platform/app/dgtl-tokens.css`, the canonical layer with real token names
+  (`var(--gold)`); the `--blue` alias in `dgtl-admin.css` is legacy.
 - `journal/` → `journal/_shared/dgtl-editorial.css`. Never fork it into a pack.
 - `pitches/` and one-off sends → inline `assets/dgtl-tokens.css`; these are self-contained by design.
 

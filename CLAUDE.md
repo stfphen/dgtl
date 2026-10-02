@@ -54,9 +54,10 @@ outreach → package the whole thing as a priced B2B offer.
 The migration build was verified on 2026-08-13. Address these audit findings before starting large
 new features:
 
-1. **Make the verified release gate mandatory.** `npm test` passes 356/356 and `npm run build`
-   passes on Next 15.5.23. Add both to required CI and resolve the three remaining high production
-   advisories before treating the platform as release-ready.
+1. **Make the verified release gate mandatory.** `npm test` passes 536/536 on `main` and `npm run build`
+   passes on Next 15.5.27 (PR #44). Both run in `core-release-gate.yml`, and #44 brings
+   `npm audit --omit=dev` to 0. Mark that check required on `main` before treating the platform as
+   release-ready.
 2. **Review Polish Stone content with the owner before publishing.** The three formerly untracked
    tenant modules were code-reviewed on 2026-08-13 and contain no credentials; the two legacy modules
    are compatibility re-exports. The live config still contains a `555` phone number and several
@@ -194,6 +195,6 @@ Report the exact commands you ran and their output. Do not claim a check passed 
 
 | Touched | Run |
 |---|---|
-| `platform/` | `cd platform && npm test` (356 tests) **and** `npm run build` |
+| `platform/` | `cd platform && npm test` (536 tests on `main`; 613 with DGTL Pass P1) **and** `npm run build` |
 | `journal/`, `pitches/` | `python3 tools/check-links.py` — must report `missing=0` |
 | a new pack | the link check, plus confirm `pack.json` exists and the journal index links it |

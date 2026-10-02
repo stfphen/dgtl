@@ -3,7 +3,7 @@ title: 53 · Known Issues, Risks & Tech Debt
 type: log
 tags: [audit, security]
 status: living
-updated: 2026-08-25
+updated: 2026-10-01
 source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, status docs
 ---
 
@@ -14,6 +14,13 @@ Latest sweep: `docs/audits/2026-07-02-codebase-audit.md` (branch `audit/2026-07-
 
 ## Repository/platform integration audit (2026-08-13)
 
+- 🟡 **Release gate red on `main` since 2026-08-26; fix in PR #44 (2026-10-01).** Two causes: PR #42
+  renamed the Core/admin titles to the `DGTL --` standard without updating `tests/app-identity.test.js`;
+  and new production advisories since the 08-14 overrides (critical Next RCE via AVIF image
+  optimization, axios, fast-uri, hono, ip-address, qs, sharp/libheif). #44 patches Next 15.5.27 and the
+  sharp override 0.35.5 (audit 0), aligns the test with `docs/WEB-APP-BRANDING.md`, and isolates the
+  test's JSON store. A stale local `data/app-store.json` tenant claiming `dgtlmag.com` had failed it on
+  dev machines only. **Branch protection on `main` is off**: mark `Required DGTL Core checkpoint` required.
 - **Stage 3 is local/test only.** The bounded worker protocol, isolated `pitch.pages` worker library,
   immutable Artifact registry, and preview deployment are implemented, but no continuously operated
   staging worker or production deploy adapter is enabled. Before production: use a fresh snapshot,

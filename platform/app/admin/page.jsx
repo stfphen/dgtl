@@ -25,7 +25,9 @@ import {
   canManageLeads,
   canManageTenants,
   canManageUsers,
-  canViewDashboard
+  canViewDashboard,
+  isPassOnlyRole,
+  passHomeFor
 } from "../../lib/permissions";
 import {
   listContractors,
@@ -244,6 +246,8 @@ function renderEnrichmentGroup(label, values) {
 export default async function AdminPage({ searchParams }) {
   const session = await getAdminSession();
   if (!session) redirect("/admin/login");
+  // Pass-only staff (issuer, verifier) never enter the workspace.
+  if (isPassOnlyRole(session.role)) redirect(passHomeFor(session));
   if (!canViewDashboard(session)) redirect("/admin/login");
   const params = await searchParams;
   const notice = params?.notice;
@@ -1743,8 +1747,15 @@ export default async function AdminPage({ searchParams }) {
               <input name="email" type="email" placeholder="teammate@example.com" required />
             </label>
             <label>
+              Sign-in
+              <select name="authMethod" defaultValue="password">
+                <option value="password">Password</option>
+                <option value="google">Google (no password)</option>
+              </select>
+            </label>
+            <label>
               Temporary Password
-              <input name="password" type="password" minLength="12" placeholder="At least 12 characters" required />
+              <input name="password" type="password" minLength="12" placeholder="12+ characters; blank for Google" />
             </label>
             <label>
               Role

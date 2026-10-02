@@ -74,24 +74,37 @@ export async function createAdminSession(email, password) {
       return null;
     }
 
+    // A Google-only account (null hash) can never sign in with a password.
+    // Run one bcrypt compare anyway so its response time matches a wrong password.
+    if (!user.passwordHash) {
+      await verifyPassword(password, DUMMY_PASSWORD_HASH);
+      return null;
+    }
     const passwordOk = await verifyPassword(password, user.passwordHash);
     if (!passwordOk) return null;
 
-    const token = createSessionToken();
-    const tokenHash = hashSessionToken(token);
-    const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
-    const db = requireDatabase();
-
-    await db.query(
-      `insert into sessions (id, user_id, token_hash, expires_at)
-       values ($1, $2, $3, $4)`,
-      [id("session"), user.id, tokenHash, expiresAt]
-    );
-
-    return { token, expiresAt, user };
+    return await createSessionForUser(user);
   } catch {
     return null;
   }
+}
+
+// One session row + token for an already-authenticated user. Shared by
+// password login and Google sign-in (lib/oauth/google.js).
+export async function createSessionForUser(user) {
+  if (!user?.id) throw new Error("A user is required to create a session.");
+  const token = createSessionToken();
+  const tokenHash = hashSessionToken(token);
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  const db = requireDatabase();
+
+  await db.query(
+    `insert into sessions (id, user_id, token_hash, expires_at)
+     values ($1, $2, $3, $4)`,
+    [id("session"), user.id, tokenHash, expiresAt]
+  );
+
+  return { token, expiresAt, user };
 }
 
 export async function getAdminSessionForToken(token) {

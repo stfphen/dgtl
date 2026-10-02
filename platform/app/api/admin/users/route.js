@@ -36,7 +36,8 @@ export async function POST(request) {
         name: String(form.get("name") || ""),
         password: String(form.get("password") || ""),
         teamId,
-        role: String(form.get("role") || "")
+        role: String(form.get("role") || ""),
+        authMethod: String(form.get("authMethod") || "password")
       });
       await logAudit({
         userId: session.user?.id,
@@ -47,10 +48,16 @@ export async function POST(request) {
           email: created.email,
           name: created.name,
           role: created.role,
+          authMethod: String(form.get("authMethod") || "password"),
           teamId
         }
       });
-      return redirectAdmin(request, "Team credential created.");
+      return redirectAdmin(
+        request,
+        String(form.get("authMethod") || "password") === "google"
+          ? "Team member added. They sign in with Google using this email."
+          : "Team credential created."
+      );
     }
 
     if (action === "deactivate" || action === "reactivate") {

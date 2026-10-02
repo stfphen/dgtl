@@ -3,7 +3,7 @@ title: 13 · Data Model
 type: reference
 tags: [architecture, leads, tenancy]
 status: stable
-updated: 2026-08-14
+updated: 2026-10-01
 source: migrations/001-013, lib/store.js, lib/core/, lib/stage2/, lib/stage3/, lib/stage4/
 ---
 
@@ -100,6 +100,19 @@ The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
   relink revives the same row.
 - Deliberately creates **no table for Worklog projects/tasks/time/shifts/clients** — Worklog stays
   the only authority; see `docs/architecture/dgtl-core-phase-4.md` and [[2F-Worklog-Bridge]].
+
+### `015_passes.sql` — DGTL Pass foundation (2026-10-01)
+- **Auth:** `team_memberships.role` now admits **`issuer`** and **`verifier`** (pass-only roles,
+  refused by every workspace guard); `users.password_hash` is **nullable** for Google-only staff;
+  **`user_identities`** links (provider, subject) to a user, unique per provider subject.
+- **Passes:** `pass_types` (a tenant's catalogue: tier, validity rule, entry rule, design/email/SMS
+  JSON), `pass_holders` (the people passes go to, plus marketing-consent state),
+  `passes` (one hashed credential each; stored status active/suspended/revoked; expired/used are
+  derived; `use_count ≤ max_uses` check), `pass_deliveries` (email/SMS log + bulk queue),
+  `pass_scans` (append-only ledger, primary key = client scan id, stored response),
+  `pass_wallet_registrations` (Apple Wallet updates, Phase 5b).
+- Every business table carries `team_id` (the security boundary) + `tenant_id`. Postgres-only: no
+  file-store fallback (redemption needs row locks). Spec: `docs/specs/dgtl-pass/03-data-model.md` · [[2I-Passes]]
 
 ## Entity relationships (mental model)
 ```

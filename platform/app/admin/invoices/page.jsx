@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ReceiptText } from "lucide-react";
 import { getAdminSession } from "../../../lib/auth";
-import { canViewDashboard } from "../../../lib/permissions";
+import { canViewDashboard, isPassOnlyRole, passHomeFor } from "../../../lib/permissions";
 import InvoiceGeneratorPanel from "../../../components/admin/InvoiceGeneratorPanel";
 
 export const metadata = { title: "Invoices" };
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function InvoicesPage() {
   const session = await getAdminSession();
+  if (session && isPassOnlyRole(session.role)) redirect(passHomeFor(session));
   if (!session || !canViewDashboard(session)) redirect("/admin/login");
 
   return (

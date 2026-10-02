@@ -18,6 +18,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8091", "--directory", "journal"],
       "port": 8091
+    },
+    {
+      "name": "dgtl-pass-previews",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8093", "--directory", "docs/specs/dgtl-pass/previews"],
+      "port": 8093
     }
   ]
 }

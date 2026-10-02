@@ -46,7 +46,7 @@ function safeColor(value, fallback) {
 // `hex`. Without this, a bright brand primary (e.g. DMTV's yellow, ELiXR's gold)
 // would render white text on a near-white button — illegible. Uses perceived
 // luminance so the threshold tracks how light a color actually looks.
-function readableForeground(hex) {
+export function readableForeground(hex) {
   const rgb = toRgb(hex);
   if (!rgb) return "#ffffff";
   const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;

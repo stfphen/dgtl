@@ -111,6 +111,7 @@ Run in order by `npm run migrate`; each file is idempotent.
 | `012_artifact_automation_phase_3.sql` | Artifact families and immutable versions, bounded job leases, deployment attempts, and exact Message–Artifact relationships |
 | `013_worklog_operations_phase_4.sql` | Generic approved integration operations (idempotent, quarantine-aware) and external-link lifecycle/snapshot columns; no Worklog data copies |
 | `014_dgtl_chat_command_layer.sql` | Assistant threads/messages/tool-run audit and ActionProposals (payload hash, precondition snapshot, expiry, CAS states, one live proposal per exact payload) |
+| `015_passes.sql` | DGTL Pass: `issuer`/`verifier` roles, password-less (Google) users, `user_identities`, pass types, holders, passes (hashed credentials), deliveries, the scan ledger, Wallet registrations (`docs/specs/dgtl-pass/`) |
 
 The Core architecture, legacy mapping, and spreadsheet-import contract are documented
 in [`docs/architecture/dgtl-core-phase-1.md`](../docs/architecture/dgtl-core-phase-1.md).
