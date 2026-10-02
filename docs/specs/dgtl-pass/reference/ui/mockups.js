@@ -29,6 +29,10 @@ import { buildPassJson } from "../passJson.js";
 import { cardArtSvg, iconSvg, sparkFromSvg, stripSvg, thumbnailSvg } from "../walletArt.js";
 import { formatShortCode } from "../credentials.js";
 
+// The release gate runs `git diff --check`: indented template literals leave
+// whitespace-only lines, so generated pages are written without trailing space.
+const stripTrailingSpace = (text) => text.replace(/[ \t]+$/gm, "");
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../../../../..");
 const kitDir = path.join(repoRoot, "engine/dgtl-brand-kit/assets");
@@ -573,5 +577,5 @@ function adminPage() {
 
 await mkdir(outDir, { recursive: true });
 const pages = { "wallet.html": walletPage(), "pass-page.html": passPage(), "scanner.html": scannerPage(), "admin.html": adminPage() };
-for (const [file, html] of Object.entries(pages)) await writeFile(path.join(outDir, file), html);
+for (const [file, html] of Object.entries(pages)) await writeFile(path.join(outDir, file), stripTrailingSpace(html));
 console.log(`Wrote ${Object.keys(pages).join(", ")} to ${path.relative(process.cwd(), outDir)}`);

@@ -18,6 +18,10 @@ import { resolveBrandKit } from "../brand.js";
 import { resolvePassDesign } from "../tiers.js";
 import { cardArtSvg, sparkFromSvg } from "../walletArt.js";
 
+// The release gate runs `git diff --check`: indented template literals leave
+// whitespace-only lines, so generated pages are written without trailing space.
+const stripTrailingSpace = (text) => text.replace(/[ \t]+$/gm, "");
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, "../../previews");
 const require = createRequire(import.meta.url);
@@ -36,7 +40,7 @@ const pages = [];
 
 async function emit(file, title, note, input) {
   const out = renderPassEmail({ ...input, allowDataImages: true });
-  await writeFile(path.join(outDir, file), out.html);
+  await writeFile(path.join(outDir, file), stripTrailingSpace(out.html));
   pages.push({ file, title, note, subject: out.subject, preheader: out.preheader, warnings: out.warnings, blockers: out.blockers });
 }
 
@@ -159,6 +163,6 @@ ${sms.map((s) => `<div class="bubble">${esc(s.body)}<small>${s.units} chars · $
 </div>
 </body></html>`;
 
-await writeFile(path.join(outDir, "index.html"), index);
+await writeFile(path.join(outDir, "index.html"), stripTrailingSpace(index));
 console.log(`Wrote ${pages.length} previews + index.html to ${path.relative(process.cwd(), outDir)}`);
 for (const p of pages) console.log(` - ${p.file}${p.blockers.length ? `  BLOCKED: ${p.blockers.join(",")}` : ""}`);
