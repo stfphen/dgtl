@@ -36,6 +36,29 @@ PGLITE_PATH=/tmp/pglite/node_modules/@electric-sql/pglite node --test docs/specs
 | `passes-roles-config.test.js` (6) | capability matrix equals [10](10-auth-and-roles.md) (**T-U2**); pass-only roles hold no workspace rights; `requireSession` / `requirePassCapability`; pass config parsing |
 | `route-guard-sweep.test.js` (4) | **T-R1** for `verifier` *and* `issuer` over **every** `app/api` route (not only `/api/admin`): 401/403/login, else listed on an explicit PUBLIC map with a reason; Core pages redirect pass-only staff to `/scan`. Mutation-tested: removing the central deny fails it with 14 leaking routes per role |
 
+## Written in Phases 2–3 (`platform/tests/`, 34 more; 647 in `npm test`, 3 skip without Postgres)
+
+| Suite | Covers |
+|---|---|
+| `passes-store.test.js` (7, PGlite) | Store behaviour on real SQL: |
+| | • preset install is idempotent, and team-scoped |
+| | • issue is idempotent; another team's type → 404; holder validation |
+| | • door rules: single use, replay, cooldown warn, foreign host, a miss reveals nothing; the ledger count |
+| | • http QR only from the dev host |
+| | • holder lookup stamps `first_viewed_at`; revoke is terminal and team-scoped |
+| | • list carries no credential; overview tier counts equal the Active KPI |
+| | • Wallet copy columns + check constraint |
+| `passes-walletwallet.test.js` (7) | WalletWallet, against a fake provider: |
+| | • request carries our link as the barcode, and no email or phone |
+| | • free presets stay distinct and never use green or red; Pro face colour |
+| | • expiry rounding; bearer auth |
+| | • `.pkpass` ZIP check; 429, 504 and foreign Google-link handling; revoke 404 = gone |
+| | • **two taps → one provider pass**; a provider failure is recorded, not thrown |
+| `passes-routes.test.js` (10) | **T-R2**: every pass route × every role against the capability matrix, plus a guard that a new pass route must join the matrix. No session → 401 |
+| `passes-art.test.js` (3) | Spark byte-identical to the kit; gold spark on every tier's card art; the self-hosted `zxing_reader.wasm` hash equals the package's `ZXING_WASM_SHA256` |
+| `passes.pg.test.js` (3, real Postgres) | **T-C1** 20 parallel scans → 1 admit; **T-C2** one scan id ×10 → 1 ledger row; **T-C3** one issue id ×10 → 1 pass. Needs `PASSES_PG_TEST_URL`; runs in the release gate |
+| additions | Config: LAN base URL in dev only, WalletWallet provider config. Credentials: `insecureHosts`. `brand-tokens.test.js`: no hex in pass CSS; the scanner never makes a verdict gold |
+
 SQL tests use `@electric-sql/pglite` (devDependency) through `tests/support/migrated-pglite.js`.
 Route handlers are imported directly via `tests/support/next-resolve-hook.mjs`.
 
@@ -71,18 +94,18 @@ Route handlers are imported directly via `tests/support/next-resolve-hook.mjs`.
 
 | Id | Test |
 |---|---|
-| T-C1 | 20 parallel `verifyScan` calls (separate pool clients) on one single-use pass → exactly 1 `valid`, 19 `used`, `use_count = 1`, 20 ledger rows |
-| T-C2 | 10 parallel calls with the **same** scan id → 1 ledger row, all responses identical |
-| T-C3 | 10 parallel issues with the same `issueRequestId` → 1 pass |
+| T-C1 ✅ P3 | 20 parallel `verifyScan` calls (separate pool clients) on one single-use pass → exactly 1 `valid`, 19 `used`, `use_count = 1`, 20 ledger rows |
+| T-C2 ✅ P3 | 10 parallel calls with the **same** scan id → 1 ledger row, all responses identical |
+| T-C3 ✅ P3 | 10 parallel issues with the same `issueRequestId` → 1 pass |
 
 ### Routes and security (T-R, T-S)
 
 | Id | Test |
 |---|---|
 | T-R1 ✅ P1 | **verifier sweep:** a verifier session against every `/api/admin/*` route handler → 403 (enumerate the `app/api/admin` tree so new routes are covered automatically) |
-| T-R2 | issuer session: pass routes allowed per matrix; tenants/users/outreach routes 403 |
-| T-S1 | `/p/<unknown>` and `/p/<rotated>` return identical 404 bodies |
-| T-S2 | `/p/*` sets `noindex`, `no-store`, `no-referrer`; title never contains the holder name |
+| T-R2 ✅ P2 | issuer session: pass routes allowed per matrix; tenants/users/outreach routes 403 |
+| T-S1 (manual ✓ 2026-10-02, automate) | `/p/<unknown>` and `/p/<rotated>` return identical 404 bodies |
+| T-S2 (manual ✓ 2026-10-02, automate) | `/p/*` sets `noindex`, `no-store`, `no-referrer`; title never contains the holder name |
 | T-S3 | `/p/<revoked>` renders no QR and no image route serves it (qr.png → 404 for revoked/expired/used) |
 | T-S4 | rate limits: 31st request/min on one credential → 429 |
 | T-S5 | request logs redact `/p/<credential>` |

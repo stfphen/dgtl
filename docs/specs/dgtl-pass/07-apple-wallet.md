@@ -1,6 +1,39 @@
 # 07 · Apple Wallet
 
-## What ships in the MVP
+## Hosted signing first: Wallet without an Apple Developer account (built 2026-10-02)
+
+Every `.pkpass` must be signed with an Apple Pass Type ID certificate, and only a paid
+Apple Developer Program membership can create one. There is no free or open way around
+that. A hosted provider can sign with **its own** Pass Type ID, though. DGTL Pass ships
+that path first, through **WalletWallet** (`lib/passes/wallet/walletwallet.js`):
+
+- **What it costs.** Free is 1,000 creates + updates a month, with no card and no Apple
+  account. Pro is $39/month (checked 2026-10-01). One POST returns the signed `.pkpass`, a
+  Google Wallet save link and a hosted page. DELETE revokes it on both wallets.
+- **How it is wired.** `GET /p/<credential>/wallet.pkpass` creates the Wallet copy on the
+  first tap, stores the signed bytes and the provider serial (migration 016), and serves
+  the stored copy after that. A row lock makes two taps create one pass.
+  `GET /p/<credential>/google-wallet` uses the same copy. Revoke deletes it at the provider
+  (best effort: the door already refuses the pass).
+- **The barcode is our pass link.** The provider only stores the pass, so a Wallet copy
+  can never admit anyone on its own. The scanner asks our database.
+- **Branding by plan.**
+  - Free: a colour preset per tier (Day blue, Monthly orange, Annual purple, VIP dark)
+    plus "DGTL PASS" as text. Green and red are avoided because they are the scanner's
+    verdict colours.
+  - Pro (`WALLETWALLET_BRANDING=full`): the tier's exact face colour and the tenant's logo
+    URL.
+  - The pass page in Safari is fully branded on every plan.
+- **Data.** The holder's name and pass link reach the provider, which makes it a
+  processor; put it in the privacy notice before real holders get passes this way. No
+  email or phone is sent.
+
+DGTL's own certificate (the design below) remains the launch recommendation: $99/year,
+full strip art, and holder data stays first-party. `PASS_WALLET_PROVIDER` switches between
+the two, so moving is configuration, not a rewrite. The demo runbook is
+[18-iphone-demo.md](18-iphone-demo.md).
+
+## What ships with DGTL's own certificate (Phase 5)
 
 - A signed `.pkpass` generated on demand at `GET /p/<credential>/wallet.pkpass`.
 - An "Add to Apple Wallet" badge in every email and on the pass page (iOS/macOS Safari).

@@ -3,7 +3,7 @@ title: 53 · Known Issues, Risks & Tech Debt
 type: log
 tags: [audit, security]
 status: living
-updated: 2026-10-01
+updated: 2026-10-02
 source: docs/SECURITY_REVIEW.md, docs/audits/2026-07-02-codebase-audit.md, status docs
 ---
 
@@ -366,3 +366,15 @@ link checker intentionally does not scan templates under `engine/`.
 - **Proposal expiry is passive.** Expired proposals are refused at confirmation and shown as
   expired, but no background job transitions `proposed → expired`; listing queries treat
   past-expiry proposals as inert. A sweeper is only needed if proposal lists ever grow noisy.
+
+## DGTL Pass Phases 2–3 follow-ups (2026-10-02)
+| ID | Issue | Detail | Fix |
+|---|---|---|---|
+| P-1 | WalletWallet is a processor of holder data | The holder's name and pass link leave when a holder taps Add to Wallet | List it in the privacy notice before real holders, or move to the own certificate (P5) |
+| P-2 | Free-plan Wallet cards are unbranded | Colour preset + "DGTL PASS" text; no logo, strip art or exact tier colours | WalletWallet Pro (`WALLETWALLET_BRANDING=full`) or own certificate (P5, full art) |
+| P-3 | Wallet buttons are placeholders | Not Apple's or Google's official badge artwork (their guidelines require it) | Use the official badges before launch (P5.4) |
+| P-4 | Issuers can't reach `/passes` | Pass-only roles are redirected by the Core layout; issuers land on `/scan` | A pass-only shell or route group for `/passes` with `pass.issue` |
+| P-5 | Scanner decodes on the main thread | ~8 fps on the main thread; spec asks for a Worker | Move `readBarcodes` into a Worker (P3.3) |
+| P-6 | No PWA manifest for `/scan` | Home-screen install uses Apple meta only | `app/scan` manifest + icons (P3.2) |
+| P-7 | T-S1 / T-S2 checked by hand only | Identical 404s and no-store / no-referrer / noindex verified with curl, not in `npm test` | Add a route test (needs a Next request harness for pages) |
+| P-8 | Tenant normalisation fills legacy blue | A tenant without `brand.primaryColor` gets `#0071e3`, which then marks its passes | Set the colour when a tenant is created; consider defaulting new tenants to the DGTL token |

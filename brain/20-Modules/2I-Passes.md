@@ -3,7 +3,7 @@ title: 2I · DGTL Pass (passes, tickets, verification)
 type: module
 tags: [module, passes, wallet, verification]
 status: in-build
-updated: 2026-10-01
+updated: 2026-10-02
 ---
 
 # DGTL Pass
@@ -16,7 +16,10 @@ config, teams/roles, sessions, audit, Resend, Twilio and Stripe. It sits after c
 lead lifecycle. Once [[27-Checkout-Payments]] issues passes automatically, it becomes a sellable
 feature (roadmap item R1 in the spec).
 
-**Status: in build. Phase 1 (foundation) is built on `feat/pass-p1-foundation` (2026-10-01).**
+**Status: in build. Phases 1–3 are built and demo on a real iPhone (2026-10-02).** Phase 1
+(foundation) is on `feat/pass-p1-foundation`. Phases 2–3 (pass engine, holder page, scanner,
+Apple Wallet through WalletWallet) are on `feat/pass-p2-p3-demo`. Run it with
+`npm run demo:passes`; the runbook is `docs/specs/dgtl-pass/18-iphone-demo.md`.
 The full spec, a tested reference core and the migration exist. The **DGTL brand kit**
 (`engine/dgtl-brand-kit/`) is applied to every surface, and every pass is a **branded DGTL card**:
 the DGTL⚡ PASS lockup and gold spark on every tier, plus a distinct tier colour (Steel blue, Bronze
@@ -35,6 +38,21 @@ Phase 1 delivered:
 
 `npm test` is 613/613.
 
+Phases 2–3 delivered:
+- **Core `/passes`:** issue, with an "open on your phone" QR; recent passes with QR and
+  revoke; tier bars; live scans.
+- **`/p/[credential]`:** the branded pass page in all four tier colours. Dead states hide the
+  QR; every miss gets one 404.
+- **`/scan`:** `zxing-wasm` (self-hosted, hash-pinned); full-screen verdicts; manual entry;
+  a photo fallback for plain-http Wi-Fi.
+- **Apple and Google Wallet via WalletWallet.** No Apple Developer account is needed;
+  migration 016 stores the copy.
+- **`npm run demo:passes`:** its own Postgres 16 container, seeded, LAN-reachable.
+
+Verified on real Postgres 16: 20 parallel scans of one single-use pass → exactly 1 admit
+(T-C1, now a release-gate step). `npm test` 647 (644 pass, 3 real-Postgres tests skip
+locally without `PASSES_PG_TEST_URL`; 3/3 pass against the demo database).
+
 ## Key files
 - Spec + handoff: `docs/specs/dgtl-pass/` (start at `README.md`; build agent prompt in `HANDOFF-PROMPT.md`)
 - Reference core (tested, to port into `platform/lib/passes/`): `docs/specs/dgtl-pass/reference/`
@@ -52,8 +70,20 @@ Phase 1 delivered:
   `lib/oauth/{google,state,identities}.js` (PKCE + signed state cookie + jose JWKS, invite-only
   linking by Google `sub`); `app/api/auth/google/{start,callback}`; `app/scan` (signed-in landing,
   camera scanner in P3); pass roles + capability matrix in `lib/permissions.js`; `scripts/seed-passes-dev.js`.
-- Target (not built): `app/p/[credential]`, `app/api/admin/passes/*`, `app/api/scan/*`,
-  `lib/passes/repository.js`, and a Core routed module `/passes` (`app/(core)/passes`).
+- Built (P2–P3):
+  - `lib/passes/store.js` (the reference transactions, plus list, overview, holder lookup and
+    Wallet copy)
+  - `settings.js` (tenant `passes` block), `holderView.js`, `http.js`, `art.js` + the generated
+    `brandAssets.js` (kit spark), `qr.js`
+  - `wallet/{index,walletwallet}.js`
+  - `app/p/*`, `app/(core)/passes`, `app/api/admin/{passes,pass-types}/*`, `app/api/scan/*`
+  - `components/{passes,scan}/*`
+  - `scripts/demo-passes.mjs`
+- Target (not built):
+  - pass-type editor; suspend / rotate / extend / resend
+  - delivery (P4)
+  - DGTL-signed `.pkpass` (P5)
+  - `/passes/scans` ledger; scanner PWA manifest + Worker decode
 
 ## Data flow
 Admin issues (idempotent on `issue_request_id`) → the pass row stores the window + usage snapshot
@@ -70,6 +100,17 @@ The Google and `PASS_*` variables are in [[43-Environment-Variables]] and `platf
 cutoff, gates, brand kit, legal/postal address, VIP offer).
 
 ## ⚠️ Gotchas / open issues
+- **Wallet without Apple, and its limits.** WalletWallet signs with its own Pass Type ID.
+  The Free plan gives a colour preset and text only (Day blue, Monthly orange, Annual
+  purple, VIP dark; never green or red). The holder's name and pass link go to a processor.
+  The barcode stays our link, so the door still decides. Own certificate (P5) remains the
+  launch recommendation; switching is `PASS_WALLET_PROVIDER`.
+- **A tenant's `brand.primaryColor` is the pass brand mark.** Without one, tenant
+  normalisation fills the legacy funnel blue (`#0071e3`) and the spark turns blue. The
+  demo seed sets it from the gold token.
+- **LAN http is development-only.** `PASS_PUBLIC_BASE_URL` may be `http://<private IP>` outside
+  production, and the scanner then accepts http QR codes from that host only. Live camera
+  still needs HTTPS (photo fallback otherwise).
 - **Postgres-only.** No JSON file-store fallback, because redemption needs row locks
   (see the file-store race in [[53-Known-Issues]]).
 - **iOS Safari has no `BarcodeDetector`.** The scanner uses `zxing-wasm`.

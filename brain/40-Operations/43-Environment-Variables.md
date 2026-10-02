@@ -3,7 +3,7 @@ title: 43 · Environment Variables
 type: reference
 tags: [ops]
 status: stable
-updated: 2026-10-01
+updated: 2026-10-02
 source: .env.example, API_KEYS.md, GO_LIVE_PLAN.md
 ---
 
@@ -95,6 +95,11 @@ See [[2H-DGTL-Chat]] and `docs/architecture/dgtl-core-phase-6.md`.
 | `PASS_ALLOWED_SCAN_HOSTS` | Extra hosts the scanner accepts | Keep retired pass hosts here forever |
 | `PASS_CREDENTIAL_SECRETS` / `PASS_CREDENTIAL_ACTIVE_KEY` | HMAC key(s) that derive pass credentials | `k1:<base64 ≥32 bytes>`; rotate by adding `k2` and switching the active key; never delete a key passes still reference. See [[44-Secrets-And-Rotation]] |
 | `PASSES_DRY_RUN` | Mock pass email/SMS | `true` in staging and demos |
+| `PASSES_DEFAULT_TIMEZONE` | Tenant timezone fallback | IANA name; a tenant's `passes.timeZone` wins |
+| `WALLETWALLET_API_KEY` | Apple Wallet **without an Apple Developer account** (WalletWallet signs with its own Pass Type ID) | `ww_live_…`, server-only, `platform/.env` only. Free = 1,000 passes/month, preset colours + text. Malformed → config error at load |
+| `WALLETWALLET_BRANDING` | `preset` (Free) / `full` (Pro: tier face colour + logo URL) | default `preset` |
+| `PASS_WALLET_PROVIDER` | `walletwallet` / `apple` | Unset: `apple` if the PASSKIT_* set is complete, else `walletwallet` if its key is set. `apple` = own certificate, Phase 5, recognised but not yet on |
+| `NEXT_DEV_ALLOWED_ORIGINS` | Dev only: a phone on the Wi-Fi loading the dev server | Set by `npm run demo:passes`. A LAN `PASS_PUBLIC_BASE_URL` (http, private range) is accepted only outside production, and only that host's http QR codes scan |
 
 ## App host / canonical identity
 

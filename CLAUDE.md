@@ -195,6 +195,6 @@ Report the exact commands you ran and their output. Do not claim a check passed 
 
 | Touched | Run |
 |---|---|
-| `platform/` | `cd platform && npm test` (536 tests on `main`; 613 with DGTL Pass P1) **and** `npm run build` |
+| `platform/` | `cd platform && npm test` (536 tests on `main`; 647 with DGTL Pass P1–P3, 3 of which need `PASSES_PG_TEST_URL`) **and** `npm run build` |
 | `journal/`, `pitches/` | `python3 tools/check-links.py` — must report `missing=0` |
 | a new pack | the link check, plus confirm `pack.json` exists and the journal index links it |

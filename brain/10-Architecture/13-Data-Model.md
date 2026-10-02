@@ -3,7 +3,7 @@ title: 13 · Data Model
 type: reference
 tags: [architecture, leads, tenancy]
 status: stable
-updated: 2026-10-01
+updated: 2026-10-02
 source: migrations/001-013, lib/store.js, lib/core/, lib/stage2/, lib/stage3/, lib/stage4/
 ---
 
@@ -113,6 +113,17 @@ The data layer is `lib/store.js` (82KB) which also has a **JSON-file fallback**
   `pass_wallet_registrations` (Apple Wallet updates, Phase 5b).
 - Every business table carries `team_id` (the security boundary) + `tenant_id`. Postgres-only: no
   file-store fallback (redemption needs row locks). Spec: `docs/specs/dgtl-pass/03-data-model.md` · [[2I-Passes]]
+
+### `016_pass_wallet_provider.sql` — hosted Apple Wallet copy (2026-10-02)
+- Adds to `passes`:
+  - `wallet_provider` (`walletwallet` | `apple`, checked)
+  - `wallet_ref` (the provider's serial)
+  - `wallet_share_url`, `wallet_google_url`
+  - `wallet_pkpass` (the signed bytes, served again on later taps)
+  - `wallet_issued_at`, `wallet_synced_at`, `wallet_error`
+- One pass makes one provider pass: the row is locked while the copy is created. The pass's
+  barcode is still our credential link, so the provider only stores the pass. It never
+  decides admission.
 
 ## Entity relationships (mental model)
 ```

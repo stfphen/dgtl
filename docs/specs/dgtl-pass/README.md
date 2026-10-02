@@ -31,7 +31,7 @@ config, roles, sessions, audit log, Resend, Twilio and Stripe. The reasons are i
 | [04-api.md](04-api.md) | Every route: body, response, capability, errors |
 | [05-verification.md](05-verification.md) | Credential design · decision rules · the scan transaction · anti-passback · offline stance |
 | [06-scanner.md](06-scanner.md) | The `/scan` PWA: iOS/Android constraints, screens, behaviour, device matrix |
-| [07-apple-wallet.md](07-apple-wallet.md) | Styles per tier, certificates, `.pkpass` build, badge rules, update service |
+| [07-apple-wallet.md](07-apple-wallet.md) | Hosted signing (WalletWallet, built) · styles per tier, certificates, `.pkpass` build, badge rules, update service |
 | [08-messaging.md](08-messaging.md) | Delivery pipeline, email/SMS rules, deliverability, CASL/CAN-SPAM gates |
 | [09-brand-and-tiers.md](09-brand-and-tiers.md) | Brand kit contract, Steel/Bronze/Silver/Gold ladder, voice, VIP onboarding strategy |
 | [10-auth-and-roles.md](10-auth-and-roles.md) | Google OIDC (invite-only), `issuer` + `verifier` roles, capability matrix |
@@ -42,6 +42,7 @@ config, roles, sessions, audit log, Resend, Twilio and Stripe. The reasons are i
 | [15-config-and-accounts.md](15-config-and-accounts.md) | Env vars, Apple / Google / Twilio / Resend / DNS checklists, new dependencies |
 | [16-roadmap.md](16-roadmap.md) | Selling passes, Google Wallet, renewals, photos, offline, … |
 | [17-launch-plan.md](17-launch-plan.md) | **Current status, production timeline (target Fri Oct 30, 2026), readiness checklist, decisions needed** |
+| [18-iphone-demo.md](18-iphone-demo.md) | **Demo on a real iPhone today:** `npm run demo:passes`, Apple Wallet via WalletWallet (no Apple Developer account), limits, own-certificate comparison |
 | [`migration/015_passes.sql`](migration/015_passes.sql) | Draft migration, validated against platform migrations 001–014 |
 | [`reference/`](reference/) | Tested, dependency-free implementations to port into `platform/lib/passes/` |
 | [`previews/`](previews/) | UI design targets built to the DGTL brand kit: 7 emails + SMS, Wallet passes, pass page, scanner, admin tab |
