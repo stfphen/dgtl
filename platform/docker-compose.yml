@@ -86,6 +86,32 @@ services:
       CORE_CHAT_MODEL: ${CORE_CHAT_MODEL:-}
       # --- Release identity shown by the authenticated health endpoint ---
       CORE_RELEASE_SHA: ${CORE_RELEASE_SHA:-}
+      # --- DGTL Pass (docs/operations/dgtl-pass-production-runbook.md) ---
+      # Unset PASS_PUBLIC_BASE_URL = passes off: holder pages 404, pass APIs 503.
+      # PASS_PUBLIC_BASE_URL is PERMANENT once a pass ships: every QR encodes it.
+      PASS_PUBLIC_BASE_URL: ${PASS_PUBLIC_BASE_URL:-}
+      PASS_ALLOWED_SCAN_HOSTS: ${PASS_ALLOWED_SCAN_HOSTS:-}
+      PASS_CREDENTIAL_SECRETS: ${PASS_CREDENTIAL_SECRETS:-}
+      PASS_CREDENTIAL_ACTIVE_KEY: ${PASS_CREDENTIAL_ACTIVE_KEY:-}
+      PASSES_DRY_RUN: ${PASSES_DRY_RUN:-true}
+      PASSES_DEFAULT_TIMEZONE: ${PASSES_DEFAULT_TIMEZONE:-}
+      # Pass SMS (Phase 4) sends through a Twilio Messaging Service.
+      TWILIO_MESSAGING_SERVICE_SID: ${TWILIO_MESSAGING_SERVICE_SID:-}
+      # Apple Wallet: WalletWallet (hosted signing) or DGTL's own certificate.
+      PASS_WALLET_PROVIDER: ${PASS_WALLET_PROVIDER:-}
+      WALLETWALLET_API_KEY: ${WALLETWALLET_API_KEY:-}
+      WALLETWALLET_BRANDING: ${WALLETWALLET_BRANDING:-}
+      PASSKIT_TEAM_ID: ${PASSKIT_TEAM_ID:-}
+      PASSKIT_PASS_TYPE_ID: ${PASSKIT_PASS_TYPE_ID:-}
+      PASSKIT_SIGNER_CERT_B64: ${PASSKIT_SIGNER_CERT_B64:-}
+      PASSKIT_SIGNER_KEY_B64: ${PASSKIT_SIGNER_KEY_B64:-}
+      PASSKIT_SIGNER_KEY_PASSPHRASE: ${PASSKIT_SIGNER_KEY_PASSPHRASE:-}
+      PASSKIT_WWDR_CERT_B64: ${PASSKIT_WWDR_CERT_B64:-}
+      # --- Staff Google sign-in (unset = the button is hidden) ---
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_ORIGINS: ${GOOGLE_OAUTH_REDIRECT_ORIGINS:-}
+      OAUTH_STATE_SECRET: ${OAUTH_STATE_SECRET:-}
     depends_on:
       - content-funnel-postgres
     volumes:
@@ -133,6 +159,20 @@ services:
       traefik.http.routers.dgtlltd-http.entrypoints: "http"
       traefik.http.routers.dgtlltd-http.middlewares: "dgtlmag-redirect"
       traefik.http.routers.dgtlltd-http.service: "dgtlmag"
+      # pass.dgtl.ltd — DGTL Pass holder pages. Every pass QR points here, so
+      # it is permanent once passes ship. ONLY the holder routes (/p/*) and
+      # the static files they load are routed: the admin, the scanner and the
+      # APIs stay on the staff hosts, so a pass link can never be turned into
+      # a sign-in page on this host. Anything else is Traefik's 404.
+      # Inert until DNS points pass.dgtl.ltd here.
+      traefik.http.routers.dgtlpass.rule: "Host(`pass.dgtl.ltd`) && (PathPrefix(`/p/`) || PathPrefix(`/_next/static/`) || Path(`/favicon.ico`) || Path(`/icon.svg`))"
+      traefik.http.routers.dgtlpass.entrypoints: "https"
+      traefik.http.routers.dgtlpass.tls.certresolver: "letsencrypt"
+      traefik.http.routers.dgtlpass.service: "dgtlmag"
+      traefik.http.routers.dgtlpass-http.rule: "Host(`pass.dgtl.ltd`)"
+      traefik.http.routers.dgtlpass-http.entrypoints: "http"
+      traefik.http.routers.dgtlpass-http.middlewares: "dgtlmag-redirect"
+      traefik.http.routers.dgtlpass-http.service: "dgtlmag"
     healthcheck:
       # The login page is the cheapest unauthenticated route that proves the
       # Next server is up without touching business data.
