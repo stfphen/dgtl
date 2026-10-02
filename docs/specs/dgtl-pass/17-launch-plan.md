@@ -69,6 +69,21 @@ normal review slippage. The two approvals degrade the launch rather than stop it
 - **Apple late:** launch with email + the pass page QR, which verify identically, and Wallet
   follows. Stephen decides by Oct 20 whether either is acceptable for the pilot.
 
+## Production deploy
+
+The step-by-step is **`docs/operations/dgtl-pass-production-runbook.md`**:
+1. deploy dark;
+2. DNS for `pass.dgtl.ltd`;
+3. secrets in `.env`;
+4. tenant + door staff (`npm run passes:setup-tenant`);
+5. phone smoke test;
+6. go-live gates;
+7. rollback if needed.
+
+Before 2026-10-02 production could not have turned passes on at all: compose passes the
+container an explicit variable list, and none of the pass settings were in it.
+`tests/passes-production-config.test.js` now pins that.
+
 ## Production readiness checklist
 
 Owner: **S** = Stephen · **B** = build agent/engineer. Status: ✅ done · 🟡 in progress · ⬜ not

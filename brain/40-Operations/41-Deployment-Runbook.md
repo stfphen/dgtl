@@ -3,7 +3,7 @@ title: 41 · Deployment Runbook (Hetzner VPS)
 type: runbook
 tags: [ops]
 status: stable
-updated: 2026-08-14
+updated: 2026-10-02
 source: DEPLOY_HOSTINGER.md, PRE_DEPLOY_CHECKLIST.md, RESUME_HERE.md
 ---
 
@@ -116,6 +116,9 @@ docker compose build content-funnel
 docker compose run --rm --no-deps content-funnel npm run migrate
 docker compose up -d
 ```
+
+DGTL Pass on `pass.dgtl.ltd`: `docs/operations/dgtl-pass-production-runbook.md` (same `/opt/dgtl`
+loop; adds DNS, pass secrets, `npm run passes:setup-tenant`, phone smoke test). [[2I-Passes]]
 
 Related: [[42-Go-Live-Plan]] · [[45-Database-Backups]] · [[43-Environment-Variables]] · [[46-Demo-Flow]]
 
