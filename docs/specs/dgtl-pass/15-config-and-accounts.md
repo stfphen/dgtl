@@ -17,14 +17,14 @@
 | `TWILIO_MESSAGING_SERVICE_SID` | P4 | yes | `MG…` | Messaging Service with Advanced Opt-Out on |
 | `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | P1 | yes | — | Web application client |
 | `OAUTH_STATE_SECRET` | P1 | yes | random 32+ bytes | signs the `oauth_tx` cookie |
-| `PASSKIT_TEAM_ID` | P5 | for Wallet | `ABCDE12345` | Apple Team ID |
+| `PASSKIT_TEAM_ID` | P5 (built) | for own-cert Wallet | `ABCDE12345` | Apple Team ID. All PASSKIT_* are written and checked by `npm run passkit:setup -- env` |
 | `PASSKIT_PASS_TYPE_ID` | P5 | for Wallet | `pass.io.dgtl.passes` | |
 | `PASSKIT_SIGNER_CERT_B64` / `PASSKIT_SIGNER_KEY_B64` | P5 | for Wallet | base64 PEM | server-only |
 | `PASSKIT_SIGNER_KEY_PASSPHRASE` | P5 | if the key is encrypted | — | |
 | `PASSKIT_WWDR_CERT_B64` | P5 | for Wallet | base64 PEM (WWDR G4) | |
 | `PASS_WALLET_BADGE_URL` | P5 | for launch | https PNG | official Apple badge |
 | `WALLETWALLET_API_KEY` | P2 (built) | for hosted Wallet | `ww_live_` + 32 hex | WalletWallet signs with its own Pass Type ID: no Apple account. Server-only; `platform/.env`, never committed |
-| `WALLETWALLET_BRANDING` | P2 (built) | no | `preset` (Free) · `full` (Pro) | Pro sends the tier face colour + logo URL |
+| `WALLETWALLET_BRANDING` | P2 (built) | no | `preset` (Free) · `full` (Pro) | Pro sends the DGTL card layout, tier face colour, strip art, icon and wordmark. A plan refusal falls back to the free card |
 | `WALLETWALLET_API_URL` | P2 (built) | no | `https://api.walletwallet.dev` | https only; tests point it elsewhere |
 | `PASS_WALLET_PROVIDER` | P2 (built) | no | `walletwallet` · `apple` | Unset: `apple` when the PASSKIT_* set is complete, else `walletwallet` when its key is set |
 | `PASSES_DEFAULT_TIMEZONE` | P2 (built) | no | `America/Toronto` | Fallback when a tenant has no `passes.timeZone` |

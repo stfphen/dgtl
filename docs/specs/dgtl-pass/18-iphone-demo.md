@@ -1,7 +1,9 @@
 # 18 · iPhone demo (no Apple Developer account)
 
 How to show DGTL Pass end to end on a real iPhone, on the Mac's Wi-Fi, today. Built and
-verified 2026-10-02 on `feat/pass-p2-p3-demo`.
+verified 2026-10-02 on `feat/pass-p2-p3-demo`. The live WalletWallet tap was confirmed on
+Stephen's iPhone the same day. Matching Wallet card designs were added on
+`feat/pass-wallet-branding`.
 
 ## What you can show
 
@@ -62,8 +64,47 @@ image, no strip art, no exact tier colours. Tiers map to presets so they stay ap
 
 The lockup is spelled out as "DGTL PASS" text. Green and red are avoided because they are
 the scanner's verdict colours. The pass page in Safari is fully branded on every plan; only
-the Wallet copy is plain. WalletWallet Pro ($39/month, `WALLETWALLET_BRANDING=full`) sends
-the exact tier face colour (and a logo URL when the tenant has one).
+the Wallet copy is plain.
+
+## Make the Wallet card match the DGTL design
+
+Two ways, both built (2026-10-02). Neither needs a code change, only settings and a restart.
+
+**WalletWallet Pro ($39/month): DGTL art now.** After upgrading the plan, add
+`WALLETWALLET_BRANDING=full` to `platform/.env`. Each new pass then carries:
+- the DGTL-signed card's own layout (TIER, ACCESS, MEMBER, EXPIRES, MEMBER SINCE);
+- the tier's exact face colour;
+- the brand-kit strip art (tier field, watermark, gold spark);
+- the spark icon, and the wordmark beside "PASS".
+
+WalletWallet still picks the card style, so the Day pass is a store card rather than a ticket,
+and label colours are its own. If the key isn't on Pro yet, the pass is issued on the free
+card and the reason is recorded on it. Passes already in a Wallet keep the look they were
+issued with.
+
+**DGTL's own Apple certificate ($99/year): the exact design.** It matches
+`previews/wallet.html`: ticket-style Day pass, tier label colours, every image at
+@1x/@2x/@3x, and holder data stays first-party. Signed by `lib/passes/wallet/apple.js`;
+OpenSSL verifies it in `tests/passes-wallet-signing.test.js`.
+
+1. Enrol at [developer.apple.com/programs](https://developer.apple.com/programs/). Individual
+   enrolment is usually approved in a day or two. An organisation needs a D-U-N-S number.
+2. ```bash
+   cd platform && npm run passkit:setup -- csr --email <your Apple ID email>
+   ```
+   This makes the key and a signing request in `platform/data/passkit/` (git-ignored).
+3. In the portal, register a Pass Type ID (e.g. `pass.io.dgtl.passes`), create a Pass Type ID
+   Certificate from `passkit.csr`, and save it as `platform/data/passkit/pass.cer`.
+4. ```bash
+   npm run passkit:setup -- env --pass-type-id pass.io.dgtl.passes --team-id <Team ID>
+   ```
+   This downloads Apple's WWDR G4 intermediate, checks everything the app checks at load, and
+   writes `platform/data/passkit/passkit.env`.
+5. Copy those lines into `platform/.env` (demo) or the production secrets, then restart. The
+   demo banner then reads **Apple Wallet: ON, DGTL-signed**.
+
+With your own certificate, Google Wallet is not offered (roadmap R2), and passes already in a
+Wallet from WalletWallet keep working: their barcode is the same pass link.
 
 ## Known demo limits
 
@@ -81,8 +122,9 @@ the exact tier face colour (and a logo URL when the tenant has one).
 
 | | WalletWallet Free | WalletWallet Pro | DGTL's own Apple certificate (Phase 5) |
 |---|---|---|---|
+| Status | built | built (`WALLETWALLET_BRANDING=full`) | built (`npm run passkit:setup`) |
 | Cost | $0, 1,000 passes/month | $39/month | $99/year Apple Developer Program |
-| DGTL branding on the Wallet card | Preset + text | Tier colour + logo | Full: strip art, logo, tier colours (`reference/walletArt.js`) |
+| DGTL branding on the Wallet card | Preset + text | Strip art, icon, wordmark, tier face colour; WalletWallet picks the style | Exact: every tier's style, label colours, all art |
 | Holder data | Leaves to a processor | Leaves to a processor | Stays first-party |
 | Wallet updates (revoke greys out) | Via provider | Via provider | Phase 5b web service |
 | Lead time | None | None | D-U-N-S + enrolment (days) |

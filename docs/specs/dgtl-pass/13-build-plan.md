@@ -199,6 +199,18 @@ fully.
 
 ## P5 · Apple Wallet (≈ 2 days, needs the P0.4 account)
 
+**Status 2026-10-02: code built; waiting on the Apple certificate.**
+
+| Task | State | Notes |
+|---|---|---|
+| P5.1 | done | `.gitignore` covers `*.p12`, `*.cer`, `passkit*.key`, `passkit*.pem`. Env documented. `npm run passkit:setup` generates the CSR and writes validated env |
+| P5.2 | done | Ported `passJson.js` (as `wallet/passJson.js`) and `walletArt.js` (as `art.js`), with their tests. `sharp` rasterizes at @1x/@2x/@3x. The kit spark and wordmark are synced, not retyped. Signing uses `pkijs`, not `passkit-generator` (its pinned deps carry three high advisories) |
+| P5.3 | done | `wallet.pkpass` signs on demand with `PASS_WALLET_PROVIDER=apple` (auto when PASSKIT_* is complete). Google Wallet is hidden in that mode |
+| P5.4 | open | The official badge |
+
+Also built: WalletWallet Pro carries the same layout and art (`WALLETWALLET_BRANDING=full`).
+Gate P5 waits on a real Pass Type ID certificate and an install on an iPhone.
+
 | # | Task | Files |
 |---|---|---|
 | P5.1 | Certificates → env per [07](07-apple-wallet.md#certificates-and-identity); gitignore `*.p12`, `*.pem` | `.gitignore`, `.env.example` |

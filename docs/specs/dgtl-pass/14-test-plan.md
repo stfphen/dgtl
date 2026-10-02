@@ -59,6 +59,14 @@ PGLITE_PATH=/tmp/pglite/node_modules/@electric-sql/pglite node --test docs/specs
 | `passes.pg.test.js` (3, real Postgres) | **T-C1** 20 parallel scans → 1 admit; **T-C2** one scan id ×10 → 1 ledger row; **T-C3** one issue id ×10 → 1 pass. Needs `PASSES_PG_TEST_URL`; runs in the release gate |
 | additions | Config: LAN base URL in dev only, WalletWallet provider config. Credentials: `insecureHosts`. `brand-tokens.test.js`: no hex in pass CSS; the scanner never makes a verdict gold |
 
+## Written for Wallet branding (Phase 5 + WalletWallet Pro)
+
+| Suite | Covers |
+|---|---|
+| `passes-pass-json.test.js` (6), `passes-wallet-art.test.js` (5) | The reference suites, ported unchanged |
+| `passes-wallet-signing.test.js` (5) | DGTL-signed passes, with OpenSSL as the independent check:<br>• config refuses a wrong Pass Type ID, team, key or WWDR, and junk input<br>• all four tiers: manifest SHA-1s match, `openssl cms -verify` passes, `pass.json` has the tier face and labels, our link as the barcode, no email<br>• Apple's image sizes at @1x/@2x/@3x<br>• a tampered manifest fails<br>• the Wallet route signs on demand and records the first add |
+| `passes-walletwallet.test.js` (+2) | Pro request: layout, tier face, strip 1080×360, icon 120×120, logo within 480×150, each image < 1 MB, body < 2 MB. A key not on Pro falls back to the free card and records why; an outage does not silently downgrade |
+
 SQL tests use `@electric-sql/pglite` (devDependency) through `tests/support/migrated-pglite.js`.
 Route handlers are imported directly via `tests/support/next-resolve-hook.mjs`.
 

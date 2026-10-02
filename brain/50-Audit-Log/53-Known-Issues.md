@@ -371,7 +371,9 @@ link checker intentionally does not scan templates under `engine/`.
 | ID | Issue | Detail | Fix |
 |---|---|---|---|
 | P-1 | WalletWallet is a processor of holder data | The holder's name and pass link leave when a holder taps Add to Wallet | List it in the privacy notice before real holders, or move to the own certificate (P5) |
-| P-2 | Free-plan Wallet cards are unbranded | Colour preset + "DGTL PASS" text; no logo, strip art or exact tier colours | WalletWallet Pro (`WALLETWALLET_BRANDING=full`) or own certificate (P5, full art) |
+| P-2 | Free-plan Wallet cards are unbranded | Colour preset + "DGTL PASS" text; no logo, strip art or exact tier colours | **Fix built 2026-10-02** (both paths). Takes effect when Stephen upgrades to Pro and sets `WALLETWALLET_BRANDING=full`, or installs the Apple certificate. Passes already issued keep their look |
+| P-9 | Own-certificate passes not yet installed on a device | The signature verifies under OpenSSL with test certificates; iOS also checks the chain to Apple's root | First install with the real Pass Type ID certificate (Gate P5) |
+| P-10 | Changing branding doesn't refresh existing WalletWallet copies | Stored copies are served as issued | A "refresh Wallet copy" action (PUT to the provider), with Phase 5b-style updates |
 | P-3 | Wallet buttons are placeholders | Not Apple's or Google's official badge artwork (their guidelines require it) | Use the official badges before launch (P5.4) |
 | P-4 | Issuers can't reach `/passes` | Pass-only roles are redirected by the Core layout; issuers land on `/scan` | A pass-only shell or route group for `/passes` with `pass.issue` |
 | P-5 | Scanner decodes on the main thread | ~8 fps on the main thread; spec asks for a Worker | Move `readBarcodes` into a Worker (P3.3) |
