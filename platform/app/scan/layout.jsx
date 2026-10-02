@@ -1,10 +1,10 @@
 import { manrope } from "../../lib/fonts";
 import "../dgtl-tokens.css";
-import "../admin/dgtl-admin.css";
+import "./scan.css";
 
 // The door scanner is a DGTL-owned surface: "DGTL --" title per
-// docs/WEB-APP-BRANDING.md. The PWA manifest (scope /scan) arrives with the
-// scanner itself in build-plan Phase 3.
+// docs/WEB-APP-BRANDING.md. Platform chrome, not themed per tenant: staff
+// moving between venues see the same tool (docs/specs/dgtl-pass/06-scanner.md).
 export const metadata = {
   title: { default: "DGTL -- Scanner", template: "DGTL -- Scanner | %s" },
   appleWebApp: {
@@ -26,9 +26,5 @@ export const viewport = {
 };
 
 export default function ScanLayout({ children }) {
-  return (
-    <div className={manrope.variable} style={{ display: "contents" }}>
-      {children}
-    </div>
-  );
+  return <div className={`${manrope.variable} dgtl-pass sc-root`}>{children}</div>;
 }

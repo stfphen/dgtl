@@ -1,33 +1,47 @@
 import { redirect } from "next/navigation";
-import DgtlWordmark from "../../components/brand/DgtlWordmark";
+import Scanner from "../../components/scan/Scanner";
 import { canUsePass, loadSession } from "../../lib/permissions";
+import { sparkSvg, svgDataUri } from "../../lib/passes/art";
+import { passesConfig } from "../../lib/passes/config";
+import { passSettingsForTenant } from "../../lib/passes/settings";
+import { TIER_PALETTE } from "../../lib/passes/tiers";
+import { getSessionTeamId, listTenants } from "../../lib/store";
 
 export const dynamic = "force-dynamic";
 
-// Phase 1 landing for door staff: proves the sign-in, role and routing work
-// end to end. The camera scanner replaces this page in build-plan Phase 3
-// (docs/specs/dgtl-pass/06-scanner.md, previews/scanner.html).
+// The door scanner (docs/specs/dgtl-pass/06-scanner.md). Door staff land here
+// after sign-in; workspace roles holding pass.verify can open it too.
 export default async function ScanPage() {
   const session = await loadSession();
   if (!session) redirect("/admin/login");
   if (!canUsePass(session, "pass.verify")) redirect("/home");
 
+  let configured = true;
+  try {
+    configured = passesConfig().enabled;
+  } catch {
+    configured = false;
+  }
+  const teamId = getSessionTeamId(session);
+  const tenants = (await listTenants({ teamId })).filter((tenant) => tenant.teamId === teamId);
+  const gates = [...new Set(tenants.flatMap((tenant) => passSettingsForTenant(tenant).gates))];
+
   return (
-    <main className="admin-login" data-theme="dark">
-      <section className="admin-login__panel">
-        <span className="admin-login__brand" aria-label="DGTL">
-          <DgtlWordmark />
-        </span>
-        <h1 className="admin-login__title">Scanner</h1>
-        <p className="admin-login__note">
-          Signed in as <strong>{session.user?.name || session.email}</strong> · {session.role}
-          {session.team?.name ? ` · ${session.team.name}` : ""}
-        </p>
-        <p className="admin-login__note admin-login__note--dim">The camera scanner arrives here next. Your sign-in and door access are ready.</p>
-        <form action="/api/admin/logout" method="post" className="admin-form">
-          <button className="button button--secondary" type="submit">Sign out</button>
-        </form>
-      </section>
-    </main>
+    <Scanner
+      configured={configured}
+      user={{ name: session.user?.name || session.email || "", role: session.role }}
+      teamName={session.team?.name || ""}
+      gates={gates.length ? gates : ["Main door"]}
+      art={{
+        spark: svgDataUri(sparkSvg(TIER_PALETTE.gold.accent)),
+        tiers: {
+          day: { accent: TIER_PALETTE.steel.accent, label: "Steel" },
+          monthly: { accent: TIER_PALETTE.bronze.accent, label: "Bronze" },
+          yearly: { accent: TIER_PALETTE.silver.accent, label: "Silver" },
+          vip_lifetime: { accent: TIER_PALETTE.gold.accent, label: "VIP" },
+          custom: { accent: TIER_PALETTE.steel.accent, label: "" }
+        }
+      }}
+    />
   );
 }
